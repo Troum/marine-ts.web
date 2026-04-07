@@ -74,10 +74,6 @@ async function handleSubmit() {
             <ArrowRight class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
         </form>
-
-        <div class="mt-6 pt-6 border-t border-mts-border">
-          <p class="font-mono text-[10px] text-mts-text-muted text-center">Демо-доступ: admin / marine2024</p>
-        </div>
       </div>
 
       <div class="text-center mt-6">
