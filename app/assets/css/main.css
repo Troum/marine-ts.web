@@ -1,0 +1,138 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-mts-bg: #f8f9fa;
+  --color-mts-surface: #ffffff;
+  --color-mts-accent: #c14041;
+  --color-mts-accent-light: #d45455;
+  --color-mts-accent-dark: #a33536;
+  --color-mts-text: #1c1c1e;
+  --color-mts-text-secondary: #6c757d;
+  --color-mts-text-muted: #adb5bd;
+  --color-mts-border: #dee2e6;
+  --color-mts-border-light: #e9ecef;
+  --color-mts-grid: #e9ecef;
+  --color-mts-dark: #212529;
+
+  --font-display: 'Oranienbaum', serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-ui: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --shadow-tech: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-tech-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-accent: 0 4px 20px rgba(193, 64, 65, 0.25);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-mts-bg text-mts-text antialiased font-body;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 border border-transparent bg-mts-accent px-4 py-2 font-mono text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 border border-mts-border bg-white px-4 py-2 font-mono text-xs font-medium uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent;
+  }
+
+  /**
+   * Единый стиль нативных checkbox (border, акцент, focus ring).
+   * При необходимости выровнять с многострочным текстом: `mts-checkbox mt-0.5` или `mt-1`.
+   */
+  .mts-checkbox {
+    @apply size-4 shrink-0 cursor-pointer rounded border border-mts-border bg-white accent-mts-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  /**
+   * Контент из Markdown / TipTap (v-html после DOMPurify).
+   * Таблицы, подсветка, код, картинки и YouTube — в линии с админ-редактором.
+   */
+  .mts-markdown {
+    @apply max-w-none min-w-0 font-body text-mts-text;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mts-markdown :where(h1, h2, h3, h4) {
+    @apply font-display text-mts-text;
+  }
+  .mts-markdown h1 {
+    @apply mt-10 text-3xl first:mt-0;
+  }
+  .mts-markdown h2 {
+    @apply mt-8 text-2xl;
+  }
+  .mts-markdown h3 {
+    @apply mt-6 text-xl;
+  }
+  .mts-markdown h4 {
+    @apply mt-5 text-lg;
+  }
+  .mts-markdown :where(p) {
+    @apply mt-4 leading-relaxed first:mt-0;
+  }
+  .mts-markdown :where(ul, ol) {
+    @apply mt-4 list-outside space-y-2 pl-6;
+  }
+  .mts-markdown ul {
+    @apply list-disc;
+  }
+  .mts-markdown ol {
+    @apply list-decimal;
+  }
+  .mts-markdown :where(a) {
+    @apply text-mts-accent underline underline-offset-2 hover:text-mts-accent-dark;
+  }
+  .mts-markdown :where(code) {
+    @apply rounded bg-mts-bg px-1.5 py-0.5 font-mono text-[0.9em] text-mts-text;
+  }
+  .mts-markdown :where(pre) {
+    @apply mt-4 overflow-x-auto rounded-lg border border-mts-border bg-mts-bg p-4 font-mono text-sm leading-relaxed text-mts-text shadow-tech;
+  }
+  .mts-markdown :where(pre code) {
+    @apply block w-fit min-w-full bg-transparent p-0 text-[0.9375rem] leading-relaxed;
+  }
+  .mts-markdown :where(blockquote) {
+    @apply mt-4 border-l-2 border-mts-accent pl-4 text-mts-text-secondary;
+  }
+  .mts-markdown :where(hr) {
+    @apply my-10 border-0 border-t border-mts-border;
+  }
+  .mts-markdown :where(mark) {
+    @apply rounded px-0.5 py-px text-inherit;
+    background-color: color-mix(in srgb, var(--color-mts-accent) 26%, transparent);
+  }
+  .mts-markdown :where(table) {
+    @apply mt-6 w-full border-collapse text-left text-sm;
+  }
+  .mts-markdown :where(thead) {
+    @apply bg-mts-bg;
+  }
+  .mts-markdown :where(th) {
+    @apply border border-mts-border px-3 py-2 font-mono text-xs font-medium uppercase tracking-wide text-mts-text-secondary;
+  }
+  .mts-markdown :where(td) {
+    @apply border border-mts-border px-3 py-2 align-top text-mts-text;
+  }
+  .mts-markdown :where(tbody tr:nth-child(even)) {
+    @apply bg-mts-surface;
+  }
+  .mts-markdown :where(tbody tr:nth-child(odd)) {
+    @apply bg-mts-bg/80;
+  }
+  .mts-markdown :where(img) {
+    @apply my-6 h-auto max-h-[min(480px,70vh)] w-full max-w-full rounded-md border border-mts-border object-contain shadow-tech;
+  }
+  .mts-markdown :where([data-youtube-video]) {
+    @apply relative my-8 w-full overflow-hidden rounded-md border border-mts-border bg-mts-dark shadow-tech;
+    aspect-ratio: 16 / 9;
+  }
+  .mts-markdown :where([data-youtube-video] iframe) {
+    @apply absolute inset-0 h-full w-full border-0;
+  }
+}

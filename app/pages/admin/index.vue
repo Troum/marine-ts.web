@@ -1,0 +1,358 @@
+<script setup lang="ts">
+import {
+  Newspaper,
+  Briefcase,
+  LogOut,
+  Edit,
+  Eye,
+  Loader2,
+  Wrench,
+  Search,
+  Users,
+  MessageSquare,
+  ClipboardList,
+  Shield,
+} from 'lucide-vue-next'
+import type { NewsItem, Project } from '~/types'
+import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
+
+definePageMeta({
+  layout: 'admin',
+  middleware: 'admin',
+})
+
+const api = useMarineApi()
+const { logout } = useAuth()
+const { canManageUsers, canManageContentPages } = useAdminPermissions()
+
+const news = ref<NewsItem[]>([])
+const projects = ref<Project[]>([])
+const stats = ref({
+  news_count: 0,
+  projects_count: 0,
+  featured_news: 0,
+  services_count: 0,
+  vacancies_count: 0,
+  application_forms_count: 0,
+})
+const pending = ref(true)
+
+onMounted(async () => {
+  try {
+    const [n, p, s] = await Promise.all([api.news.getAll(), api.projects.getAll(), api.stats.getAll()])
+    news.value = n
+    projects.value = p
+    stats.value = s
+  } catch {
+    /* ignore */
+  } finally {
+    pending.value = false
+  }
+})
+
+const statCards = computed(() => [
+  { label: 'Всего новостей', value: stats.value.news_count || news.value.length, icon: Newspaper, color: 'bg-blue-500' },
+  { label: 'Всего проектов', value: stats.value.projects_count || projects.value.length, icon: Briefcase, color: 'bg-green-500' },
+  {
+    label: 'Изб. новостей',
+    value: stats.value.featured_news || news.value.filter((x) => x.featured).length,
+    icon: Eye,
+    color: 'bg-purple-500',
+  },
+  {
+    label: 'Услуг на сайте',
+    value: stats.value.services_count ?? 0,
+    icon: Wrench,
+    color: 'bg-amber-600',
+  },
+  {
+    label: 'Вакансий',
+    value: stats.value.vacancies_count ?? 0,
+    icon: Users,
+    color: 'bg-teal-600',
+  },
+  {
+    label: 'Поданных анкет',
+    value: stats.value.application_forms_count ?? 0,
+    icon: ClipboardList,
+    color: 'bg-slate-600',
+  },
+])
+</script>
+
+<template>
+  <div>
+    <header class="bg-white border-b border-mts-border sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-4 min-w-0">
+            <AppLogo img-class="h-9 w-auto max-w-[min(45vw,220px)] shrink-0 object-contain object-left" />
+            <span class="font-mono text-sm font-medium tracking-wide text-mts-text-secondary shrink-0 hidden sm:inline"
+              >ADMIN PANEL</span
+            >
+          </div>
+          <div class="flex items-center gap-4">
+            <NuxtLink to="/" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">
+              Перейти на сайт
+            </NuxtLink>
+            <button
+              type="button"
+              class="flex items-center gap-2 px-4 py-2 border border-mts-border text-mts-text-secondary hover:text-mts-accent hover:border-mts-accent transition-colors"
+              @click="logout(); navigateTo('/admin/login')"
+            >
+              <LogOut class="w-4 h-4" />
+              <span class="font-mono text-xs uppercase">Выйти</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+      <div v-if="pending" class="flex justify-center py-24">
+        <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
+      </div>
+      <template v-else>
+        <h1 class="font-display text-3xl text-mts-text mb-8">Панель управления</h1>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-12">
+          <div v-for="stat in statCards" :key="stat.label" class="bg-white border border-mts-border p-6 flex flex-wrap items-center gap-4">
+            <div class="flex items-center justify-start gap-x-4">
+              <div :class="['w-12 h-12 flex items-center justify-center', stat.color]">
+                <component :is="stat.icon" class="w-6 h-6 text-white" />
+              </div>
+              <p class="font-mono text-3xl font-medium text-mts-text">{{ stat.value }}</p>
+            </div>
+            <div>
+              <p class="font-body text-sm text-mts-text-secondary">{{ stat.label }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Newspaper class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Новости</h2>
+              </div>
+              <AdminPlusLink to="/admin/news/new">Добавить</AdminPlusLink>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Управление новостями компании. Добавляйте, редактируйте и удаляйте публикации.
+              </p>
+              <NuxtLink to="/admin/news" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline">
+                <Edit class="w-4 h-4" />
+                Управление новостями
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div
+              class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
+            >
+              <div class="flex shrink-0 items-center gap-3">
+                <Briefcase class="w-5 h-5 shrink-0 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Проекты</h2>
+              </div>
+              <div class="flex shrink-0 flex-nowrap items-center gap-2">
+                <AdminPlusLink
+                  v-if="canManageContentPages"
+                  to="/admin/content-pages/new?contentableType=project"
+                  variant="outline"
+                >
+                  Страница
+                </AdminPlusLink>
+                <AdminPlusLink to="/admin/projects/new">Карточка</AdminPlusLink>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Портфолио проектов на сайте: карточки каталога и при необходимости отдельные текстовые страницы по адресу
+                /projects/…
+              </p>
+              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+                <NuxtLink
+                  to="/admin/projects"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Проекты на сайте
+                </NuxtLink>
+                <NuxtLink
+                  v-if="canManageContentPages"
+                  to="/admin/content-pages"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Текстовые страницы
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div
+              class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
+            >
+              <div class="flex shrink-0 items-center gap-3">
+                <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Услуги</h2>
+              </div>
+              <div class="flex shrink-0 flex-nowrap items-center gap-2">
+                <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
+                  Страница
+                </AdminPlusLink>
+                <AdminPlusLink to="/admin/services/new">Карточка</AdminPlusLink>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Раздел «Услуги» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по адресу
+                /services/…
+              </p>
+              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+                <NuxtLink
+                  to="/admin/services"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Карточки на сайте
+                </NuxtLink>
+                <NuxtLink
+                  v-if="canManageContentPages"
+                  to="/admin/content-pages"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Текстовые страницы
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Users class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Вакансии</h2>
+              </div>
+              <AdminPlusLink to="/admin/vacancies/new">Добавить</AdminPlusLink>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Открытые позиции на странице «Вакансии»: описание, требования, локация, публикация и анкеты кандидатов.
+              </p>
+              <NuxtLink
+                to="/admin/vacancies"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Управление вакансиями
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <MessageSquare class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Обратная связь</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Сообщения с формы на странице «Контакты»: имя, email, текст обращения.
+              </p>
+              <NuxtLink
+                to="/admin/feedback"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Открыть сообщения
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div v-if="canManageUsers" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Shield class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Пользователи</h2>
+              </div>
+              <AdminPlusLink to="/admin/users/new">Добавить</AdminPlusLink>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Учётные записи панели: логин, роли и права доступа (Spatie).
+              </p>
+              <NuxtLink to="/admin/users" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline">
+                <Edit class="w-4 h-4" />
+                Управление пользователями
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Search class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">SEO</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Meta title, description и keywords для разделов сайта и отдельных материалов.
+              </p>
+              <NuxtLink to="/admin/seo" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline">
+                <Edit class="w-4 h-4" />
+                Управление SEO
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-12">
+          <h2 class="font-display text-2xl text-mts-text mb-6">Последние новости</h2>
+          <div class="bg-white border border-mts-border overflow-x-auto">
+            <table class="w-full min-w-150">
+              <thead class="bg-mts-bg border-b border-mts-border">
+                <tr>
+                  <th class="text-left p-4 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Заголовок</th>
+                  <th class="text-left p-4 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Категория</th>
+                  <th class="text-left p-4 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Дата</th>
+                  <th class="text-left p-4 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in news.slice(0, 5)" :key="item.id" class="border-b border-mts-border last:border-0">
+                  <td class="p-4">
+                    <p class="font-body text-sm text-mts-text">{{ item.title }}</p>
+                    <span
+                      v-if="item.featured"
+                      class="inline-block mt-1 px-2 py-0.5 bg-mts-accent/10 text-mts-accent font-mono text-[9px] uppercase"
+                    >
+                      Избранное
+                    </span>
+                  </td>
+                  <td class="p-4">
+                    <span class="font-body text-sm text-mts-text-secondary">{{ item.category }}</span>
+                  </td>
+                  <td class="p-4">
+                    <span class="font-body text-sm text-mts-text-secondary">{{ item.date }}</span>
+                  </td>
+                  <td class="p-4">
+                    <NuxtLink :to="`/admin/news/${item.id}`" class="p-2 text-mts-text-secondary hover:text-mts-accent transition-colors inline-flex">
+                      <Edit class="w-4 h-4" />
+                    </NuxtLink>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </template>
+    </main>
+  </div>
+</template>
