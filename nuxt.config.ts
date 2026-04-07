@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     /** SSR в Docker: `http://api:8000/api` (см. docker-compose). Браузер использует `public.apiBase`. */
     apiBaseServer: '',
     public: {
-      apiBase: 'http://marine-ts.test/api',
+      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE ?? 'http://marine-ts.test/api',
     },
   },
   app: {
