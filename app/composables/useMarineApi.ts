@@ -14,6 +14,7 @@ import type {
   Project,
   ServiceItem,
   SiteSeoPage,
+  PageViewsSummary,
   Stats,
   VacancyApplicationForm,
   VacancyItem,
@@ -419,6 +420,9 @@ export function useMarineApi() {
     },
     stats: {
       getAll: () => fetchPublic<Stats>('/stats'),
+    },
+    analytics: {
+      getSummary: () => fetchAuth<PageViewsSummary>('/analytics/manage/summary'),
     },
     applicationForms: {
       submit: async (slug: string, body: VacancyApplicationForm) => {

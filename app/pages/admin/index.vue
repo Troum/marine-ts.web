@@ -12,8 +12,9 @@ import {
   MessageSquare,
   ClipboardList,
   Shield,
+  BarChart3,
 } from 'lucide-vue-next'
-import type { NewsItem, Project } from '~/types'
+import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
 
 definePageMeta({
@@ -36,6 +37,7 @@ const stats = ref({
   application_forms_count: 0,
 })
 const pending = ref(true)
+const pageViews = ref<PageViewsSummary | null>(null)
 
 onMounted(async () => {
   try {
@@ -48,7 +50,22 @@ onMounted(async () => {
   } finally {
     pending.value = false
   }
+  try {
+    pageViews.value = await api.analytics.getSummary()
+  } catch {
+    pageViews.value = null
+  }
 })
+
+const maxDailyViews = computed(() => {
+  const days = pageViews.value?.dailyLast14Days ?? []
+  const m = Math.max(0, ...days.map((d) => d.views))
+
+  return m > 0 ? m : 1
+})
+
+/** Высота столбиков в px (h-28 ≈ 7rem) */
+const chartBarMaxPx = 112
 
 const statCards = computed(() => [
   { label: 'Всего новостей', value: stats.value.news_count || news.value.length, icon: Newspaper, color: 'bg-blue-500' },
@@ -127,6 +144,88 @@ const statCards = computed(() => [
             </div>
           </div>
         </div>
+
+        <section v-if="pageViews" class="mb-12 border border-mts-border bg-white p-6 lg:p-8">
+          <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div class="mb-1 flex items-center gap-2">
+                <BarChart3 class="h-5 w-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Просмотры публичного сайта</h2>
+              </div>
+              <p class="font-body text-sm text-mts-text-secondary max-w-2xl">
+                Данные из собственного счётчика (маршруты без <span class="font-mono text-xs">/admin</span>). Внешняя
+                аналитика (GA / Plausible) ведётся отдельно.
+              </p>
+            </div>
+          </div>
+
+          <div class="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div class="border border-mts-border bg-mts-bg p-4">
+              <p class="font-mono text-2xl font-medium text-mts-text">{{ pageViews.totalViews }}</p>
+              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Всего просмотров</p>
+            </div>
+            <div class="border border-mts-border bg-mts-bg p-4">
+              <p class="font-mono text-2xl font-medium text-mts-accent">{{ pageViews.todayViews }}</p>
+              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Сегодня</p>
+            </div>
+            <div class="border border-mts-border bg-mts-bg p-4">
+              <p class="font-mono text-2xl font-medium text-mts-text">{{ pageViews.last7Days }}</p>
+              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">За 7 дней</p>
+            </div>
+            <div class="border border-mts-border bg-mts-bg p-4">
+              <p class="font-mono text-2xl font-medium text-mts-text">{{ pageViews.last30Days }}</p>
+              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">За 30 дней</p>
+            </div>
+          </div>
+
+          <div class="mb-8">
+            <h3 class="font-mono text-xs uppercase tracking-wide text-mts-text-secondary mb-3">14 дней</h3>
+            <div class="flex h-28 items-end gap-0.5 sm:gap-1">
+              <div
+                v-for="day in pageViews.dailyLast14Days"
+                :key="day.date"
+                class="group flex min-w-0 flex-1 flex-col items-stretch justify-end"
+                :title="`${day.date}: ${day.views}`"
+              >
+                <div
+                  class="w-full rounded-t bg-mts-accent/80 transition-colors group-hover:bg-mts-accent"
+                  :style="{
+                    height: `${Math.max(2, (day.views / maxDailyViews) * chartBarMaxPx)}px`,
+                    minHeight: day.views > 0 ? '2px' : '0',
+                  }"
+                />
+                <span
+                  class="mt-1 hidden truncate text-center font-mono text-[9px] text-mts-text-secondary sm:block max-w-full"
+                >
+                  {{ day.date.slice(8, 10) }}.{{ day.date.slice(5, 7) }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="font-mono text-xs uppercase tracking-wide text-mts-text-secondary mb-3">Популярные пути</h3>
+            <div class="overflow-x-auto border border-mts-border">
+              <table class="w-full min-w-[320px] text-left text-sm">
+                <thead class="bg-mts-bg font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  <tr>
+                    <th class="px-4 py-2">Путь</th>
+                    <th class="px-4 py-2 w-24 text-right">Просмотры</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="row in pageViews.topPaths" :key="row.path" class="border-t border-mts-border">
+                    <td class="px-4 py-2 font-mono text-xs text-mts-text break-all">{{ row.path }}</td>
+                    <td class="px-4 py-2 text-right font-mono text-mts-text">{{ row.views }}</td>
+                  </tr>
+                  <tr v-if="pageViews.topPaths.length === 0">
+                    <td colspan="2" class="px-4 py-6 text-center text-mts-text-secondary">Пока нет данных</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="bg-white border border-mts-border">

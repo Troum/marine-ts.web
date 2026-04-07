@@ -60,6 +60,16 @@ export interface Stats {
   application_forms_count: number
 }
 
+/** Сводка просмотров публичного сайта (таблица page_views). */
+export interface PageViewsSummary {
+  totalViews: number
+  todayViews: number
+  last7Days: number
+  last30Days: number
+  topPaths: { path: string; views: number }[]
+  dailyLast14Days: { date: string; views: number }[]
+}
+
 export interface VacancyItem {
   id: number
   slug: string

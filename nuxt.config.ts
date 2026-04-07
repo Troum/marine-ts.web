@@ -14,6 +14,10 @@ export default defineNuxtConfig({
     apiBaseServer: '',
     public: {
       apiBase: import.meta.env.NUXT_PUBLIC_API_BASE ?? 'http://marine-ts.test/api',
+      /** Google Analytics 4 — измерение G-XXXXXXXX (если задано, Plausible не подключается) */
+      analyticsGtagId: import.meta.env.NUXT_PUBLIC_ANALYTICS_GTAG_ID ?? '',
+      /** Домен для Plausible (например marine-ts.com), без https */
+      analyticsPlausibleDomain: import.meta.env.NUXT_PUBLIC_ANALYTICS_PLAUSIBLE_DOMAIN ?? '',
     },
   },
   app: {
