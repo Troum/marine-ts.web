@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Paperclip, Send, Trash2, X } from 'lucide-vue-next'
 import type { FeedbackMessage } from '~/types'
 
 definePageMeta({
@@ -17,6 +17,11 @@ const id = computed(() => Number(route.params.id))
 const item = ref<FeedbackMessage | null>(null)
 const loading = ref(true)
 const deleting = ref(false)
+
+const replyBody = ref('')
+const replyFiles = ref<File[]>([])
+const fileInputKey = ref(0)
+const replying = ref(false)
 
 onMounted(async () => {
   if (!Number.isFinite(id.value) || id.value < 1) {
@@ -56,6 +61,60 @@ function formatDate(iso: string | null) {
     })
   } catch {
     return iso
+  }
+}
+
+function onReplyFilesChange(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const list = input.files ? Array.from(input.files) : []
+  const next = [...replyFiles.value]
+  for (const f of list) {
+    if (next.length >= 5) {
+      break
+    }
+    next.push(f)
+  }
+  replyFiles.value = next
+  input.value = ''
+}
+
+function removeReplyFile(index: number) {
+  replyFiles.value = replyFiles.value.filter((_, i) => i !== index)
+}
+
+function formatReplyError(e: unknown): string {
+  const err = e as { data?: { message?: string; errors?: Record<string, string[]> } }
+  const errors = err?.data?.errors
+  if (errors) {
+    const first = Object.values(errors).flat()[0]
+    if (first) {
+      return first
+    }
+  }
+  return err?.data?.message ?? 'Не удалось отправить ответ.'
+}
+
+async function handleSendReply() {
+  if (!item.value) {
+    return
+  }
+  const body = replyBody.value.trim()
+  if (!body) {
+    await showAdminAlert({ message: 'Введите текст ответа.', variant: 'error' })
+    return
+  }
+  replying.value = true
+  try {
+    const updated = await api.feedback.reply(item.value.id, body, replyFiles.value)
+    item.value = updated
+    replyBody.value = ''
+    replyFiles.value = []
+    fileInputKey.value += 1
+    adminToast.success('Ответ отправлен на ' + updated.email)
+  } catch (e: unknown) {
+    await showAdminAlert({ message: formatReplyError(e), variant: 'error' })
+  } finally {
+    replying.value = false
   }
 }
 
@@ -144,7 +203,81 @@ async function handleDelete() {
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Сообщение</dt>
             <dd class="mt-1 whitespace-pre-wrap font-body leading-relaxed text-mts-text">{{ item.message }}</dd>
           </div>
+          <div v-if="item.repliedAt">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Ответ отправлен</dt>
+            <dd class="mt-1 font-body text-mts-text">{{ formatDate(item.repliedAt) }}</dd>
+          </div>
         </dl>
+
+        <div class="mt-10 border-t border-mts-border pt-8">
+          <h2 class="font-display text-lg text-mts-text">Ответить по email</h2>
+          <p class="mt-2 text-sm leading-relaxed text-mts-text-secondary">
+            Письмо уйдёт на
+            <a :href="`mailto:${item.email}`" class="text-mts-accent hover:underline">{{ item.email }}</a>
+            с вашего адреса в поле «Ответить». При необходимости приложите до 5 файлов (каждый до 10 МБ): PDF, Office, изображения,
+            ZIP.
+          </p>
+          <div class="mt-4 space-y-4">
+            <div>
+              <label for="feedback-reply-body" class="sr-only">Текст ответа</label>
+              <textarea
+                id="feedback-reply-body"
+                v-model="replyBody"
+                rows="10"
+                class="w-full resize-y bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
+                placeholder="Текст ответа клиенту…"
+                :disabled="replying"
+              />
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <label
+                class="inline-flex cursor-pointer items-center gap-2 rounded border border-mts-border bg-white px-3 py-2 text-sm text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent has-[:disabled]:pointer-events-none has-[:disabled]:opacity-50"
+              >
+                <Paperclip class="h-4 w-4" />
+                Прикрепить файлы
+                <input
+                  :key="fileInputKey"
+                  type="file"
+                  class="hidden"
+                  multiple
+                  :disabled="replying || replyFiles.length >= 5"
+                  @change="onReplyFilesChange"
+                />
+              </label>
+              <span class="text-xs text-mts-text-secondary">{{ replyFiles.length }} / 5</span>
+            </div>
+            <ul v-if="replyFiles.length" class="space-y-1 rounded border border-mts-border bg-mts-bg-muted/30 p-3 text-sm">
+              <li
+                v-for="(f, i) in replyFiles"
+                :key="i + f.name + f.size"
+                class="flex items-center justify-between gap-2"
+              >
+                <span class="min-w-0 truncate font-mono text-xs text-mts-text">{{ f.name }}</span>
+                <button
+                  type="button"
+                  class="shrink-0 rounded p-1 text-mts-text-secondary hover:bg-red-50 hover:text-red-700"
+                  :disabled="replying"
+                  title="Убрать"
+                  @click="removeReplyFile(i)"
+                >
+                  <X class="h-4 w-4" />
+                </button>
+              </li>
+            </ul>
+            <div class="flex justify-end">
+              <button
+                type="button"
+                class="btn-primary inline-flex items-center gap-2"
+                :disabled="replying || !replyBody.trim()"
+                @click="handleSendReply"
+              >
+                <Loader2 v-if="replying" class="h-4 w-4 animate-spin" />
+                <Send v-else class="h-4 w-4" />
+                {{ replying ? 'Отправка…' : 'Отправить ответ' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   </div>

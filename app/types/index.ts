@@ -196,6 +196,8 @@ export interface FeedbackMessage {
   message: string
   ip: string | null
   readAt: string | null
+  /** Когда на это сообщение отправили ответ с сайта админки (email). */
+  repliedAt: string | null
   createdAt: string | null
   updatedAt: string | null
 }

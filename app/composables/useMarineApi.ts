@@ -94,6 +94,39 @@ export function useMarineApi() {
     }
   }
 
+  /** POST multipart/form-data с Bearer (без Content-Type — задаёт браузер). */
+  async function fetchAuthFormData<T>(path: string, formData: FormData): Promise<T> {
+    if (import.meta.client) {
+      const t = localStorage.getItem('mts_admin_token')
+      if (t) {
+        token.value = t
+      }
+    }
+    const headers: Record<string, string> = { Accept: 'application/json' }
+    const t = import.meta.client ? localStorage.getItem('mts_admin_token') : null
+    if (t) {
+      headers.Authorization = `Bearer ${t}`
+    }
+    try {
+      return await $fetch<T>(`${resolveApiBase()}${path}`, {
+        method: 'POST',
+        headers,
+        body: formData as unknown as BodyInit,
+      })
+    } catch (e: unknown) {
+      const err = e as { statusCode?: number; status?: number }
+      if (err?.statusCode === 401 || err?.status === 401) {
+        setToken(null)
+        if (import.meta.client) {
+          sessionStorage.removeItem('mts_admin_permissions')
+          sessionStorage.removeItem('mts_admin_user_id')
+          await navigateTo('/admin/login')
+        }
+      }
+      throw e
+    }
+  }
+
   return {
     async login(username: string, password: string) {
       const data = await $fetch<{
@@ -621,6 +654,15 @@ export function useMarineApi() {
       },
       getById: async (id: number) => {
         const res = await fetchAuth<{ data: FeedbackMessage }>(`/feedback/manage/${id}`)
+        return res.data
+      },
+      reply: async (id: number, body: string, attachments: File[]) => {
+        const fd = new FormData()
+        fd.append('body', body)
+        for (const file of attachments) {
+          fd.append('attachments[]', file)
+        }
+        const res = await fetchAuthFormData<{ data: FeedbackMessage }>(`/feedback/manage/${id}/reply`, fd)
         return res.data
       },
       delete: (id: number) => fetchAuth<unknown>(`/feedback/${id}`, { method: 'DELETE' }),
