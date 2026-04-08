@@ -26,6 +26,7 @@ const navLinks = [
   { label: 'О компании', href: '/about' },
   { label: 'Услуги', href: '/services' },
   { label: 'Проекты', href: '/projects' },
+  { label: 'Галерея', href: '/gallery' },
   { label: 'Новости', href: '/news' },
   { label: 'Контакты', href: '/contacts' },
 ]

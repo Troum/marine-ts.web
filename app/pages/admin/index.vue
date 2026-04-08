@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Shield,
   BarChart3,
+  Images,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -24,7 +25,7 @@ definePageMeta({
 
 const api = useMarineApi()
 const { logout } = useAuth()
-const { canManageUsers, canManageContentPages } = useAdminPermissions()
+const { canManageUsers, canManageContentPages, canManageGallery } = useAdminPermissions()
 
 const news = ref<NewsItem[]>([])
 const projects = ref<Project[]>([])
@@ -288,6 +289,27 @@ const statCards = computed(() => [
                   Текстовые страницы
                 </NuxtLink>
               </div>
+            </div>
+          </div>
+
+          <div v-if="canManageGallery" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Images class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Галерея</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Фотографии на странице «Галерея»: загрузка, подписи, порядок и замена файлов.
+              </p>
+              <NuxtLink
+                to="/admin/gallery"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Управление галереей
+              </NuxtLink>
             </div>
           </div>
 

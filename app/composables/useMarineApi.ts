@@ -9,6 +9,7 @@ import type {
   DocumentUploadSession,
   PaginatedApplicationForms,
   FeedbackMessage,
+  GalleryItem,
   NewsItem,
   ContentPageSummary,
   Project,
@@ -450,6 +451,28 @@ export function useMarineApi() {
         return res.data
       },
       delete: (id: number) => fetchAuth<unknown>(`/content-pages/${id}`, { method: 'DELETE' }),
+    },
+    gallery: {
+      getAll: async () => {
+        const res = await fetchPublic<{ data: GalleryItem[] }>('/gallery')
+        return res.data
+      },
+      create: async (formData: FormData) => {
+        const res = await fetchAuthFormData<{ data: GalleryItem }>('/gallery', formData)
+        return res.data
+      },
+      update: async (id: number, body: { alt?: string; sortOrder?: number }) => {
+        const res = await fetchAuth<{ data: GalleryItem }>(`/gallery/${id}`, {
+          method: 'PUT',
+          body,
+        })
+        return res.data
+      },
+      replaceImage: async (id: number, formData: FormData) => {
+        const res = await fetchAuthFormData<{ data: GalleryItem }>(`/gallery/${id}/image`, formData)
+        return res.data
+      },
+      delete: (id: number) => fetchAuth<unknown>(`/gallery/${id}`, { method: 'DELETE' }),
     },
     stats: {
       getAll: () => fetchPublic<Stats>('/stats'),

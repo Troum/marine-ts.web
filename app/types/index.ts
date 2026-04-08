@@ -35,6 +35,13 @@ export interface LinkedContentPageRef {
   title: string
 }
 
+export interface GalleryItem {
+  id: number
+  src: string
+  alt: string
+  sortOrder: number
+}
+
 export interface Project {
   id: number
   title: string

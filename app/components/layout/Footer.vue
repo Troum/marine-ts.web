@@ -9,6 +9,7 @@ const navLinks = [
   { label: 'Услуги', href: '/services' },
   { label: 'Крюинг-менеджмент', href: '/crewing-management' },
   { label: 'Проекты', href: '/projects' },
+  { label: 'Галерея', href: '/gallery' },
   { label: 'Новости', href: '/news' },
   { label: 'Вакансии', href: '/vacancies' },
   { label: 'Контакты', href: '/contacts' },
