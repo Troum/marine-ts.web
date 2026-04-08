@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Trash2, Images } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Trash2, Images, Save } from 'lucide-vue-next'
 import type { GalleryItem, MarineContentLocale } from '~/types'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import { galleryAltTranslations } from '~/utils/adminTranslationForms'
@@ -348,6 +348,7 @@ async function addImage() {
                   :disabled="savingId === item.id"
                   @click="saveRow(item.id)"
                 >
+                  <Save class="h-4 w-4" />
                   {{ savingId === item.id ? 'Сохранение…' : 'Сохранить' }}
                 </button>
                 <button
