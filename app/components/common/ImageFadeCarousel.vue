@@ -34,7 +34,7 @@ onUnmounted(() => {
 <template>
   <div>
     <div
-      class="relative z-10 w-full aspect-[4/3] overflow-hidden bg-mts-bg"
+      class="relative z-10 w-full aspect-[4/3] min-h-[14rem] sm:min-h-[18rem] overflow-hidden bg-mts-bg"
       role="region"
       aria-roledescription="carousel"
       :aria-label="`${ariaLabel}: кадр ${index + 1} из ${slides.length}`"
@@ -47,7 +47,7 @@ onUnmounted(() => {
         :aria-hidden="i !== index"
         :loading="i === 0 ? 'eager' : 'lazy'"
         decoding="async"
-        class="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ease-in-out motion-reduce:transition-none"
+        class="absolute inset-0 h-full w-full object-cover brightness-[1.04] contrast-[1.03] saturate-[1.05] transition-opacity duration-1000 ease-in-out motion-reduce:transition-none"
         :class="i === index ? 'opacity-100 z-[1]' : 'opacity-0 z-0'"
       />
     </div>

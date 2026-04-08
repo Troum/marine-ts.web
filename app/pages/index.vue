@@ -78,8 +78,8 @@ const processSteps = computed(() => [
           ]"
           style="background-image: url(/hero-bg.jpg)"
         />
-        <div class="absolute inset-0 bg-linear-to-r from-mts-bg via-mts-bg/95 to-mts-bg/80" />
-        <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/60" />
+        <div class="absolute inset-0 bg-linear-to-r from-mts-bg via-mts-bg/82 to-mts-bg/55" />
+        <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/40" />
       </div>
 
       <div class="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 pt-28 pb-20">
@@ -244,11 +244,11 @@ const processSteps = computed(() => [
             :key="service.title"
             class="bg-white overflow-hidden hover:bg-mts-bg transition-colors group"
           >
-            <div class="aspect-[16/10] overflow-hidden border-b border-mts-border">
+            <div class="aspect-[16/9] min-h-[11rem] sm:min-h-[13rem] overflow-hidden border-b border-mts-border">
               <img
                 :src="service.image"
                 :alt="service.title"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                class="h-full w-full object-cover brightness-[1.04] contrast-[1.03] saturate-[1.06] transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
                 decoding="async"
               />
@@ -296,7 +296,7 @@ const processSteps = computed(() => [
             class="flex flex-col items-center text-center max-w-sm mx-auto md:max-w-none"
           >
             <div class="mb-4 flex justify-center">
-              <img :src="step.badge" alt="" class="h-16 w-16 shrink-0" width="100" height="100" />
+              <img :src="step.badge" alt="" class="h-20 w-20 shrink-0 opacity-95" width="100" height="100" />
             </div>
             <h3 class="font-display text-lg text-mts-text mb-2">{{ step.title }}</h3>
             <p class="font-body text-sm text-mts-text-secondary leading-relaxed">{{ step.text }}</p>
