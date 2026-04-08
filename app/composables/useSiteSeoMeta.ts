@@ -3,9 +3,10 @@
  */
 export function useSiteSeoMeta(slug: string) {
   const api = useMarineApi()
+  const { locale } = useI18n()
 
   const { data } = useAsyncData(
-    `site-seo-${slug}`,
+    () => `site-seo-${slug}-${locale.value}`,
     async () => {
       try {
         return await api.seoPages.getBySlug(slug)

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
-import type { SeoFields, SiteSeoPage } from '~/types'
-import SeoAdminFields from "~/components/admin/SeoAdminFields.vue";
+import type { MarineContentLocale, SeoFields } from '~/types'
+import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
+import { mergeSiteSeoTranslations } from '~/utils/adminTranslationForms'
+import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
   layout: 'admin',
@@ -14,20 +16,38 @@ const api = useMarineApi()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 
-const page = ref<SiteSeoPage | null>(null)
-const seo = ref<SeoFields>({ seoTitle: '', seoDescription: '', seoKeywords: '' })
+const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
+
+const page = ref<{ slug: string; label: string | null } | null>(null)
+const form = ref({
+  translations: mergeSiteSeoTranslations(),
+})
+
 const loading = ref(true)
 const saving = ref(false)
 
+const seoForTab = computed<SeoFields>({
+  get() {
+    const t = form.value.translations[localeTab.value]
+    return {
+      seoTitle: t.seoTitle,
+      seoDescription: t.seoDescription,
+      seoKeywords: t.seoKeywords,
+    }
+  },
+  set(v: SeoFields) {
+    const t = form.value.translations[localeTab.value]
+    t.seoTitle = v.seoTitle
+    t.seoDescription = v.seoDescription
+    t.seoKeywords = v.seoKeywords
+  },
+})
+
 onMounted(async () => {
   try {
-    const p = await api.seoPages.getBySlug(slug.value)
-    page.value = p
-    seo.value = {
-      seoTitle: p.seoTitle ?? '',
-      seoDescription: p.seoDescription ?? '',
-      seoKeywords: p.seoKeywords ?? '',
-    }
+    const p = await api.seoPages.getManageBySlug(slug.value)
+    page.value = { slug: p.slug, label: p.label }
+    form.value.translations = mergeSiteSeoTranslations(p.translations)
   } catch {
     await navigateTo('/admin/seo')
   } finally {
@@ -35,10 +55,26 @@ onMounted(async () => {
   }
 })
 
+function validate(): boolean {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    if (!form.value.translations[loc].label?.trim()) {
+      return false
+    }
+  }
+  return true
+}
+
 async function submit() {
+  if (!validate()) {
+    await showAdminAlert({
+      message: 'Укажите подпись страницы на русском и английском.',
+      variant: 'error',
+    })
+    return
+  }
   saving.value = true
   try {
-    await api.seoPages.update(slug.value, seo.value)
+    await api.seoPages.update(slug.value, { translations: form.value.translations })
     adminToast.success('Настройки SEO сохранены')
     await navigateTo('/admin/seo')
   } catch {
@@ -70,7 +106,23 @@ async function submit() {
         <div class="absolute -left-2 -top-2 h-4 w-4 border-l-2 border-t-2 border-mts-accent" />
         <div class="absolute -bottom-2 -right-2 h-4 w-4 border-b-2 border-r-2 border-mts-accent" />
 
-        <SeoAdminFields v-model="seo" />
+        <div class="space-y-8">
+          <AdminLocaleTabs v-model="localeTab" label="Язык" />
+          <div>
+            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+              Подпись в интерфейсе *
+            </label>
+            <input
+              v-model="form.translations[localeTab].label"
+              type="text"
+              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm text-mts-text focus:border-mts-accent focus:outline-none"
+            />
+          </div>
+          <div class="rounded-md border border-mts-border/80 bg-mts-bg/40 p-4">
+            <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Мета-теги</p>
+            <SeoAdminFields v-model="seoForTab" />
+          </div>
+        </div>
 
         <div class="mt-8 flex gap-4">
           <button type="submit" :disabled="saving" class="btn-primary">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>

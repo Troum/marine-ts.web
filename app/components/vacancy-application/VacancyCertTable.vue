@@ -11,6 +11,8 @@ defineProps<{
 
 const extraRows = defineModel<CertTableRow[]>('extraRows', { required: true })
 
+const { t } = useI18n()
+
 const minExtra = 1
 
 const fieldClass =
@@ -74,7 +76,7 @@ function removeExtra(index: number) {
           >
             <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
               <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Дополнительная запись {{ j + 1 }}
+                {{ t('pages.certTable.extraRow', { n: j + 1 }) }}
               </span>
               <button
                 v-if="extraRows.length > minExtra"
@@ -83,18 +85,18 @@ function removeExtra(index: number) {
                 @click="removeExtra(j)"
               >
                 <Trash2 class="h-3.5 w-3.5" />
-                Удалить
+                {{ t('pages.certTable.remove') }}
               </button>
             </div>
             <div class="mb-3">
               <label class="mb-1 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Название документа (необязательно)
+                {{ t('pages.certTable.docNameOpt') }}
               </label>
               <input
                 v-model="ex.customLabel"
                 type="text"
                 :class="fieldClass"
-                placeholder="Например: национальный паспорт, доп. виза…"
+                :placeholder="t('pages.certTable.placeholderDoc')"
                 autocomplete="off"
               />
             </div>
@@ -125,7 +127,7 @@ function removeExtra(index: number) {
           @click="addExtra"
         >
           <Plus class="h-4 w-4" />
-          Добавить строку
+          {{ t('pages.certTable.addRow') }}
         </button>
       </div>
     </div>

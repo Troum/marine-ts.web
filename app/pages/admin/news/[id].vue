@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
-import type { NewsItem } from '~/types'
+import type { MarineContentLocale, SeoFields } from '~/types'
+import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
+import MtsDateInput from '~/components/common/MtsDateInput.vue'
+import { mergeNewsTranslations } from '~/utils/adminTranslationForms'
+import { defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
   layout: 'admin',
@@ -9,21 +13,25 @@ definePageMeta({
 
 const route = useRoute()
 const api = useMarineApi()
+const { t } = useI18n()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const idParam = computed(() => route.params.id as string)
 const isNew = computed(() => idParam.value === 'new')
 
-const form = ref<Partial<NewsItem>>({
-  title: '',
+const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
+
+const form = ref({
   slug: '',
-  excerpt: '',
-  content: '',
+  /** ISO YYYY-MM-DD для корректной локализации даты на сайте */
   date: '',
   author: '',
-  category: 'Компания',
   featured: false,
+  translations: mergeNewsTranslations(),
 })
+
+/** Если в БД была длинная строка без ISO — показываем подсказку */
+const loadedLegacyDate = ref('')
 
 const categories = ['Компания', 'Проекты', 'Технологии', 'Сертификация', 'Мероприятия', 'Обучение']
 
@@ -31,16 +39,52 @@ const categoryOptions = categories.map((c) => ({ value: c, label: c }))
 const loading = ref(!isNew.value)
 const saving = ref(false)
 
+const seoForTab = computed<SeoFields>({
+  get() {
+    const t = form.value.translations[localeTab.value]
+    return {
+      seoTitle: t.seoTitle,
+      seoDescription: t.seoDescription,
+      seoKeywords: t.seoKeywords,
+    }
+  },
+  set(v: SeoFields) {
+    const t = form.value.translations[localeTab.value]
+    t.seoTitle = v.seoTitle
+    t.seoDescription = v.seoDescription
+    t.seoKeywords = v.seoKeywords
+  },
+})
+
+function dateToIsoInput(raw: string | undefined): { iso: string; legacy: string } {
+  const m = raw?.trim().match(/^(\d{4}-\d{2}-\d{2})/)
+  if (m) {
+    return { iso: m[1], legacy: '' }
+  }
+  if (raw?.trim()) {
+    return { iso: new Date().toISOString().slice(0, 10), legacy: raw.trim() }
+  }
+  return { iso: new Date().toISOString().slice(0, 10), legacy: '' }
+}
+
 onMounted(async () => {
   if (isNew.value) {
-    const d = new Date()
-    form.value.date = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    form.value.date = new Date().toISOString().slice(0, 10)
+    loadedLegacyDate.value = ''
     loading.value = false
     return
   }
   try {
     const item = await api.news.getById(Number(idParam.value))
-    form.value = { ...item }
+    const { iso, legacy } = dateToIsoInput(item.date)
+    loadedLegacyDate.value = legacy
+    form.value = {
+      slug: item.slug,
+      date: iso,
+      author: item.author,
+      featured: item.featured ?? false,
+      translations: mergeNewsTranslations(item.translations),
+    }
   } catch {
     await navigateTo('/admin/news')
   } finally {
@@ -48,13 +92,37 @@ onMounted(async () => {
   }
 })
 
+function validateTranslations(): boolean {
+  for (const loc of ['ru', 'en'] as const) {
+    const t = form.value.translations[loc]
+    if (!t.title?.trim() || !t.excerpt?.trim()) {
+      return false
+    }
+  }
+  return true
+}
+
 async function submit() {
+  if (!validateTranslations()) {
+    await showAdminAlert({
+      message: 'Заполните заголовок и краткое описание на русском и английском.',
+      variant: 'error',
+    })
+    return
+  }
   saving.value = true
   try {
+    const payload = {
+      slug: form.value.slug?.trim() || undefined,
+      date: form.value.date,
+      author: form.value.author,
+      featured: form.value.featured,
+      translations: form.value.translations,
+    }
     if (isNew.value) {
-      await api.news.create(form.value as Omit<NewsItem, 'id'>)
+      await api.news.create(payload)
     } else {
-      await api.news.update(Number(idParam.value), form.value)
+      await api.news.update(Number(idParam.value), payload)
     }
     adminToast.success(isNew.value ? 'Новость создана' : 'Новость сохранена')
     await navigateTo('/admin/news')
@@ -91,75 +159,87 @@ async function submit() {
         <div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-mts-accent" />
         <div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-mts-accent" />
 
-        <div class="space-y-6">
-          <div>
-            <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Заголовок *</label>
-            <input
-              v-model="form.title"
-              required
-              type="text"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-            />
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2"
-              >URL (slug)</label
-            >
-            <input
-              v-model="form.slug"
-              type="text"
-              placeholder="Оставьте пустым — сгенерируется из заголовка"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm font-mono focus:outline-none focus:border-mts-accent"
-            />
-            <p class="mt-1 font-body text-xs text-mts-text-secondary">
-              Латиница, цифры и дефисы. Можно задать вручную для сохранения старых ссылок (SEO).
-            </p>
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Краткое описание *</label>
-            <textarea
-              v-model="form.excerpt"
-              required
-              rows="3"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-            />
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Текст</label>
-            <textarea
-              v-model="form.content"
-              rows="8"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-            />
-          </div>
-          <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-8">
+          <section class="space-y-6">
+            <h2 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">Общие поля</h2>
             <div>
-              <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Дата *</label>
+              <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">URL (slug)</label>
               <input
-                v-model="form.date"
-                required
+                v-model="form.slug"
                 type="text"
-                class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm"
+                placeholder="Оставьте пустым — сгенерируется из заголовка"
+                class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm font-mono focus:outline-none focus:border-mts-accent"
               />
+              <p class="mt-1 font-body text-xs text-mts-text-secondary">
+                Латиница, цифры и дефисы. Один slug для всех языков.
+              </p>
             </div>
-            <div>
-              <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Автор *</label>
-              <input
-                v-model="form.author"
-                required
-                type="text"
-                class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm"
-              />
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Дата *</label>
+                <MtsDateInput
+                  v-model="form.date"
+                  required
+                  :placeholder="t('pages.common.datePlaceholder')"
+                  input-class="!rounded-none border-mts-border bg-mts-bg py-3 pe-4 font-body text-sm"
+                />
+                <p v-if="loadedLegacyDate" class="mt-2 font-body text-xs text-amber-800">
+                  Ранее в базе: «{{ loadedLegacyDate }}». Уточните дату в календаре и сохраните — так дата корректно отобразится на сайте на русском и английском.
+                </p>
+              </div>
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Автор *</label>
+                <input
+                  v-model="form.author"
+                  required
+                  type="text"
+                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm"
+                />
+              </div>
             </div>
-          </div>
-          <div>
-            <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Категория</label>
-            <AdminSelect v-model="form.category" :options="categoryOptions" />
-          </div>
-          <label class="flex items-center gap-2 font-body text-sm">
-            <input v-model="form.featured" type="checkbox" class="mts-checkbox" />
-            Избранная новость
-          </label>
+            <label class="flex items-center gap-2 font-body text-sm">
+              <input v-model="form.featured" type="checkbox" class="mts-checkbox" />
+              Избранная новость
+            </label>
+          </section>
+
+          <section class="space-y-6 border-t border-mts-border pt-8">
+            <AdminLocaleTabs v-model="localeTab" label="Тексты и SEO" />
+            <div class="space-y-6">
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Заголовок *</label>
+                <input
+                  v-model="form.translations[localeTab].title"
+                  type="text"
+                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
+                />
+              </div>
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Краткое описание *</label>
+                <textarea
+                  v-model="form.translations[localeTab].excerpt"
+                  rows="3"
+                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
+                />
+              </div>
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Текст</label>
+                <textarea
+                  v-model="form.translations[localeTab].content"
+                  rows="8"
+                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
+                />
+              </div>
+              <div>
+                <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Категория</label>
+                <AdminSelect v-model="form.translations[localeTab].category" :options="categoryOptions" />
+              </div>
+              <div class="rounded-md border border-mts-border/80 bg-mts-bg/40 p-4">
+                <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">SEO</p>
+                <SeoAdminFields v-model="seoForTab" />
+              </div>
+            </div>
+          </section>
         </div>
 
         <div class="mt-8 flex gap-4">

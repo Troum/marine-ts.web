@@ -10,21 +10,54 @@ import type {
   PaginatedApplicationForms,
   FeedbackMessage,
   GalleryItem,
+  ContentPageTranslationPayload,
+  MarineContentLocale,
   NewsItem,
+  NewsTranslationPayload,
   ContentPageSummary,
+  ProjectTranslationPayload,
+  ServiceTranslationPayload,
+  VacancyTranslationPayload,
   Project,
   ServiceItem,
   SiteSeoPage,
   PageViewsSummary,
+  SiteContactSettings,
   Stats,
   VacancyApplicationForm,
   VacancyItem,
 } from '~/types'
 
 import { buildListQuery } from '~/composables/useAdminListQuery'
+import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
 
 export function useMarineApi() {
   const config = useRuntimeConfig()
+  /**
+   * Laravel (`SetApiLocale` + `MarineLocale::resolve`) выбирает перевод по `?locale=` или `Accept-Language`.
+   * Без этого заголовка бэкенд остаётся на дефолтной локали (часто ru), даже на маршруте `/en/...`.
+   */
+  function publicApiHeaders(extra?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...extra,
+    }
+    let lang = 'ru'
+    try {
+      const { locale } = useI18n()
+      const primary = String(locale.value ?? 'ru')
+        .split('-')[0]
+        ?.toLowerCase() ?? 'ru'
+      if ((MARINE_CONTENT_LOCALES as readonly string[]).includes(primary)) {
+        lang = primary
+      }
+    } catch {
+      /* вне Vue / без i18n */
+    }
+    headers['Accept-Language'] = lang
+    return headers
+  }
+
   const resolveApiBase = (): string => {
     if (import.meta.server) {
       const server = (config.apiBaseServer as string) || ''
@@ -48,14 +81,14 @@ export function useMarineApi() {
 
   async function fetchPublic<T>(path: string): Promise<T> {
     return await $fetch<T>(`${resolveApiBase()}${path}`, {
-      headers: { Accept: 'application/json' },
+      headers: publicApiHeaders(),
     })
   }
 
   async function fetchPublicPost<T>(path: string, body: unknown): Promise<T> {
     return await $fetch<T>(`${resolveApiBase()}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: publicApiHeaders({ 'Content-Type': 'application/json' }),
       body,
     })
   }
@@ -63,7 +96,7 @@ export function useMarineApi() {
   async function fetchPublicFormData<T>(path: string, formData: FormData): Promise<T> {
     return await $fetch<T>(`${resolveApiBase()}${path}`, {
       method: 'POST',
-      headers: { Accept: 'application/json' },
+      headers: publicApiHeaders(),
       body: formData as unknown as BodyInit,
     })
   }
@@ -236,11 +269,23 @@ export function useMarineApi() {
         const res = await fetchAuth<{ data: NewsItem }>(`/news/manage/${id}`)
         return res.data
       },
-      create: async (body: Omit<NewsItem, 'id'>) => {
+      create: async (body: {
+        slug?: string
+        date: string
+        author: string
+        featured?: boolean
+        image?: string
+        translations: Record<MarineContentLocale, NewsTranslationPayload>
+      }) => {
         const res = await fetchAuth<{ data: NewsItem }>('/news', { method: 'POST', body })
         return res.data
       },
-      update: async (id: number, body: Partial<NewsItem>) => {
+      update: async (
+        id: number,
+        body: Partial<NewsItem> & {
+          translations?: Record<MarineContentLocale, NewsTranslationPayload>
+        },
+      ) => {
         const res = await fetchAuth<{ data: NewsItem }>(`/news/${id}`, { method: 'PUT', body })
         return res.data
       },
@@ -265,14 +310,24 @@ export function useMarineApi() {
         return res.data
       },
       getById: async (id: number) => {
-        const res = await fetchPublic<{ data: Project }>(`/projects/${id}`)
+        const res = await fetchAuth<{ data: Project }>(`/projects/manage/${id}`)
         return res.data
       },
-      create: async (body: Omit<Project, 'id'>) => {
+      create: async (body: {
+        type: Project['type']
+        date: string
+        image?: string
+        translations: Record<MarineContentLocale, ProjectTranslationPayload>
+      }) => {
         const res = await fetchAuth<{ data: Project }>('/projects', { method: 'POST', body })
         return res.data
       },
-      update: async (id: number, body: Partial<Project>) => {
+      update: async (
+        id: number,
+        body: Partial<Project> & {
+          translations?: Record<MarineContentLocale, ProjectTranslationPayload>
+        },
+      ) => {
         const res = await fetchAuth<{ data: Project }>(`/projects/${id}`, { method: 'PUT', body })
         return res.data
       },
@@ -298,19 +353,26 @@ export function useMarineApi() {
         return res.data
       },
       getById: async (id: number) => {
-        const res = await fetchPublic<{ data: ServiceItem }>(`/services/${id}`)
+        const res = await fetchAuth<{ data: ServiceItem }>(`/services/manage/${id}`)
         return res.data
       },
-      create: async (
-        body: Omit<ServiceItem, 'id'> & { features: string[] },
-      ) => {
+      create: async (body: {
+        iconKey: string
+        sortOrder: number
+        translations: Record<MarineContentLocale, ServiceTranslationPayload>
+      }) => {
         const res = await fetchAuth<{ data: ServiceItem }>('/services', {
           method: 'POST',
           body,
         })
         return res.data
       },
-      update: async (id: number, body: Partial<ServiceItem>) => {
+      update: async (
+        id: number,
+        body: Partial<ServiceItem> & {
+          translations?: Record<MarineContentLocale, ServiceTranslationPayload>
+        },
+      ) => {
         const res = await fetchAuth<{ data: ServiceItem }>(`/services/${id}`, {
           method: 'PUT',
           body,
@@ -353,11 +415,21 @@ export function useMarineApi() {
         const res = await fetchAuth<{ data: VacancyItem }>(`/vacancies/manage/${id}`)
         return res.data
       },
-      create: async (body: Omit<VacancyItem, 'id'>) => {
+      create: async (body: {
+        slug?: string
+        sortOrder: number
+        isPublished: boolean
+        translations: Record<MarineContentLocale, VacancyTranslationPayload>
+      }) => {
         const res = await fetchAuth<{ data: VacancyItem }>('/vacancies', { method: 'POST', body })
         return res.data
       },
-      update: async (id: number, body: Partial<VacancyItem>) => {
+      update: async (
+        id: number,
+        body: Partial<VacancyItem> & {
+          translations?: Record<MarineContentLocale, VacancyTranslationPayload>
+        },
+      ) => {
         const res = await fetchAuth<{ data: VacancyItem }>(`/vacancies/${id}`, { method: 'PUT', body })
         return res.data
       },
@@ -378,8 +450,20 @@ export function useMarineApi() {
         const res = await fetchPublic<{ data: SiteSeoPage }>(`/seo/pages/${slug}`)
         return res.data
       },
-      update: async (slug: string, body: Partial<Pick<SiteSeoPage, 'seoTitle' | 'seoDescription' | 'seoKeywords'>>) => {
-        const res = await fetchAuth<{ data: SiteSeoPage }>(`/seo/pages/${slug}`, {
+      /** Полные переводы (manage API, Bearer). */
+      getManageBySlug: async (slug: string) => {
+        const enc = encodeURIComponent(slug)
+        const res = await fetchAuth<{ data: SiteSeoPage }>(`/seo/manage/pages/${enc}`)
+        return res.data
+      },
+      update: async (
+        slug: string,
+        body: Partial<Pick<SiteSeoPage, 'seoTitle' | 'seoDescription' | 'seoKeywords' | 'label'>> & {
+          translations?: SiteSeoPage['translations']
+        },
+      ) => {
+        const enc = encodeURIComponent(slug)
+        const res = await fetchAuth<{ data: SiteSeoPage }>(`/seo/pages/${enc}`, {
           method: 'PUT',
           body,
         })
@@ -422,21 +506,14 @@ export function useMarineApi() {
         const res = await fetchAuth<{ data: ContentPage }>(`/content-pages/manage/${id}`)
         return res.data
       },
-      create: async (
-        body: {
-          slug: string
-          title: string
-          body: string
-          excerpt?: string | null
-          isPublished?: boolean
-          sortOrder?: number
-          seoTitle?: string | null
-          seoDescription?: string | null
-          seoKeywords?: string | null
-          contentableType?: ContentPageContentableType
-          contentableId?: number
-        },
-      ) => {
+      create: async (body: {
+        slug: string
+        isPublished?: boolean
+        sortOrder?: number
+        contentableType?: ContentPageContentableType
+        contentableId?: number
+        translations: Record<MarineContentLocale, ContentPageTranslationPayload>
+      }) => {
         const res = await fetchAuth<{ data: ContentPage }>('/content-pages', { method: 'POST', body })
         return res.data
       },
@@ -445,6 +522,7 @@ export function useMarineApi() {
         body: Partial<ContentPage> & {
           contentableType?: ContentPageContentableType | null
           contentableId?: number | null
+          translations?: Record<MarineContentLocale, ContentPageTranslationPayload>
         },
       ) => {
         const res = await fetchAuth<{ data: ContentPage }>(`/content-pages/${id}`, { method: 'PUT', body })
@@ -457,11 +535,19 @@ export function useMarineApi() {
         const res = await fetchPublic<{ data: GalleryItem[] }>('/gallery')
         return res.data
       },
+      /** Список с полными `translations` для админки. */
+      getManageAll: async () => {
+        const res = await fetchAuth<{ data: GalleryItem[] }>('/gallery/manage')
+        return res.data
+      },
       create: async (formData: FormData) => {
         const res = await fetchAuthFormData<{ data: GalleryItem }>('/gallery', formData)
         return res.data
       },
-      update: async (id: number, body: { alt?: string; sortOrder?: number }) => {
+      update: async (
+        id: number,
+        body: { alt?: string; sortOrder?: number; translations?: GalleryItem['translations'] },
+      ) => {
         const res = await fetchAuth<{ data: GalleryItem }>(`/gallery/${id}`, {
           method: 'PUT',
           body,
@@ -476,6 +562,19 @@ export function useMarineApi() {
     },
     stats: {
       getAll: () => fetchPublic<Stats>('/stats'),
+    },
+    contactSettings: {
+      get: async () => {
+        const res = await fetchPublic<{ data: SiteContactSettings }>('/contact-settings')
+        return res.data
+      },
+      update: async (body: SiteContactSettings) => {
+        const res = await fetchAuth<{ data: SiteContactSettings }>('/contact-settings', {
+          method: 'PUT',
+          body,
+        })
+        return res.data
+      },
     },
     analytics: {
       getSummary: () => fetchAuth<PageViewsSummary>('/analytics/manage/summary'),

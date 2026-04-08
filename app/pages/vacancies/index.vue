@@ -1,8 +1,17 @@
 <script setup lang="ts">
 import { MapPin, Briefcase, Loader2 } from 'lucide-vue-next'
+import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import type { VacancyItem } from '~/types'
 
 useSiteSeoMeta('vacancies')
+
+const { t } = useI18n()
+const localePath = useLocalePath()
+const { breadcrumbs } = usePageBreadcrumbs()
+
+const crumbItems = computed(() =>
+  breadcrumbs({ label: t('nav.vacancies'), to: '/vacancies' }),
+)
 
 const api = useMarineApi()
 const vacancies = ref<VacancyItem[]>([])
@@ -15,7 +24,7 @@ async function load() {
   try {
     vacancies.value = await api.vacancies.getAll()
   } catch {
-    error.value = 'Не удалось загрузить вакансии'
+    error.value = t('pages.vacancies.loadError')
   } finally {
     pending.value = false
   }
@@ -30,18 +39,17 @@ onMounted(load)
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div class="max-w-3xl">
-          <Breadcrumbs :items="[{ label: 'Главная', to: '/' }, { label: 'Вакансии' }]" />
+          <Breadcrumbs :items="crumbItems" />
           <div class="mb-4 flex items-center gap-3">
             <div class="h-px w-6 bg-mts-accent" />
-            <span class="section-label">Карьера</span>
+            <span class="section-label">{{ t('pages.vacancies.labelCareer') }}</span>
           </div>
           <h1 class="font-display text-4xl leading-tight text-mts-text lg:text-5xl">
-            Открытые <span class="text-mts-accent">вакансии</span>
+            {{ t('pages.vacancies.heroTitle') }}<span class="text-mts-accent">{{ t('pages.vacancies.heroAccent') }}</span>
           </h1>
           <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
           <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-            Присоединяйтесь к команде Marine Technical Solutions. Мы предлагаем работу в судоремонте и сервисе морского
-            флота.
+            {{ t('pages.vacancies.heroLead') }}
           </p>
         </div>
       </div>
@@ -52,13 +60,13 @@ onMounted(load)
     </div>
     <div v-else-if="error" class="py-24 text-center">
       <p class="mb-4 font-body text-mts-text-secondary">{{ error }}</p>
-      <button type="button" class="btn-primary" @click="load">Попробовать снова</button>
+      <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
     </div>
     <section v-else class="relative overflow-hidden pb-24">
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div v-if="vacancies.length === 0" class="py-16 text-center font-body text-mts-text-secondary">
-          Сейчас нет открытых позиций. Загляните позже или отправьте резюме на
+          {{ t('pages.vacancies.emptyHtml') }}
           <a href="mailto:info@marin-ts.com" class="text-mts-accent hover:underline">info@marin-ts.com</a>.
         </div>
         <div v-else class="grid gap-6 md:grid-cols-2">
@@ -74,7 +82,7 @@ onMounted(load)
               </span>
             </div>
             <h2 class="font-display text-xl text-mts-text">
-              <NuxtLink :to="`/vacancies/${v.slug}`" class="hover:text-mts-accent transition-colors">
+              <NuxtLink :to="localePath(`/vacancies/${v.slug}`)" class="hover:text-mts-accent transition-colors">
                 {{ v.title }}
               </NuxtLink>
             </h2>
@@ -84,10 +92,10 @@ onMounted(load)
               {{ v.location }}
             </div>
             <NuxtLink
-              :to="`/vacancies/${v.slug}`"
+              :to="localePath(`/vacancies/${v.slug}`)"
               class="mt-6 inline-block font-mono text-[10px] uppercase tracking-wide text-mts-accent hover:underline"
             >
-              Подробнее
+              {{ t('pages.common.readMore') }}
             </NuxtLink>
           </article>
         </div>

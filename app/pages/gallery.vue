@@ -5,10 +5,21 @@ import type { GalleryItem } from '~/types'
 
 useSiteSeoMeta('gallery')
 
+const { t, locale } = useI18n()
+const { breadcrumbs } = usePageBreadcrumbs()
+
+const crumbItems = computed(() =>
+  breadcrumbs({ label: t('nav.gallery'), to: '/gallery' }),
+)
+
 const api = useMarineApi()
-const { data: slides, pending, error } = await useAsyncData('gallery-items', () => api.gallery.getAll(), {
-  default: () => [] as GalleryItem[],
-})
+const { data: slides, pending, error } = await useAsyncData(
+  () => `gallery-items-${locale.value}`,
+  () => api.gallery.getAll(),
+  {
+    default: () => [] as GalleryItem[],
+  },
+)
 
 const slidesList = computed(() => slides.value ?? [])
 const lightboxIndex = ref<number | null>(null)
@@ -85,18 +96,18 @@ onUnmounted(() => {
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
-          <Breadcrumbs :items="[{ label: 'Главная', to: '/' }, { label: 'Галерея' }]" />
+          <Breadcrumbs :items="crumbItems" />
           <div class="flex items-center gap-3 mb-4">
             <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">Галерея</span>
+            <span class="section-label">{{ t('nav.gallery') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            Фото с <span class="text-mts-accent">объектов</span> и производства
+            {{ t('pages.gallery.heroTitle') }}<span class="text-mts-accent">{{ t('pages.gallery.heroAccent') }}</span
+            >{{ t('pages.gallery.heroEnd') }}
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            Подборка снимков выполненных работ и инфраструктуры Marine Technical Solutions. Нажмите на фото, чтобы
-            открыть крупный план. Навигация стрелками на клавиатуре или кнопками в окне просмотра.
+            {{ t('pages.gallery.heroLead') }}
           </p>
         </div>
       </div>
@@ -108,10 +119,10 @@ onUnmounted(() => {
           <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
         </div>
         <p v-else-if="error" class="font-body text-mts-text-secondary text-center py-12">
-          Не удалось загрузить галерею. Попробуйте обновить страницу позже.
+          {{ t('pages.gallery.loadError') }}
         </p>
         <p v-else-if="slidesList.length === 0" class="font-body text-mts-text-secondary text-center py-12">
-          Фотографии скоро появятся.
+          {{ t('pages.gallery.empty') }}
         </p>
         <ul v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           <li v-for="(item, index) in slidesList" :key="item.id">
@@ -152,13 +163,13 @@ onUnmounted(() => {
           class="fixed inset-0 z-[100] flex flex-col bg-mts-text/92 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
-          aria-label="Просмотр фотографии"
+          :aria-label="t('pages.gallery.lightboxAria')"
         >
           <div class="flex items-center justify-end gap-2 p-4">
             <button
               type="button"
               class="flex h-11 w-11 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10"
-              aria-label="Закрыть"
+              :aria-label="t('pages.gallery.close')"
               @click="closeLightbox"
             >
               <X class="h-5 w-5" />
@@ -168,7 +179,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="absolute left-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10 lg:left-6"
-              aria-label="Предыдущее фото"
+              :aria-label="t('pages.gallery.prevPhoto')"
               @click="showPrev"
             >
               <ChevronLeft class="h-7 w-7" />
@@ -186,7 +197,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="absolute right-2 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center border border-white/20 text-white transition-colors hover:bg-white/10 lg:right-6"
-              aria-label="Следующее фото"
+              :aria-label="t('pages.gallery.nextPhoto')"
               @click="showNext"
             >
               <ChevronRight class="h-7 w-7" />

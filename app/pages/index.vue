@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ArrowRight, ChevronDown, Ship, MapPin, Users, Calendar } from 'lucide-vue-next'
-import ButtonLink from "~/components/common/ButtonLink.vue";
-import ImageFadeCarousel from "~/components/common/ImageFadeCarousel.vue";
-import { aboutCarouselSlides } from "~/utils/aboutCarouselSlides";
+import { ChevronDown, Ship, MapPin, Users, Calendar } from 'lucide-vue-next'
+import ButtonLink from '~/components/common/ButtonLink.vue'
+import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
+import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
 
 useSiteSeoMeta('home')
+
+const { t } = useI18n()
+const localePath = useLocalePath()
 
 const isVisible = ref(false)
 
@@ -16,48 +19,48 @@ function scrollToAbout() {
   document.querySelector('#about-section')?.scrollIntoView({ behavior: 'smooth' })
 }
 
-const stats = [
-  { value: '150+', label: 'Судов отремонтировано', icon: Ship },
-  { value: '15', label: 'Портов присутствия', icon: MapPin },
-  { value: '50+', label: 'Сертифицированных инженеров', icon: Users },
-  { value: '14', label: 'Лет на рынке', icon: Calendar },
-]
+const stats = computed(() => [
+  { value: '150+', label: t('home.stats.ships'), icon: Ship },
+  { value: '15', label: t('home.stats.ports'), icon: MapPin },
+  { value: '50+', label: t('home.stats.engineers'), icon: Users },
+  { value: '14', label: t('home.stats.years'), icon: Calendar },
+])
 
-const services = [
+const services = computed(() => [
   {
-    title: 'Ремонт корпусов',
-    description: 'Ультразвуковая дефектоскопия, сварка корпусных конструкций',
+    title: t('home.services.hullTitle'),
+    description: t('home.services.hullDesc'),
     image: '/images/services/hull.jpg',
   },
   {
-    title: 'Ремонт двигателей',
-    description: 'Капитальный ремонт главных и вспомогательных двигателей',
+    title: t('home.services.engineTitle'),
+    description: t('home.services.engineDesc'),
     image: '/images/services/general.jpg',
   },
   {
-    title: 'Электротехнические работы',
-    description: 'Ремонт генераторов, электродвигателей, трансформаторов',
+    title: t('home.services.electroTitle'),
+    description: t('home.services.electroDesc'),
     image: '/images/services/electro.jpg',
   },
-]
+])
 
-const processSteps = [
+const processSteps = computed(() => [
   {
-    title: 'Заявка и оценка',
-    text: 'Принимаем обращение, согласуем объём работ и сроки выезда специалистов.',
+    title: t('home.process.step1Title'),
+    text: t('home.process.step1Text'),
     badge: '/images/steps/1.svg',
   },
   {
-    title: 'Диагностика и ремонт',
-    text: 'Проводим обследование, выполняем ремонт по классу и стандартам IACS.',
+    title: t('home.process.step2Title'),
+    text: t('home.process.step2Text'),
     badge: '/images/steps/2.svg',
   },
   {
-    title: 'Сдача и гарантия',
-    text: 'Оформляем документацию, передаём объект и сопровождаем по гарантии.',
+    title: t('home.process.step3Title'),
+    text: t('home.process.step3Text'),
     badge: '/images/steps/3.svg',
   },
-]
+])
 </script>
 
 <template>
@@ -89,7 +92,7 @@ const processSteps = [
               ]"
             >
               <div class="w-8 h-px bg-mts-accent" />
-              <span class="section-label">Судоремонтные услуги</span>
+              <span class="section-label">{{ t('home.hero.label') }}</span>
             </div>
 
             <h1
@@ -98,9 +101,9 @@ const processSteps = [
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              Техническое обслуживание
+              {{ t('home.hero.titleLine1') }}
               <br />
-              <span class="text-mts-accent">судов</span> по всему миру
+              <span class="text-mts-accent">{{ t('home.hero.titleAccent') }}</span>{{ t('home.hero.titleSuffix') }}
             </h1>
 
             <p
@@ -109,8 +112,7 @@ const processSteps = [
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              Сертифицированный ремонт корпусов, двигателей и электрооборудования. Работаем в 15+ портах мира. Гарантия
-              качества и соблюдение сроков.
+              {{ t('home.hero.lead') }}
             </p>
 
             <div
@@ -119,8 +121,8 @@ const processSteps = [
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <ButtonLink title="Получить консультацию" link="/contacts" :asButton="true"/>
-              <NuxtLink to="/services" class="btn-secondary">Наши услуги</NuxtLink>
+              <ButtonLink :title="t('home.hero.ctaConsult')" link="/contacts" :asButton="true" />
+              <NuxtLink :to="localePath('/services')" class="btn-secondary">{{ t('home.hero.ctaServices') }}</NuxtLink>
             </div>
 
             <div
@@ -133,21 +135,21 @@ const processSteps = [
                 <div class="w-1.5 h-1.5 bg-mts-accent" />
                 <div>
                   <span class="font-mono text-sm font-medium text-mts-text">ISO</span>
-                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">9001:2015</span>
+                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">{{ t('home.hero.badgeIso') }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-1.5 h-1.5 bg-mts-accent" />
                 <div>
                   <span class="font-mono text-sm font-medium text-mts-text">IACS</span>
-                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">Member</span>
+                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">{{ t('home.hero.badgeIacs') }}</span>
                 </div>
               </div>
               <div class="flex items-center gap-2">
                 <div class="w-1.5 h-1.5 bg-mts-accent" />
                 <div>
                   <span class="font-mono text-sm font-medium text-mts-text">14+</span>
-                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">Years exp.</span>
+                  <span class="font-mono text-[10px] text-mts-text-secondary ml-1">{{ t('home.hero.badgeYears') }}</span>
                 </div>
               </div>
             </div>
@@ -163,7 +165,7 @@ const processSteps = [
               <div class="flex items-center gap-2 mb-6">
                 <div class="w-2 h-2 bg-mts-accent animate-pulse" />
                 <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                  Статистика 2024
+                  {{ t('home.statsCard.label') }}
                 </span>
               </div>
               <div class="grid grid-cols-2 gap-4">
@@ -185,7 +187,7 @@ const processSteps = [
           ]"
           @click="scrollToAbout"
         >
-          <span class="font-mono text-[10px] uppercase tracking-wide">Листайте</span>
+          <span class="font-mono text-[10px] uppercase tracking-wide">{{ t('home.hero.scroll') }}</span>
           <ChevronDown class="block w-4 h-4 animate-bounce" />
         </button>
       </div>
@@ -200,18 +202,16 @@ const processSteps = [
           <div>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-6 h-px bg-mts-accent" />
-              <span class="section-label">О компании</span>
+              <span class="section-label">{{ t('home.about.label') }}</span>
             </div>
             <h2 class="font-display text-3xl lg:text-4xl text-mts-text leading-tight mb-6">
-              Marine Technical Solutions —
-              <span class="text-mts-accent">надёжный партнёр</span> в судоремонте
+              {{ t('home.about.title') }} <span class="text-mts-accent">{{ t('home.about.titleAccent') }}</span>{{ t('home.about.titleEnd') }}
             </h2>
             <div class="w-12 h-0.5 bg-mts-accent mb-6" />
             <p class="font-body text-mts-text-secondary leading-relaxed mb-6">
-              Мы предоставляем полный спектр услуг по техническому обслуживанию и ремонту морских судов. Наши
-              сертифицированные специалисты работают в соответствии с международными стандартами ISO.
+              {{ t('home.about.text') }}
             </p>
-            <ButtonLink title="Подробнее о компании" link="/about" />
+            <ButtonLink :title="t('home.about.more')" link="/about" />
           </div>
           <div class="relative">
             <div class="absolute -top-2 -left-2 z-20 w-6 h-6 border-t-2 border-l-2 border-mts-accent pointer-events-none" />
@@ -229,13 +229,13 @@ const processSteps = [
           <div>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-6 h-px bg-mts-accent" />
-              <span class="section-label">Услуги</span>
+              <span class="section-label">{{ t('home.services.label') }}</span>
             </div>
             <h2 class="font-display text-3xl lg:text-4xl text-mts-text">
-              Полный спектр <span class="text-mts-accent">судоремонтных</span> услуг
+              {{ t('home.services.heading') }}<span class="text-mts-accent">{{ t('home.services.headingAccent') }}</span>{{ t('home.services.headingEnd') }}
             </h2>
           </div>
-          <ButtonLink title="Все услуги" link="/services" extra-class="hidden lg:inline-flex" />
+          <ButtonLink :title="t('home.services.all')" link="/services" extra-class="hidden lg:inline-flex" />
         </div>
 
         <div class="grid md:grid-cols-3 gap-px bg-mts-border">
@@ -261,17 +261,17 @@ const processSteps = [
                 {{ service.description }}
               </p>
               <NuxtLink
-                to="/services"
+                :to="localePath('/services')"
                 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                Подробнее →
+                {{ t('home.services.more') }}
               </NuxtLink>
             </div>
           </div>
         </div>
 
         <div class="mt-8 lg:hidden">
-          <ButtonLink title="Все услуги" link="/services" extra-class="w-full justify-center" />
+          <ButtonLink :title="t('home.services.all')" link="/services" extra-class="w-full justify-center" />
         </div>
       </div>
     </section>
@@ -282,11 +282,11 @@ const processSteps = [
         <div class="text-center max-w-2xl mx-auto mb-14">
           <div class="flex items-center justify-center gap-3 mb-4">
             <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">Процесс</span>
+            <span class="section-label">{{ t('home.process.label') }}</span>
             <div class="w-6 h-px bg-mts-accent" />
           </div>
           <h2 class="font-display text-3xl lg:text-4xl text-mts-text">
-            Три шага к <span class="text-mts-accent">надёжному ремонту</span>
+            {{ t('home.process.heading') }}<span class="text-mts-accent">{{ t('home.process.headingAccent') }}</span>
           </h2>
         </div>
         <div class="grid md:grid-cols-3 gap-10 lg:gap-12">
@@ -313,17 +313,17 @@ const processSteps = [
       <div class="max-w-4xl mx-auto px-6 lg:px-12 relative z-10 text-center">
         <div class="flex items-center justify-center gap-3 mb-4">
           <div class="w-6 h-px bg-mts-accent" />
-          <span class="section-label">Свяжитесь с нами</span>
+          <span class="section-label">{{ t('home.cta.label') }}</span>
           <div class="w-6 h-px bg-mts-accent" />
         </div>
         <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-6">
-          Нужен <span class="text-mts-accent">срочный ремонт?</span>
+          {{ t('home.cta.title') }} <span class="text-mts-accent">{{ t('home.cta.titleAccent') }}</span>
         </h2>
         <p class="font-body text-mts-text-secondary mb-8 max-w-xl mx-auto">
-          Свяжитесь с нашим техническим отделом. Мы ответим в течение 2 часов и подготовим коммерческое предложение.
+          {{ t('home.cta.text') }}
         </p>
         <div class="flex justify-center items-center">
-          <ButtonLink title="Получить консультацию" link="/contacts"/>
+          <ButtonLink :title="t('home.cta.button')" link="/contacts" />
         </div>
       </div>
     </section>

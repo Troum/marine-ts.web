@@ -4,12 +4,75 @@ export interface SeoFields {
   seoKeywords: string
 }
 
+/** Локали динамического контента (совпадают с config marine.locales в API). */
+export type MarineContentLocale = 'ru' | 'en'
+
+export interface NewsTranslationPayload {
+  title: string
+  excerpt: string
+  content: string
+  category: string
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
+export interface VacancyTranslationPayload {
+  title: string
+  excerpt: string
+  content: string
+  requirements: string[]
+  location: string
+  employmentType: string
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
+export interface ServiceTranslationPayload {
+  title: string
+  description: string
+  features: string[]
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
+export interface ProjectTranslationPayload {
+  title: string
+  typeLabel: string
+  location: string
+  description: string
+  stats: Record<string, string>
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
+export interface ContentPageTranslationPayload {
+  title: string
+  excerpt: string
+  body: string
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
+export interface SiteSeoTranslationPayload {
+  label: string
+  seoTitle: string
+  seoDescription: string
+  seoKeywords: string
+}
+
 export interface SiteSeoPage {
   slug: string
   label: string | null
   seoTitle: string | null
   seoDescription: string | null
   seoKeywords: string | null
+  /** В ответах manage API — полный набор переводов. */
+  translations?: Partial<Record<MarineContentLocale, SiteSeoTranslationPayload>>
 }
 
 export interface NewsItem {
@@ -26,6 +89,7 @@ export interface NewsItem {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  translations?: Partial<Record<MarineContentLocale, NewsTranslationPayload>>
 }
 
 /** Связанная текстовая страница раздела «Услуги» (полиморфная привязка в API). */
@@ -40,6 +104,7 @@ export interface GalleryItem {
   src: string
   alt: string
   sortOrder: number
+  translations?: Partial<Record<MarineContentLocale, { alt: string }>>
 }
 
 export interface Project {
@@ -56,6 +121,7 @@ export interface Project {
   seoDescription?: string | null
   seoKeywords?: string | null
   contentPage?: LinkedContentPageRef | null
+  translations?: Partial<Record<MarineContentLocale, ProjectTranslationPayload>>
 }
 
 export interface Stats {
@@ -93,6 +159,7 @@ export interface VacancyItem {
   seoKeywords?: string | null
   /** Подсчёт анкет (только в ответах manage API). */
   applicationFormsCount?: number
+  translations?: Partial<Record<MarineContentLocale, VacancyTranslationPayload>>
 }
 
 export type ApplicationFormStatus = 'pending' | 'accepted' | 'rejected' | 'documents_requested'
@@ -149,6 +216,7 @@ export interface ServiceItem {
   seoDescription?: string | null
   seoKeywords?: string | null
   contentPage?: LinkedContentPageRef | null
+  translations?: Partial<Record<MarineContentLocale, ServiceTranslationPayload>>
 }
 
 /** Публичный список контентных страниц (без тела Markdown). */
@@ -176,6 +244,7 @@ export interface ContentPage extends ContentPageSummary {
   contentableTitle?: string | null
   created_at?: string | null
   updated_at?: string | null
+  translations?: Partial<Record<MarineContentLocale, ContentPageTranslationPayload>>
 }
 
 export type {
@@ -224,4 +293,23 @@ export interface AdminPanelUser {
 export interface AdminRoleOption {
   name: string
   label: string
+}
+
+export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock'
+
+/** Публичные контакты (страница «Контакты»), из API `/contact-settings`. */
+export interface SiteContactSettings {
+  quick: {
+    iconKey: ContactQuickIconKey
+    label: string
+    value: string
+    href: string | null
+  }[]
+  offices: {
+    city: string
+    country: string
+    address: string
+    phone: string
+    email: string
+  }[]
 }

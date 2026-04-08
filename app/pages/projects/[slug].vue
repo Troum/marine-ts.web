@@ -9,8 +9,11 @@ const slug = computed(() => {
   return Array.isArray(s) ? (s[0] ?? '') : (s as string)
 })
 const api = useMarineApi()
+const { t, locale } = useI18n()
+const localePath = useLocalePath()
+const { breadcrumbs } = usePageBreadcrumbs()
 
-const pageKey = computed(() => `content-page-project-${slug.value}`)
+const pageKey = computed(() => `content-page-project-${locale.value}-${slug.value}`)
 
 const { data: page, pending } = await useAsyncData(
   pageKey,
@@ -21,7 +24,7 @@ const { data: page, pending } = await useAsyncData(
       return null
     }
   },
-  { watch: [slug] },
+  { watch: [slug, locale] },
 )
 
 const bodyHtml = computed(() => {
@@ -30,6 +33,14 @@ const bodyHtml = computed(() => {
     return ''
   }
   return contentBodyToSafeHtml(body)
+})
+
+const crumbItems = computed(() => {
+  const p = page.value
+  if (!p) {
+    return breadcrumbs({ label: t('nav.projects'), to: '/projects' })
+  }
+  return breadcrumbs({ label: t('nav.projects'), to: '/projects' }, { label: p.title })
 })
 
 watchEffect(() => {
@@ -51,20 +62,13 @@ watchEffect(() => {
       <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
     </div>
     <div v-else-if="!page" class="mx-auto max-w-3xl px-6 py-24 text-center">
-      <p class="mb-6 font-body text-mts-text-secondary">Страница не найдена или не опубликована.</p>
-      <NuxtLink to="/projects" class="btn-primary inline-flex">К проектам</NuxtLink>
+      <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundPage') }}</p>
+      <NuxtLink :to="localePath('/projects')" class="btn-primary inline-flex">{{ t('pages.common.toProjects') }}</NuxtLink>
     </div>
     <article v-else class="relative overflow-hidden pb-24">
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-3xl px-6 lg:px-12">
-        <Breadcrumbs
-          class="mb-8"
-          :items="[
-            { label: 'Главная', to: '/' },
-            { label: 'Проекты', to: '/projects' },
-            { label: page.title },
-          ]"
-        />
+        <Breadcrumbs class="mb-8" :items="crumbItems" />
 
         <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
           {{ page.title }}

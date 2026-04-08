@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { Menu, X, Phone } from 'lucide-vue-next'
+import LanguageSwitch from '~/components/layout/LanguageSwitch.vue'
 
 const route = useRoute()
+const localePath = useLocalePath()
+const { t } = useI18n()
+
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
 
@@ -21,21 +25,24 @@ watch(
   },
 )
 
-const navLinks = [
-  { label: 'Главная', href: '/' },
-  { label: 'О компании', href: '/about' },
-  { label: 'Услуги', href: '/services' },
-  { label: 'Проекты', href: '/projects' },
-  { label: 'Галерея', href: '/gallery' },
-  { label: 'Новости', href: '/news' },
-  { label: 'Контакты', href: '/contacts' },
-]
+const navLinks = computed(() => [
+  { label: t('nav.home'), href: '/' },
+  { label: t('nav.about'), href: '/about' },
+  { label: t('nav.services'), href: '/services' },
+  { label: t('nav.projects'), href: '/projects' },
+  { label: t('nav.gallery'), href: '/gallery' },
+  { label: t('nav.news'), href: '/news' },
+  { label: t('nav.contacts'), href: '/contacts' },
+])
 
-function isActive(path: string) {
-  if (path === '/') {
-    return route.path === '/'
+function isActive(href: string) {
+  const resolved = localePath(href)
+  const path = route.path.replace(/\/$/, '') || '/'
+  const target = String(resolved).replace(/\/$/, '') || '/'
+  if (href === '/') {
+    return path === '/' || path === '/en'
   }
-  return route.path.startsWith(path)
+  return path === target || path.startsWith(`${target}/`)
 }
 </script>
 
@@ -48,15 +55,15 @@ function isActive(path: string) {
   >
     <div class="max-w-7xl mx-auto px-6 lg:px-12">
       <div class="flex items-center justify-between h-16">
-        <NuxtLink to="/" class="flex items-center group shrink-0">
+        <NuxtLink :to="localePath('/')" class="flex items-center group shrink-0">
           <AppLogo img-class="h-9 w-auto max-w-[min(55vw,260px)] object-contain object-left md:h-10" />
         </NuxtLink>
 
-        <div class="hidden lg:flex items-center gap-8">
+        <div class="hidden lg:flex items-center gap-6 xl:gap-8">
           <NuxtLink
             v-for="link in navLinks"
             :key="link.href"
-            :to="link.href"
+            :to="localePath(link.href)"
             :class="[
               'font-mono text-[11px] font-medium tracking-[0.1em] uppercase transition-colors duration-200 relative group',
               isActive(link.href) ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
@@ -72,25 +79,29 @@ function isActive(path: string) {
           </NuxtLink>
         </div>
 
-        <div class="hidden lg:flex items-center gap-6">
+        <div class="hidden lg:flex items-center gap-4 xl:gap-6">
+          <LanguageSwitch />
           <a
             href="tel:84012355290"
             class="flex items-center gap-2 text-mts-text-secondary hover:text-mts-accent transition-colors"
           >
             <Phone class="w-3.5 h-3.5" />
-            <span class="font-mono text-[11px] font-medium tracking-wide">8 (4012) 35-52-90</span>
+            <span class="font-mono text-[11px] font-medium tracking-wide">{{ t('header.phoneDisplay') }}</span>
           </a>
-          <NuxtLink to="/contacts" class="btn-primary">Связаться</NuxtLink>
+          <NuxtLink :to="localePath('/contacts')" class="btn-primary">{{ t('header.ctaContact') }}</NuxtLink>
         </div>
 
-        <button
-          type="button"
-          class="lg:hidden p-2 border border-mts-border text-mts-text hover:text-mts-accent hover:border-mts-accent transition-colors"
-          @click="isMobileMenuOpen = !isMobileMenuOpen"
-        >
-          <X v-if="isMobileMenuOpen" class="w-5 h-5" />
-          <Menu v-else class="w-5 h-5" />
-        </button>
+        <div class="flex lg:hidden items-center gap-3">
+          <LanguageSwitch />
+          <button
+            type="button"
+            class="p-2 border border-mts-border text-mts-text hover:text-mts-accent hover:border-mts-accent transition-colors"
+            @click="isMobileMenuOpen = !isMobileMenuOpen"
+          >
+            <X v-if="isMobileMenuOpen" class="w-5 h-5" />
+            <Menu v-else class="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   </nav>
@@ -112,7 +123,7 @@ function isActive(path: string) {
         <NuxtLink
           v-for="link in navLinks"
           :key="link.href"
-          :to="link.href"
+          :to="localePath(link.href)"
           :class="[
             'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
             isActive(link.href) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
@@ -126,7 +137,7 @@ function isActive(path: string) {
           <div class="w-10 h-10 bg-mts-accent/10 flex items-center justify-center">
             <Phone class="w-4 h-4 text-mts-accent" />
           </div>
-          <span class="font-mono text-sm font-medium">8 (4012) 35-52-90</span>
+          <span class="font-mono text-sm font-medium">{{ t('header.phoneDisplay') }}</span>
         </a>
       </div>
     </div>

@@ -1,10 +1,44 @@
 <script setup lang="ts">
 import { Phone, Mail, MapPin, Clock, Send, Loader2 } from 'lucide-vue-next'
+import type { Component } from 'vue'
+import type { ContactQuickIconKey } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 
 useSiteSeoMeta('contacts')
 
+const { t } = useI18n()
+const { breadcrumbs } = usePageBreadcrumbs()
+
+const crumbItems = computed(() =>
+  breadcrumbs({ label: t('nav.contacts'), to: '/contacts' }),
+)
+
 const api = useMarineApi()
+
+const { data: contactSettings, pending: contactsPending } = await useAsyncData(
+  'contact-settings',
+  async () => {
+    try {
+      return await api.contactSettings.get()
+    } catch {
+      return null
+    }
+  },
+  {
+    default: () => null,
+    server: true,
+  },
+)
+
+const resolvedContacts = computed(() => contactSettings.value ?? contactSettingsDefaults)
+
+const quickIcons: Record<ContactQuickIconKey, Component> = {
+  phone: Phone,
+  mail: Mail,
+  'map-pin': MapPin,
+  clock: Clock,
+}
 
 const form = ref({
   name: '',
@@ -31,42 +65,11 @@ async function submitFeedback() {
     formSuccess.value = true
     form.value = { name: '', email: '', phone: '', message: '' }
   } catch {
-    formError.value = 'Не удалось отправить сообщение. Попробуйте позже или свяжитесь с нами по телефону или email.'
+    formError.value = t('pages.contacts.formError')
   } finally {
     sending.value = false
   }
 }
-
-const contacts = [
-  { icon: Phone, label: 'Телефон', value: '8 (4012) 35-52-90', href: 'tel:84012355290' },
-  { icon: Mail, label: 'Email', value: 'info@marin-ts.com', href: 'mailto:info@marin-ts.com' },
-  { icon: MapPin, label: 'Адрес', value: 'г. Калининград, Россия', href: null as string | null },
-  { icon: Clock, label: 'Режим работы', value: 'Пн-Пт: 9:00 - 18:00', href: null as string | null },
-]
-
-const offices = [
-  {
-    city: 'Калининград',
-    country: 'Россия',
-    address: 'ул. Портовая, 15, офис 302',
-    phone: '8 (4012) 35-52-90',
-    email: 'info@marin-ts.com',
-  },
-  {
-    city: 'Дубай',
-    country: 'ОАЭ',
-    address: 'Dubai Maritime City, Building 45',
-    phone: '+971 4 123 4567',
-    email: 'dubai@marin-ts.com',
-  },
-  {
-    city: 'Роттердам',
-    country: 'Нидерланды',
-    address: 'Wilhelminakade 123, 3072 AP',
-    phone: '+31 10 123 4567',
-    email: 'rotterdam@marin-ts.com',
-  },
-]
 </script>
 
 <template>
@@ -75,18 +78,17 @@ const offices = [
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
-          <Breadcrumbs :items="[{ label: 'Главная', to: '/' }, { label: 'Контакты' }]" />
+          <Breadcrumbs :items="crumbItems" />
           <div class="flex items-center gap-3 mb-4">
             <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">Контакты</span>
+            <span class="section-label">{{ t('nav.contacts') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            Свяжитесь <span class="text-mts-accent">с нами</span>
+            {{ t('pages.contacts.heroTitle') }}<span class="text-mts-accent">{{ t('pages.contacts.heroAccent') }}</span>
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            Свяжитесь с нашим техническим отделом. Мы ответим в течение 2 часов и подготовим коммерческое предложение под
-            ваши задачи.
+            {{ t('pages.contacts.heroLead') }}
           </p>
         </div>
       </div>
@@ -97,18 +99,22 @@ const offices = [
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 class="font-display text-2xl text-mts-text mb-8">Контактная информация</h2>
-            <div class="space-y-4 mb-12">
+            <h2 class="font-display text-2xl text-mts-text mb-8">{{ t('pages.contacts.infoTitle') }}</h2>
+            <div v-if="contactsPending" class="flex items-center gap-2 text-mts-text-secondary font-body text-sm mb-12">
+              <Loader2 class="h-4 w-4 animate-spin" />
+              {{ t('pages.common.loading') }}
+            </div>
+            <div v-else class="space-y-4 mb-12">
               <component
                 :is="item.href ? 'a' : 'div'"
-                v-for="item in contacts"
-                :key="item.label"
+                v-for="(item, idx) in resolvedContacts.quick"
+                :key="`${item.label}-${idx}`"
                 :href="item.href || undefined"
                 class="flex items-center gap-4 p-4 bg-white border border-mts-border hover:border-mts-accent/30 transition-all"
                 :class="item.href ? '' : 'cursor-default'"
               >
                 <div class="w-10 h-10 bg-mts-bg border border-mts-border flex items-center justify-center">
-                  <component :is="item.icon" class="w-4 h-4 text-mts-accent" />
+                  <component :is="quickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-mts-accent" />
                 </div>
                 <div>
                   <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{ item.label }}</p>
@@ -120,16 +126,16 @@ const offices = [
           <div class="card-tech border border-mts-border p-8">
             <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-mts-text">
               <Send class="h-5 w-5 text-mts-accent" />
-              Обратная связь
+              {{ t('pages.contacts.formTitle') }}
             </h3>
             <p class="mb-6 font-body text-sm text-mts-text-secondary">
-              Заполните форму — мы ответим на email в течение рабочего дня. Для срочных вопросов звоните по телефону.
+              {{ t('pages.contacts.formLead') }}
             </p>
             <form class="space-y-4" @submit.prevent="submitFeedback">
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Имя *</label
-                >
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  t('pages.contacts.labelName')
+                }}</label>
                 <input
                   v-model="form.name"
                   required
@@ -139,9 +145,9 @@ const offices = [
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Email *</label
-                >
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  t('pages.contacts.labelEmail')
+                }}</label>
                 <input
                   v-model="form.email"
                   required
@@ -151,9 +157,9 @@ const offices = [
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Телефон</label
-                >
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  t('pages.contacts.labelPhone')
+                }}</label>
                 <input
                   v-model="form.phone"
                   type="tel"
@@ -162,20 +168,20 @@ const offices = [
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Сообщение *</label
-                >
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  t('pages.contacts.labelMessage')
+                }}</label>
                 <textarea
                   v-model="form.message"
                   required
                   rows="5"
                   class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                  placeholder="Опишите задачу или вопрос"
+                  :placeholder="t('pages.contacts.placeholderMessage')"
                 />
               </div>
               <p v-if="formError" class="font-body text-sm text-red-600">{{ formError }}</p>
               <p v-if="formSuccess" class="font-body text-sm text-green-700">
-                Сообщение отправлено. Спасибо за обращение.
+                {{ t('pages.contacts.formSuccess') }}
               </p>
               <button
                 type="submit"
@@ -183,17 +189,21 @@ const offices = [
                 class="btn-primary inline-flex w-full justify-center sm:w-auto sm:min-w-[200px]"
               >
                 <Loader2 v-if="sending" class="h-4 w-4 animate-spin" />
-                <span v-if="sending">Отправка…</span>
-                <span v-else>Отправить</span>
+                <span v-if="sending">{{ t('pages.common.sending') }}</span>
+                <span v-else>{{ t('pages.contacts.submit') }}</span>
               </button>
             </form>
           </div>
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-2xl text-mts-text mb-8">Офисы</h2>
+          <h2 class="font-display text-2xl text-mts-text mb-8">{{ t('pages.contacts.officesTitle') }}</h2>
           <div class="grid md:grid-cols-3 gap-6">
-            <div v-for="o in offices" :key="o.city" class="card-tech p-6 border border-mts-border">
+            <div
+              v-for="(o, oi) in resolvedContacts.offices"
+              :key="`${o.city}-${o.country}-${oi}`"
+              class="card-tech p-6 border border-mts-border"
+            >
               <p class="font-mono text-xs text-mts-accent mb-1">{{ o.country }}</p>
               <h3 class="font-display text-lg text-mts-text mb-2">{{ o.city }}</h3>
               <p class="font-body text-sm text-mts-text-secondary mb-4">{{ o.address }}</p>

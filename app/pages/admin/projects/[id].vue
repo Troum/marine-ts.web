@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Plus, Minus, Ship, Cog, Zap } from 'lucide-vue-next'
-import type { Project } from '~/types'
+import type { MarineContentLocale, Project, SeoFields } from '~/types'
+import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
+import { mergeProjectTranslations } from '~/utils/adminTranslationForms'
+import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
   layout: 'admin',
@@ -20,16 +23,20 @@ const types = [
   { id: 'electrical' as const, label: 'Электрика', icon: Zap },
 ]
 
+const typeLabelsByLocale: Record<Project['type'], Record<MarineContentLocale, string>> = {
+  hull: { ru: 'Ремонт корпуса', en: 'Hull repair' },
+  engine: { ru: 'Ремонт двигателя', en: 'Engine repair' },
+  electrical: { ru: 'Электрика', en: 'Electrical systems' },
+}
+
 const typeOptions = types.map((t) => ({ value: t.id, label: t.label, icon: t.icon }))
 
-const form = ref<Partial<Project>>({
-  title: '',
-  type: 'hull',
-  typeLabel: 'Ремонт корпуса',
-  location: '',
+const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
+
+const form = ref({
+  type: 'hull' as Project['type'],
   date: new Date().getFullYear().toString(),
-  description: '',
-  stats: {},
+  translations: mergeProjectTranslations(),
 })
 
 const statKey = ref('')
@@ -37,14 +44,67 @@ const statValue = ref('')
 const loading = ref(!isNew.value)
 const saving = ref(false)
 
+const seoForTab = computed<SeoFields>({
+  get() {
+    const t = form.value.translations[localeTab.value]
+    return {
+      seoTitle: t.seoTitle,
+      seoDescription: t.seoDescription,
+      seoKeywords: t.seoKeywords,
+    }
+  },
+  set(v: SeoFields) {
+    const t = form.value.translations[localeTab.value]
+    t.seoTitle = v.seoTitle
+    t.seoDescription = v.seoDescription
+    t.seoKeywords = v.seoKeywords
+  },
+})
+
+const statsForTab = computed(() => form.value.translations[localeTab.value].stats)
+
+function applyTypeLabelsForAllLocales(typeId: Project['type']) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    form.value.translations[loc].typeLabel = typeLabelsByLocale[typeId][loc]
+  }
+}
+
+function onTypeChange(typeId: string) {
+  const id = typeId as Project['type']
+  form.value.type = id
+  applyTypeLabelsForAllLocales(id)
+}
+
+function addStat() {
+  if (!statKey.value || !statValue.value) {
+    return
+  }
+  const t = form.value.translations[localeTab.value]
+  t.stats = { ...t.stats, [statKey.value]: statValue.value }
+  statKey.value = ''
+  statValue.value = ''
+}
+
+function removeStat(key: string) {
+  const t = form.value.translations[localeTab.value]
+  const next = { ...t.stats }
+  delete next[key]
+  t.stats = next
+}
+
 onMounted(async () => {
   if (isNew.value) {
+    applyTypeLabelsForAllLocales('hull')
     loading.value = false
     return
   }
   try {
     const p = await api.projects.getById(Number(idParam.value))
-    form.value = { ...p }
+    form.value = {
+      type: p.type,
+      date: p.date,
+      translations: mergeProjectTranslations(p.translations),
+    }
   } catch {
     await navigateTo('/admin/projects')
   } finally {
@@ -52,39 +112,35 @@ onMounted(async () => {
   }
 })
 
-function onTypeChange(typeId: string) {
-  const t = types.find((x) => x.id === typeId)
-  if (t) {
-    form.value.type = t.id
-    form.value.typeLabel = t.label
+function validate(): boolean {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const t = form.value.translations[loc]
+    if (!t.title?.trim() || !t.location?.trim() || !t.description?.trim()) {
+      return false
+    }
   }
-}
-
-function addStat() {
-  if (!statKey.value || !statValue.value || !form.value.stats) {
-    return
-  }
-  form.value.stats = { ...form.value.stats, [statKey.value]: statValue.value }
-  statKey.value = ''
-  statValue.value = ''
-}
-
-function removeStat(key: string) {
-  if (!form.value.stats) {
-    return
-  }
-  const next = { ...form.value.stats }
-  delete next[key]
-  form.value.stats = next
+  return true
 }
 
 async function submit() {
+  if (!validate()) {
+    await showAdminAlert({
+      message: 'Заполните название, локацию и описание на русском и английском.',
+      variant: 'error',
+    })
+    return
+  }
   saving.value = true
   try {
+    const payload = {
+      type: form.value.type,
+      date: form.value.date,
+      translations: form.value.translations,
+    }
     if (isNew.value) {
-      await api.projects.create(form.value as Omit<Project, 'id'>)
+      await api.projects.create(payload)
     } else {
-      await api.projects.update(Number(idParam.value), form.value)
+      await api.projects.update(Number(idParam.value), payload)
     }
     adminToast.success(isNew.value ? 'Проект добавлен' : 'Проект сохранён')
     await navigateTo('/admin/projects')
@@ -115,59 +171,95 @@ async function submit() {
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>
-      <form v-else class="bg-white border border-mts-border p-8 space-y-6" @submit.prevent="submit">
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Название *</label>
-          <input v-model="form.title" required type="text" class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm" />
-        </div>
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Тип</label>
-          <AdminSelect
-            :model-value="form.type ?? 'hull'"
-            :options="typeOptions"
-            @update:model-value="onTypeChange($event)"
-          />
-        </div>
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Локация *</label>
-          <input v-model="form.location" required type="text" class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm" />
-        </div>
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Год *</label>
-          <input v-model="form.date" required type="text" class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm" />
-        </div>
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Описание *</label>
-          <textarea
-            v-model="form.description"
-            required
-            rows="5"
-            class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
-          />
-        </div>
+      <form v-else class="bg-white border border-mts-border p-8 space-y-8 shadow-tech relative" @submit.prevent="submit">
+        <div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-mts-accent" />
+        <div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-mts-accent" />
 
-        <div>
-          <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Показатели</label>
-          <div class="flex flex-wrap gap-2 mb-2">
-            <span
-              v-for="(val, key) in form.stats"
-              :key="key"
-              class="inline-flex items-center gap-1 px-2 py-1 bg-mts-bg border text-xs font-mono"
-            >
-              {{ key }}: {{ val }}
-              <button type="button" class="text-mts-accent" @click="removeStat(key)">
-                <Minus class="w-3 h-3" />
+        <section class="space-y-6">
+          <h2 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">Общие поля</h2>
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Тип</label>
+            <AdminSelect
+              :model-value="form.type"
+              :options="typeOptions"
+              @update:model-value="onTypeChange($event)"
+            />
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Год *</label>
+            <input v-model="form.date" required type="text" class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm" />
+          </div>
+        </section>
+
+        <section class="space-y-6 border-t border-mts-border pt-8">
+          <AdminLocaleTabs v-model="localeTab" label="Тексты и SEO" />
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Название *</label>
+            <input
+              v-model="form.translations[localeTab].title"
+              required
+              type="text"
+              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Подпись типа</label>
+            <input
+              v-model="form.translations[localeTab].typeLabel"
+              type="text"
+              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
+            />
+            <p class="mt-1 font-body text-xs text-mts-text-secondary">
+              Подставляется при смене типа; можно отредактировать отдельно для каждого языка.
+            </p>
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Локация *</label>
+            <input
+              v-model="form.translations[localeTab].location"
+              required
+              type="text"
+              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Описание *</label>
+            <textarea
+              v-model="form.translations[localeTab].description"
+              required
+              rows="5"
+              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
+            />
+          </div>
+
+          <div>
+            <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Показатели (язык: {{ localeTab.toUpperCase() }})</label>
+            <div class="flex flex-wrap gap-2 mb-2">
+              <span
+                v-for="(val, key) in statsForTab"
+                :key="String(key)"
+                class="inline-flex items-center gap-1 px-2 py-1 bg-mts-bg border text-xs font-mono"
+              >
+                {{ key }}: {{ val }}
+                <button type="button" class="text-mts-accent" @click="removeStat(String(key))">
+                  <Minus class="w-3 h-3" />
+                </button>
+              </span>
+            </div>
+            <div class="flex gap-2">
+              <input v-model="statKey" placeholder="Ключ" type="text" class="flex-1 bg-mts-bg border border-mts-border px-3 py-2 text-sm" />
+              <input v-model="statValue" placeholder="Значение" type="text" class="flex-1 bg-mts-bg border border-mts-border px-3 py-2 text-sm" />
+              <button type="button" class="btn-secondary px-3" @click="addStat">
+                <Plus class="w-4 h-4" />
               </button>
-            </span>
+            </div>
           </div>
-          <div class="flex gap-2">
-            <input v-model="statKey" placeholder="Ключ" type="text" class="flex-1 bg-mts-bg border border-mts-border px-3 py-2 text-sm" />
-            <input v-model="statValue" placeholder="Значение" type="text" class="flex-1 bg-mts-bg border border-mts-border px-3 py-2 text-sm" />
-            <button type="button" class="btn-secondary px-3" @click="addStat">
-              <Plus class="w-4 h-4" />
-            </button>
+
+          <div class="rounded-md border border-mts-border/80 bg-mts-bg/40 p-4">
+            <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">SEO</p>
+            <SeoAdminFields v-model="seoForTab" />
           </div>
-        </div>
+        </section>
 
         <div class="flex gap-4 pt-4">
           <button type="submit" :disabled="saving" class="btn-primary">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>

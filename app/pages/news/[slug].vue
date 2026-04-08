@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { Calendar, User, Loader2 } from 'lucide-vue-next'
-import Breadcrumbs from "~/components/common/Breadcrumbs.vue";
+import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import { newsCategoryLabel } from '~/utils/contentLabels'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
 const api = useMarineApi()
+const { t, locale } = useI18n()
+const localePath = useLocalePath()
+const { breadcrumbs } = usePageBreadcrumbs()
 
 const { data: article, pending } = await useAsyncData(
-  () => `news-article-${slug.value}`,
+  () => `news-article-${locale.value}-${slug.value}`,
   async () => {
     try {
       return await api.news.getBySlug(slug.value)
@@ -15,8 +19,16 @@ const { data: article, pending } = await useAsyncData(
       return null
     }
   },
-  { watch: [slug] },
+  { watch: [slug, locale] },
 )
+
+const crumbItems = computed(() => {
+  const a = article.value
+  if (!a) {
+    return breadcrumbs({ label: t('nav.news'), to: '/news' })
+  }
+  return breadcrumbs({ label: t('nav.news'), to: '/news' }, { label: a.title })
+})
 
 watchEffect(() => {
   const item = article.value
@@ -36,6 +48,8 @@ function formatContent(text: string | undefined) {
   }
   return text.split('\n\n').filter(Boolean)
 }
+
+const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category, t))
 </script>
 
 <template>
@@ -44,30 +58,23 @@ function formatContent(text: string | undefined) {
       <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
     </div>
     <div v-else-if="!article" class="mx-auto max-w-3xl px-6 py-24 text-center">
-      <p class="mb-6 font-body text-mts-text-secondary">Новость не найдена или была удалена.</p>
-      <NuxtLink to="/news" class="btn-primary inline-flex">К списку новостей</NuxtLink>
+      <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundNews') }}</p>
+      <NuxtLink :to="localePath('/news')" class="btn-primary inline-flex">{{ t('pages.common.toNewsList') }}</NuxtLink>
     </div>
     <article v-else class="relative overflow-hidden pb-24">
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-3xl px-6 lg:px-12">
-        <Breadcrumbs
-          class="mb-8"
-          :items="[
-            { label: 'Главная', to: '/' },
-            { label: 'Новости', to: '/news' },
-            { label: article.title },
-          ]"
-        />
+        <Breadcrumbs class="mb-8" :items="crumbItems" />
 
         <div class="mb-6 flex flex-wrap items-center gap-3">
           <span class="inline-block bg-mts-accent/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-mts-accent">
-            {{ article.category }}
+            {{ categoryDisplay }}
           </span>
           <span
             v-if="article.featured"
             class="inline-block bg-mts-accent px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-white"
           >
-            Главная новость
+            {{ t('pages.common.featured') }}
           </span>
         </div>
 

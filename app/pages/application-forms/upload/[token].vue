@@ -10,6 +10,7 @@ const route = useRoute()
 const token = computed(() => (route.params.token as string) || '')
 
 const api = useMarineApi()
+const { t, locale } = useI18n()
 
 const session = ref<DocumentUploadSession | null>(null)
 const loadError = ref<string | null>(null)
@@ -21,7 +22,7 @@ const uploadError = ref<string | null>(null)
 const uploadDone = ref(false)
 
 useSeoMeta({
-  title: 'Загрузка документов — Marine Technical Solutions',
+  title: t('pages.upload.title'),
   robots: 'noindex, nofollow',
 })
 
@@ -37,7 +38,7 @@ async function loadSession() {
     fileInputs.value = next
   } catch (e: unknown) {
     const err = e as { data?: { message?: string }; message?: string }
-    loadError.value = err?.data?.message ?? err?.message ?? 'Не удалось открыть страницу.'
+    loadError.value = err?.data?.message ?? err?.message ?? t('pages.upload.loadErr')
     session.value = null
   } finally {
     pending.value = false
@@ -57,7 +58,8 @@ function formatExp(iso: string | null) {
     return '—'
   }
   try {
-    return new Date(iso).toLocaleString('ru-RU', {
+    const loc = locale.value === 'en' ? 'en-GB' : 'ru-RU'
+    return new Date(iso).toLocaleString(loc, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -80,7 +82,7 @@ async function submitUpload() {
     }
   }
   if (!any) {
-    uploadError.value = 'Выберите хотя бы один файл.'
+    uploadError.value = t('pages.upload.pickOne')
     return
   }
   uploading.value = true
@@ -93,7 +95,7 @@ async function submitUpload() {
     uploadError.value =
       err?.data?.errors?.documents?.[0] ??
       err?.data?.message ??
-      'Не удалось загрузить файлы. Проверьте формат (PDF, JPG, PNG, WebP) и размер (до 10 МБ).'
+      t('pages.upload.uploadErr')
   } finally {
     uploading.value = false
   }
@@ -112,15 +114,15 @@ async function submitUpload() {
       </div>
 
       <div v-else-if="session" class="border border-mts-border bg-white p-8 shadow-tech">
-        <h1 class="font-display text-2xl text-mts-text">Загрузка документов</h1>
+        <h1 class="font-display text-2xl text-mts-text">{{ t('pages.upload.title') }}</h1>
         <p class="mt-2 font-body text-sm text-mts-text-secondary">
-          {{ session.fullName }}, загрузите запрошенные файлы. Срок действия ссылки:
+          {{ t('pages.upload.intro', { name: session.fullName }) }}
           <strong>{{ formatExp(session.expiresAt) }}</strong>
         </p>
 
         <div v-if="uploadDone" class="mt-4 flex items-start gap-2 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-900">
           <CheckCircle2 class="mt-0.5 h-5 w-5 shrink-0" />
-          <span>Файлы приняты. При необходимости вы можете дозагрузить остальные документы до истечения срока ссылки.</span>
+          <span>{{ t('pages.upload.successNote') }}</span>
         </div>
 
         <ul class="mt-8 space-y-6">
@@ -129,7 +131,7 @@ async function submitUpload() {
               {{ doc.label }}
             </p>
             <div v-if="session.uploaded[doc.key]" class="mt-1 text-sm text-green-800">
-              Уже загружено: {{ session.uploaded[doc.key]?.originalName }}
+              {{ t('pages.upload.uploadedLabel') }} {{ session.uploaded[doc.key]?.originalName }}
               ({{ formatExp(session.uploaded[doc.key]?.uploadedAt ?? null) }})
             </div>
             <input
@@ -152,11 +154,11 @@ async function submitUpload() {
           @click="submitUpload"
         >
           <Loader2 v-if="uploading" class="h-4 w-4 animate-spin" />
-          {{ uploading ? 'Загрузка…' : 'Отправить файлы' }}
+          {{ uploading ? t('pages.common.uploading') : t('pages.upload.submitFiles') }}
         </button>
 
         <p class="mt-8 font-body text-xs text-mts-text-muted">
-          Допустимые форматы: PDF, JPEG, PNG, WebP. Максимальный размер одного файла — 10 МБ.
+          {{ t('pages.upload.formatsNote') }}
         </p>
       </div>
     </div>

@@ -5,6 +5,8 @@ import { emptySeaServiceRow } from '~/types/applicationForm'
 
 const rows = defineModel<SeaServiceRow[]>('rows', { required: true })
 
+const { t } = useI18n()
+
 const minRows = 1
 const maxRows = 24
 
@@ -41,14 +43,16 @@ function removeRow(index: number) {
 <template>
   <section class="overflow-hidden rounded-xl border border-mts-border bg-white shadow-sm">
     <header class="border-b border-mts-border bg-gradient-to-r from-mts-bg to-white px-5 py-4">
-      <h3 class="font-display text-lg text-mts-text">Морская служба (последние 5 лет)</h3>
-      <p class="mt-1 text-sm text-mts-text-secondary">Добавляйте строки по мере необходимости.</p>
+      <h3 class="font-display text-lg text-mts-text">{{ t('pages.seaTable.title') }}</h3>
+      <p class="mt-1 text-sm text-mts-text-secondary">{{ t('pages.seaTable.lead') }}</p>
     </header>
 
     <div class="divide-y divide-mts-border">
       <div v-for="(row, i) in rows" :key="'sea-' + i" class="px-5 py-5">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Запись {{ i + 1 }}</span>
+          <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+            t('pages.seaTable.record', { n: i + 1 })
+          }}</span>
           <button
             v-if="rows.length > minRows"
             type="button"
@@ -56,7 +60,7 @@ function removeRow(index: number) {
             @click="removeRow(i)"
           >
             <Trash2 class="h-3.5 w-3.5" />
-            Удалить
+            {{ t('pages.seaTable.remove') }}
           </button>
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -76,7 +80,7 @@ function removeRow(index: number) {
         @click="addRow"
       >
         <Plus class="h-4 w-4" />
-        Добавить запись о службе
+        {{ t('pages.seaTable.add') }}
       </button>
     </div>
   </section>

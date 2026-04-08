@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxtjs/i18n": "^10.2.4",
     "@tiptap/extension-highlight": "^3.22.2",
     "@tiptap/extension-image": "^3.22.2",
     "@tiptap/extension-link": "^3.22.2",
@@ -22,6 +23,7 @@
     "@tiptap/starter-kit": "^3.22.2",
     "@tiptap/vue-3": "^3.22.2",
     "isomorphic-dompurify": "^2.36.0",
+    "libphonenumber-js": "^1.12.41",
     "lucide-vue-next": "^1.0.0",
     "marked": "^18.0.0",
     "nuxt": "^4.4.2",

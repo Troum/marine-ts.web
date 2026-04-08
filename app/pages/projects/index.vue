@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { MapPin, Calendar, ArrowRight, Ship, Loader2 } from 'lucide-vue-next'
 import type { Project } from '~/types'
-import Breadcrumbs from "~/components/common/Breadcrumbs.vue";
+import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import { projectTypeLabel } from '~/utils/contentLabels'
 
 useSiteSeoMeta('projects')
+
+const { t, locale } = useI18n()
+const localePath = useLocalePath()
+const { breadcrumbs } = usePageBreadcrumbs()
+
+const crumbItems = computed(() =>
+  breadcrumbs({ label: t('nav.projects'), to: '/projects' }),
+)
 
 const api = useMarineApi()
 const filter = ref('all')
@@ -11,19 +20,23 @@ const projects = ref<Project[]>([])
 const pending = ref(true)
 const error = ref('')
 
-/** Кнопки фильтра: «Все проекты» + уникальные категории из ответа API (по `type`, подпись — `typeLabel`). */
 const filterButtons = computed(() => {
-  const byType = new Map<string, string>()
+  const byType = new Map<Project['type'], string>()
   for (const p of projects.value) {
     if (!byType.has(p.type)) {
-      byType.set(p.type, p.typeLabel)
+      byType.set(p.type, projectTypeLabel(p.type, t))
     }
   }
+  const loc = locale.value === 'en' ? 'en' : 'ru'
   const categories = [...byType.entries()]
-    .sort((a, b) => a[1].localeCompare(b[1], 'ru'))
+    .sort((a, b) => a[1].localeCompare(b[1], loc))
     .map(([id, label]) => ({ id, label }))
-  return [{ id: 'all', label: 'Все проекты' }, ...categories]
+  return [{ id: 'all', label: t('pages.projects.filterAll') }, ...categories]
 })
+
+function typeLabelFor(p: Project) {
+  return projectTypeLabel(p.type, t)
+}
 
 async function load() {
   pending.value = true
@@ -31,7 +44,7 @@ async function load() {
   try {
     projects.value = await api.projects.getAll()
   } catch {
-    error.value = 'Не удалось загрузить проекты'
+    error.value = t('pages.projects.loadError')
   } finally {
     pending.value = false
   }
@@ -68,17 +81,18 @@ const filteredProjects = computed(() => {
       <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
-          <Breadcrumbs :items="[{ label: 'Главная', to: '/' }, { label: 'Проекты' }]" />
+          <Breadcrumbs :items="crumbItems" />
           <div class="flex items-center gap-3 mb-4">
             <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">Проекты</span>
+            <span class="section-label">{{ t('nav.projects') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            Наши <span class="text-mts-accent">выполненные</span> проекты
+            {{ t('pages.projects.heroTitle') }}<span class="text-mts-accent">{{ t('pages.projects.heroAccent') }}</span
+            >{{ t('pages.projects.heroEnd') }}
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            Портфолио выполненных работ по ремонту и техническому обслуживанию морских судов в портах по всему миру.
+            {{ t('pages.projects.heroLead') }}
           </p>
         </div>
       </div>
@@ -111,10 +125,10 @@ const filteredProjects = computed(() => {
         </div>
         <div v-else-if="error" class="text-center py-12">
           <p class="font-body text-mts-text-secondary mb-4">{{ error }}</p>
-          <button type="button" class="btn-primary" @click="load">Попробовать снова</button>
+          <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
         </div>
         <div v-else-if="filteredProjects.length === 0" class="text-center py-12">
-          <p class="font-body text-mts-text-secondary">Проектов в этой категории пока нет</p>
+          <p class="font-body text-mts-text-secondary">{{ t('pages.projects.emptyCategory') }}</p>
         </div>
         <div v-else class="grid md:grid-cols-2 gap-6">
           <article
@@ -124,7 +138,7 @@ const filteredProjects = computed(() => {
           >
             <div class="flex items-center gap-2 mb-4">
               <Ship class="w-4 h-4 text-mts-accent" />
-              <span class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">{{ p.typeLabel }}</span>
+              <span class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">{{ typeLabelFor(p) }}</span>
             </div>
             <h2 class="font-display text-xl text-mts-text mb-3">{{ p.title }}</h2>
             <div class="flex flex-wrap gap-4 text-mts-text-secondary text-sm mb-4">
@@ -144,15 +158,15 @@ const filteredProjects = computed(() => {
                 :key="key"
                 class="font-mono text-[9px] uppercase tracking-wide bg-mts-bg px-2 py-1 border border-mts-border"
               >
-                {{ key }}: {{ val }}
+                {{ key }}{{ t('pages.projects.statsSep') }}{{ val }}
               </span>
             </div>
             <NuxtLink
               v-if="p.contentPage?.slug"
-              :to="`/projects/${p.contentPage.slug}`"
+              :to="localePath(`/projects/${p.contentPage.slug}`)"
               class="mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase text-mts-accent hover:underline"
             >
-              Подробнее
+              {{ t('pages.common.readMore') }}
               <ArrowRight class="h-4 w-4" />
             </NuxtLink>
           </article>
@@ -162,9 +176,9 @@ const filteredProjects = computed(() => {
 
     <section class="relative py-16 bg-white border-t border-mts-border">
       <div class="max-w-4xl mx-auto px-6 text-center">
-        <h2 class="font-display text-2xl text-mts-text mb-4">Нужен расчёт по вашему судну?</h2>
-        <NuxtLink to="/contacts" class="btn-primary group">
-          Оставить заявку
+        <h2 class="font-display text-2xl text-mts-text mb-4">{{ t('pages.projects.ctaTitle') }}</h2>
+        <NuxtLink :to="localePath('/contacts')" class="btn-primary group">
+          {{ t('pages.projects.ctaButton') }}
           <ArrowRight class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
         </NuxtLink>
       </div>

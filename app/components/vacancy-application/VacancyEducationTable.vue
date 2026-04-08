@@ -5,6 +5,8 @@ import { emptyEducationRow } from '~/types/applicationForm'
 
 const rows = defineModel<EducationRow[]>('rows', { required: true })
 
+const { t } = useI18n()
+
 const minRows = 1
 const maxRows = 12
 
@@ -29,14 +31,16 @@ function removeRow(index: number) {
 <template>
   <section class="overflow-hidden rounded-xl border border-mts-border bg-white shadow-sm">
     <header class="border-b border-mts-border bg-gradient-to-r from-mts-bg to-white px-5 py-4">
-      <h3 class="font-display text-lg text-mts-text">Морское образование</h3>
-      <p class="mt-1 text-sm text-mts-text-secondary">Учебные заведения и степени — можно добавить несколько записей.</p>
+      <h3 class="font-display text-lg text-mts-text">{{ t('pages.eduTable.title') }}</h3>
+      <p class="mt-1 text-sm text-mts-text-secondary">{{ t('pages.eduTable.lead') }}</p>
     </header>
 
     <div class="divide-y divide-mts-border">
       <div v-for="(row, i) in rows" :key="'edu-' + i" class="px-5 py-5">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Учебное заведение {{ i + 1 }}</span>
+          <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+            t('pages.eduTable.institution', { n: i + 1 })
+          }}</span>
           <button
             v-if="rows.length > minRows"
             type="button"
@@ -44,7 +48,7 @@ function removeRow(index: number) {
             @click="removeRow(i)"
           >
             <Trash2 class="h-3.5 w-3.5" />
-            Удалить
+            {{ t('pages.eduTable.remove') }}
           </button>
         </div>
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -76,7 +80,7 @@ function removeRow(index: number) {
         @click="addRow"
       >
         <Plus class="h-4 w-4" />
-        Добавить учебное заведение
+        {{ t('pages.eduTable.add') }}
       </button>
     </div>
   </section>

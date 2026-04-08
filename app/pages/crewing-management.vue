@@ -12,44 +12,47 @@ import ButtonLink from '~/components/common/ButtonLink.vue'
 
 useSiteSeoMeta('crewing-management')
 
-const directions = [
+const { t } = useI18n()
+const { breadcrumbs } = usePageBreadcrumbs()
+
+const crumbItems = computed(() =>
+  breadcrumbs({ label: t('nav.crewing'), to: '/crewing-management' }),
+)
+
+const directions = computed(() => [
   {
     icon: UserCheck,
-    title: 'Подбор и смена экипажа',
-    text: 'Поиск квалифицированных специалистов под требования судна и флага, планирование ротации и смены экипажа в согласованные сроки.',
+    title: t('pages.crewing.d1t'),
+    text: t('pages.crewing.d1x'),
   },
   {
     icon: FileCheck,
-    title: 'Документооборот и соответствие',
-    text: 'Оформление контрактов, сертификатов и записей в соответствии с требованиями STCW, кодексами MLC и регистрами судовладельца.',
+    title: t('pages.crewing.d2t'),
+    text: t('pages.crewing.d2x'),
   },
   {
     icon: ShieldCheck,
-    title: 'Контроль квалификации',
-    text: 'Проверка дипломов, допусков и медицинских заключений, напоминания о продлении документов и обучении.',
+    title: t('pages.crewing.d3t'),
+    text: t('pages.crewing.d3x'),
   },
   {
     icon: Globe2,
-    title: 'Визы и логистика',
-    text: 'Сопровождение при посадке и высадке экипажа: визовая поддержка, билеты, трансферы и взаимодействие с агентами в портах.',
+    title: t('pages.crewing.d4t'),
+    text: t('pages.crewing.d4x'),
   },
   {
     icon: Ship,
-    title: 'Работа с судовладельцем',
-    text: 'Единая точка контакта по кадровым вопросам: отчётность, согласование замен, взаимодействие с капитаном и береговым офисом.',
+    title: t('pages.crewing.d5t'),
+    text: t('pages.crewing.d5x'),
   },
   {
     icon: ClipboardList,
-    title: 'Учёт и прозрачность',
-    text: 'Структурированные данные по составу экипажа, срокам контрактов и затратам — для прогнозирования и аудита.',
+    title: t('pages.crewing.d6t'),
+    text: t('pages.crewing.d6x'),
   },
-]
+])
 
-const principles = [
-  'Соблюдение международных и национальных норм в области труда на море',
-  'Конфиденциальность персональных данных моряков и судовладельца',
-  'Оперативная коммуникация в нештатных ситуациях и при срочной смене экипажа',
-]
+const principles = computed(() => [t('pages.crewing.p1'), t('pages.crewing.p2'), t('pages.crewing.p3')])
 </script>
 
 <template>
@@ -59,21 +62,18 @@ const principles = [
       <div class="absolute top-0 left-1/3 h-full w-px bg-mts-border" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div class="max-w-3xl">
-          <Breadcrumbs
-            :items="[{ label: 'Главная', to: '/' }, { label: 'Крюинг-менеджмент' }]"
-          />
+          <Breadcrumbs :items="crumbItems" />
           <div class="mb-4 flex items-center gap-3">
             <div class="h-px w-6 bg-mts-accent" />
-            <span class="section-label">Крюинг-менеджмент</span>
+            <span class="section-label">{{ t('nav.crewing') }}</span>
           </div>
           <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-            Кадровые решения и <span class="text-mts-accent">сопровождение экипажа</span> для морского флота
+            {{ t('pages.crewing.heroTitle') }}<span class="text-mts-accent">{{ t('pages.crewing.heroAccent') }}</span
+            >{{ t('pages.crewing.heroEnd') }}
           </h1>
           <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
           <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-            Комплексный крюинг-менеджмент для судовладельцев: от подбора моряков до документооборота и логистики смены
-            экипажа. Мы помогаем снизить риски и административную нагрузку, сохраняя фокус на безопасной эксплуатации
-            судна.
+            {{ t('pages.crewing.heroLead') }}
           </p>
         </div>
       </div>
@@ -82,9 +82,9 @@ const principles = [
     <section class="relative overflow-hidden bg-white py-24">
       <div class="absolute inset-0 grid-bg opacity-20" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-        <h2 class="font-display mb-4 text-center text-2xl text-mts-text md:text-3xl">Направления работы</h2>
+        <h2 class="font-display mb-4 text-center text-2xl text-mts-text md:text-3xl">{{ t('pages.crewing.directionsTitle') }}</h2>
         <p class="mx-auto mb-14 max-w-2xl text-center font-body text-mts-text-secondary">
-          Единый подход к кадрам на море: от стратегии комплектования до операционного сопровождения в портах и офисе.
+          {{ t('pages.crewing.directionsLead') }}
         </p>
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div
@@ -108,7 +108,7 @@ const principles = [
             <div class="absolute -left-2 -top-2 h-6 w-6 border-l-2 border-t-2 border-mts-accent" />
             <div class="absolute -bottom-2 -right-2 h-6 w-6 border-b-2 border-r-2 border-mts-accent" />
             <div class="border border-mts-border bg-mts-bg p-8 shadow-tech">
-              <h2 class="font-display mb-6 text-2xl text-mts-text">Принципы</h2>
+              <h2 class="font-display mb-6 text-2xl text-mts-text">{{ t('pages.crewing.principlesTitle') }}</h2>
               <ul class="space-y-4">
                 <li v-for="(line, i) in principles" :key="i" class="flex gap-3 font-body text-mts-text-secondary">
                   <span class="mt-1.5 h-1.5 w-1.5 shrink-0 bg-mts-accent" />
@@ -118,17 +118,14 @@ const principles = [
             </div>
           </div>
           <div>
-            <h2 class="font-display mb-6 text-2xl text-mts-text">Кому подходит сервис</h2>
+            <h2 class="font-display mb-6 text-2xl text-mts-text">{{ t('pages.crewing.audienceTitle') }}</h2>
             <p class="mb-6 font-body leading-relaxed text-mts-text-secondary">
-              Судовладельцам и операторам, которым нужен предсказуемый состав экипажа и прозрачные процессы без
-              перегрузки внутренних HR- и флотских служб. Формат сотрудничества и перечень услуг согласуем под ваш флот и
-              регион плавания.
+              {{ t('pages.crewing.audience1') }}
             </p>
             <p class="mb-8 font-body leading-relaxed text-mts-text-secondary">
-              Для уточнения задач и коммерческого предложения оставьте заявку — мы свяжемся и предложим оптимальную
-              модель крюинг-менеджмента.
+              {{ t('pages.crewing.audience2') }}
             </p>
-            <ButtonLink title="Связаться с нами" link="/contacts" />
+            <ButtonLink :title="t('pages.crewing.ctaContact')" link="/contacts" />
           </div>
         </div>
       </div>

@@ -14,6 +14,7 @@ import {
   Shield,
   BarChart3,
   Images,
+  Phone,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -25,7 +26,7 @@ definePageMeta({
 
 const api = useMarineApi()
 const { logout } = useAuth()
-const { canManageUsers, canManageContentPages, canManageGallery } = useAdminPermissions()
+const { canManageUsers, canManageContentPages, canManageGallery, canManageContacts } = useAdminPermissions()
 
 const news = ref<NewsItem[]>([])
 const projects = ref<Project[]>([])
@@ -392,6 +393,27 @@ const statCards = computed(() => [
               >
                 <Edit class="w-4 h-4" />
                 Открыть сообщения
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div v-if="canManageContacts" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Phone class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Контакты на сайте</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Телефоны, email, адрес, режим работы и карточки офисов на странице «Контакты».
+              </p>
+              <NuxtLink
+                to="/admin/contacts"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Редактировать контакты
               </NuxtLink>
             </div>
           </div>

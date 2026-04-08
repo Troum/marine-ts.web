@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, ClipboardList } from 'lucide-vue-next'
-import type { VacancyItem } from '~/types'
+import type { MarineContentLocale, SeoFields } from '~/types'
+import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
+import { mergeVacancyTranslations } from '~/utils/adminTranslationForms'
+import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
   layout: 'admin',
@@ -14,20 +17,48 @@ const adminToast = useAdminToast()
 const idParam = computed(() => route.params.id as string)
 const isNew = computed(() => idParam.value === 'new')
 
+const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
+
 const form = ref({
-  title: '',
   slug: '',
-  excerpt: '',
-  content: '',
-  requirementsText: '',
-  location: '',
-  employmentType: '',
   sortOrder: 0,
   isPublished: true,
+  translations: mergeVacancyTranslations(),
 })
+
+/** Текстовое представление списка требований по языкам. */
+const requirementsText = ref<Record<MarineContentLocale, string>>(
+  Object.fromEntries(MARINE_CONTENT_LOCALES.map((loc) => [loc, ''])) as Record<
+    MarineContentLocale,
+    string
+  >,
+)
 
 const loading = ref(!isNew.value)
 const saving = ref(false)
+
+const seoForTab = computed<SeoFields>({
+  get() {
+    const t = form.value.translations[localeTab.value]
+    return {
+      seoTitle: t.seoTitle,
+      seoDescription: t.seoDescription,
+      seoKeywords: t.seoKeywords,
+    }
+  },
+  set(v: SeoFields) {
+    const t = form.value.translations[localeTab.value]
+    t.seoTitle = v.seoTitle
+    t.seoDescription = v.seoDescription
+    t.seoKeywords = v.seoKeywords
+  },
+})
+
+function syncRequirementsTextFromForm() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    requirementsText.value[loc] = (form.value.translations[loc].requirements ?? []).join('\n')
+  }
+}
 
 onMounted(async () => {
   if (isNew.value) {
@@ -37,16 +68,12 @@ onMounted(async () => {
   try {
     const item = await api.vacancies.getById(Number(idParam.value))
     form.value = {
-      title: item.title,
       slug: item.slug,
-      excerpt: item.excerpt,
-      content: item.content ?? '',
-      requirementsText: (item.requirements ?? []).join('\n'),
-      location: item.location ?? '',
-      employmentType: item.employmentType ?? '',
       sortOrder: item.sortOrder,
       isPublished: item.isPublished,
+      translations: mergeVacancyTranslations(item.translations),
     }
+    syncRequirementsTextFromForm()
   } catch {
     await navigateTo('/admin/vacancies')
   } finally {
@@ -54,31 +81,44 @@ onMounted(async () => {
   }
 })
 
-function buildPayload(): Partial<VacancyItem> & { requirements: string[] } {
-  const requirements = form.value.requirementsText
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean)
-
-  return {
-    title: form.value.title,
-    slug: form.value.slug || undefined,
-    excerpt: form.value.excerpt,
-    content: form.value.content || null,
-    requirements,
-    location: form.value.location || null,
-    employmentType: form.value.employmentType || null,
-    sortOrder: Number(form.value.sortOrder) || 0,
-    isPublished: form.value.isPublished,
+function applyRequirementsTextToTranslations() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    form.value.translations[loc].requirements = requirementsText.value[loc]
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
   }
 }
 
+function validate(): boolean {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const t = form.value.translations[loc]
+    if (!t.title?.trim() || !t.excerpt?.trim()) {
+      return false
+    }
+  }
+  return true
+}
+
 async function submit() {
+  applyRequirementsTextToTranslations()
+  if (!validate()) {
+    await showAdminAlert({
+      message: 'Заполните название и краткое описание на русском и английском.',
+      variant: 'error',
+    })
+    return
+  }
   saving.value = true
   try {
-    const payload = buildPayload()
+    const payload = {
+      slug: form.value.slug || undefined,
+      sortOrder: Number(form.value.sortOrder) || 0,
+      isPublished: form.value.isPublished,
+      translations: form.value.translations,
+    }
     if (isNew.value) {
-      await api.vacancies.create(payload as Omit<VacancyItem, 'id'>)
+      await api.vacancies.create(payload)
     } else {
       await api.vacancies.update(Number(idParam.value), payload)
     }
@@ -125,108 +165,115 @@ async function submit() {
         <div class="absolute -left-2 -top-2 h-4 w-4 border-l-2 border-t-2 border-mts-accent" />
         <div class="absolute -bottom-2 -right-2 h-4 w-4 border-b-2 border-r-2 border-mts-accent" />
 
-        <div class="space-y-6">
-          <div>
-            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-              >Название *</label
-            >
-            <input
-              v-model="form.title"
-              required
-              type="text"
-              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">URL (slug)</label>
-            <input
-              v-model="form.slug"
-              type="text"
-              placeholder="Пусто — сгенерируется из названия"
-              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-mono text-sm focus:border-mts-accent focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-              >Краткое описание *</label
-            >
-            <textarea
-              v-model="form.excerpt"
-              required
-              rows="3"
-              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-              >Полный текст</label
-            >
-            <textarea
-              v-model="form.content"
-              rows="8"
-              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-            />
-          </div>
-          <div>
-            <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-              >Требования (каждый пункт с новой строки)</label
-            >
-            <textarea
-              v-model="form.requirementsText"
-              rows="8"
-              placeholder="Пункт 1&#10;Пункт 2"
-              class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-mono text-xs focus:border-mts-accent focus:outline-none"
-            />
-          </div>
-          <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-8">
+          <section class="space-y-6">
+            <h2 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">Общие поля</h2>
             <div>
-              <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Локация</label
-              >
+              <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">URL (slug)</label>
               <input
-                v-model="form.location"
+                v-model="form.slug"
                 type="text"
-                class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                placeholder="Пусто — сгенерируется из названия"
+                class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-mono text-sm focus:border-mts-accent focus:outline-none"
               />
             </div>
-            <div>
-              <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Тип занятости</label
-              >
-              <input
-                v-model="form.employmentType"
-                type="text"
-                placeholder="Полная занятость"
-                class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
-            </div>
-          </div>
-          <div class="grid gap-4 md:grid-cols-[minmax(0,12rem)_1fr] md:items-center md:gap-x-8">
-            <div class="space-y-2">
+            <div class="grid gap-4 md:grid-cols-[minmax(0,12rem)_1fr] md:items-center md:gap-x-8">
+              <div class="space-y-2">
+                <label
+                  for="vacancy-sort-order"
+                  class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Порядок сортировки</label
+                >
+                <AdminInputNumberStepper
+                  id="vacancy-sort-order"
+                  v-model="form.sortOrder"
+                  hint="Целое число от 0 — меньшее значение выше в списке."
+                  decrement-label="Уменьшить порядок сортировки"
+                  increment-label="Увеличить порядок сортировки"
+                />
+              </div>
               <label
-                for="vacancy-sort-order"
-                class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Порядок сортировки</label
+                class="flex cursor-pointer select-none items-center gap-2.5 font-body text-sm text-mts-text md:justify-start"
               >
-              <AdminInputNumberStepper
-                id="vacancy-sort-order"
-                v-model="form.sortOrder"
-                hint="Целое число от 0 — меньшее значение выше в списке."
-                decrement-label="Уменьшить порядок сортировки"
-                increment-label="Увеличить порядок сортировки"
-              />
+                <input v-model="form.isPublished" type="checkbox" class="mts-checkbox" />
+                <span>Опубликовано на сайте</span>
+              </label>
             </div>
-            <label
-              class="flex cursor-pointer select-none items-center gap-2.5 font-body text-sm text-mts-text md:justify-start"
-            >
-              <input
-                v-model="form.isPublished"
-                type="checkbox"
-                class="mts-checkbox"
-              />
-              <span>Опубликовано на сайте</span>
-            </label>
-          </div>
+          </section>
+
+          <section class="space-y-6 border-t border-mts-border pt-8">
+            <AdminLocaleTabs v-model="localeTab" label="Тексты и SEO" />
+            <div class="space-y-6">
+              <div>
+                <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Название *</label
+                >
+                <input
+                  v-model="form.translations[localeTab].title"
+                  type="text"
+                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Краткое описание *</label
+                >
+                <textarea
+                  v-model="form.translations[localeTab].excerpt"
+                  rows="3"
+                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Полный текст</label
+                >
+                <textarea
+                  v-model="form.translations[localeTab].content"
+                  rows="8"
+                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Требования (каждый пункт с новой строки)</label
+                >
+                <textarea
+                  v-model="requirementsText[localeTab]"
+                  rows="8"
+                  placeholder="Пункт 1&#10;Пункт 2"
+                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-mono text-xs focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Локация</label
+                  >
+                  <input
+                    v-model="form.translations[localeTab].location"
+                    type="text"
+                    class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Тип занятости</label
+                  >
+                  <input
+                    v-model="form.translations[localeTab].employmentType"
+                    type="text"
+                    placeholder="Полная занятость"
+                    class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div class="rounded-md border border-mts-border/80 bg-mts-bg/40 p-4">
+                <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">SEO</p>
+                <SeoAdminFields v-model="seoForTab" />
+              </div>
+            </div>
+          </section>
         </div>
 
         <div class="mt-8 flex gap-4">
