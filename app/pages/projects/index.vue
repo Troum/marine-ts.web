@@ -11,12 +11,19 @@ const projects = ref<Project[]>([])
 const pending = ref(true)
 const error = ref('')
 
-const filters = [
-  { id: 'all', label: 'Все проекты' },
-  { id: 'hull', label: 'Ремонт корпусов' },
-  { id: 'engine', label: 'Ремонт двигателей' },
-  { id: 'electrical', label: 'Электрика' },
-]
+/** Кнопки фильтра: «Все проекты» + уникальные категории из ответа API (по `type`, подпись — `typeLabel`). */
+const filterButtons = computed(() => {
+  const byType = new Map<string, string>()
+  for (const p of projects.value) {
+    if (!byType.has(p.type)) {
+      byType.set(p.type, p.typeLabel)
+    }
+  }
+  const categories = [...byType.entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'ru'))
+    .map(([id, label]) => ({ id, label }))
+  return [{ id: 'all', label: 'Все проекты' }, ...categories]
+})
 
 async function load() {
   pending.value = true
@@ -31,6 +38,15 @@ async function load() {
 }
 
 onMounted(load)
+
+watch(projects, (list) => {
+  if (filter.value === 'all') {
+    return
+  }
+  if (!list.some((p) => p.type === filter.value)) {
+    filter.value = 'all'
+  }
+})
 
 const filteredProjects = computed(() => {
   if (filter.value === 'all') {
@@ -72,7 +88,7 @@ const filteredProjects = computed(() => {
       <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="f in filters"
+            v-for="f in filterButtons"
             :key="f.id"
             type="button"
             :class="[
