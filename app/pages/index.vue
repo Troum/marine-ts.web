@@ -34,6 +34,9 @@ watchEffect(() => {
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 const d = computed<HomePageData>(() => cms.value ?? defaultHomeData(loc.value))
+const visibleServiceCards = computed(() =>
+  d.value.services.cards.filter(c => c.image && c.title),
+)
 
 const isVisible = ref(false)
 onMounted(() => { isVisible.value = true })
@@ -201,7 +204,7 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section v-if="d.services.cards.length" class="relative py-24 lg:py-32 overflow-hidden bg-white">
+    <section v-if="visibleServiceCards.length" class="relative py-24 lg:py-32 overflow-hidden bg-white">
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="flex items-start justify-between mb-12">
           <div>
@@ -216,9 +219,12 @@ const statIcons = computed(() =>
           <ButtonLink :title="d.services.all" link="/services" extra-class="hidden lg:inline-flex" />
         </div>
 
-        <div class="grid md:grid-cols-3 gap-px bg-mts-border">
+        <div
+          class="grid gap-px bg-mts-border"
+          :class="visibleServiceCards.length >= 3 ? 'md:grid-cols-3' : visibleServiceCards.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-lg'"
+        >
           <div
-            v-for="service in d.services.cards"
+            v-for="service in visibleServiceCards"
             :key="service.title"
             class="bg-white overflow-hidden hover:bg-mts-bg transition-colors group"
           >
