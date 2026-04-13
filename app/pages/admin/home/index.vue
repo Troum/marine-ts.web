@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {
-  ArrowLeft, Loader2, Plus, Trash2, ChevronDown,
+  ArrowLeft, Loader2, Plus, Trash2, ChevronDown, Upload,
   Ship, MapPin, Users, Calendar,
 } from 'lucide-vue-next'
 import type { HomePageData, ContentPage, MarineContentLocale } from '~/types'
@@ -77,6 +77,33 @@ function addServiceCard() {
 function removeServiceCard(i: number) {
   for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].services.cards.splice(i, 1)
 }
+
+const uploadingCardIdx = ref<number | null>(null)
+async function uploadCardImage(idx: number) {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.jpg,.jpeg,.png,.webp'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) return
+    uploadingCardIdx.value = idx
+    try {
+      const res = await api.media.upload(file)
+      for (const loc of MARINE_CONTENT_LOCALES) {
+        if (data.value[loc].services.cards[idx]) {
+          data.value[loc].services.cards[idx].image = res.url
+        }
+      }
+      adminToast.success('Изображение загружено')
+    } catch {
+      await showAdminAlert({ message: 'Не удалось загрузить изображение', variant: 'error' })
+    } finally {
+      uploadingCardIdx.value = null
+    }
+  }
+  input.click()
+}
+
 function addStep() {
   for (const loc of MARINE_CONTENT_LOCALES)
     data.value[loc].process.steps.push({ title: '', text: '' })
@@ -237,6 +264,24 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeServiceCard(i)"><Trash2 class="w-4 h-4" /></button>
                 </div>
                 <div><label :class="sectionLabel">URL изображения</label><input v-model="card.image" :class="sectionInput" placeholder="/images/services/hull.jpg" /></div>
+                <div class="flex items-center gap-3">
+                  <button
+                    type="button"
+                    :disabled="uploadingCardIdx === i"
+                    class="flex items-center gap-2 shrink-0 border border-mts-border px-4 py-3 font-mono text-xs uppercase text-mts-text-secondary hover:text-mts-accent hover:border-mts-accent transition-colors disabled:opacity-50"
+                    @click="uploadCardImage(i)"
+                  >
+                    <Loader2 v-if="uploadingCardIdx === i" class="w-4 h-4 animate-spin" />
+                    <Upload v-else class="w-4 h-4" />
+                    Загрузить
+                  </button>
+                  <img
+                    v-if="card.image"
+                    :src="card.image"
+                    alt=""
+                    class="h-12 w-20 object-cover border border-mts-border"
+                  />
+                </div>
                 <div><label :class="sectionLabel">Название</label><input v-model="card.title" :class="sectionInput" /></div>
                 <div><label :class="sectionLabel">Описание</label><textarea v-model="card.description" rows="2" :class="sectionInput" /></div>
               </div>

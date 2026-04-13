@@ -201,7 +201,7 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section class="relative py-24 lg:py-32 overflow-hidden bg-white">
+    <section v-if="d.services.cards.length" class="relative py-24 lg:py-32 overflow-hidden bg-white">
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="flex items-start justify-between mb-12">
           <div>
