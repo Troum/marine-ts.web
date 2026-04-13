@@ -1,20 +1,33 @@
 <script setup lang="ts">
 import { MapPin, Calendar, ArrowRight, Ship, Loader2 } from 'lucide-vue-next'
-import type { Project } from '~/types'
+import type { Project, ProjectsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import { projectTypeLabel } from '~/utils/contentLabels'
+import { defaultListingData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('projects')
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { breadcrumbs } = usePageBreadcrumbs()
+const api = useMarineApi()
+
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
+
+const { data: cmsPage } = await useAsyncData('projects-page-cms', async () => {
+  try { return await api.contentPages.getPublicBySlug('projects-page') } catch { return null }
+}, { server: true })
+
+const cms = computed<ProjectsPageData>(() => {
+  const body = cmsPage.value?.body
+  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  return defaultListingData('projects-page', loc.value) as ProjectsPageData
+})
 
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.projects'), to: '/projects' }),
 )
 
-const api = useMarineApi()
 const filter = ref('all')
 const projects = ref<Project[]>([])
 const pending = ref(true)
@@ -70,15 +83,14 @@ const filteredProjects = computed(() => {
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
-    <section class="relative py-24 lg:py-32 overflow-hidden">
+  <div class="bg-mts-bg">
+    <section class="relative pt-40 lg:pt-48 pb-16 lg:pb-20 overflow-hidden">
       <div
-        class="absolute inset-0 bg-cover bg-center opacity-[0.22]"
-        style="background-image: url(/images/ship-teaser.jpg)"
+        class="absolute inset-0 bg-cover bg-center opacity-[0.5]"
+        :style="`background-image: url(${cms.heroImage || '/about-workshop.jpg'})`"
         aria-hidden="true"
       />
-      <div class="absolute inset-0 bg-linear-to-r from-white via-white/95 to-white/85" />
-      <div class="absolute inset-0 grid-bg opacity-30" />
+      <div class="absolute inset-0 bg-linear-to-r from-white/95 via-white/80 to-white/60" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
           <Breadcrumbs :items="crumbItems" />
@@ -87,18 +99,18 @@ const filteredProjects = computed(() => {
             <span class="section-label">{{ t('nav.projects') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            {{ t('pages.projects.heroTitle') }}<span class="text-mts-accent">{{ t('pages.projects.heroAccent') }}</span
-            >{{ t('pages.projects.heroEnd') }}
+            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
+            >{{ cms.hero.titleEnd }}
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ t('pages.projects.heroLead') }}
+            {{ cms.hero.lead }}
           </p>
         </div>
       </div>
     </section>
 
-    <section class="relative py-8 border-b border-mts-border bg-white">
+    <section class="relative py-6">
       <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="flex flex-wrap gap-2">
           <button
@@ -118,7 +130,6 @@ const filteredProjects = computed(() => {
     </section>
 
     <section class="relative py-24 overflow-hidden">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div v-if="pending" class="flex justify-center py-24">
           <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
@@ -164,10 +175,10 @@ const filteredProjects = computed(() => {
             <NuxtLink
               v-if="p.contentPage?.slug"
               :to="localePath(`/projects/${p.contentPage.slug}`)"
-              class="mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase text-mts-accent hover:underline"
+              class="mt-6 btn-primary px-4 py-2 text-[11px]"
             >
               {{ t('pages.common.readMore') }}
-              <ArrowRight class="h-4 w-4" />
+              <ArrowRight class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </NuxtLink>
           </article>
         </div>
@@ -176,9 +187,9 @@ const filteredProjects = computed(() => {
 
     <section class="relative py-16 bg-white border-t border-mts-border">
       <div class="max-w-4xl mx-auto px-6 text-center">
-        <h2 class="font-display text-2xl text-mts-text mb-4">{{ t('pages.projects.ctaTitle') }}</h2>
+        <h2 class="font-display text-2xl text-mts-text mb-4">{{ cms.cta?.title || t('pages.projects.ctaTitle') }}</h2>
         <NuxtLink :to="localePath('/contacts')" class="btn-primary group">
-          {{ t('pages.projects.ctaButton') }}
+          {{ cms.cta?.buttonText || t('pages.projects.ctaButton') }}
           <ArrowRight class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
         </NuxtLink>
       </div>

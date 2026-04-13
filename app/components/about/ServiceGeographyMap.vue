@@ -1,27 +1,42 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import type { AboutGeoLocation } from '~/types'
 
-/**
- * Координаты в % полной карты (как в world-map-stroke.svg, 950×620).
- * CROP — прямоугольник в тех же единицах: только регион с представительствами + поля.
- */
 const MAP = { w: 950, h: 620 }
 const CROP = { x: 198, y: 96, w: 426, h: 232 }
 
 const { t } = useI18n()
 
-const locations = [
-  { mapKey: 'panama', x: 23.5, y: 50.0, labelOnRight: true },
-  { mapKey: 'curacao', x: 30.8, y: 46.8, labelOnRight: true },
-  { mapKey: 'lasPalmas', x: 43.1, y: 41.0, labelOnRight: true },
-  { mapKey: 'alexandria', x: 54.5, y: 38.4, labelOnRight: false },
-  { mapKey: 'dubai', x: 63.0, y: 42.7, labelOnRight: false },
-  { mapKey: 'hull', x: 48.0, y: 25.2, labelOnRight: true },
-  { mapKey: 'stockholm', x: 53.3, y: 22.3, labelOnRight: false },
-  { mapKey: 'alesund', x: 52.8, y: 18.2, labelOnRight: false },
-  { mapKey: 'klaipeda', x: 53.8, y: 25.0, labelOnRight: true },
-  { mapKey: 'kaliningrad', x: 52.6, y: 25.5, labelOnRight: false },
-] as const
+const props = withDefaults(
+  defineProps<{
+    locations?: AboutGeoLocation[]
+    label?: string
+    title?: string
+    lead?: string
+  }>(),
+  {
+    locations: undefined,
+    label: '',
+    title: '',
+    lead: '',
+  },
+)
+
+const FALLBACK_LOCATIONS: (AboutGeoLocation & { mapKey: string })[] = [
+  { mapKey: 'panama', x: 23.5, y: 50.0, labelOnRight: true, name: '' },
+  { mapKey: 'curacao', x: 30.8, y: 46.8, labelOnRight: true, name: '' },
+  { mapKey: 'lasPalmas', x: 43.1, y: 41.0, labelOnRight: true, name: '' },
+  { mapKey: 'alexandria', x: 54.5, y: 38.4, labelOnRight: false, name: '' },
+  { mapKey: 'dubai', x: 63.0, y: 42.7, labelOnRight: false, name: '' },
+  { mapKey: 'hull', x: 48.0, y: 25.2, labelOnRight: true, name: '' },
+  { mapKey: 'stockholm', x: 53.3, y: 22.3, labelOnRight: false, name: '' },
+  { mapKey: 'alesund', x: 52.8, y: 18.2, labelOnRight: false, name: '' },
+  { mapKey: 'klaipeda', x: 53.8, y: 25.0, labelOnRight: true, name: '' },
+  { mapKey: 'kaliningrad', x: 52.6, y: 25.5, labelOnRight: false, name: '' },
+]
+
+const displayLabel = computed(() => props.label || t('pages.map.label'))
+const displayTitle = computed(() => props.title || t('pages.map.title'))
+const displayLead = computed(() => props.lead || t('pages.map.lead'))
 
 function cropPos(fullX: number, fullY: number) {
   const px = (fullX / 100) * MAP.w
@@ -32,17 +47,18 @@ function cropPos(fullX: number, fullY: number) {
   }
 }
 
-const markers = computed(() =>
-  locations.map((loc) => {
+const markers = computed(() => {
+  if (props.locations?.length) {
+    return props.locations.map((loc, i) => {
+      const p = cropPos(loc.x, loc.y)
+      return { key: `cms-${i}`, left: p.x, top: p.y, labelOnRight: loc.labelOnRight, name: loc.name }
+    })
+  }
+  return FALLBACK_LOCATIONS.map((loc) => {
     const p = cropPos(loc.x, loc.y)
-    return {
-      ...loc,
-      left: p.x,
-      top: p.y,
-      name: t(`pages.map.${loc.mapKey}`),
-    }
-  }),
-)
+    return { key: loc.mapKey, left: p.x, top: p.y, labelOnRight: loc.labelOnRight, name: t(`pages.map.${loc.mapKey}`) }
+  })
+})
 </script>
 
 <template>
@@ -50,21 +66,19 @@ const markers = computed(() =>
     class="relative bg-mts-bg text-mts-text overflow-hidden"
     aria-labelledby="service-geography-heading"
   >
-    <div class="absolute inset-0 grid-bg opacity-25 pointer-events-none" aria-hidden="true" />
-
     <div class="max-w-7xl mx-auto px-6 lg:px-12 pt-16 lg:pt-24 pb-6 lg:pb-8 relative z-10">
       <div class="max-w-xl">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-6 h-px bg-mts-accent" />
           <span class="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-mts-text-secondary">{{
-            t('pages.map.label')
+            displayLabel
           }}</span>
         </div>
         <h2 id="service-geography-heading" class="font-display text-3xl lg:text-4xl text-mts-text leading-tight mb-4">
-          {{ t('pages.map.title') }}
+          {{ displayTitle }}
         </h2>
         <p class="font-body text-sm lg:text-base text-mts-text-secondary leading-relaxed">
-          {{ t('pages.map.lead') }}
+          {{ displayLead }}
         </p>
       </div>
     </div>
@@ -82,7 +96,7 @@ const markers = computed(() =>
 
         <div
           v-for="loc in markers"
-          :key="loc.mapKey"
+          :key="loc.key"
           class="absolute z-[2]"
           :style="{
             left: `${loc.left}%`,

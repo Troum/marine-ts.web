@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
-import type { GalleryItem } from '~/types'
+import type { GalleryItem, ListingPageData, MarineContentLocale } from '~/types'
+import { defaultListingData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('gallery')
 
 const { t, locale } = useI18n()
 const { breadcrumbs } = usePageBreadcrumbs()
+const api = useMarineApi()
+
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
+
+const { data: cmsPage } = await useAsyncData('gallery-page-cms', async () => {
+  try { return await api.contentPages.getPublicBySlug('gallery-page') } catch { return null }
+}, { server: true })
+
+const cms = computed<ListingPageData>(() => {
+  const body = cmsPage.value?.body
+  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  return defaultListingData('gallery-page', loc.value)
+})
 
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.gallery'), to: '/gallery' }),
 )
 
-const api = useMarineApi()
 const { data: slides, pending, error } = await useAsyncData(
   () => `gallery-items-${locale.value}`,
   () => api.gallery.getAll(),
@@ -93,7 +106,6 @@ onUnmounted(() => {
 <template>
   <div class="bg-mts-bg pt-16">
     <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
           <Breadcrumbs :items="crumbItems" />
@@ -102,12 +114,12 @@ onUnmounted(() => {
             <span class="section-label">{{ t('nav.gallery') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            {{ t('pages.gallery.heroTitle') }}<span class="text-mts-accent">{{ t('pages.gallery.heroAccent') }}</span
-            >{{ t('pages.gallery.heroEnd') }}
+            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
+            >{{ cms.hero.titleEnd }}
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ t('pages.gallery.heroLead') }}
+            {{ cms.hero.lead }}
           </p>
         </div>
       </div>

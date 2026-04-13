@@ -65,7 +65,7 @@ function isActive(href: string) {
             :key="link.href"
             :to="localePath(link.href)"
             :class="[
-              'font-mono text-[11px] font-medium tracking-[0.1em] uppercase transition-colors duration-200 relative group',
+              'font-mono text-xs font-medium tracking-[0.08em] uppercase transition-colors duration-200 relative group',
               isActive(link.href) ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
             ]"
           >
@@ -83,10 +83,10 @@ function isActive(href: string) {
           <LanguageSwitch />
           <a
             href="tel:84012355290"
-            class="flex items-center gap-2 text-mts-text-secondary hover:text-mts-accent transition-colors"
+            class="flex items-center gap-2 text-mts-text"
           >
             <Phone class="w-3.5 h-3.5" />
-            <span class="font-mono text-[11px] font-medium tracking-wide">{{ t('header.phoneDisplay') }}</span>
+            <span class="font-mono text-xs font-medium tracking-wide">{{ t('header.phoneDisplay') }}</span>
           </a>
           <NuxtLink :to="localePath('/contacts')" class="btn-primary">{{ t('header.ctaContact') }}</NuxtLink>
         </div>

@@ -64,7 +64,6 @@ const principles = computed(() => [t('pages.crewing.p1'), t('pages.crewing.p2'),
 <template>
   <div class="bg-mts-bg">
     <section class="relative flex min-h-[min(88vh,920px)] items-center overflow-hidden">
-      <div class="absolute inset-0 grid-bg opacity-50" />
       <div class="absolute top-0 left-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
       <div class="absolute top-0 right-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
 
@@ -121,7 +120,6 @@ const principles = computed(() => [t('pages.crewing.p1'), t('pages.crewing.p2'),
     </section>
 
     <section class="relative overflow-hidden bg-white py-24">
-      <div class="absolute inset-0 grid-bg opacity-20" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <h2 class="font-display mb-4 text-center text-2xl text-mts-text md:text-3xl">{{ t('pages.crewing.directionsTitle') }}</h2>
         <p class="mx-auto mb-14 max-w-2xl text-center font-body text-mts-text-secondary">
@@ -142,12 +140,10 @@ const principles = computed(() => [t('pages.crewing.p1'), t('pages.crewing.p2'),
     </section>
 
     <section class="relative overflow-hidden py-24">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div class="grid items-start gap-16 lg:grid-cols-2">
           <div class="relative">
-            <div class="absolute -left-2 -top-2 h-6 w-6 border-l-2 border-t-2 border-mts-accent" />
-            <div class="absolute -bottom-2 -right-2 h-6 w-6 border-b-2 border-r-2 border-mts-accent" />
+            <CommonAccentCorners size="lg" />
             <div class="border border-mts-border bg-mts-bg p-8 shadow-tech">
               <h2 class="font-display mb-6 text-2xl text-mts-text">{{ t('pages.crewing.principlesTitle') }}</h2>
               <ul class="space-y-4">

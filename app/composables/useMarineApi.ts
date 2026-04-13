@@ -530,6 +530,13 @@ export function useMarineApi() {
       },
       delete: (id: number) => fetchAuth<unknown>(`/content-pages/${id}`, { method: 'DELETE' }),
     },
+    media: {
+      upload: async (file: File) => {
+        const fd = new FormData()
+        fd.append('file', file)
+        return fetchAuthFormData<{ url: string }>('/media', fd)
+      },
+    },
     gallery: {
       getAll: async () => {
         const res = await fetchPublic<{ data: GalleryItem[] }>('/gallery')

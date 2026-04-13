@@ -36,7 +36,6 @@ onMounted(load)
 <template>
   <div class="bg-mts-bg pt-16">
     <section class="relative overflow-hidden py-24 lg:py-32">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div class="max-w-3xl">
           <Breadcrumbs :items="crumbItems" />
@@ -63,7 +62,6 @@ onMounted(load)
       <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
     </div>
     <section v-else class="relative overflow-hidden pb-24">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
         <div v-if="vacancies.length === 0" class="py-16 text-center font-body text-mts-text-secondary">
           {{ t('pages.vacancies.emptyHtml') }}
@@ -93,7 +91,7 @@ onMounted(load)
             </div>
             <NuxtLink
               :to="localePath(`/vacancies/${v.slug}`)"
-              class="mt-6 inline-block font-mono text-[10px] uppercase tracking-wide text-mts-accent hover:underline"
+              class="mt-6 btn-primary px-4 py-2 text-[11px]"
             >
               {{ t('pages.common.readMore') }}
             </NuxtLink>

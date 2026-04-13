@@ -1,9 +1,9 @@
 import tailwindcss from '@tailwindcss/vite'
 
 /** Бэкенд Laravel (без завершающего слэша). Для dev-прокси и SSR по умолчанию. */
-const defaultApiOrigin = process.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test'
+const defaultApiOrigin = import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test'
 
-const isDev = process.env.NODE_ENV !== 'production'
+const isDev = import.meta.env.NODE_ENV !== 'production'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/i18n'],
   i18n: {
     /** Нужен для hreflang / SEO в useLocaleHead (иначе предупреждение в консоли). */
-    baseUrl: process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    baseUrl: import.meta.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     lazy: true,
     langDir: 'locales',
     locales: [
@@ -73,7 +73,7 @@ export default defineNuxtConfig({
         { rel: 'apple-touch-icon', href: '/favicon.ico' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&family=Oranienbaum&family=Space+Grotesk:wght@400;500&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500&display=swap',
         },
       ],
     },

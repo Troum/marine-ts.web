@@ -4,6 +4,7 @@ import { Phone, Mail, MapPin, ExternalLink } from 'lucide-vue-next'
 const currentYear = new Date().getFullYear()
 const localePath = useLocalePath()
 const { t } = useI18n()
+const api = useMarineApi()
 
 const navLinks = computed(() => [
   { label: t('nav.home'), href: '/' },
@@ -17,14 +18,24 @@ const navLinks = computed(() => [
   { label: t('nav.contacts'), href: '/contacts' },
 ])
 
-const serviceLinks = computed(() => [
-  { label: t('footer.svcHull'), href: '/services' },
-  { label: t('footer.svcEngine'), href: '/services' },
-  { label: t('footer.svcElectro'), href: '/services' },
-  { label: t('footer.svcPipes'), href: '/services' },
-  { label: t('footer.svcDock'), href: '/services' },
-  { label: t('footer.svcEng'), href: '/services' },
-])
+const { data: apiServices } = await useAsyncData('footer-services', () => api.services.getAll())
+
+const serviceLinks = computed(() => {
+  if (apiServices.value?.length) {
+    return apiServices.value.map((s) => ({
+      label: s.title,
+      href: s.contentPage?.slug ? `/services/${s.contentPage.slug}` : '/services',
+    }))
+  }
+  return [
+    { label: t('footer.svcHull'), href: '/services' },
+    { label: t('footer.svcEngine'), href: '/services' },
+    { label: t('footer.svcElectro'), href: '/services' },
+    { label: t('footer.svcPipes'), href: '/services' },
+    { label: t('footer.svcDock'), href: '/services' },
+    { label: t('footer.svcEng'), href: '/services' },
+  ]
+})
 </script>
 
 <template>

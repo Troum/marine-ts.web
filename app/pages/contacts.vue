@@ -1,20 +1,32 @@
 <script setup lang="ts">
 import { Phone, Mail, MapPin, Clock, Send, Loader2 } from 'lucide-vue-next'
 import type { Component } from 'vue'
-import type { ContactQuickIconKey } from '~/types'
+import type { ContactQuickIconKey, ContactsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { defaultContactsData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('contacts')
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { breadcrumbs } = usePageBreadcrumbs()
+const api = useMarineApi()
+
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
+
+const { data: cmsPage } = await useAsyncData('contacts-page-cms', async () => {
+  try { return await api.contentPages.getPublicBySlug('contacts-page') } catch { return null }
+}, { server: true })
+
+const cms = computed<ContactsPageData>(() => {
+  const body = cmsPage.value?.body
+  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  return defaultContactsData(loc.value)
+})
 
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.contacts'), to: '/contacts' }),
 )
-
-const api = useMarineApi()
 
 const { data: contactSettings, pending: contactsPending } = await useAsyncData(
   'contact-settings',
@@ -75,7 +87,6 @@ async function submitFeedback() {
 <template>
   <div class="bg-mts-bg pt-16">
     <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="max-w-3xl">
           <Breadcrumbs :items="crumbItems" />
@@ -84,22 +95,21 @@ async function submitFeedback() {
             <span class="section-label">{{ t('nav.contacts') }}</span>
           </div>
           <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            {{ t('pages.contacts.heroTitle') }}<span class="text-mts-accent">{{ t('pages.contacts.heroAccent') }}</span>
+            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span>
           </h1>
           <div class="w-12 h-0.5 bg-mts-accent mb-6" />
           <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ t('pages.contacts.heroLead') }}
+            {{ cms.hero.lead }}
           </p>
         </div>
       </div>
     </section>
 
     <section class="relative py-24 overflow-hidden">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 class="font-display text-2xl text-mts-text mb-8">{{ t('pages.contacts.infoTitle') }}</h2>
+            <h2 class="font-display text-2xl text-mts-text mb-8">{{ cms.infoTitle }}</h2>
             <div v-if="contactsPending" class="flex items-center gap-2 text-mts-text-secondary font-body text-sm mb-12">
               <Loader2 class="h-4 w-4 animate-spin" />
               {{ t('pages.common.loading') }}
@@ -126,10 +136,10 @@ async function submitFeedback() {
           <div class="card-tech border border-mts-border p-8">
             <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-mts-text">
               <Send class="h-5 w-5 text-mts-accent" />
-              {{ t('pages.contacts.formTitle') }}
+              {{ cms.formTitle }}
             </h3>
             <p class="mb-6 font-body text-sm text-mts-text-secondary">
-              {{ t('pages.contacts.formLead') }}
+              {{ cms.formLead }}
             </p>
             <form class="space-y-4" @submit.prevent="submitFeedback">
               <div>
@@ -197,7 +207,7 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-2xl text-mts-text mb-8">{{ t('pages.contacts.officesTitle') }}</h2>
+          <h2 class="font-display text-2xl text-mts-text mb-8">{{ cms.officesTitle }}</h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"

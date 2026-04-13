@@ -293,7 +293,7 @@ async function addImage() {
               :key="item.id"
               class="border border-mts-border bg-white p-6 grid gap-6 lg:grid-cols-[200px_1fr_auto] lg:items-start"
             >
-              <div class="relative aspect-[4/3] w-full max-w-[200px] overflow-hidden border border-mts-border bg-mts-bg">
+              <div class="relative aspect-4/3 w-full max-w-50 overflow-hidden border border-mts-border bg-mts-bg">
                 <img :src="item.src" :alt="item.alt" class="h-full w-full object-cover" />
                 <div
                   v-if="replacingId === item.id"

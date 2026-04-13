@@ -15,6 +15,14 @@ import {
   BarChart3,
   Images,
   Phone,
+  Building2,
+  Home,
+  FileText,
+  X,
+  Compass,
+  Ship,
+  Camera,
+  Mail,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -27,6 +35,17 @@ definePageMeta({
 const api = useMarineApi()
 const { logout } = useAuth()
 const { canManageUsers, canManageContentPages, canManageGallery, canManageContacts } = useAdminPermissions()
+
+const sectionPickerOpen = ref(false)
+const sectionOptions = [
+  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью услуг, процесс работы, CTA' },
+  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
+  { label: 'Услуги', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
+  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
+  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
+  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
+  { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы' },
+]
 
 const news = ref<NewsItem[]>([])
 const projects = ref<Project[]>([])
@@ -315,6 +334,28 @@ const statCards = computed(() => [
           </div>
 
           <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <FileText class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Редактирование раздела</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Секционное редактирование страниц сайта: hero-блоки, тексты, CTA, статистика и превью.
+              </p>
+              <button
+                type="button"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                @click="sectionPickerOpen = true"
+              >
+                <Edit class="w-4 h-4" />
+                Выбрать раздел
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
             >
@@ -497,5 +538,54 @@ const statCards = computed(() => [
         </div>
       </template>
     </main>
+
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="sectionPickerOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          @click.self="sectionPickerOpen = false"
+        >
+          <div class="bg-white w-full max-w-lg mx-4 border border-mts-border shadow-xl">
+            <div class="p-5 border-b border-mts-border flex items-center justify-between">
+              <h3 class="font-display text-lg text-mts-text">Выберите раздел</h3>
+              <button
+                type="button"
+                class="text-mts-text-secondary hover:text-mts-text transition-colors"
+                @click="sectionPickerOpen = false"
+              >
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+            <div class="p-2 max-h-[60vh] overflow-y-auto">
+              <NuxtLink
+                v-for="s in sectionOptions"
+                :key="s.to"
+                :to="s.to"
+                class="flex items-center gap-4 p-4 hover:bg-mts-accent/5 transition-colors group"
+                @click="sectionPickerOpen = false"
+              >
+                <component :is="s.icon" class="w-5 h-5 text-mts-text-secondary group-hover:text-mts-accent shrink-0 transition-colors" />
+                <div class="min-w-0">
+                  <p class="font-display text-sm text-mts-text group-hover:text-mts-accent transition-colors">{{ s.label }}</p>
+                  <p class="font-body text-xs text-mts-text-secondary truncate">{{ s.desc }}</p>
+                </div>
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

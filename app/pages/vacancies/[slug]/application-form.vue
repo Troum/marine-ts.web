@@ -195,8 +195,6 @@ function syncSurnameName() {
       <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
     </div>
     <div v-else class="relative mx-auto max-w-4xl px-6 pb-24 pt-8 lg:px-12">
-      <div class="absolute inset-0 -z-10 grid-bg opacity-20" />
-
       <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
         <NuxtLink
           :to="localePath(`/vacancies/${slug}`)"

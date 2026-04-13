@@ -66,7 +66,6 @@ watchEffect(() => {
       <NuxtLink :to="localePath('/projects')" class="btn-primary inline-flex">{{ t('pages.common.toProjects') }}</NuxtLink>
     </div>
     <article v-else class="relative overflow-hidden pb-24">
-      <div class="absolute inset-0 grid-bg opacity-30" />
       <div class="relative z-10 mx-auto max-w-3xl px-6 lg:px-12">
         <Breadcrumbs class="mb-8" :items="crumbItems" />
 

@@ -30,8 +30,7 @@ async function handleSubmit() {
       </div>
 
       <div class="bg-white border border-mts-border shadow-tech p-8 relative">
-        <div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-mts-accent" />
-        <div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-mts-accent" />
+        <CommonAccentCorners />
 
         <h1 class="font-display text-2xl text-mts-text mb-2">Вход в систему</h1>
         <p class="font-body text-sm text-mts-text-secondary mb-6">Введите учётные данные для доступа к панели управления</p>

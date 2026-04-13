@@ -14,7 +14,7 @@
   --color-mts-grid: #e9ecef;
   --color-mts-dark: #212529;
 
-  --font-display: 'Oranienbaum', serif;
+  --font-display: 'Inter', sans-serif;
   --font-body: 'Manrope', sans-serif;
   --font-ui: 'Space Grotesk', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -27,6 +27,7 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    font-size: 17px;
   }
   body {
     @apply bg-mts-bg text-mts-text antialiased font-body;
@@ -35,10 +36,14 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 border border-transparent bg-mts-accent px-4 py-2 font-mono text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 border border-transparent bg-mts-accent px-5 py-2.5 font-mono text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 border border-mts-border bg-white px-4 py-2 font-mono text-xs font-medium uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent;
+    @apply inline-flex items-center justify-center gap-2 border border-mts-border bg-white px-5 py-2.5 font-mono text-xs font-medium uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent;
+  }
+
+  .section-label {
+    @apply font-mono text-xs font-medium uppercase tracking-widest text-mts-text-secondary;
   }
 
   /**

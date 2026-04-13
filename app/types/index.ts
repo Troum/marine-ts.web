@@ -313,3 +313,191 @@ export interface SiteContactSettings {
     email: string
   }[]
 }
+
+/* ── About page structured data (CMS JSON in body) ── */
+
+export interface AboutHero {
+  title: string
+  titleAccent: string
+  titleEnd: string
+  subtitle: string
+  lead: string
+  lead2: string
+}
+
+export interface AboutServiceCard {
+  icon: string
+  title: string
+  text: string
+}
+
+export interface AboutEcosystem {
+  title: string
+  lead: string
+  services: AboutServiceCard[]
+}
+
+export interface AboutPrinciple {
+  icon: string
+  text: string
+}
+
+export interface AboutMission {
+  title: string
+  lead: string
+  principles: AboutPrinciple[]
+}
+
+export interface AboutWhy {
+  title: string
+  text: string
+  ctaText: string
+}
+
+export interface AboutGeoLocation {
+  x: number
+  y: number
+  labelOnRight: boolean
+  name: string
+}
+
+export interface AboutGeography {
+  label: string
+  title: string
+  lead: string
+  locations: AboutGeoLocation[]
+}
+
+export interface AboutCertItem {
+  name: string
+  desc: string
+  fileUrl: string
+}
+
+export interface AboutCertificates {
+  title: string
+  items: AboutCertItem[]
+}
+
+export interface AboutPageData {
+  hero: AboutHero
+  ecosystem: AboutEcosystem
+  mission: AboutMission
+  why: AboutWhy
+  geography: AboutGeography
+  certificates: AboutCertificates
+}
+
+/* ── Home page structured data (CMS JSON in body) ── */
+
+export interface HomeHero {
+  label: string
+  titleLine1: string
+  titleAccent: string
+  titleSuffix: string
+  lead: string
+  ctaConsult: string
+  ctaServices: string
+  badgeIso: string
+  badgeIacs: string
+  badgeYears: string
+  scroll: string
+}
+
+export interface HomeStat {
+  icon: string
+  value: string
+  label: string
+}
+
+export interface HomeStatsCard {
+  label: string
+  items: HomeStat[]
+}
+
+export interface HomeAboutPreview {
+  label: string
+  title: string
+  titleAccent: string
+  titleEnd: string
+  text: string
+  more: string
+}
+
+export interface HomeServiceCard {
+  image: string
+  title: string
+  description: string
+}
+
+export interface HomeServicesSection {
+  label: string
+  heading: string
+  headingAccent: string
+  headingEnd: string
+  all: string
+  more: string
+  cards: HomeServiceCard[]
+}
+
+export interface HomeProcessStep {
+  title: string
+  text: string
+}
+
+export interface HomeProcessSection {
+  label: string
+  heading: string
+  headingAccent: string
+  steps: HomeProcessStep[]
+}
+
+export interface HomeCTA {
+  label: string
+  title: string
+  titleAccent: string
+  text: string
+  button: string
+}
+
+export interface HomePageData {
+  hero: HomeHero
+  statsCard: HomeStatsCard
+  about: HomeAboutPreview
+  services: HomeServicesSection
+  process: HomeProcessSection
+  cta: HomeCTA
+}
+
+/* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
+
+export interface ListingHero {
+  title: string
+  titleAccent: string
+  titleEnd: string
+  lead: string
+}
+
+export interface ListingCTA {
+  title: string
+  buttonText: string
+}
+
+export interface ListingPageData {
+  hero: ListingHero
+  cta?: ListingCTA
+}
+
+export interface ProjectsPageData extends ListingPageData {
+  heroImage?: string
+}
+
+/* ── Contacts page structured data (CMS JSON in body) ── */
+
+export interface ContactsPageData {
+  hero: { title: string; titleAccent: string; lead: string }
+  infoTitle: string
+  formTitle: string
+  formLead: string
+  officesTitle: string
+}

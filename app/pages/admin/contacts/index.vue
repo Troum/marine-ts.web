@@ -109,8 +109,7 @@ async function submit() {
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>
       <form v-else class="relative border border-mts-border bg-white p-8 shadow-tech" @submit.prevent="submit">
-        <div class="absolute -left-2 -top-2 h-4 w-4 border-l-2 border-t-2 border-mts-accent" />
-        <div class="absolute -bottom-2 -right-2 h-4 w-4 border-b-2 border-r-2 border-mts-accent" />
+        <CommonAccentCorners />
 
         <p class="font-body text-sm text-mts-text-secondary mb-8">
           Данные отображаются на странице «Контакты»: блок «Контактная информация» и карточки офисов.

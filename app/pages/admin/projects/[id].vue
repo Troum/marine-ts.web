@@ -172,8 +172,7 @@ async function submit() {
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>
       <form v-else class="bg-white border border-mts-border p-8 space-y-8 shadow-tech relative" @submit.prevent="submit">
-        <div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-mts-accent" />
-        <div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-mts-accent" />
+        <CommonAccentCorners />
 
         <section class="space-y-6">
           <h2 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">Общие поля</h2>
