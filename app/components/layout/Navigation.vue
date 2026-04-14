@@ -164,8 +164,8 @@ function toggleMore(e: Event) {
               :aria-label="t('nav.moreAria')"
               @click="toggleMore"
             >
-              <MoreVertical class="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{{ t('nav.more') }}</span>
+              <MoreVertical class="h-4 w-4 shrink-0" aria-hidden="true" />
               <span
                 :class="[
                   'absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200',
