@@ -25,6 +25,7 @@ const form = ref({
   slug: '',
   isPublished: true,
   sortOrder: 0,
+  showInquiryForm: false,
   translations: mergeContentPageTranslations(),
 })
 
@@ -118,6 +119,7 @@ onMounted(async () => {
       slug: item.slug,
       isPublished: item.isPublished,
       sortOrder: item.sortOrder ?? 0,
+      showInquiryForm: item.showInquiryForm ?? false,
       translations: mergeContentPageTranslations(item.translations),
     }
     normalizeAllBodies()
@@ -162,6 +164,7 @@ async function submit() {
       slug: form.value.slug?.trim() ?? '',
       isPublished: form.value.isPublished ?? true,
       sortOrder: Number(form.value.sortOrder ?? 0),
+      showInquiryForm: form.value.showInquiryForm ?? false,
       translations: form.value.translations,
     }
 
@@ -315,6 +318,10 @@ async function submit() {
                 <span>Опубликовано на сайте</span>
               </label>
             </div>
+            <label class="flex cursor-pointer select-none items-center gap-2.5 font-body text-sm text-mts-text">
+              <input v-model="form.showInquiryForm" type="checkbox" class="mts-checkbox" />
+              <span>Показать форму заявки внизу этой страницы на сайте</span>
+            </label>
           </section>
 
           <section class="space-y-6 border-t border-mts-border pt-8">

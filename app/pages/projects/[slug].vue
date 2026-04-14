@@ -82,6 +82,8 @@ watchEffect(() => {
 
         <div v-if="bodyHtml" class="mts-markdown mt-10" v-html="bodyHtml" />
       </div>
+
+      <CommonPageInquiryForm v-if="page.showInquiryForm" :source-page="`projects/${slug}`" />
     </article>
   </div>
 </template>

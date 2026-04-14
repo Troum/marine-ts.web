@@ -234,6 +234,8 @@ export type ContentPageContentableType = 'service' | 'project'
 export interface ContentPage extends ContentPageSummary {
   body: string
   isPublished: boolean
+  /** Показать форму заявки внизу страницы (контентные страницы услуг/проектов). */
+  showInquiryForm?: boolean
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
@@ -278,6 +280,23 @@ export interface FeedbackMessage {
   updatedAt: string | null
 }
 
+/** Заявка с формы «подключённой» страницы (судовой менеджмент и др.). */
+export interface PageInquiry {
+  id: number
+  name: string
+  email: string
+  phone: string | null
+  company: string | null
+  vesselName: string | null
+  imo: string | null
+  message: string
+  sourcePage: string
+  ip: string | null
+  readAt: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
 /** Учётная запись панели управления (ответ API manage users). */
 export interface AdminPanelUser {
   id: number
@@ -312,6 +331,17 @@ export interface SiteContactSettings {
     phone: string
     email: string
   }[]
+}
+
+/** Пункт меню в шапке сайта (`/navigation-settings`). */
+export interface NavigationMenuItem {
+  path: string
+  label: Record<MarineContentLocale, string>
+}
+
+export interface NavigationMenuSettings {
+  main: NavigationMenuItem[]
+  more: NavigationMenuItem[]
 }
 
 /* ── About page structured data (CMS JSON in body) ── */
@@ -386,6 +416,7 @@ export interface AboutPageData {
   why: AboutWhy
   geography: AboutGeography
   certificates: AboutCertificates
+  showInquiryForm?: boolean
 }
 
 /* ── Home page structured data (CMS JSON in body) ── */
@@ -467,6 +498,8 @@ export interface HomePageData {
   services: HomeServicesSection
   process: HomeProcessSection
   cta: HomeCTA
+  /** Показать блок формы заявки внизу главной. */
+  showInquiryForm?: boolean
 }
 
 /* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
@@ -486,6 +519,7 @@ export interface ListingCTA {
 export interface ListingPageData {
   hero: ListingHero
   cta?: ListingCTA
+  showInquiryForm?: boolean
 }
 
 export interface ProjectsPageData extends ListingPageData {
@@ -500,4 +534,5 @@ export interface ContactsPageData {
   formTitle: string
   formLead: string
   officesTitle: string
+  showInquiryForm?: boolean
 }

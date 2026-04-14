@@ -9,6 +9,7 @@ import type {
   DocumentUploadSession,
   PaginatedApplicationForms,
   FeedbackMessage,
+  PageInquiry,
   GalleryItem,
   ContentPageTranslationPayload,
   MarineContentLocale,
@@ -23,6 +24,7 @@ import type {
   SiteSeoPage,
   PageViewsSummary,
   SiteContactSettings,
+  NavigationMenuSettings,
   Stats,
   VacancyApplicationForm,
   VacancyItem,
@@ -583,6 +585,19 @@ export function useMarineApi() {
         return res.data
       },
     },
+    navigationSettings: {
+      get: async () => {
+        const res = await fetchPublic<{ data: NavigationMenuSettings }>('/navigation-settings')
+        return res.data
+      },
+      update: async (body: NavigationMenuSettings) => {
+        const res = await fetchAuth<{ data: NavigationMenuSettings }>('/navigation-settings', {
+          method: 'PUT',
+          body,
+        })
+        return res.data
+      },
+    },
     analytics: {
       getSummary: () => fetchAuth<PageViewsSummary>('/analytics/manage/summary'),
     },
@@ -795,6 +810,53 @@ export function useMarineApi() {
         return res.data
       },
       delete: (id: number) => fetchAuth<unknown>(`/feedback/${id}`, { method: 'DELETE' }),
+    },
+    pageInquiries: {
+      submit: async (body: {
+        name: string
+        email: string
+        phone?: string | null
+        company?: string | null
+        vesselName?: string | null
+        imo?: string | null
+        message: string
+        sourcePage: string
+      }) => {
+        await fetchPublicPost<unknown>('/page-inquiries', {
+          name: body.name,
+          email: body.email,
+          phone: body.phone ?? null,
+          company: body.company ?? null,
+          vessel_name: body.vesselName ?? null,
+          imo: body.imo ?? null,
+          message: body.message,
+          source_page: body.sourcePage,
+        })
+      },
+      getManageAll: async (params?: {
+        search?: string
+        sort?: string
+        order?: 'asc' | 'desc'
+        read?: '0' | '1'
+        per_page?: number
+        page?: number
+      }) => {
+        const q = buildListQuery({
+          per_page: params?.per_page ?? 500,
+          page: params?.page ?? 1,
+          search: params?.search,
+          sort: params?.sort,
+          order: params?.order,
+          read: params?.read,
+        })
+        const res = await fetchAuth<{ data: PageInquiry[] }>(`/page-inquiries/manage?${q}`)
+        return res.data
+      },
+      getById: async (id: number) => {
+        const res = await fetchAuth<{ data: PageInquiry }>(`/page-inquiries/manage/${id}`)
+        return res.data
+      },
+      delete: (id: number) => fetchAuth<unknown>(`/page-inquiries/${id}`, { method: 'DELETE' }),
     },
   }
 }

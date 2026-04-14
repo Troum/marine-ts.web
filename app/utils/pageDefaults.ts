@@ -70,6 +70,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       text: 'Свяжитесь с нашим техническим отделом. Мы ответим в течение 2 часов и подготовим коммерческое предложение.',
       button: 'Получить консультацию',
     },
+    showInquiryForm: false,
   },
   en: {
     hero: {
@@ -132,6 +133,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       text: 'Contact our technical team. We respond within two hours and prepare a commercial proposal.',
       button: 'Request a consultation',
     },
+    showInquiryForm: false,
   },
 }
 
@@ -167,6 +169,7 @@ export function syncHomeStructuralFields(
       d.process.steps.push({ title: '', text: '' })
     }
     d.process.steps.length = src.process.steps.length
+    d.showInquiryForm = src.showInquiryForm
   }
 }
 
@@ -179,10 +182,12 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
     ru: {
       hero: { title: 'Полный спектр ', titleAccent: 'судоремонтных', titleEnd: ' услуг', lead: 'Мы предоставляем комплексные решения для технического обслуживания и ремонта морских судов любого типа и размера.' },
       cta: { title: '', buttonText: 'Запросить консультацию' },
+      showInquiryForm: false,
     },
     en: {
       hero: { title: 'Full range of ', titleAccent: 'ship repair', titleEnd: ' services', lead: 'We deliver end-to-end maintenance and repair solutions for vessels of any type and size.' },
       cta: { title: '', buttonText: 'Request a consultation' },
+      showInquiryForm: false,
     },
   },
   'projects-page': {
@@ -190,27 +195,33 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { title: 'Наши ', titleAccent: 'выполненные', titleEnd: ' проекты', lead: 'Портфолио выполненных работ по ремонту и техническому обслуживанию морских судов в портах по всему миру.' },
       cta: { title: 'Нужен расчёт по вашему судну?', buttonText: 'Оставить заявку' },
       heroImage: '/about-workshop.jpg',
+      showInquiryForm: false,
     } as ProjectsPageData,
     en: {
       hero: { title: 'Our ', titleAccent: 'completed', titleEnd: ' projects', lead: 'A portfolio of repair and maintenance work for seagoing vessels in ports worldwide.' },
       cta: { title: 'Need an estimate for your vessel?', buttonText: 'Send a request' },
       heroImage: '/about-workshop.jpg',
+      showInquiryForm: false,
     } as ProjectsPageData,
   },
   'gallery-page': {
     ru: {
       hero: { title: 'Фото с ', titleAccent: 'объектов', titleEnd: ' и производства', lead: 'Подборка снимков выполненных работ и инфраструктуры Marine Technical Solutions. Нажмите на фото, чтобы открыть крупный план. Навигация стрелками на клавиатуре или кнопками в окне просмотра.' },
+      showInquiryForm: false,
     },
     en: {
       hero: { title: 'Photos from ', titleAccent: 'projects', titleEnd: ' and workshops', lead: 'A selection of completed work and infrastructure at Marine Technical Solutions. Click a photo for a larger view. Use keyboard arrows or the on-screen controls.' },
+      showInquiryForm: false,
     },
   },
   'news-page': {
     ru: {
       hero: { title: 'Последние ', titleAccent: 'новости', titleEnd: ' компании', lead: 'Следите за развитием компании, новыми проектами и достижениями в сфере судоремонта.' },
+      showInquiryForm: false,
     },
     en: {
       hero: { title: 'Latest ', titleAccent: 'news', titleEnd: ' from the company', lead: 'Follow our development, new projects and achievements in ship repair.' },
+      showInquiryForm: false,
     },
   },
 }
@@ -232,6 +243,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     formTitle: 'Обратная связь',
     formLead: 'Заполните форму — мы ответим на email в течение рабочего дня. Для срочных вопросов звоните по телефону.',
     officesTitle: 'Офисы',
+    showInquiryForm: false,
   },
   en: {
     hero: { title: 'Get in ', titleAccent: 'touch', lead: 'Contact our technical department. We respond within two hours and prepare a commercial proposal for your needs.' },
@@ -239,6 +251,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     formTitle: 'Feedback',
     formLead: 'Fill in the form — we reply by email within a business day. For urgent matters, call us.',
     officesTitle: 'Offices',
+    showInquiryForm: false,
   },
 }
 

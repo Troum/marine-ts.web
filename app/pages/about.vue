@@ -184,5 +184,7 @@ const geoLocations = computed<AboutGeoLocation[]>(() => d.value.geography.locati
         </div>
       </div>
     </section>
+
+    <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="about" />
   </div>
 </template>

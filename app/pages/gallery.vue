@@ -163,6 +163,8 @@ onUnmounted(() => {
       </div>
     </section>
 
+    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="gallery" />
+
     <Teleport to="body">
       <Transition
         enter-active-class="transition-opacity duration-200"

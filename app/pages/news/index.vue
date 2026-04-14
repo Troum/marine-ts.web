@@ -159,5 +159,7 @@ function categoryLabel(cat: string | undefined) {
         </div>
       </section>
     </template>
+
+    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="news" />
   </div>
 </template>

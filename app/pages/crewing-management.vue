@@ -167,5 +167,7 @@ const principles = computed(() => [t('pages.crewing.p1'), t('pages.crewing.p2'),
         </div>
       </div>
     </section>
+
+    <CommonPageInquiryForm source-page="crewing-management" />
   </div>
 </template>

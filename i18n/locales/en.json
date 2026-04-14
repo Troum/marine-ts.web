@@ -7,6 +7,8 @@
     "gallery": "Gallery",
     "news": "News",
     "contacts": "Contacts",
+    "more": "More",
+    "moreAria": "More sections",
     "crewing": "Crewing management",
     "vacancies": "Careers"
   },
@@ -194,6 +196,26 @@
       "formSuccess": "Message sent. Thank you for contacting us.",
       "submit": "Send",
       "officesTitle": "Offices"
+    },
+    "pageInquiry": {
+      "sectionLabel": "Request",
+      "title": "Submit a ",
+      "titleAccent": "request",
+      "titleEnd": "",
+      "lead": "Fill in the form and we will get back to you with a solution for your ship management or crewing needs.",
+      "formTitle": "Request details",
+      "formLead": "Provide your contacts and a short description. Vessel and company fields help us respond faster.",
+      "labelName": "Contact person *",
+      "labelEmail": "Email *",
+      "labelPhone": "Phone",
+      "labelCompany": "Company / owner",
+      "labelVessel": "Vessel name",
+      "labelImo": "IMO",
+      "labelMessage": "Message *",
+      "placeholderMessage": "Scope, timeline, port or region…",
+      "submit": "Send request",
+      "success": "Your request has been sent. We will contact you shortly.",
+      "error": "Could not send the request. Please try again later or use the contacts in the site footer."
     },
     "services": {
       "heroTitle": "Full range of ",

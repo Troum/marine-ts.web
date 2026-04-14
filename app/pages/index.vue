@@ -306,5 +306,7 @@ const statIcons = computed(() =>
         </div>
       </div>
     </section>
+
+    <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="home" />
   </div>
 </template>

@@ -335,6 +335,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
+        <section class="bg-white border border-mts-border shadow-tech relative p-6">
+          <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+            <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
+            Показать форму заявки внизу главной страницы
+          </label>
+        </section>
+
         <div class="flex justify-end">
           <button type="button" :disabled="saving" class="btn-primary px-8 disabled:opacity-50" @click="submit">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>
         </div>

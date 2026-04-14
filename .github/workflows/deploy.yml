@@ -1,0 +1,33 @@
+# Репозиторий фронта (корень = Nuxt). Сервер: /var/www/marine-ts.mytests.space
+# Secrets: SSH_HOST, SSH_USER, SSH_KEY, PM2_APP_NAME
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_PATH: /var/www/marine-ts.mytests.space
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            cd ${{ env.DEPLOY_PATH }}
+            git pull origin main
+
+            npm ci
+            npm run build
+
+            pm2 restart ${{ secrets.PM2_APP_NAME }}

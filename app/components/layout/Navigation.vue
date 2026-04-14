@@ -1,13 +1,53 @@
 <script setup lang="ts">
-import { Menu, X, Phone } from 'lucide-vue-next'
+import { Menu, X, Phone, MoreVertical } from 'lucide-vue-next'
 import LanguageSwitch from '~/components/layout/LanguageSwitch.vue'
+import type { NavigationMenuItem } from '~/types'
+import { navigationMenuDefaults } from '~/utils/navigationDefaults'
 
 const route = useRoute()
 const localePath = useLocalePath()
-const { t } = useI18n()
+const { t, locale } = useI18n()
+const api = useMarineApi()
+
+const { data: navigationRemote } = await useAsyncData('site-navigation', async () => {
+  try {
+    return await api.navigationSettings.get()
+  } catch {
+    return null
+  }
+})
+
+const menu = computed(() => navigationRemote.value ?? navigationMenuDefaults)
+
+function labelForLocale(item: NavigationMenuItem): string {
+  const loc = locale.value === 'en' ? 'en' : 'ru'
+  return item.label[loc] || item.label.ru || item.label.en || ''
+}
+
+function isExternalPath(p: string) {
+  return /^https?:\/\//i.test(p.trim())
+}
+
+const primaryLinks = computed(() =>
+  menu.value.main.map((item) => ({
+    path: item.path,
+    label: labelForLocale(item),
+  })),
+)
+
+const moreLinks = computed(() =>
+  menu.value.more.map((item) => ({
+    path: item.path,
+    label: labelForLocale(item),
+  })),
+)
+
+const showMoreBlock = computed(() => moreLinks.value.length > 0)
 
 const isScrolled = ref(false)
 const isMobileMenuOpen = ref(false)
+const moreOpen = ref(false)
+const moreMenuRoot = ref<HTMLElement | null>(null)
 
 onMounted(() => {
   const onScroll = () => {
@@ -15,27 +55,43 @@ onMounted(() => {
   }
   window.addEventListener('scroll', onScroll, { passive: true })
   onScroll()
-  onUnmounted(() => window.removeEventListener('scroll', onScroll))
+
+  function onDocumentClick(e: MouseEvent) {
+    const el = moreMenuRoot.value
+    if (!moreOpen.value || !el) {
+      return
+    }
+    const target = e.target
+    if (target instanceof Node && !el.contains(target)) {
+      moreOpen.value = false
+    }
+  }
+  function onKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      moreOpen.value = false
+    }
+  }
+  document.addEventListener('click', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+  onUnmounted(() => {
+    window.removeEventListener('scroll', onScroll)
+    document.removeEventListener('click', onDocumentClick)
+    document.removeEventListener('keydown', onKeydown)
+  })
 })
 
 watch(
   () => route.path,
   () => {
     isMobileMenuOpen.value = false
+    moreOpen.value = false
   },
 )
 
-const navLinks = computed(() => [
-  { label: t('nav.home'), href: '/' },
-  { label: t('nav.about'), href: '/about' },
-  { label: t('nav.services'), href: '/services' },
-  { label: t('nav.projects'), href: '/projects' },
-  { label: t('nav.gallery'), href: '/gallery' },
-  { label: t('nav.news'), href: '/news' },
-  { label: t('nav.contacts'), href: '/contacts' },
-])
-
-function isActive(href: string) {
+function isActivePath(href: string) {
+  if (isExternalPath(href)) {
+    return false
+  }
   const resolved = localePath(href)
   const path = route.path.replace(/\/$/, '') || '/'
   const target = String(resolved).replace(/\/$/, '') || '/'
@@ -43,6 +99,13 @@ function isActive(href: string) {
     return path === '/' || path === '/en'
   }
   return path === target || path.startsWith(`${target}/`)
+}
+
+const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActivePath(link.path)))
+
+function toggleMore(e: Event) {
+  e.stopPropagation()
+  moreOpen.value = !moreOpen.value
 }
 </script>
 
@@ -60,23 +123,97 @@ function isActive(href: string) {
         </NuxtLink>
 
         <div class="hidden lg:flex items-center gap-6 xl:gap-8">
-          <NuxtLink
-            v-for="link in navLinks"
-            :key="link.href"
-            :to="localePath(link.href)"
-            :class="[
-              'font-mono text-xs font-medium tracking-[0.08em] uppercase transition-colors duration-200 relative group',
-              isActive(link.href) ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
-            ]"
-          >
-            {{ link.label }}
-            <span
+          <template v-for="(link, i) in primaryLinks" :key="`nav-p-${i}-${link.path}`">
+            <a
+              v-if="isExternalPath(link.path)"
+              :href="link.path"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-mono text-xs font-medium tracking-[0.08em] uppercase transition-colors duration-200 relative group text-mts-text-secondary hover:text-mts-accent"
+            >
+              {{ link.label }}
+              <span class="absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200 w-0 group-hover:w-full" />
+            </a>
+            <NuxtLink
+              v-else
+              :to="localePath(link.path)"
               :class="[
-                'absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200',
-                isActive(link.href) ? 'w-full' : 'w-0 group-hover:w-full',
+                'font-mono text-xs font-medium tracking-[0.08em] uppercase transition-colors duration-200 relative group',
+                isActivePath(link.path) ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
               ]"
-            />
-          </NuxtLink>
+            >
+              {{ link.label }}
+              <span
+                :class="[
+                  'absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200',
+                  isActivePath(link.path) ? 'w-full' : 'w-0 group-hover:w-full',
+                ]"
+              />
+            </NuxtLink>
+          </template>
+
+          <div v-if="showMoreBlock" ref="moreMenuRoot" class="relative">
+            <button
+              type="button"
+              class="flex items-center gap-1.5 font-mono text-xs font-medium tracking-[0.08em] uppercase transition-colors duration-200 relative group"
+              :class="[
+                isMoreSectionActive || moreOpen ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
+              ]"
+              :aria-expanded="moreOpen"
+              :aria-haspopup="true"
+              :aria-label="t('nav.moreAria')"
+              @click="toggleMore"
+            >
+              <MoreVertical class="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{{ t('nav.more') }}</span>
+              <span
+                :class="[
+                  'absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200',
+                  isMoreSectionActive || moreOpen ? 'w-full' : 'w-0 group-hover:w-full',
+                ]"
+              />
+            </button>
+            <Transition
+              enter-active-class="transition duration-150 ease-out"
+              enter-from-class="opacity-0 -translate-y-0.5"
+              enter-to-class="opacity-100 translate-y-0"
+              leave-active-class="transition duration-100 ease-in"
+              leave-from-class="opacity-100 translate-y-0"
+              leave-to-class="opacity-0 -translate-y-0.5"
+            >
+              <div
+                v-show="moreOpen"
+                class="absolute right-0 top-[calc(100%+0.5rem)] z-[60] min-w-[12rem] border border-mts-border bg-white py-1 shadow-tech"
+                role="menu"
+              >
+                <template v-for="(link, i) in moreLinks" :key="`nav-m-${i}-${link.path}`">
+                  <a
+                    v-if="isExternalPath(link.path)"
+                    :href="link.path"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    role="menuitem"
+                    class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent"
+                    @click="moreOpen = false"
+                  >
+                    {{ link.label }}
+                  </a>
+                  <NuxtLink
+                    v-else
+                    :to="localePath(link.path)"
+                    role="menuitem"
+                    class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors"
+                    :class="[
+                      isActivePath(link.path) ? 'bg-mts-bg text-mts-accent' : 'text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent',
+                    ]"
+                    @click="moreOpen = false"
+                  >
+                    {{ link.label }}
+                  </NuxtLink>
+                </template>
+              </div>
+            </Transition>
+          </div>
         </div>
 
         <div class="hidden lg:flex items-center gap-4 xl:gap-6">
@@ -120,17 +257,53 @@ function isActive(href: string) {
       ]"
     >
       <div class="space-y-1">
-        <NuxtLink
-          v-for="link in navLinks"
-          :key="link.href"
-          :to="localePath(link.href)"
-          :class="[
-            'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
-            isActive(link.href) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
-          ]"
-        >
-          {{ link.label }}
-        </NuxtLink>
+        <template v-for="(link, i) in primaryLinks" :key="`nav-mob-p-${i}-${link.path}`">
+          <a
+            v-if="isExternalPath(link.path)"
+            :href="link.path"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
+          >
+            {{ link.label }}
+          </a>
+          <NuxtLink
+            v-else
+            :to="localePath(link.path)"
+            :class="[
+              'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
+              isActivePath(link.path) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+            ]"
+          >
+            {{ link.label }}
+          </NuxtLink>
+        </template>
+        <template v-if="showMoreBlock">
+          <div class="px-4 pt-3 pb-1">
+            <p class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">{{ t('nav.more') }}</p>
+          </div>
+          <template v-for="(link, i) in moreLinks" :key="`nav-mob-m-${i}-${link.path}`">
+            <a
+              v-if="isExternalPath(link.path)"
+              :href="link.path"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
+            >
+              {{ link.label }}
+            </a>
+            <NuxtLink
+              v-else
+              :to="localePath(link.path)"
+              :class="[
+                'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
+                isActivePath(link.path) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+              ]"
+            >
+              {{ link.label }}
+            </NuxtLink>
+          </template>
+        </template>
       </div>
       <div class="mt-4 pt-4 border-t border-mts-border">
         <a href="tel:84012355290" class="flex items-center gap-3 text-mts-text px-4 py-3">

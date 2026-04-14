@@ -100,5 +100,7 @@ const { data: services, pending, error } = await useAsyncData(
         </div>
       </div>
     </section>
+
+    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="services" />
   </div>
 </template>

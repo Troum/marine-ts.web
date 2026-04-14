@@ -66,5 +66,21 @@ export function useAdminPermissions() {
     }
   })
 
-  return { canManageUsers, canManageContentPages, canManageGallery, canManageContacts }
+  const canManageNavigation = computed(() => {
+    if (!import.meta.client) {
+      return false
+    }
+    try {
+      const raw = sessionStorage.getItem('mts_admin_permissions')
+      if (!raw) {
+        return false
+      }
+      const perms = JSON.parse(raw) as string[]
+      return Array.isArray(perms) && perms.includes('manage navigation')
+    } catch {
+      return false
+    }
+  })
+
+  return { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation }
 }

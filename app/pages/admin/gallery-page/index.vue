@@ -48,6 +48,10 @@ onMounted(async () => {
 })
 
 async function submit() {
+  const inq = data.value[localeTab.value].showInquiryForm
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].showInquiryForm = inq
+  }
   saving.value = true
   try {
     const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }>
@@ -123,6 +127,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <textarea v-model="d.hero.lead" rows="4" :class="sectionInput" />
             </div>
           </div>
+        </section>
+
+        <section class="bg-white border border-mts-border shadow-tech relative p-6">
+          <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+            <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
+            Показать форму заявки внизу страницы «Галерея»
+          </label>
         </section>
 
         <div class="flex justify-end">

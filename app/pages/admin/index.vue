@@ -23,6 +23,8 @@ import {
   Ship,
   Camera,
   Mail,
+  Inbox,
+  LayoutList,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -34,7 +36,8 @@ definePageMeta({
 
 const api = useMarineApi()
 const { logout } = useAuth()
-const { canManageUsers, canManageContentPages, canManageGallery, canManageContacts } = useAdminPermissions()
+const { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation } =
+  useAdminPermissions()
 
 const sectionPickerOpen = ref(false)
 const sectionOptions = [
@@ -438,6 +441,27 @@ const statCards = computed(() => [
             </div>
           </div>
 
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Inbox class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Заявки</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Заявки с формы на страницах сайта (судовой менеджмент, разделы с подключённой формой): контакты, судно, текст запроса.
+              </p>
+              <NuxtLink
+                to="/admin/inquiries"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Открыть заявки
+              </NuxtLink>
+            </div>
+          </div>
+
           <div v-if="canManageContacts" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -455,6 +479,27 @@ const statCards = computed(() => [
               >
                 <Edit class="w-4 h-4" />
                 Редактировать контакты
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <LayoutList class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Меню в шапке</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Ссылки в основной строке навигации и в списке «Ещё»: пути, подписи RU/EN, внешние URL.
+              </p>
+              <NuxtLink
+                to="/admin/navigation"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Редактировать меню
               </NuxtLink>
             </div>
           </div>

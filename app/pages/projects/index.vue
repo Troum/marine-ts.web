@@ -194,5 +194,7 @@ const filteredProjects = computed(() => {
         </NuxtLink>
       </div>
     </section>
+
+    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="projects" />
   </div>
 </template>

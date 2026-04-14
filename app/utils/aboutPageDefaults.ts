@@ -80,6 +80,7 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
         { name: 'ISO 45001:2018', desc: 'Система менеджмента безопасности', fileUrl: '' },
       ],
     },
+    showInquiryForm: false,
   },
   en: {
     hero: {
@@ -139,6 +140,7 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
         { name: 'ISO 45001:2018', desc: 'Occupational health and safety management system', fileUrl: '' },
       ],
     },
+    showInquiryForm: false,
   },
 }
 
@@ -201,5 +203,7 @@ export function syncStructuralFields(
       }
     })
     dst.certificates.items.length = src.certificates.items.length
+
+    dst.showInquiryForm = src.showInquiryForm
   }
 }

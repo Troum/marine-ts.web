@@ -1,0 +1,297 @@
+<script setup lang="ts">
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
+import type { NavigationMenuItem, NavigationMenuSettings } from '~/types'
+import { navigationMenuDefaults } from '~/utils/navigationDefaults'
+
+definePageMeta({
+  layout: 'admin',
+  middleware: 'admin',
+})
+
+const api = useMarineApi()
+const { show: showAdminAlert } = useAdminAlert()
+const adminToast = useAdminToast()
+const { canManageNavigation } = useAdminPermissions()
+
+const loading = ref(true)
+const saving = ref(false)
+const form = ref<NavigationMenuSettings>(structuredClone(navigationMenuDefaults))
+
+function emptyItem(): NavigationMenuItem {
+  return { path: '/', label: { ru: '', en: '' } }
+}
+
+onMounted(async () => {
+  if (!canManageNavigation.value) {
+    await navigateTo('/admin')
+    return
+  }
+  try {
+    form.value = await api.navigationSettings.get()
+  } catch {
+    await showAdminAlert({ message: 'Не удалось загрузить меню', variant: 'error' })
+    form.value = structuredClone(navigationMenuDefaults)
+  } finally {
+    loading.value = false
+  }
+})
+
+function addMain() {
+  form.value.main.push(emptyItem())
+}
+
+function removeMain(i: number) {
+  if (form.value.main.length <= 1) {
+    return
+  }
+  form.value.main.splice(i, 1)
+}
+
+function moveMain(i: number, dir: -1 | 1) {
+  const arr = form.value.main
+  const j = i + dir
+  if (j < 0 || j >= arr.length) {
+    return
+  }
+  const a = arr[i]!
+  const b = arr[j]!
+  arr[i] = b
+  arr[j] = a
+}
+
+function addMore() {
+  form.value.more.push(emptyItem())
+}
+
+function removeMore(i: number) {
+  form.value.more.splice(i, 1)
+}
+
+function moveMore(i: number, dir: -1 | 1) {
+  const arr = form.value.more
+  const j = i + dir
+  if (j < 0 || j >= arr.length) {
+    return
+  }
+  const a = arr[i]!
+  const b = arr[j]!
+  arr[i] = b
+  arr[j] = a
+}
+
+async function submit() {
+  saving.value = true
+  try {
+    const payload: NavigationMenuSettings = {
+      main: form.value.main.map((row) => ({
+        path: row.path.trim() || '/',
+        label: { ru: row.label.ru.trim(), en: row.label.en.trim() },
+      })),
+      more: form.value.more.map((row) => ({
+        path: row.path.trim() || '/',
+        label: { ru: row.label.ru.trim(), en: row.label.en.trim() },
+      })),
+    }
+    await api.navigationSettings.update(payload)
+    form.value = await api.navigationSettings.get()
+    adminToast.success('Меню сохранено')
+  } catch {
+    await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+
+<template>
+  <div>
+    <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
+      <div class="mx-auto flex h-16 max-w-4xl items-center px-6 lg:px-12">
+        <NuxtLink to="/admin" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
+          <ArrowLeft class="h-5 w-5" />
+        </NuxtLink>
+        <h1 class="font-display text-xl text-mts-text">Меню в шапке</h1>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-4xl px-6 py-8 lg:px-12">
+      <div v-if="loading" class="flex justify-center py-24">
+        <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
+      </div>
+      <form v-else class="relative border border-mts-border bg-white p-8 shadow-tech" @submit.prevent="submit">
+        <CommonAccentCorners />
+
+        <p class="font-body text-sm text-mts-text-secondary mb-8">
+          Первый ряд ссылок в шапке и пункты в выпадающем списке «Ещё». Путь — внутренний (например
+          <span class="font-mono">/news</span>) или полный URL (<span class="font-mono">https://…</span>).
+        </p>
+
+        <h2 class="font-display text-lg text-mts-text mb-4">Основное меню</h2>
+        <div class="space-y-4 mb-10">
+          <div
+            v-for="(row, i) in form.main"
+            :key="`main-${i}`"
+            class="grid gap-4 border border-mts-border p-4 bg-mts-bg/50 sm:grid-cols-2"
+          >
+            <div class="sm:col-span-2 flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                :disabled="i === 0"
+                aria-label="Выше"
+                @click="moveMain(i, -1)"
+              >
+                <ChevronUp class="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                :disabled="i === form.main.length - 1"
+                aria-label="Ниже"
+                @click="moveMain(i, 1)"
+              >
+                <ChevronDown class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Путь или URL</label
+              >
+              <input
+                v-model="row.path"
+                type="text"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                placeholder="/services или https://…"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Подпись (RU)</label
+              >
+              <input
+                v-model="row.label.ru"
+                type="text"
+                required
+                maxlength="120"
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Подпись (EN)</label
+              >
+              <input
+                v-model="row.label.en"
+                type="text"
+                required
+                maxlength="120"
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div class="sm:col-span-2 flex justify-end">
+              <button
+                v-if="form.main.length > 1"
+                type="button"
+                class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
+                @click="removeMain(i)"
+              >
+                <Trash2 class="h-4 w-4" />
+                Удалить
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addMain">
+            <Plus class="h-4 w-4" />
+            Добавить пункт
+          </button>
+        </div>
+
+        <h2 class="font-display text-lg text-mts-text mb-4">Меню «Ещё»</h2>
+        <div class="space-y-4 mb-10">
+          <div
+            v-for="(row, i) in form.more"
+            :key="`more-${i}`"
+            class="grid gap-4 border border-mts-border p-4 bg-mts-bg/30 sm:grid-cols-2"
+          >
+            <div class="sm:col-span-2 flex flex-wrap items-center gap-2 justify-end">
+              <button
+                type="button"
+                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                :disabled="i === 0"
+                aria-label="Выше"
+                @click="moveMore(i, -1)"
+              >
+                <ChevronUp class="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                :disabled="i === form.more.length - 1"
+                aria-label="Ниже"
+                @click="moveMore(i, 1)"
+              >
+                <ChevronDown class="h-4 w-4" />
+              </button>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Путь или URL</label
+              >
+              <input
+                v-model="row.path"
+                type="text"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                placeholder="/gallery или https://…"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Подпись (RU)</label
+              >
+              <input
+                v-model="row.label.ru"
+                type="text"
+                required
+                maxlength="120"
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Подпись (EN)</label
+              >
+              <input
+                v-model="row.label.en"
+                type="text"
+                required
+                maxlength="120"
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div class="sm:col-span-2 flex justify-end">
+              <button
+                type="button"
+                class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
+                @click="removeMore(i)"
+              >
+                <Trash2 class="h-4 w-4" />
+                Удалить
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addMore">
+            <Plus class="h-4 w-4" />
+            Добавить пункт
+          </button>
+        </div>
+
+        <div class="flex gap-4">
+          <button type="submit" :disabled="saving" class="btn-primary">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>
+          <NuxtLink to="/admin" class="btn-secondary">Отмена</NuxtLink>
+        </div>
+      </form>
+    </main>
+  </div>
+</template>

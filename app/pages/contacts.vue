@@ -224,5 +224,7 @@ async function submitFeedback() {
         </div>
       </div>
     </section>
+
+    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="contacts" />
   </div>
 </template>
