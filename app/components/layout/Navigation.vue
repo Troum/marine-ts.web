@@ -2,7 +2,7 @@
 import { Menu, X, Phone, MoreVertical, ChevronDown } from 'lucide-vue-next'
 import LanguageSwitch from '~/components/layout/LanguageSwitch.vue'
 import type { NavigationMenuItem } from '~/types'
-import { navigationMenuDefaults } from '~/utils/navigationDefaults'
+import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 
 const route = useRoute()
 const localePath = useLocalePath()
@@ -17,7 +17,7 @@ const { data: navigationRemote } = await useAsyncData('site-navigation', async (
   }
 })
 
-const menu = computed(() => navigationRemote.value ?? navigationMenuDefaults)
+const menu = computed(() => navigationRemote.value ?? emptyNavigationSettings())
 
 function labelForLocale(item: NavigationMenuItem): string {
   const loc = locale.value === 'en' ? 'en' : 'ru'

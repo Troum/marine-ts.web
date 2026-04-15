@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
 import type { NavigationMenuItem, NavigationMenuSettings } from '~/types'
-import { navigationMenuDefaults } from '~/utils/navigationDefaults'
+import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 
 definePageMeta({
   layout: 'admin',
@@ -15,7 +15,7 @@ const { canManageNavigation } = useAdminPermissions()
 
 const loading = ref(true)
 const saving = ref(false)
-const form = ref<NavigationMenuSettings>(structuredClone(navigationMenuDefaults))
+const form = ref<NavigationMenuSettings>(emptyNavigationSettings())
 
 function emptyItem(): NavigationMenuItem {
   return { path: '/', label: { ru: '', en: '' } }
@@ -48,7 +48,7 @@ onMounted(async () => {
     form.value = await api.navigationSettings.get()
   } catch {
     await showAdminAlert({ message: 'Не удалось загрузить меню', variant: 'error' })
-    form.value = structuredClone(navigationMenuDefaults)
+    form.value = emptyNavigationSettings()
   } finally {
     loading.value = false
   }
@@ -59,9 +59,6 @@ function addMain() {
 }
 
 function removeMain(i: number) {
-  if (form.value.main.length <= 1) {
-    return
-  }
   form.value.main.splice(i, 1)
 }
 
@@ -328,7 +325,6 @@ async function submit() {
 
             <div class="sm:col-span-2 flex justify-end">
               <button
-                v-if="form.main.length > 1"
                 type="button"
                 class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
                 @click="removeMain(i)"
