@@ -11,8 +11,6 @@
     "moreAria": "Дополнительные разделы",
     "shipManagement": "Судовой менеджмент",
     "crewing": "Крюинг",
-    "shipRepair": "Судоремонт",
-    "spareParts": "Запчасти",
     "vacancies": "Вакансии"
   },
   "header": {
@@ -48,7 +46,7 @@
   },
   "home": {
     "hero": {
-      "label": "Судоремонтные услуги",
+      "label": "Морские услуги",
       "titleLine1": "Техническое обслуживание",
       "titleAccent": "судов",
       "titleSuffix": " по всему миру",
@@ -80,7 +78,7 @@
     "services": {
       "label": "Услуги",
       "heading": "Полный спектр ",
-      "headingAccent": "судоремонтных",
+      "headingAccent": "морских",
       "headingEnd": " услуг",
       "all": "Все услуги",
       "more": "Подробнее →",

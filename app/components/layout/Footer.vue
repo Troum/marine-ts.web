@@ -15,8 +15,6 @@ const serviceLinks = computed(() => [
   { label: t('nav.services'), href: '/services' },
   { label: t('nav.shipManagement'), href: '/ship-management' },
   { label: t('nav.crewing'), href: '/crewing-management' },
-  { label: t('nav.shipRepair'), href: '/ship-repair' },
-  { label: t('nav.spareParts'), href: '/spare-parts' },
 ])
 
 const candidateLinks = computed(() => [

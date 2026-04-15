@@ -13,11 +13,7 @@ import {
   DEFAULT_CREWING_CHECKLIST_SECTIONS_EN,
   DEFAULT_CREWING_CHECKLIST_SECTIONS_RU,
 } from '~/utils/crewingChecklistDefaults'
-import {
-  SHIP_MANAGEMENT_DEFAULTS,
-  SHIP_REPAIR_DEFAULTS,
-  SPARE_PARTS_DEFAULTS,
-} from '~/utils/extraLinePageDefaults'
+import { SHIP_MANAGEMENT_DEFAULTS } from '~/utils/extraLinePageDefaults'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
 
 /* ── Home page ── */
@@ -67,13 +63,13 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       href: '/vacancies',
     },
     funnelTechnical: {
-      label: 'Техника и ремонт',
-      title: 'Судоремонт и',
-      titleAccent: 'запчасти',
-      titleEnd: '',
-      text: 'Дефектоскопия, механика, электрика, докование — полный цикл или точечные работы в портах присутствия.',
-      cta: 'Смотреть услуги',
-      href: '/ship-repair',
+      label: 'Услуги',
+      title: 'Инженерные ',
+      titleAccent: 'решения',
+      titleEnd: ' для флота',
+      text: 'Каталог услуг: техническое сопровождение, проекты и консультации — выберите направление и свяжитесь с нами.',
+      cta: 'Каталог услуг',
+      href: '/services',
     },
     directions: {
       label: 'Направления',
@@ -92,18 +88,6 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
           description: 'Подбор экипажей, контракты, сопровождение моряков и компаний.',
           cta: 'Крюинг',
           href: '/crewing-management',
-        },
-        {
-          title: 'Судоремонт',
-          description: 'Корпус, механика, электрика — ремонт по классу и срокам.',
-          cta: 'Ремонт',
-          href: '/ship-repair',
-        },
-        {
-          title: 'Запчасти и снабжение',
-          description: 'Поставки под задачу судна и рейса.',
-          cta: 'Запросить',
-          href: '/spare-parts',
         },
       ],
     },
@@ -128,7 +112,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     services: {
       label: 'Услуги',
       heading: 'Полный спектр ',
-      headingAccent: 'судоремонтных',
+      headingAccent: 'морских',
       headingEnd: ' услуг',
       all: 'Все услуги',
       more: 'Подробнее →',
@@ -137,11 +121,11 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     process: {
       label: 'Процесс',
       heading: 'Три шага к',
-      headingAccent: 'надёжному ремонту',
+      headingAccent: 'результату',
       steps: [
-        { title: 'Заявка и оценка', text: 'Принимаем обращение, согласуем объём работ и сроки выезда специалистов.' },
-        { title: 'Диагностика и ремонт', text: 'Проводим обследование, выполняем ремонт по классу и стандартам IACS.' },
-        { title: 'Сдача и гарантия', text: 'Оформляем документацию, передаём объект и сопровождаем по гарантии.' },
+        { title: 'Заявка и консультация', text: 'Принимаем обращение, уточняем задачу и согласуем следующий шаг.' },
+        { title: 'Решение и реализация', text: 'Подбираем команду и формат работ в соответствии с требованиями класса и судовладельца.' },
+        { title: 'Сдача и сопровождение', text: 'Передаём результат, оформляем документацию и остаёмся на связи по согласованным вопросам.' },
       ],
     },
     cta: {
@@ -198,13 +182,13 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       href: '/vacancies',
     },
     funnelTechnical: {
-      label: 'Technical',
-      title: 'Repair &',
-      titleAccent: 'spares',
+      label: 'Services',
+      title: 'Engineering ',
+      titleAccent: 'solutions',
       titleEnd: '',
-      text: 'UT, machinery, electrical, docking — full cycle or targeted jobs in our ports.',
-      cta: 'Services',
-      href: '/ship-repair',
+      text: 'Browse the catalogue — technical support, projects and consulting. Pick a line and get in touch.',
+      cta: 'All services',
+      href: '/services',
     },
     directions: {
       label: 'Focus areas',
@@ -223,18 +207,6 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
           description: 'Recruitment, contracts, support for crews and companies.',
           cta: 'Crewing',
           href: '/crewing-management',
-        },
-        {
-          title: 'Ship repair',
-          description: 'Hull, machinery, electrical — class and schedule.',
-          cta: 'Repair',
-          href: '/ship-repair',
-        },
-        {
-          title: 'Spares & supply',
-          description: 'Procurement for vessel and voyage needs.',
-          cta: 'Contact',
-          href: '/spare-parts',
         },
       ],
     },
@@ -259,7 +231,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     services: {
       label: 'Services',
       heading: 'Full range of ',
-      headingAccent: 'ship repair',
+      headingAccent: 'marine',
       headingEnd: ' services',
       all: 'All services',
       more: 'Learn more →',
@@ -268,11 +240,11 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     process: {
       label: 'Process',
       heading: 'Three steps to',
-      headingAccent: 'reliable repair',
+      headingAccent: 'delivery',
       steps: [
-        { title: 'Request & estimate', text: 'We take your request, agree on scope and mobilisation timeline.' },
-        { title: 'Diagnosis & repair', text: 'We survey the vessel and perform class-compliant work to IACS standards.' },
-        { title: 'Handover & warranty', text: 'We complete documentation, hand over the job and support under warranty.' },
+        { title: 'Request & consultation', text: 'We take your enquiry, clarify the scope and agree on the next step.' },
+        { title: 'Solution & execution', text: 'We align the team and scope with class and owner requirements.' },
+        { title: 'Handover & follow-up', text: 'We deliver results, complete documentation and stay available as agreed.' },
       ],
     },
     cta: {
@@ -393,12 +365,12 @@ type ListingSlug = 'services-page' | 'projects-page' | 'gallery-page' | 'news-pa
 const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingPageData | ProjectsPageData>> = {
   'services-page': {
     ru: {
-      hero: { title: 'Полный спектр ', titleAccent: 'судоремонтных', titleEnd: ' услуг', lead: 'Мы предоставляем комплексные решения для технического обслуживания и ремонта морских судов любого типа и размера.' },
+      hero: { title: 'Полный спектр ', titleAccent: 'морских', titleEnd: ' услуг', lead: 'Мы предоставляем комплексные инженерные и сервисные решения для морского флота любого типа и размера.' },
       cta: { title: '', buttonText: 'Запросить консультацию' },
       showInquiryForm: false,
     },
     en: {
-      hero: { title: 'Full range of ', titleAccent: 'ship repair', titleEnd: ' services', lead: 'We deliver end-to-end maintenance and repair solutions for vessels of any type and size.' },
+      hero: { title: 'Full range of ', titleAccent: 'marine', titleEnd: ' services', lead: 'We deliver engineering and marine services for vessels of any type and size.' },
       cta: { title: '', buttonText: 'Request a consultation' },
       showInquiryForm: false,
     },
@@ -429,11 +401,11 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
   },
   'news-page': {
     ru: {
-      hero: { title: 'Последние ', titleAccent: 'новости', titleEnd: ' компании', lead: 'Следите за развитием компании, новыми проектами и достижениями в сфере судоремонта.' },
+      hero: { title: 'Последние ', titleAccent: 'новости', titleEnd: ' компании', lead: 'Следите за развитием компании, новыми проектами и новостями отрасли.' },
       showInquiryForm: false,
     },
     en: {
-      hero: { title: 'Latest ', titleAccent: 'news', titleEnd: ' from the company', lead: 'Follow our development, new projects and achievements in ship repair.' },
+      hero: { title: 'Latest ', titleAccent: 'news', titleEnd: ' from the company', lead: 'Follow our development, new projects and maritime industry updates.' },
       showInquiryForm: false,
     },
   },
@@ -513,7 +485,7 @@ function mergeCrewingChecklistBlock(
   }
 }
 
-/* ── Line marketing pages (крюинг, судовой менеджмент, судоремонт, запчасти) ── */
+/* ── Line marketing pages (крюинг, судовой менеджмент) ── */
 
 const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
   ru: {
@@ -661,8 +633,6 @@ const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
 const LINE_PAGE_DATA: Record<LineMarketingPageSlug, Record<MarineContentLocale, CrewingPageData>> = {
   'crewing-management': CREWING_DEFAULTS,
   'ship-management': SHIP_MANAGEMENT_DEFAULTS,
-  'ship-repair': SHIP_REPAIR_DEFAULTS,
-  'spare-parts': SPARE_PARTS_DEFAULTS,
 }
 
 export function defaultLinePageData(slug: LineMarketingPageSlug, locale: MarineContentLocale): CrewingPageData {

@@ -59,18 +59,6 @@ const sectionOptions = [
     icon: Users,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
   },
-  {
-    label: 'Судоремонт',
-    to: '/admin/line-pages/ship-repair',
-    icon: Wrench,
-    desc: 'Hero, направления, чек-лист, принципы, аудитория',
-  },
-  {
-    label: 'Запчасти',
-    to: '/admin/line-pages/spare-parts',
-    icon: ClipboardList,
-    desc: 'Hero, направления, чек-лист, принципы, аудитория',
-  },
   { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы' },
 ]
 

@@ -282,7 +282,7 @@ async function submit() {
                       type="text"
                       required
                       class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
-                      placeholder="/ship-repair"
+                      placeholder="/ship-management"
                     />
                   </div>
                   <div>

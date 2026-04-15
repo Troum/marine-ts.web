@@ -11,8 +11,6 @@
     "moreAria": "More sections",
     "shipManagement": "Ship management",
     "crewing": "Crewing",
-    "shipRepair": "Ship repair",
-    "spareParts": "Spare parts",
     "vacancies": "Careers"
   },
   "header": {
@@ -48,7 +46,7 @@
   },
   "home": {
     "hero": {
-      "label": "Ship repair services",
+      "label": "Marine services",
       "titleLine1": "Technical maintenance for",
       "titleAccent": "vessels",
       "titleSuffix": " worldwide",
@@ -80,7 +78,7 @@
     "services": {
       "label": "Services",
       "heading": "Full range of ",
-      "headingAccent": "ship repair",
+      "headingAccent": "marine",
       "headingEnd": " services",
       "all": "All services",
       "more": "Learn more →",
