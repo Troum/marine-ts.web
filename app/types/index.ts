@@ -166,7 +166,8 @@ export type ApplicationFormStatus = 'pending' | 'accepted' | 'rejected' | 'docum
 
 export interface ApplicationFormItem {
   id: number
-  vacancyId: number
+  /** null — открытая анкета без вакансии */
+  vacancyId: number | null
   /** Заполняется в списке «все анкеты» при загрузке связи vacancy. */
   vacancyTitle?: string | null
   vacancySlug?: string | null
@@ -212,6 +213,8 @@ export interface ServiceItem {
   features: string[]
   iconKey: string
   sortOrder: number
+  /** Публичный URL изображения для карточки (загрузка в админке). */
+  imageUrl?: string | null
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
@@ -337,6 +340,8 @@ export interface SiteContactSettings {
 export interface NavigationMenuItem {
   path: string
   label: Record<MarineContentLocale, string>
+  /** Вложенные ссылки (выпадающее подменю). У родителя `path` может быть `#`, если сам пункт не ведёт на страницу. */
+  children?: NavigationMenuItem[]
 }
 
 export interface NavigationMenuSettings {
@@ -427,12 +432,54 @@ export interface HomeHero {
   titleAccent: string
   titleSuffix: string
   lead: string
-  ctaConsult: string
-  ctaServices: string
+  /** Клиент: заявка */
+  ctaClient: string
+  ctaClientHref: string
+  /** Моряк: анкета */
+  ctaSeafarer: string
+  ctaSeafarerHref: string
+  /** @deprecated совместимость со старым JSON главной */
+  ctaConsult?: string
+  /** @deprecated */
+  ctaServices?: string
   badgeIso: string
   badgeIacs: string
   badgeYears: string
   scroll: string
+}
+
+/** Акцентный блок воронки на главной (судовой менеджмент / крюинг / ремонт). */
+export interface HomeFunnelSpotlight {
+  label: string
+  title: string
+  titleAccent: string
+  titleEnd: string
+  text: string
+  cta: string
+  href: string
+}
+
+export interface HomeDirectionRow {
+  title: string
+  description: string
+  cta: string
+  href: string
+}
+
+export interface HomeDirectionsSection {
+  label: string
+  heading: string
+  headingAccent: string
+  headingEnd: string
+  rows: HomeDirectionRow[]
+}
+
+/** Коротко «доверие»: маркеры под «О компании». */
+export interface HomeTrustStrip {
+  label: string
+  title: string
+  titleAccent: string
+  bullets: string[]
 }
 
 export interface HomeStat {
@@ -455,12 +502,6 @@ export interface HomeAboutPreview {
   more: string
 }
 
-export interface HomeServiceCard {
-  image: string
-  title: string
-  description: string
-}
-
 export interface HomeServicesSection {
   label: string
   heading: string
@@ -468,7 +509,8 @@ export interface HomeServicesSection {
   headingEnd: string
   all: string
   more: string
-  cards: HomeServiceCard[]
+  /** ID услуг из каталога (порядок = порядок на главной). Пусто — блок «Услуги» не показывается. */
+  featuredServiceIds: number[]
 }
 
 export interface HomeProcessStep {
@@ -494,8 +536,15 @@ export interface HomeCTA {
 export interface HomePageData {
   hero: HomeHero
   statsCard: HomeStatsCard
+  funnelShip: HomeFunnelSpotlight
+  funnelCrewing: HomeFunnelSpotlight
+  funnelTechnical: HomeFunnelSpotlight
+  directions: HomeDirectionsSection
   about: HomeAboutPreview
+  trust: HomeTrustStrip
   services: HomeServicesSection
+  /** Скрыть блок «процесс» (устаревший сценарий ремонта). */
+  showProcess?: boolean
   process: HomeProcessSection
   cta: HomeCTA
   /** Показать блок формы заявки внизу главной. */
@@ -534,5 +583,64 @@ export interface ContactsPageData {
   formTitle: string
   formLead: string
   officesTitle: string
+  showInquiryForm?: boolean
+}
+
+/** Структурированный JSON страницы «Крюинг-менеджмент» (CMS, body в content_pages). */
+export interface CrewingDirectionItem {
+  icon: string
+  title: string
+  text: string
+}
+
+/** Один пункт чек-листа (заголовок строки + пояснение). */
+export interface CrewingChecklistPoint {
+  title: string
+  text: string
+}
+
+/** Группа пунктов с общим подзаголовком (I, II, …). */
+export interface CrewingChecklistSection {
+  heading: string
+  points: CrewingChecklistPoint[]
+}
+
+/** Раскрывающийся блок «полный чек-лист» (критерии отбора экипажа). */
+export interface CrewingChecklistBlock {
+  /** Текст кнопки в свёрнутом состоянии */
+  toggleShow: string
+  /** Текст кнопки в развёрнутом состоянии */
+  toggleHide: string
+  /** Вводный абзац над списком (показывается только если есть хотя бы один пункт) */
+  intro: string
+  sections: CrewingChecklistSection[]
+}
+
+export interface CrewingPageData {
+  hero: {
+    label: string
+    title: string
+    titleAccent: string
+    titleEnd: string
+    lead: string
+  }
+  directionsSection: {
+    title: string
+    lead: string
+  }
+  directions: CrewingDirectionItem[]
+  principles: {
+    title: string
+    items: string[]
+  }
+  audience: {
+    title: string
+    paragraph1: string
+    paragraph2: string
+    ctaLabel: string
+    /** Внутренний путь, например /contacts */
+    ctaHref: string
+  }
+  checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
 }

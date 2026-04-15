@@ -36,6 +36,38 @@ const featuresText = ref<Record<MarineContentLocale, string>>(
 const loading = ref(!isNew.value)
 const saving = ref(false)
 
+const imageFile = ref<File | null>(null)
+const imagePreview = ref<string | null>(null)
+const existingImageUrl = ref<string | null>(null)
+const removeImage = ref(false)
+
+watch(imageFile, (f) => {
+  if (imagePreview.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(imagePreview.value)
+  }
+  imagePreview.value = f ? URL.createObjectURL(f) : null
+})
+
+onUnmounted(() => {
+  if (imagePreview.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(imagePreview.value)
+  }
+})
+
+function onPickImage(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  imageFile.value = file ?? null
+  if (file) {
+    removeImage.value = false
+  }
+}
+
+function clearImagePick() {
+  imageFile.value = null
+}
+
 const seoForTab = computed<SeoFields>({
   get() {
     const t = form.value.translations[localeTab.value]
@@ -80,6 +112,8 @@ onMounted(async () => {
       sortOrder: item.sortOrder,
       translations: mergeServiceTranslations(item.translations),
     }
+    existingImageUrl.value = item.imageUrl ?? null
+    removeImage.value = false
     syncFeaturesTextFromForm()
   } catch {
     await navigateTo('/admin/services')
@@ -116,15 +150,36 @@ async function submit() {
   }
   saving.value = true
   try {
-    const payload = {
-      iconKey: form.value.iconKey,
-      sortOrder: Number(form.value.sortOrder) || 0,
-      translations: form.value.translations,
-    }
-    if (isNew.value) {
-      await api.services.create(payload)
+    const iconKey = form.value.iconKey
+    const sortOrder = Number(form.value.sortOrder) || 0
+    const translations = form.value.translations
+
+    if (imageFile.value) {
+      const fd = new FormData()
+      fd.append('iconKey', iconKey)
+      fd.append('sortOrder', String(sortOrder))
+      fd.append('translations', JSON.stringify(translations))
+      fd.append('image', imageFile.value)
+      if (isNew.value) {
+        await api.services.create(fd)
+      } else {
+        await api.services.update(Number(idParam.value), fd)
+      }
     } else {
-      await api.services.update(Number(idParam.value), payload)
+      const payload: {
+        iconKey: string
+        sortOrder: number
+        translations: typeof translations
+        removeImage?: boolean
+      } = { iconKey, sortOrder, translations }
+      if (!isNew.value && removeImage.value) {
+        payload.removeImage = true
+      }
+      if (isNew.value) {
+        await api.services.create(payload)
+      } else {
+        await api.services.update(Number(idParam.value), payload)
+      }
     }
     adminToast.success(isNew.value ? 'Услуга создана' : 'Услуга сохранена')
     await navigateTo('/admin/services')
@@ -185,6 +240,44 @@ async function submit() {
                   decrement-label="Уменьшить порядок сортировки"
                   increment-label="Увеличить порядок сортировки"
                 />
+              </div>
+            </div>
+            <div class="md:col-span-2 space-y-3">
+              <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >Изображение для карточки</label
+              >
+              <p class="font-body text-xs text-mts-text-secondary">
+                Используется в каталоге и на главной (если услуга выбрана в блоке). Форматы: JPG, PNG, WebP, до 20 МБ.
+              </p>
+              <div v-if="(imagePreview || existingImageUrl) && !removeImage" class="relative max-w-md overflow-hidden border border-mts-border bg-mts-bg">
+                <img
+                  :src="(imagePreview || existingImageUrl) ?? ''"
+                  alt=""
+                  class="h-44 w-full object-cover"
+                />
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <label
+                  class="cursor-pointer rounded border border-mts-border bg-mts-bg px-4 py-2 font-mono text-[10px] uppercase tracking-wide text-mts-text hover:border-mts-accent"
+                >
+                  Выбрать файл
+                  <input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onPickImage" />
+                </label>
+                <button
+                  v-if="imageFile"
+                  type="button"
+                  class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary hover:text-mts-accent"
+                  @click="clearImagePick"
+                >
+                  Отменить выбор
+                </button>
+                <label
+                  v-if="!isNew && existingImageUrl && !imageFile"
+                  class="flex cursor-pointer items-center gap-2 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                >
+                  <input v-model="removeImage" type="checkbox" class="rounded border-mts-border" />
+                  Удалить текущее изображение
+                </label>
               </div>
             </div>
           </section>

@@ -1,26 +1,5 @@
 import type { AboutPageData, MarineContentLocale } from '~/types'
 
-export const ABOUT_ICON_OPTIONS = [
-  { value: 'Wrench', label: 'Wrench (ключ)' },
-  { value: 'Ship', label: 'Ship (корабль)' },
-  { value: 'Users', label: 'Users (команда)' },
-  { value: 'Layers', label: 'Layers (слои)' },
-  { value: 'ShieldCheck', label: 'ShieldCheck (щит)' },
-  { value: 'Leaf', label: 'Leaf (лист)' },
-  { value: 'Target', label: 'Target (цель)' },
-  { value: 'Anchor', label: 'Anchor (якорь)' },
-  { value: 'Settings', label: 'Settings (шестерёнка)' },
-  { value: 'Award', label: 'Award (награда)' },
-  { value: 'Compass', label: 'Compass (компас)' },
-  { value: 'Gauge', label: 'Gauge (манометр)' },
-  { value: 'Truck', label: 'Truck (транспорт)' },
-  { value: 'Globe', label: 'Globe (глобус)' },
-  { value: 'Zap', label: 'Zap (молния)' },
-  { value: 'Hammer', label: 'Hammer (молоток)' },
-  { value: 'HeartPulse', label: 'HeartPulse (пульс)' },
-  { value: 'Factory', label: 'Factory (завод)' },
-]
-
 const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   ru: {
     hero: {

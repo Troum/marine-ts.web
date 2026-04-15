@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import {
-  Wrench, Ship, Users, Layers, ShieldCheck, Leaf, Target, Check,
-  Anchor, Settings, Award, Compass, Gauge, Truck, Globe, Zap, Hammer, HeartPulse, Factory,
-  FileDown,
-} from 'lucide-vue-next'
+import { Check, FileDown } from 'lucide-vue-next'
 import type { AboutPageData, AboutGeoLocation } from '~/types'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
@@ -11,6 +7,7 @@ import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import AboutServiceGeographyMap from '~/components/about/ServiceGeographyMap.vue'
 import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
 import { defaultAboutData } from '~/utils/aboutPageDefaults'
+import { resolveLucideIcon } from '~/utils/lucideIconRegistry'
 
 useSiteSeoMeta('about')
 
@@ -22,13 +19,8 @@ const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.about'), to: '/about' }),
 )
 
-const ICON_MAP: Record<string, object> = {
-  Wrench, Ship, Users, Layers, ShieldCheck, Leaf, Target,
-  Anchor, Settings, Award, Compass, Gauge, Truck, Globe, Zap, Hammer, HeartPulse, Factory,
-}
-
 function resolveIcon(name: string) {
-  return ICON_MAP[name] ?? Wrench
+  return resolveLucideIcon(name)
 }
 
 const cms = ref<AboutPageData | null>(null)

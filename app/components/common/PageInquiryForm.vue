@@ -59,22 +59,23 @@ async function onSubmit() {
 <template>
   <section class="relative overflow-hidden border-t border-mts-border bg-white py-24 lg:py-32">
     <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-      <div class="mb-10 max-w-3xl">
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-8 bg-mts-accent" />
-          <span class="section-label">{{ t('pages.pageInquiry.sectionLabel') }}</span>
+      <div class="mx-auto w-full max-w-3xl">
+        <div class="mb-10">
+          <div class="mb-4 flex items-center gap-3">
+            <div class="h-px w-8 bg-mts-accent" />
+            <span class="section-label">{{ t('pages.pageInquiry.sectionLabel') }}</span>
+          </div>
+          <h2 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
+            {{ t('pages.pageInquiry.title') }}<span class="text-mts-accent">{{ t('pages.pageInquiry.titleAccent') }}</span
+            >{{ t('pages.pageInquiry.titleEnd') }}
+          </h2>
+          <div class="mb-6 mt-6 h-0.5 w-12 bg-mts-accent" />
+          <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+            {{ t('pages.pageInquiry.lead') }}
+          </p>
         </div>
-        <h2 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
-          {{ t('pages.pageInquiry.title') }}<span class="text-mts-accent">{{ t('pages.pageInquiry.titleAccent') }}</span
-          >{{ t('pages.pageInquiry.titleEnd') }}
-        </h2>
-        <div class="mb-6 mt-6 h-0.5 w-12 bg-mts-accent" />
-        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ t('pages.pageInquiry.lead') }}
-        </p>
-      </div>
 
-      <div class="card-tech max-w-3xl border border-mts-border p-8">
+        <div class="card-tech border border-mts-border p-8">
         <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-mts-text">
           <ClipboardList class="h-5 w-5 text-mts-accent" />
           {{ t('pages.pageInquiry.formTitle') }}
@@ -177,6 +178,7 @@ async function onSubmit() {
             <span v-else>{{ t('pages.pageInquiry.submit') }}</span>
           </button>
         </form>
+        </div>
       </div>
     </div>
   </section>

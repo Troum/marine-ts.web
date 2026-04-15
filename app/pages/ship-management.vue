@@ -3,5 +3,5 @@ import LineMarketingPageView from '~/components/line-marketing/LineMarketingPage
 </script>
 
 <template>
-  <LineMarketingPageView slug="crewing-management" />
+  <LineMarketingPageView slug="ship-management" />
 </template>

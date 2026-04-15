@@ -70,9 +70,23 @@ const { data: services, pending, error } = await useAsyncData(
           <div
             v-for="service in services"
             :key="service.id"
-            class="card-tech p-8 border border-mts-border hover:border-mts-accent/40 transition-colors"
+            class="card-tech overflow-hidden border border-mts-border hover:border-mts-accent/40 transition-colors"
           >
-            <component :is="resolveServiceIcon(service.iconKey)" class="w-8 h-8 text-mts-accent mb-4" />
+            <div v-if="service.imageUrl" class="aspect-[16/9] w-full overflow-hidden border-b border-mts-border bg-mts-bg">
+              <img
+                :src="service.imageUrl"
+                :alt="service.title"
+                class="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <div class="p-8">
+            <component
+              v-if="!service.imageUrl"
+              :is="resolveServiceIcon(service.iconKey)"
+              class="w-8 h-8 text-mts-accent mb-4"
+            />
             <h3 class="font-display text-xl text-mts-text mb-3">{{ service.title }}</h3>
             <p class="font-body text-sm text-mts-text-secondary mb-6">{{ service.description }}</p>
             <ul class="space-y-2 mb-6">
@@ -93,6 +107,7 @@ const { data: services, pending, error } = await useAsyncData(
               {{ t('pages.common.readMore') }}
               <ArrowRight class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </NuxtLink>
+            </div>
           </div>
         </div>
         <div class="flex justify-center items-center mt-16">

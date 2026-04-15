@@ -1,8 +1,8 @@
 import type { LucideIcon } from 'lucide-vue-next'
 import { getAllLucideAdminIconOptions, resolveLucideIcon } from '~/utils/lucideIconRegistry'
 
-export function resolveServiceIcon(key: string): LucideIcon {
+export const crewingIconSelectOptions = getAllLucideAdminIconOptions()
+
+export function resolveCrewingIcon(key: string): LucideIcon {
   return resolveLucideIcon(key)
 }
-
-export const serviceIconSelectOptions = getAllLucideAdminIconOptions()

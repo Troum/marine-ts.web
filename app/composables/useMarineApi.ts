@@ -130,8 +130,12 @@ export function useMarineApi() {
     }
   }
 
-  /** POST multipart/form-data с Bearer (без Content-Type — задаёт браузер). */
-  async function fetchAuthFormData<T>(path: string, formData: FormData): Promise<T> {
+  /** multipart/form-data с Bearer (без Content-Type — задаёт браузер). */
+  async function fetchAuthFormData<T>(
+    path: string,
+    formData: FormData,
+    method: 'POST' | 'PUT' = 'POST',
+  ): Promise<T> {
     if (import.meta.client) {
       const t = localStorage.getItem('mts_admin_token')
       if (t) {
@@ -145,7 +149,7 @@ export function useMarineApi() {
     }
     try {
       return await $fetch<T>(`${resolveApiBase()}${path}`, {
-        method: 'POST',
+        method,
         headers,
         body: formData as unknown as BodyInit,
       })
@@ -358,11 +362,19 @@ export function useMarineApi() {
         const res = await fetchAuth<{ data: ServiceItem }>(`/services/manage/${id}`)
         return res.data
       },
-      create: async (body: {
-        iconKey: string
-        sortOrder: number
-        translations: Record<MarineContentLocale, ServiceTranslationPayload>
-      }) => {
+      create: async (
+        body:
+          | FormData
+          | {
+              iconKey: string
+              sortOrder: number
+              translations: Record<MarineContentLocale, ServiceTranslationPayload>
+            },
+      ) => {
+        if (body instanceof FormData) {
+          const res = await fetchAuthFormData<{ data: ServiceItem }>('/services', body, 'POST')
+          return res.data
+        }
         const res = await fetchAuth<{ data: ServiceItem }>('/services', {
           method: 'POST',
           body,
@@ -371,10 +383,17 @@ export function useMarineApi() {
       },
       update: async (
         id: number,
-        body: Partial<ServiceItem> & {
-          translations?: Record<MarineContentLocale, ServiceTranslationPayload>
-        },
+        body:
+          | FormData
+          | (Partial<ServiceItem> & {
+              translations?: Record<MarineContentLocale, ServiceTranslationPayload>
+              removeImage?: boolean
+            }),
       ) => {
+        if (body instanceof FormData) {
+          const res = await fetchAuthFormData<{ data: ServiceItem }>(`/services/${id}`, body, 'PUT')
+          return res.data
+        }
         const res = await fetchAuth<{ data: ServiceItem }>(`/services/${id}`, {
           method: 'PUT',
           body,
@@ -605,6 +624,9 @@ export function useMarineApi() {
       submit: async (slug: string, body: VacancyApplicationForm) => {
         const enc = encodeURIComponent(slug)
         await fetchPublicPost<unknown>(`/vacancies/${enc}/application-forms`, body)
+      },
+      submitOpen: async (body: VacancyApplicationForm) => {
+        await fetchPublicPost<unknown>('/application-forms', body)
       },
       getManageAll: async (
         page = 1,

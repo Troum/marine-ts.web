@@ -1,18 +1,11 @@
 <script setup lang="ts">
-import {
-  ArrowLeft, Loader2, Plus, Trash2, ChevronDown, Upload,
-  Ship, MapPin, Users, Calendar,
-} from 'lucide-vue-next'
-import type { HomePageData, ContentPage, MarineContentLocale } from '~/types'
+import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import type { HomePageData, ContentPage, MarineContentLocale, ServiceItem } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultHomeData, syncHomeStructuralFields } from '~/utils/pageDefaults'
+import { defaultHomeData, mergeHomePageData, syncHomeStructuralFields } from '~/utils/pageDefaults'
+import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 
-const STAT_ICON_OPTIONS = [
-  { value: 'Ship', label: 'Корабль', icon: Ship },
-  { value: 'MapPin', label: 'Локация', icon: MapPin },
-  { value: 'Users', label: 'Команда', icon: Users },
-  { value: 'Calendar', label: 'Календарь', icon: Calendar },
-]
+const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
@@ -54,12 +47,17 @@ onMounted(async () => {
         if (body) {
           try {
             const parsed = JSON.parse(body)
-            if (parsed?.hero) data.value[loc] = { ...defaultHomeData(loc), ...parsed }
+            if (parsed?.hero) data.value[loc] = mergeHomePageData(loc, parsed)
           } catch { /* keep defaults */ }
         }
       }
     }
   } catch { /* no existing page */ }
+  try {
+    catalogServices.value = await api.services.getAll()
+  } catch {
+    catalogServices.value = []
+  }
   finally { loading.value = false }
 })
 
@@ -70,39 +68,55 @@ function addStat() {
 function removeStat(i: number) {
   for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].statsCard.items.splice(i, 1)
 }
-function addServiceCard() {
-  for (const loc of MARINE_CONTENT_LOCALES)
-    data.value[loc].services.cards.push({ image: '', title: '', description: '' })
-}
-function removeServiceCard(i: number) {
-  for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].services.cards.splice(i, 1)
+function setFeaturedServiceIds(ids: number[]) {
+  const next = [...ids]
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].services.featuredServiceIds = next
+  }
 }
 
-const uploadingCardIdx = ref<number | null>(null)
-async function uploadCardImage(idx: number) {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = '.jpg,.jpeg,.png,.webp'
-  input.onchange = async () => {
-    const file = input.files?.[0]
-    if (!file) return
-    uploadingCardIdx.value = idx
-    try {
-      const res = await api.media.upload(file)
-      for (const loc of MARINE_CONTENT_LOCALES) {
-        if (data.value[loc].services.cards[idx]) {
-          data.value[loc].services.cards[idx].image = res.url
-        }
-      }
-      adminToast.success('Изображение загружено')
-    } catch {
-      await showAdminAlert({ message: 'Не удалось загрузить изображение', variant: 'error' })
-    } finally {
-      uploadingCardIdx.value = null
-    }
-  }
-  input.click()
+const catalogServices = ref<ServiceItem[]>([])
+const pickServiceId = ref<string>('')
+
+function serviceTitleById(id: number): string {
+  return catalogServices.value.find((s) => s.id === id)?.title ?? `#${id}`
 }
+
+function addFeaturedService() {
+  const id = Number(pickServiceId.value)
+  if (!id || Number.isNaN(id)) {
+    return
+  }
+  const cur = data.value.ru.services.featuredServiceIds ?? []
+  if (cur.includes(id)) {
+    return
+  }
+  setFeaturedServiceIds([...cur, id])
+  pickServiceId.value = ''
+}
+
+function removeFeaturedService(index: number) {
+  const cur = [...(data.value.ru.services.featuredServiceIds ?? [])]
+  cur.splice(index, 1)
+  setFeaturedServiceIds(cur)
+}
+
+function moveFeaturedService(index: number, dir: -1 | 1) {
+  const cur = [...(data.value.ru.services.featuredServiceIds ?? [])]
+  const j = index + dir
+  if (j < 0 || j >= cur.length) {
+    return
+  }
+  const t = cur[index]!
+  cur[index] = cur[j]!
+  cur[j] = t
+  setFeaturedServiceIds(cur)
+}
+
+const pickServiceOptions = computed(() => {
+  const taken = new Set(data.value.ru.services.featuredServiceIds ?? [])
+  return catalogServices.value.filter((s) => !taken.has(s.id))
+})
 
 function addStep() {
   for (const loc of MARINE_CONTENT_LOCALES)
@@ -257,35 +271,76 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div><label :class="sectionLabel">Текст «Все услуги»</label><input v-model="d.services.all" :class="sectionInput" /></div>
               <div><label :class="sectionLabel">Текст «Подробнее →»</label><input v-model="d.services.more" :class="sectionInput" /></div>
             </div>
-            <div class="space-y-4">
-              <div v-for="(card, i) in d.services.cards" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Карточка {{ i + 1 }}</span>
-                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeServiceCard(i)"><Trash2 class="w-4 h-4" /></button>
+
+            <div class="rounded-md border border-mts-accent/30 bg-mts-bg/60 p-4 space-y-3">
+              <p class="font-body text-sm text-mts-text leading-relaxed">
+                <strong class="text-mts-text">Какие услуги показать на главной.</strong>
+                Тексты и фото берутся из карточек каталога (текущая локаль API). Если список пуст, блок «Услуги» на главной не отображается.
+              </p>
+              <div v-if="(d.services.featuredServiceIds?.length ?? 0) > 0" class="space-y-2">
+                <div
+                  v-for="(sid, idx) in d.services.featuredServiceIds"
+                  :key="sid"
+                  class="flex flex-wrap items-center gap-2 border border-mts-border bg-white px-3 py-2"
+                >
+                  <span class="font-mono text-xs text-mts-text-secondary w-6">{{ idx + 1 }}.</span>
+                  <span class="font-body text-sm text-mts-text flex-1 min-w-[12rem]">{{ serviceTitleById(sid) }}</span>
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                      :disabled="idx === 0"
+                      aria-label="Выше"
+                      @click="moveFeaturedService(idx, -1)"
+                    >
+                      <ChevronUp class="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                      :disabled="idx === (d.services.featuredServiceIds?.length ?? 0) - 1"
+                      aria-label="Ниже"
+                      @click="moveFeaturedService(idx, 1)"
+                    >
+                      <ChevronDown class="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="p-1.5 text-red-500/80 hover:text-red-600"
+                      aria-label="Удалить"
+                      @click="removeFeaturedService(idx)"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div><label :class="sectionLabel">URL изображения</label><input v-model="card.image" :class="sectionInput" placeholder="/images/services/hull.jpg" /></div>
-                <div class="flex items-center gap-3">
-                  <button
-                    type="button"
-                    :disabled="uploadingCardIdx === i"
-                    class="flex items-center gap-2 shrink-0 border border-mts-border px-4 py-3 font-mono text-xs uppercase text-mts-text-secondary hover:text-mts-accent hover:border-mts-accent transition-colors disabled:opacity-50"
-                    @click="uploadCardImage(i)"
-                  >
-                    <Loader2 v-if="uploadingCardIdx === i" class="w-4 h-4 animate-spin" />
-                    <Upload v-else class="w-4 h-4" />
-                    Загрузить
-                  </button>
-                  <img
-                    v-if="card.image"
-                    :src="card.image"
-                    alt=""
-                    class="h-12 w-20 object-cover border border-mts-border"
-                  />
-                </div>
-                <div><label :class="sectionLabel">Название</label><input v-model="card.title" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Описание</label><textarea v-model="card.description" rows="2" :class="sectionInput" /></div>
               </div>
-              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addServiceCard"><Plus class="w-4 h-4" /> Добавить карточку</button>
+              <div v-else class="font-body text-xs text-mts-text-secondary">Список пуст — блок «Услуги» на сайте скрыт.</div>
+              <div class="flex flex-wrap items-end gap-3">
+                <div class="min-w-[14rem] flex-1">
+                  <label :class="sectionLabel">Добавить из каталога</label>
+                  <select v-model="pickServiceId" :class="sectionInput">
+                    <option value="">— выберите услугу —</option>
+                    <option v-for="s in pickServiceOptions" :key="s.id" :value="String(s.id)">{{ s.title }}</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  class="border border-mts-border bg-white px-4 py-3 font-mono text-xs uppercase text-mts-text hover:border-mts-accent mb-0"
+                  :disabled="!pickServiceId"
+                  @click="addFeaturedService"
+                >
+                  Добавить
+                </button>
+                <button
+                  v-if="(d.services.featuredServiceIds?.length ?? 0) > 0"
+                  type="button"
+                  class="font-mono text-xs uppercase text-mts-text-secondary hover:text-mts-accent py-3"
+                  @click="setFeaturedServiceIds([])"
+                >
+                  Очистить список
+                </button>
+              </div>
             </div>
           </div>
         </section>

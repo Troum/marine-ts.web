@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "gen:lucide-word-ru": "node scripts/gen-lucide-word-ru.mjs"
   },
   "dependencies": {
     "@nuxtjs/i18n": "^10.2.4",

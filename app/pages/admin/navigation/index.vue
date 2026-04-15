@@ -21,6 +21,24 @@ function emptyItem(): NavigationMenuItem {
   return { path: '/', label: { ru: '', en: '' } }
 }
 
+/** Сохраняем одну вложенность; глубже не отдаём на API. */
+function serializeNavItem(row: NavigationMenuItem): NavigationMenuItem {
+  const path = row.path.trim() || '/'
+  const label = { ru: row.label.ru.trim(), en: row.label.en.trim() }
+  if (row.children?.length) {
+    return {
+      path,
+      label,
+      children: row.children.map((c) => {
+        const p = c.path.trim() || '/'
+        const lab = { ru: c.label.ru.trim(), en: c.label.en.trim() }
+        return { path: p, label: lab }
+      }),
+    }
+  }
+  return { path, label }
+}
+
 onMounted(async () => {
   if (!canManageNavigation.value) {
     await navigateTo('/admin')
@@ -79,18 +97,41 @@ function moveMore(i: number, dir: -1 | 1) {
   arr[j] = a
 }
 
+function addMainChild(i: number) {
+  const row = form.value.main[i]
+  if (!row) {
+    return
+  }
+  if (!row.children) {
+    row.children = []
+  }
+  row.children.push(emptyItem())
+}
+
+function removeMainChild(i: number, ci: number) {
+  const row = form.value.main[i]
+  if (!row?.children) {
+    return
+  }
+  row.children.splice(ci, 1)
+  if (row.children.length === 0) {
+    delete row.children
+  }
+}
+
+function clearMainChildren(i: number) {
+  const row = form.value.main[i]
+  if (row) {
+    delete row.children
+  }
+}
+
 async function submit() {
   saving.value = true
   try {
     const payload: NavigationMenuSettings = {
-      main: form.value.main.map((row) => ({
-        path: row.path.trim() || '/',
-        label: { ru: row.label.ru.trim(), en: row.label.en.trim() },
-      })),
-      more: form.value.more.map((row) => ({
-        path: row.path.trim() || '/',
-        label: { ru: row.label.ru.trim(), en: row.label.en.trim() },
-      })),
+      main: form.value.main.map(serializeNavItem),
+      more: form.value.more.map(serializeNavItem),
     }
     await api.navigationSettings.update(payload)
     form.value = await api.navigationSettings.get()
@@ -189,6 +230,102 @@ async function submit() {
                 class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
               />
             </div>
+
+            <div class="sm:col-span-2 border-t border-mts-border pt-4 mt-1">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Подпункты (выпадающее меню)
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-if="row.children?.length"
+                    type="button"
+                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs"
+                    @click="addMainChild(i)"
+                  >
+                    <Plus class="h-3.5 w-3.5" />
+                    Подпункт
+                  </button>
+                  <button
+                    v-if="row.children?.length"
+                    type="button"
+                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs border-red-200 text-red-800"
+                    @click="clearMainChildren(i)"
+                  >
+                    Убрать подменю
+                  </button>
+                  <button
+                    v-else
+                    type="button"
+                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs"
+                    @click="addMainChild(i)"
+                  >
+                    <Plus class="h-3.5 w-3.5" />
+                    Добавить подменю
+                  </button>
+                </div>
+              </div>
+              <p v-if="!row.children?.length" class="font-body text-xs text-mts-text-secondary">
+                Если нужен только заголовок группы без своей страницы, задайте путь родителя
+                <span class="font-mono">#</span>
+                и добавьте подпункты.
+              </p>
+              <div v-else class="space-y-3">
+                <div
+                  v-for="(child, ci) in row.children"
+                  :key="`main-${i}-sub-${ci}`"
+                  class="grid gap-3 border border-mts-border bg-white p-3 sm:grid-cols-2"
+                >
+                  <div class="sm:col-span-2">
+                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                      >Путь подпункта</label
+                    >
+                    <input
+                      v-model="child.path"
+                      type="text"
+                      required
+                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
+                      placeholder="/ship-repair"
+                    />
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                      >Подпись (RU)</label
+                    >
+                    <input
+                      v-model="child.label.ru"
+                      type="text"
+                      required
+                      maxlength="120"
+                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                      >Подпись (EN)</label
+                    >
+                    <input
+                      v-model="child.label.en"
+                      type="text"
+                      required
+                      maxlength="120"
+                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
+                    />
+                  </div>
+                  <div class="sm:col-span-2 flex justify-end">
+                    <button
+                      type="button"
+                      class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 text-xs py-1.5"
+                      @click="removeMainChild(i, ci)"
+                    >
+                      <Trash2 class="h-3.5 w-3.5" />
+                      Удалить подпункт
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="sm:col-span-2 flex justify-end">
               <button
                 v-if="form.main.length > 1"

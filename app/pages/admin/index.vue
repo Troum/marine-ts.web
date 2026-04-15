@@ -47,6 +47,30 @@ const sectionOptions = [
   { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
   { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
   { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
+  {
+    label: 'Судовой менеджмент',
+    to: '/admin/line-pages/ship-management',
+    icon: Ship,
+    desc: 'Hero, направления, чек-лист, принципы, аудитория',
+  },
+  {
+    label: 'Крюинг-менеджмент',
+    to: '/admin/line-pages/crewing-management',
+    icon: Users,
+    desc: 'Hero, направления, чек-лист, принципы, аудитория',
+  },
+  {
+    label: 'Судоремонт',
+    to: '/admin/line-pages/ship-repair',
+    icon: Wrench,
+    desc: 'Hero, направления, чек-лист, принципы, аудитория',
+  },
+  {
+    label: 'Запчасти',
+    to: '/admin/line-pages/spare-parts',
+    icon: ClipboardList,
+    desc: 'Hero, направления, чек-лист, принципы, аудитория',
+  },
   { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы' },
 ]
 

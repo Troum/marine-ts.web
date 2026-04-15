@@ -321,12 +321,13 @@ async function onRequestDocsConfirm(keys: string[]) {
               <tr v-for="row in rows" :key="row.id" class="border-b border-mts-border last:border-0">
                 <td class="p-4">
                   <NuxtLink
-                    v-if="row.vacancyTitle"
+                    v-if="row.vacancyId != null && row.vacancyTitle"
                     :to="`/admin/vacancies/${row.vacancyId}/application-forms`"
                     class="font-body text-sm text-mts-accent hover:underline"
                   >
                     {{ row.vacancyTitle }}
                   </NuxtLink>
+                  <span v-else-if="row.vacancyId == null" class="font-body text-sm text-mts-text-secondary">Открытая заявка</span>
                   <span v-else class="font-mono text-xs text-mts-text-muted">#{{ row.vacancyId }}</span>
                 </td>
                 <td class="p-4 font-body text-sm text-mts-text">{{ row.fullName }}</td>

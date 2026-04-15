@@ -1,33 +1,11 @@
 <script setup lang="ts">
-import {
-  ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink, ChevronDown,
-  Wrench, Ship, Users, Layers, ShieldCheck, Leaf, Target,
-  Anchor, Settings, Award, Compass, Gauge, Truck, Globe, Zap, Hammer, HeartPulse, Factory,
-} from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink, ChevronDown } from 'lucide-vue-next'
 import type { AboutPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import { defaultAboutData, syncStructuralFields } from '~/utils/aboutPageDefaults'
+import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 
-const ICON_OPTIONS = [
-  { value: 'Wrench', label: 'Ключ', icon: Wrench },
-  { value: 'Ship', label: 'Корабль', icon: Ship },
-  { value: 'Users', label: 'Команда', icon: Users },
-  { value: 'Layers', label: 'Слои', icon: Layers },
-  { value: 'ShieldCheck', label: 'Щит', icon: ShieldCheck },
-  { value: 'Leaf', label: 'Лист', icon: Leaf },
-  { value: 'Target', label: 'Цель', icon: Target },
-  { value: 'Anchor', label: 'Якорь', icon: Anchor },
-  { value: 'Settings', label: 'Шестерёнка', icon: Settings },
-  { value: 'Award', label: 'Награда', icon: Award },
-  { value: 'Compass', label: 'Компас', icon: Compass },
-  { value: 'Gauge', label: 'Манометр', icon: Gauge },
-  { value: 'Truck', label: 'Транспорт', icon: Truck },
-  { value: 'Globe', label: 'Глобус', icon: Globe },
-  { value: 'Zap', label: 'Молния', icon: Zap },
-  { value: 'Hammer', label: 'Молоток', icon: Hammer },
-  { value: 'HeartPulse', label: 'Пульс', icon: HeartPulse },
-  { value: 'Factory', label: 'Завод', icon: Factory },
-]
+const ICON_OPTIONS = getAllLucideAdminIconOptions()
 
 definePageMeta({
   layout: 'admin',

@@ -1,0 +1,45 @@
+import type { CrewingPageData, MarineContentLocale } from '~/types'
+
+/** Маркетинговые страницы линий бизнеса (единая структура JSON, как у крюинга). */
+export const LINE_MARKETING_PAGE_SLUGS = [
+  'crewing-management',
+  'ship-management',
+  'ship-repair',
+  'spare-parts',
+] as const
+
+export type LineMarketingPageSlug = (typeof LINE_MARKETING_PAGE_SLUGS)[number]
+
+export function isLineMarketingPageSlug(s: string): s is LineMarketingPageSlug {
+  return (LINE_MARKETING_PAGE_SLUGS as readonly string[]).includes(s)
+}
+
+/** Фон героя и ключ i18n для хлебных крошек / навигации. */
+export const LINE_MARKETING_PAGE_LAYOUT: Record<
+  LineMarketingPageSlug,
+  { heroBg: string; navI18nKey: string }
+> = {
+  'crewing-management': { heroBg: '/hero-crewing-bg.jpeg', navI18nKey: 'nav.crewing' },
+  'ship-management': { heroBg: '/hero-bg.jpg', navI18nKey: 'nav.shipManagement' },
+  'ship-repair': { heroBg: '/hero-bg.jpg', navI18nKey: 'nav.shipRepair' },
+  'spare-parts': { heroBg: '/hero-bg.jpg', navI18nKey: 'nav.spareParts' },
+}
+
+/** Заголовки страницы в переводах content_pages (админка). */
+export const LINE_MARKETING_PAGE_CONTENT_TITLES: Record<
+  LineMarketingPageSlug,
+  Record<MarineContentLocale, string>
+> = {
+  'crewing-management': { ru: 'Крюинг-менеджмент', en: 'Crew management' },
+  'ship-management': { ru: 'Судовой менеджмент', en: 'Ship management' },
+  'ship-repair': { ru: 'Судоремонт', en: 'Ship repair' },
+  'spare-parts': { ru: 'Запчасти', en: 'Spare parts' },
+}
+
+/** Человекочитаемые названия для шапки админки. */
+export const LINE_MARKETING_PAGE_ADMIN_LABELS: Record<LineMarketingPageSlug, string> = {
+  'crewing-management': 'Крюинг-менеджмент',
+  'ship-management': 'Судовой менеджмент',
+  'ship-repair': 'Судоремонт',
+  'spare-parts': 'Запчасти',
+}
