@@ -12,13 +12,21 @@ export function isLineMarketingPageSlug(s: string): s is LineMarketingPageSlug {
   return (LINE_MARKETING_PAGE_SLUGS as readonly string[]).includes(s)
 }
 
-/** Фон героя и ключ i18n для хлебных крошек / навигации. */
+/** Фон героя, ключи i18n для крошек и подписи над заголовком (не дублировать последний пункт крошек). */
 export const LINE_MARKETING_PAGE_LAYOUT: Record<
   LineMarketingPageSlug,
-  { heroBg: string; navI18nKey: string }
+  { heroBg: string; navI18nKey: string; heroEyebrowI18nKey: string }
 > = {
-  'crewing-management': { heroBg: '/hero-crewing-bg.jpeg', navI18nKey: 'nav.crewing' },
-  'ship-management': { heroBg: '/hero-bg.jpg', navI18nKey: 'nav.shipManagement' },
+  'crewing-management': {
+    heroBg: '/hero-crewing-bg.jpeg',
+    navI18nKey: 'nav.crewing',
+    heroEyebrowI18nKey: 'pages.lineMarketing.crewingHeroEyebrow',
+  },
+  'ship-management': {
+    heroBg: '/hero-bg.jpg',
+    navI18nKey: 'nav.shipManagement',
+    heroEyebrowI18nKey: 'pages.lineMarketing.shipHeroEyebrow',
+  },
 }
 
 /** Заголовки страницы в переводах content_pages (админка). */

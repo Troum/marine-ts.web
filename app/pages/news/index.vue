@@ -2,6 +2,7 @@
 import { Calendar, User, Loader2, MoveRight } from 'lucide-vue-next'
 import type { NewsItem, ListingPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
 import { defaultListingData } from '~/utils/pageDefaults'
 
@@ -55,26 +56,24 @@ function categoryLabel(cat: string | undefined) {
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="max-w-3xl">
-          <Breadcrumbs :items="crumbItems" />
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">{{ t('nav.news') }}</span>
-          </div>
-          <h1 class="font-display text-5xl lg:text-6xl text-mts-text leading-tight mb-6">
-            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-            >{{ cms.hero.titleEnd }}
-          </h1>
-          <div class="w-12 h-0.5 bg-mts-accent mb-6" />
-          <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ cms.hero.lead }}
-          </p>
+  <div class="bg-mts-bg">
+    <ListingHeroShell :hero-image="cms.heroImage">
+      <div class="max-w-3xl">
+        <Breadcrumbs :items="crumbItems" />
+        <div class="mb-4 flex items-center gap-3">
+          <div class="h-px w-6 bg-mts-accent" />
+          <span class="section-label">{{ t('pages.news.heroEyebrow') }}</span>
         </div>
+        <h1 class="font-display mb-6 text-5xl leading-tight text-mts-text lg:text-6xl">
+          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
+          >{{ cms.hero.titleEnd }}
+        </h1>
+        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
+        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+          {{ cms.hero.lead }}
+        </p>
       </div>
-    </section>
+    </ListingHeroShell>
 
     <div v-if="pending" class="flex justify-center py-24">
       <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />

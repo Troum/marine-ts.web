@@ -71,7 +71,7 @@ watch([sort, order], () => {
 
     <main class="mx-auto max-w-7xl px-6 py-10 lg:px-12">
       <p class="font-body mb-8 max-w-2xl text-mts-text-secondary">
-        Meta title, description и keywords для разделов сайта и отдельных материалов (новости, проекты, услуги).
+        Meta title, description и keywords для разделов сайта и отдельных материалов (новости, проекты, сервисы).
       </p>
 
       <AdminListToolbar
@@ -136,7 +136,7 @@ watch([sort, order], () => {
             >
               <Wrench class="h-8 w-8 text-mts-accent" />
               <div>
-                <p class="font-body font-medium text-mts-text">Услуги</p>
+                <p class="font-body font-medium text-mts-text">Сервисы</p>
                 <p class="font-mono text-[10px] text-mts-text-secondary">SEO карточек</p>
               </div>
             </NuxtLink>

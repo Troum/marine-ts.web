@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
-import type { ContactsPageData, ContentPage, MarineContentLocale } from '~/types'
+import type { ContentPage, MarineContentLocale, VacanciesPageData } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultContactsData } from '~/utils/pageDefaults'
+import { defaultListingData } from '~/utils/pageDefaults'
 
-const SLUG = 'contacts-page'
+const SLUG = 'vacancies-page'
 
-definePageMeta({
-  layout: 'admin',
-  middleware: 'admin',
-})
+definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const api = useMarineApi()
 const { show: showAdminAlert } = useAdminAlert()
@@ -20,14 +17,14 @@ const existingId = ref<number | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 
-const data = ref<Record<MarineContentLocale, ContactsPageData>>({
-  ru: defaultContactsData('ru'),
-  en: defaultContactsData('en'),
+const data = ref<Record<MarineContentLocale, VacanciesPageData>>({
+  ru: defaultListingData(SLUG, 'ru') as VacanciesPageData,
+  en: defaultListingData(SLUG, 'en') as VacanciesPageData,
 })
 
 const d = computed(() => data.value[localeTab.value])
 
-const collapsed = ref<Record<string, boolean>>({ hero: false, sections: true })
+const collapsed = ref<Record<string, boolean>>({ hero: false, cta: true })
 function toggle(s: string) {
   collapsed.value[s] = !collapsed.value[s]
 }
@@ -43,13 +40,18 @@ onMounted(async () => {
         if (body) {
           try {
             const parsed = JSON.parse(body)
-            if (parsed?.hero) data.value[loc] = { ...defaultContactsData(loc), ...parsed }
-          } catch { /* keep defaults */ }
+            if (parsed?.hero) {
+              data.value[loc] = { ...defaultListingData(SLUG, loc), ...parsed } as VacanciesPageData
+            }
+          } catch {
+            /* keep defaults */
+          }
         }
       }
     }
-  } catch { /* no existing page */ }
-  finally {
+  } catch {
+    /* no existing page */
+  } finally {
     loading.value = false
   }
 })
@@ -63,10 +65,13 @@ async function submit() {
   }
   saving.value = true
   try {
-    const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }>
+    const translations = {} as Record<
+      MarineContentLocale,
+      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }
+    >
     for (const loc of MARINE_CONTENT_LOCALES) {
       translations[loc] = {
-        title: loc === 'ru' ? 'Контакты' : 'Contacts',
+        title: loc === 'ru' ? 'Вакансии' : 'Vacancies',
         excerpt: '',
         body: JSON.stringify(data.value[loc]),
         seoTitle: '',
@@ -80,7 +85,7 @@ async function submit() {
       const created = await api.contentPages.create({ slug: SLUG, isPublished: true, sortOrder: 0, translations })
       existingId.value = (created as ContentPage).id
     }
-    adminToast.success('Страница «Контакты» сохранена')
+    adminToast.success('Страница «Вакансии» сохранена')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
   } finally {
@@ -94,19 +99,22 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
 
 <template>
   <div>
-    <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12">
-        <div class="flex items-center justify-between h-16">
+    <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
+      <div class="mx-auto max-w-7xl px-6 lg:px-12">
+        <div class="flex h-16 items-center justify-between">
           <div class="flex items-center gap-4">
-            <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
-              <ArrowLeft class="w-5 h-5" />
-            </NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Страница «Контакты»</h1>
+            <NuxtLink to="/admin" class="text-mts-text-secondary transition-colors hover:text-mts-accent"
+              ><ArrowLeft class="h-5 w-5"
+            /></NuxtLink>
+            <h1 class="font-display text-xl text-mts-text">Страница «Вакансии»</h1>
           </div>
           <div class="flex items-center gap-4">
-            <NuxtLink to="/contacts" target="_blank" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">
-              Открыть на сайте ↗
-            </NuxtLink>
+            <NuxtLink
+              to="/vacancies"
+              target="_blank"
+              class="font-body text-sm text-mts-text-secondary transition-colors hover:text-mts-accent"
+              >Открыть на сайте ↗</NuxtLink
+            >
             <button type="button" :disabled="saving || loading" class="btn-primary px-6 disabled:opacity-50" @click="submit">
               {{ saving ? 'Сохранение…' : 'Сохранить' }}
             </button>
@@ -115,24 +123,30 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
       <div v-if="loading" class="flex justify-center py-24">
-        <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
+        <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>
-
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- Hero -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
+        <!-- HERO -->
+        <section class="relative border border-mts-border bg-white shadow-tech">
           <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('hero')">
+          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('hero')">
             <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Hero-блок</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
+            <ChevronDown
+              class="h-4 w-4 text-mts-text-secondary transition-transform"
+              :class="{ 'rotate-180': !collapsed.hero }"
+            />
           </button>
-          <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <AdminHeroImageField v-model="d.heroImage" />
-            <div class="grid md:grid-cols-2 gap-4">
+          <div v-show="!collapsed.hero" class="space-y-4 border-t border-mts-border px-6 pt-4 pb-6">
+            <AdminHeroImageField
+              v-model="d.heroImage"
+              label="Фон hero страницы «Вакансии»"
+              hint="Необязательно. Нажмите «Загрузить файл» (jpeg, png, webp) или вставьте URL — фон отображается над списком вакансий на /vacancies. Один файл для обоих языков."
+            />
+            <div class="grid gap-4 md:grid-cols-3">
               <div>
                 <label :class="sectionLabel">Заголовок (начало)</label>
                 <input v-model="d.hero.title" :class="sectionInput" />
@@ -141,45 +155,44 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 <label :class="sectionLabel">Акцент (цветной)</label>
                 <input v-model="d.hero.titleAccent" :class="sectionInput" />
               </div>
+              <div>
+                <label :class="sectionLabel">Окончание</label>
+                <input v-model="d.hero.titleEnd" :class="sectionInput" />
+              </div>
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
-              <textarea v-model="d.hero.lead" rows="3" :class="sectionInput" />
+              <textarea v-model="d.hero.lead" rows="4" :class="sectionInput" />
             </div>
           </div>
         </section>
 
-        <!-- Contact sections -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
+        <!-- CTA -->
+        <section class="relative border border-mts-border bg-white shadow-tech">
           <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('sections')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. Секции контактов</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.sections }" />
+          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('cta')">
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. CTA под списком вакансий</h2>
+            <ChevronDown
+              class="h-4 w-4 text-mts-text-secondary transition-transform"
+              :class="{ 'rotate-180': !collapsed.cta }"
+            />
           </button>
-          <div v-show="!collapsed.sections" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+          <div v-show="!collapsed.cta" class="space-y-4 border-t border-mts-border px-6 pt-4 pb-6">
             <div>
-              <label :class="sectionLabel">Заголовок блока контактной информации</label>
-              <input v-model="d.infoTitle" :class="sectionInput" />
+              <label :class="sectionLabel">Заголовок</label>
+              <input v-model="d.cta!.title" :class="sectionInput" />
             </div>
             <div>
-              <label :class="sectionLabel">Заголовок формы</label>
-              <input v-model="d.formTitle" :class="sectionInput" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Текст под заголовком формы</label>
-              <textarea v-model="d.formLead" rows="3" :class="sectionInput" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Заголовок блока офисов</label>
-              <input v-model="d.officesTitle" :class="sectionInput" />
+              <label :class="sectionLabel">Текст кнопки (ведёт на страницу заявки)</label>
+              <input v-model="d.cta!.buttonText" :class="sectionInput" />
             </div>
           </div>
         </section>
 
-        <section class="bg-white border border-mts-border shadow-tech relative p-6">
+        <section class="relative border border-mts-border bg-white p-6 shadow-tech">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
-            Показать дополнительную форму заявки под блоком офисов (ниже основной формы обратной связи)
+            Показать форму заявки внизу страницы «Вакансии»
           </label>
         </section>
 

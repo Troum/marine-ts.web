@@ -55,7 +55,7 @@ async function submit() {
   saving.value = true
   try {
     await api.services.update(id.value, { translations: translations.value })
-    adminToast.success('SEO для услуги сохранено')
+    adminToast.success('SEO карточки сохранено')
     await navigateTo('/admin/seo/services')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить SEO', variant: 'error' })
@@ -72,7 +72,7 @@ async function submit() {
         <NuxtLink to="/admin/seo/services" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
           <ArrowLeft class="h-5 w-5" />
         </NuxtLink>
-        <h1 class="font-display text-xl text-mts-text">SEO услуги</h1>
+        <h1 class="font-display text-xl text-mts-text">SEO карточки сервиса</h1>
       </div>
     </header>
 

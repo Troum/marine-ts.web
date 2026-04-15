@@ -181,10 +181,10 @@ async function submit() {
         await api.services.update(Number(idParam.value), payload)
       }
     }
-    adminToast.success(isNew.value ? 'Услуга создана' : 'Услуга сохранена')
+    adminToast.success(isNew.value ? 'Карточка создана' : 'Карточка сохранена')
     await navigateTo('/admin/services')
   } catch {
-    await showAdminAlert({ message: 'Не удалось сохранить услугу', variant: 'error' })
+    await showAdminAlert({ message: 'Не удалось сохранить карточку', variant: 'error' })
   } finally {
     saving.value = false
   }
@@ -201,7 +201,7 @@ async function submit() {
               <ArrowLeft class="w-5 h-5" />
             </NuxtLink>
             <h1 class="font-display text-xl text-mts-text">
-              {{ isNew ? 'Новая услуга' : 'Редактирование услуги' }}
+              {{ isNew ? 'Новая карточка сервиса' : 'Редактирование карточки' }}
             </h1>
           </div>
         </div>
@@ -247,7 +247,7 @@ async function submit() {
                 >Изображение для карточки</label
               >
               <p class="font-body text-xs text-mts-text-secondary">
-                Используется в каталоге и на главной (если услуга выбрана в блоке). Форматы: JPG, PNG, WebP, до 20 МБ.
+                Используется в каталоге и на главной (если карточка выбрана в блоке). Форматы: JPG, PNG, WebP, до 20 МБ.
               </p>
               <div v-if="(imagePreview || existingImageUrl) && !removeImage" class="relative max-w-md overflow-hidden border border-mts-border bg-mts-bg">
                 <img

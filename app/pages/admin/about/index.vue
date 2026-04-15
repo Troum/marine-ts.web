@@ -220,6 +220,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField v-model="d.heroImage" />
             <div class="grid md:grid-cols-3 gap-4">
               <div>
                 <label :class="sectionLabel">Заголовок (начало)</label>
@@ -268,7 +269,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <div class="space-y-4">
               <div v-for="(svc, i) in d.ecosystem.services" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
                 <div class="flex items-center justify-between">
-                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Услуга {{ i + 1 }}</span>
+                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Сервис {{ i + 1 }}</span>
                   <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeService(i)">
                     <Trash2 class="w-4 h-4" />
                   </button>
@@ -289,7 +290,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 </div>
               </div>
               <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addService">
-                <Plus class="w-4 h-4" /> Добавить услугу
+                <Plus class="w-4 h-4" /> Добавить сервис
               </button>
             </div>
           </div>

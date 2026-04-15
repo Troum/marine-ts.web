@@ -27,7 +27,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       titleSuffix: '',
       lead: 'Подбор экипажей и обслуживание судов. Работаем с судовладельцами и моряками по всему миру: классификация IACS, прозрачные процессы, понятный следующий шаг.',
       ctaClient: 'Оставить заявку',
-      ctaClientHref: '/contacts',
+      ctaClientHref: '/request',
       ctaSeafarer: 'Заполнить анкету',
       ctaSeafarerHref: '/application-form',
       badgeIso: '9001:2015',
@@ -61,14 +61,16 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       text: 'Актуальные вакансии и открытая анкета в базу кандидатов — выберите удобный сценарий.',
       cta: 'Вакансии',
       href: '/vacancies',
+      secondaryCta: 'Заполнить анкету',
+      secondaryHref: '/application-form',
     },
     funnelTechnical: {
-      label: 'Услуги',
+      label: 'Сервисы',
       title: 'Инженерные ',
       titleAccent: 'решения',
       titleEnd: ' для флота',
       text: 'Каталог услуг: техническое сопровождение, проекты и консультации — выберите направление и свяжитесь с нами.',
-      cta: 'Каталог услуг',
+      cta: 'Каталог сервисов',
       href: '/services',
     },
     directions: {
@@ -110,11 +112,11 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       ],
     },
     services: {
-      label: 'Услуги',
+      label: 'Сервисы',
       heading: 'Полный спектр ',
       headingAccent: 'морских',
       headingEnd: ' услуг',
-      all: 'Все услуги',
+      all: 'Все сервисы',
       more: 'Подробнее →',
       featuredServiceIds: [],
     },
@@ -146,7 +148,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       titleSuffix: '',
       lead: 'Crewing and vessel support worldwide: IACS-aligned processes, one point of contact for owners and seafarers.',
       ctaClient: 'Request a quote',
-      ctaClientHref: '/contacts',
+      ctaClientHref: '/request',
       ctaSeafarer: 'Fill in application',
       ctaSeafarerHref: '/application-form',
       badgeIso: '9001:2015',
@@ -180,6 +182,8 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
       text: 'Open vacancies or submit an open application to our candidate pool.',
       cta: 'Vacancies',
       href: '/vacancies',
+      secondaryCta: 'Fill in application',
+      secondaryHref: '/application-form',
     },
     funnelTechnical: {
       label: 'Services',
@@ -274,7 +278,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     ...def.hero,
     ...h,
     ctaClient: h?.ctaClient ?? h?.ctaConsult ?? def.hero.ctaClient,
-    ctaClientHref: h?.ctaClientHref ?? '/contacts',
+    ctaClientHref: h?.ctaClientHref ?? '/request',
     ctaSeafarer: h?.ctaSeafarer ?? h?.ctaServices ?? def.hero.ctaSeafarer,
     ctaSeafarerHref: h?.ctaSeafarerHref ?? '/application-form',
   }
@@ -283,7 +287,12 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     ...parsed,
     hero,
     funnelShip: { ...def.funnelShip, ...parsed.funnelShip },
-    funnelCrewing: { ...def.funnelCrewing, ...parsed.funnelCrewing },
+    funnelCrewing: {
+      ...def.funnelCrewing,
+      ...parsed.funnelCrewing,
+      secondaryCta: parsed.funnelCrewing?.secondaryCta ?? def.funnelCrewing.secondaryCta,
+      secondaryHref: parsed.funnelCrewing?.secondaryHref ?? def.funnelCrewing.secondaryHref,
+    },
     funnelTechnical: { ...def.funnelTechnical, ...parsed.funnelTechnical },
     directions: {
       ...def.directions,
@@ -320,6 +329,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     },
     showProcess: parsed.showProcess ?? def.showProcess,
     showInquiryForm: parsed.showInquiryForm ?? def.showInquiryForm,
+    heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
   }
 }
 
@@ -347,6 +357,7 @@ export function syncHomeStructuralFields(
     d.process.steps.length = src.process.steps.length
     d.showInquiryForm = src.showInquiryForm
     d.showProcess = src.showProcess
+    d.heroImage = src.heroImage
     while (d.directions.rows.length < src.directions.rows.length) {
       d.directions.rows.push({ title: '', description: '', cta: '', href: '' })
     }
@@ -360,7 +371,7 @@ export function syncHomeStructuralFields(
 
 /* ── Listing pages (Services, Projects, Gallery, News) ── */
 
-type ListingSlug = 'services-page' | 'projects-page' | 'gallery-page' | 'news-page'
+type ListingSlug = 'services-page' | 'projects-page' | 'gallery-page' | 'news-page' | 'vacancies-page'
 
 const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingPageData | ProjectsPageData>> = {
   'services-page': {
@@ -408,6 +419,32 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { title: 'Latest ', titleAccent: 'news', titleEnd: ' from the company', lead: 'Follow our development, new projects and maritime industry updates.' },
       showInquiryForm: false,
     },
+  },
+  'vacancies-page': {
+    ru: {
+      hero: {
+        title: 'Открытые ',
+        titleAccent: 'вакансии',
+        titleEnd: '',
+        lead:
+          'Присоединяйтесь к команде Marine Technical Solutions. Мы предлагаем работу в судоремонте и сервисе морского флота. Среди открытых вакансий нет подходящей — можно просто заполнить анкету: мы свяжемся с вами, когда появится подходящая позиция.',
+      },
+      cta: { title: 'Вопросы по вакансиям и сотрудничеству?', buttonText: 'Оставить заявку' },
+      heroImage: '/about-workshop.jpg',
+      showInquiryForm: false,
+    } as ProjectsPageData,
+    en: {
+      hero: {
+        title: 'Open ',
+        titleAccent: 'positions',
+        titleEnd: '',
+        lead:
+          "Join the Marine Technical Solutions team. We offer roles in ship repair and maritime services. Don't see a role that fits? You can simply fill in our application form — we'll get in touch when something relevant opens up.",
+      },
+      cta: { title: 'Questions about careers or cooperation?', buttonText: 'Request a quote' },
+      heroImage: '/about-workshop.jpg',
+      showInquiryForm: false,
+    } as ProjectsPageData,
   },
 }
 
@@ -674,6 +711,10 @@ export function mergeLinePageData(
     audience: { ...base.audience, ...p.audience },
     checklist,
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    heroBackgroundImage:
+      p.heroBackgroundImage !== undefined && p.heroBackgroundImage !== null
+        ? p.heroBackgroundImage
+        : base.heroBackgroundImage,
   }
 }
 

@@ -49,15 +49,17 @@ onMounted(async () => {
 
 async function submit() {
   const inq = data.value[localeTab.value].showInquiryForm
+  const heroImg = data.value[localeTab.value].heroImage
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].heroImage = heroImg
   }
   saving.value = true
   try {
     const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }>
     for (const loc of MARINE_CONTENT_LOCALES) {
       translations[loc] = {
-        title: loc === 'ru' ? 'Услуги' : 'Services',
+        title: loc === 'ru' ? 'Сервисы' : 'Services',
         excerpt: '', body: JSON.stringify(data.value[loc]),
         seoTitle: '', seoDescription: '', seoKeywords: '',
       }
@@ -68,7 +70,7 @@ async function submit() {
       const created = await api.contentPages.create({ slug: SLUG, isPublished: true, sortOrder: 0, translations })
       existingId.value = (created as ContentPage).id
     }
-    adminToast.success('Страница «Услуги» сохранена')
+    adminToast.success('Страница «Сервисы» сохранена')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
   } finally { saving.value = false }
@@ -85,7 +87,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors"><ArrowLeft class="w-5 h-5" /></NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Страница «Услуги»</h1>
+            <h1 class="font-display text-xl text-mts-text">Страница «Сервисы»</h1>
           </div>
           <div class="flex items-center gap-4">
             <NuxtLink to="/services" target="_blank" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">Открыть на сайте ↗</NuxtLink>
@@ -108,6 +110,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField v-model="d.heroImage" />
             <div class="grid md:grid-cols-3 gap-4">
               <div>
                 <label :class="sectionLabel">Заголовок (начало)</label>
@@ -150,7 +153,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <section class="bg-white border border-mts-border shadow-tech relative p-6">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
-            Показать форму заявки внизу страницы «Услуги»
+            Показать форму заявки внизу страницы «Сервисы»
           </label>
         </section>
 

@@ -92,7 +92,7 @@ export interface NewsItem {
   translations?: Partial<Record<MarineContentLocale, NewsTranslationPayload>>
 }
 
-/** Связанная текстовая страница раздела «Услуги» (полиморфная привязка в API). */
+/** Связанная текстовая страница раздела «Сервисы» (полиморфная привязка в API). */
 export interface LinkedContentPageRef {
   id: number
   slug: string
@@ -237,12 +237,12 @@ export type ContentPageContentableType = 'service' | 'project'
 export interface ContentPage extends ContentPageSummary {
   body: string
   isPublished: boolean
-  /** Показать форму заявки внизу страницы (контентные страницы услуг/проектов). */
+  /** Показать форму заявки внизу страницы (контентные страницы сервисов/проектов). */
   showInquiryForm?: boolean
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
-  /** Краткое имя типа карточки, если страница привязана к услуге или проекту. */
+  /** Краткое имя типа карточки, если страница привязана к сервису или проекту. */
   contentableType?: ContentPageContentableType | null
   contentableId?: number | null
   /** Заголовок связанной карточки (если загружена связь в manage API). */
@@ -349,6 +349,23 @@ export interface NavigationMenuSettings {
   more: NavigationMenuItem[]
 }
 
+/** Пункт ссылки в подвале (без подменю). */
+export interface FooterNavLink {
+  path: string
+  label: Record<MarineContentLocale, string>
+}
+
+export interface FooterNavColumn {
+  title: Record<MarineContentLocale, string>
+  links: FooterNavLink[]
+}
+
+/** Три колонки ссылок + нижняя юридическая полоса (`/footer-navigation-settings`). */
+export interface FooterMenuSettings {
+  columns: FooterNavColumn[]
+  legal: FooterNavLink[]
+}
+
 /* ── About page structured data (CMS JSON in body) ── */
 
 export interface AboutHero {
@@ -422,6 +439,8 @@ export interface AboutPageData {
   geography: AboutGeography
   certificates: AboutCertificates
   showInquiryForm?: boolean
+  /** Опциональный фон первого экрана (URL или путь после загрузки). */
+  heroImage?: string
 }
 
 /* ── Home page structured data (CMS JSON in body) ── */
@@ -448,7 +467,7 @@ export interface HomeHero {
   scroll: string
 }
 
-/** Акцентный блок воронки на главной (судовой менеджмент / крюинг / ремонт). */
+/** Акцентный блок воронки на главной (судовой менеджмент / крюинг / сервисы). */
 export interface HomeFunnelSpotlight {
   label: string
   title: string
@@ -457,6 +476,12 @@ export interface HomeFunnelSpotlight {
   text: string
   cta: string
   href: string
+}
+
+/** Средняя карточка: две ссылки (вакансии + анкета). */
+export interface HomeFunnelCrewingSpotlight extends HomeFunnelSpotlight {
+  secondaryCta: string
+  secondaryHref: string
 }
 
 export interface HomeDirectionRow {
@@ -509,7 +534,7 @@ export interface HomeServicesSection {
   headingEnd: string
   all: string
   more: string
-  /** ID услуг из каталога (порядок = порядок на главной). Пусто — блок «Услуги» не показывается. */
+  /** ID карточек сервисов из каталога (порядок = порядок на главной). Пусто — блок «Сервисы» не показывается. */
   featuredServiceIds: number[]
 }
 
@@ -535,9 +560,11 @@ export interface HomeCTA {
 
 export interface HomePageData {
   hero: HomeHero
+  /** Опциональный фон первого экрана; если нет — используется стоковый `/hero-bg.jpg` на сайте. */
+  heroImage?: string
   statsCard: HomeStatsCard
   funnelShip: HomeFunnelSpotlight
-  funnelCrewing: HomeFunnelSpotlight
+  funnelCrewing: HomeFunnelCrewingSpotlight
   funnelTechnical: HomeFunnelSpotlight
   directions: HomeDirectionsSection
   about: HomeAboutPreview
@@ -569,11 +596,14 @@ export interface ListingPageData {
   hero: ListingHero
   cta?: ListingCTA
   showInquiryForm?: boolean
-}
-
-export interface ProjectsPageData extends ListingPageData {
+  /** Опциональный фон hero (листинги сервисов, проектов, галереи, новостей, вакансий). */
   heroImage?: string
 }
+
+export interface ProjectsPageData extends ListingPageData {}
+
+/** Листинг `/vacancies`: тот же JSON, что у проектов (hero + фон + CTA + форма заявки). */
+export type VacanciesPageData = ProjectsPageData
 
 /* ── Contacts page structured data (CMS JSON in body) ── */
 
@@ -584,6 +614,8 @@ export interface ContactsPageData {
   formLead: string
   officesTitle: string
   showInquiryForm?: boolean
+  /** Опциональный фон hero. */
+  heroImage?: string
 }
 
 /** Структурированный JSON страницы «Крюинг-менеджмент» (CMS, body в content_pages). */
@@ -643,4 +675,6 @@ export interface CrewingPageData {
   }
   checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
+  /** Переопределить фон hero (иначе из макета: `/hero-bg.jpg` и т.д.). */
+  heroBackgroundImage?: string
 }

@@ -41,12 +41,18 @@ const { canManageUsers, canManageContentPages, canManageGallery, canManageContac
 
 const sectionPickerOpen = ref(false)
 const sectionOptions = [
-  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью услуг, процесс работы, CTA' },
+  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA' },
   { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
-  { label: 'Услуги', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
+  { label: 'Сервисы', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
   { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
   { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
   { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
+  {
+    label: 'Вакансии',
+    to: '/admin/vacancies-page',
+    icon: ClipboardList,
+    desc: 'Hero, фон, CTA, форма заявки',
+  },
   {
     label: 'Судовой менеджмент',
     to: '/admin/line-pages/ship-management',
@@ -72,7 +78,8 @@ const stats = ref({
   vacancies_count: 0,
   application_forms_count: 0,
 })
-const pending = ref(true)
+/** Только блок «цифры сверху»; карточки разделов не прячем из‑за медленного API. */
+const statsPending = ref(true)
 const pageViews = ref<PageViewsSummary | null>(null)
 
 onMounted(async () => {
@@ -84,7 +91,7 @@ onMounted(async () => {
   } catch {
     /* ignore */
   } finally {
-    pending.value = false
+    statsPending.value = false
   }
   try {
     pageViews.value = await api.analytics.getSummary()
@@ -113,7 +120,7 @@ const statCards = computed(() => [
     color: 'bg-purple-500',
   },
   {
-    label: 'Услуг на сайте',
+    label: 'Карточек сервисов',
     value: stats.value.services_count ?? 0,
     icon: Wrench,
     color: 'bg-amber-600',
@@ -162,12 +169,11 @@ const statCards = computed(() => [
     </header>
 
     <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-      <div v-if="pending" class="flex justify-center py-24">
+      <h1 class="font-display text-3xl text-mts-text mb-8">Панель управления</h1>
+      <div v-if="statsPending" class="flex justify-center py-12 mb-12">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>
-      <template v-else>
-        <h1 class="font-display text-3xl text-mts-text mb-8">Панель управления</h1>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-12">
+      <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-12">
           <div v-for="stat in statCards" :key="stat.label" class="bg-white border border-mts-border p-6 flex flex-wrap items-center gap-4">
             <div class="flex items-center justify-start gap-x-4">
               <div :class="['w-12 h-12 flex items-center justify-center', stat.color]">
@@ -179,7 +185,7 @@ const statCards = computed(() => [
               <p class="font-body text-sm text-mts-text-secondary">{{ stat.label }}</p>
             </div>
           </div>
-        </div>
+      </div>
 
         <section v-if="pageViews" class="mb-12 border border-mts-border bg-white p-6 lg:p-8">
           <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -376,7 +382,7 @@ const statCards = computed(() => [
             >
               <div class="flex shrink-0 items-center gap-3">
                 <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Услуги</h2>
+                <h2 class="font-display text-xl text-mts-text">Сервисы</h2>
               </div>
               <div class="flex shrink-0 flex-nowrap items-center gap-2">
                 <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
@@ -387,7 +393,7 @@ const statCards = computed(() => [
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Раздел «Услуги» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по адресу
+                Раздел «Сервисы» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по адресу
                 /services/…
               </p>
               <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
@@ -516,6 +522,27 @@ const statCards = computed(() => [
             </div>
           </div>
 
+          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <LayoutList class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-xl text-mts-text">Меню в подвале</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Три колонки ссылок и нижняя полоса документов без выпадающих подменю.
+              </p>
+              <NuxtLink
+                to="/admin/footer-navigation"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Редактировать подвал
+              </NuxtLink>
+            </div>
+          </div>
+
           <div v-if="canManageUsers" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -593,7 +620,6 @@ const statCards = computed(() => [
             </table>
           </div>
         </div>
-      </template>
     </main>
 
     <Teleport to="body">

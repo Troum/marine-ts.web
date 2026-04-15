@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown } from 'lucide-vue-next'
 import type { HomePageData, MarineContentLocale, ServiceItem } from '~/types'
+import AccentHeadline from '~/components/common/AccentHeadline.vue'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
@@ -9,7 +10,7 @@ import { resolveLucideIcon } from '~/utils/lucideIconRegistry'
 
 useSiteSeoMeta('home')
 
-const { t, locale } = useI18n()
+const { locale } = useI18n()
 const localePath = useLocalePath()
 const api = useMarineApi()
 
@@ -47,7 +48,7 @@ const { data: catalogServices } = await useAsyncData(
   { watch: [locale], default: () => [] as ServiceItem[] },
 )
 
-/** Карточки блока «Услуги» только из каталога по `featuredServiceIds`. */
+/** Карточки блока «Сервисы» только из каталога по `featuredServiceIds`. */
 const visibleServiceCards = computed(() => {
   const fallbackImg = '/images/services/hull.jpg'
   const ids = (d.value.services.featuredServiceIds ?? []).filter((id) => id > 0)
@@ -95,7 +96,7 @@ const statIcons = computed(() =>
             'absolute inset-0 bg-cover bg-center transition-all duration-1000',
             isVisible ? 'scale-100 opacity-100' : 'scale-105 opacity-0',
           ]"
-          style="background-image: url(/hero-bg.jpg)"
+          :style="{ backgroundImage: `url(${d.heroImage || '/hero-bg.jpg'})` }"
         />
         <div class="absolute inset-0 bg-linear-to-r from-mts-bg via-mts-bg/82 to-mts-bg/55" />
         <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/40" />
@@ -122,7 +123,7 @@ const statIcons = computed(() =>
             >
               {{ d.hero.titleLine1 }}
               <br />
-              <span class="text-mts-accent">{{ d.hero.titleAccent }}</span>{{ d.hero.titleSuffix }}
+              <AccentHeadline :accent="d.hero.titleAccent" :after="d.hero.titleSuffix" />
             </h1>
 
             <p
@@ -216,59 +217,56 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section class="relative border-t border-mts-border bg-white py-20 lg:py-28">
-      <div class="mx-auto max-w-7xl px-6 lg:px-12">
-        <div class="grid gap-8 lg:grid-cols-3">
-          <div class="min-w-0 border border-mts-border bg-mts-bg/40 p-8 shadow-sm">
-            <div class="mb-3 flex items-center gap-2">
+    <section class="relative border-t border-mts-border bg-white py-16 lg:py-24">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4 lg:gap-6 lg:items-stretch">
+          <div
+            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
+          >
+            <div class="mb-2 flex items-center gap-2">
               <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label">{{ d.funnelShip.label }}</span>
+              <span class="section-label text-[10px]">{{ d.funnelShip.label }}</span>
             </div>
-            <h2 class="font-display text-2xl text-mts-text lg:text-3xl break-words [overflow-wrap:anywhere]">
-              {{ d.funnelShip.title }}<span class="text-mts-accent"> {{ d.funnelShip.titleAccent }}</span>{{ d.funnelShip.titleEnd }}
+            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+              <AccentHeadline :before="d.funnelShip.title" :accent="d.funnelShip.titleAccent" :after="d.funnelShip.titleEnd" />
             </h2>
-            <p class="mt-4 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelShip.text }}</p>
-            <NuxtLink
-              :to="localePath(d.funnelShip.href)"
-              class="mt-6 inline-flex font-mono text-xs uppercase tracking-wide text-mts-accent hover:underline"
-            >
+            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelShip.text }}</p>
+            <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
               {{ d.funnelShip.cta }} →
             </NuxtLink>
           </div>
-          <div class="min-w-0 border border-mts-border bg-mts-bg/40 p-8 shadow-sm">
-            <div class="mb-3 flex items-center gap-2">
+          <div
+            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
+          >
+            <div class="mb-2 flex items-center gap-2">
               <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label">{{ d.funnelCrewing.label }}</span>
+              <span class="section-label text-[10px]">{{ d.funnelCrewing.label }}</span>
             </div>
-            <h2 class="font-display text-2xl text-mts-text lg:text-3xl break-words [overflow-wrap:anywhere]">
-              {{ d.funnelCrewing.title }}<span class="text-mts-accent"> {{ d.funnelCrewing.titleAccent }}</span>{{ d.funnelCrewing.titleEnd }}
+            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+              <AccentHeadline :before="d.funnelCrewing.title" :accent="d.funnelCrewing.titleAccent" :after="d.funnelCrewing.titleEnd" />
             </h2>
-            <p class="mt-4 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelCrewing.text }}</p>
-            <div class="mt-6 flex flex-wrap gap-4">
-              <NuxtLink :to="localePath('/vacancies')" class="font-mono text-xs uppercase tracking-wide text-mts-accent hover:underline">
-                {{ t('nav.vacancies') }} →
+            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelCrewing.text }}</p>
+            <div class="mt-5 flex flex-wrap items-center gap-2">
+              <NuxtLink :to="localePath(d.funnelCrewing.href)" class="mts-cta-link-compact">
+                {{ d.funnelCrewing.cta }} →
               </NuxtLink>
-              <NuxtLink
-                :to="localePath('/application-form')"
-                class="font-mono text-xs uppercase tracking-wide text-mts-text-secondary hover:text-mts-accent hover:underline"
-              >
-                {{ d.hero.ctaSeafarer }} →
+              <NuxtLink :to="localePath(d.funnelCrewing.secondaryHref)" class="mts-cta-link-muted-compact">
+                {{ d.funnelCrewing.secondaryCta }} →
               </NuxtLink>
             </div>
           </div>
-          <div class="min-w-0 border border-mts-border bg-mts-bg/40 p-8 shadow-sm">
-            <div class="mb-3 flex items-center gap-2">
+          <div
+            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
+          >
+            <div class="mb-2 flex items-center gap-2">
               <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label">{{ d.funnelTechnical.label }}</span>
+              <span class="section-label text-[10px]">{{ d.funnelTechnical.label }}</span>
             </div>
-            <h2 class="font-display text-2xl text-mts-text lg:text-3xl break-words [overflow-wrap:anywhere]">
-              {{ d.funnelTechnical.title }}<span class="text-mts-accent"> {{ d.funnelTechnical.titleAccent }}</span>{{ d.funnelTechnical.titleEnd }}
+            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+              <AccentHeadline :before="d.funnelTechnical.title" :accent="d.funnelTechnical.titleAccent" :after="d.funnelTechnical.titleEnd" />
             </h2>
-            <p class="mt-4 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelTechnical.text }}</p>
-            <NuxtLink
-              :to="localePath(d.funnelTechnical.href)"
-              class="mt-6 inline-flex font-mono text-xs uppercase tracking-wide text-mts-accent hover:underline"
-            >
+            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelTechnical.text }}</p>
+            <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
               {{ d.funnelTechnical.cta }} →
             </NuxtLink>
           </div>
@@ -283,22 +281,19 @@ const statIcons = computed(() =>
             <div class="h-px w-6 bg-mts-accent" />
             <span class="section-label">{{ d.directions.label }}</span>
           </div>
-          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [overflow-wrap:anywhere]">
-            {{ d.directions.heading }}<span class="text-mts-accent"> {{ d.directions.headingAccent }}</span>{{ d.directions.headingEnd }}
+          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [text-wrap:pretty]">
+            <AccentHeadline :before="d.directions.heading" :accent="d.directions.headingAccent" :after="d.directions.headingEnd" />
           </h2>
         </div>
-        <div class="grid gap-px bg-mts-border md:grid-cols-2 lg:grid-cols-4">
+        <div class="flex flex-col gap-px bg-mts-border md:flex-row md:w-full">
           <div
             v-for="row in d.directions.rows"
             :key="row.title"
-            class="bg-white p-8 transition-colors hover:bg-mts-bg"
+            class="min-w-0 flex-1 basis-0 bg-mts-bg p-8 transition-colors duration-200 hover:bg-white"
           >
             <h3 class="font-display text-lg text-mts-text">{{ row.title }}</h3>
             <p class="mt-3 font-body text-sm text-mts-text-secondary">{{ row.description }}</p>
-            <NuxtLink
-              :to="localePath(row.href)"
-              class="mt-6 inline-block font-mono text-[10px] uppercase tracking-wide text-mts-accent hover:underline"
-            >
+            <NuxtLink :to="localePath(row.href)" class="mts-cta-link-compact mt-6 inline-flex">
               {{ row.cta }} →
             </NuxtLink>
           </div>
@@ -315,7 +310,7 @@ const statIcons = computed(() =>
               <span class="section-label">{{ d.about.label }}</span>
             </div>
             <h2 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-              {{ d.about.title }} <span class="text-mts-accent">{{ d.about.titleAccent }}</span>{{ d.about.titleEnd }}
+              <AccentHeadline :before="d.about.title" :accent="d.about.titleAccent" :after="d.about.titleEnd" />
             </h2>
             <div class="w-12 h-0.5 bg-mts-accent mb-6" />
             <p class="font-body text-mts-text-secondary leading-relaxed mb-6">
@@ -324,7 +319,7 @@ const statIcons = computed(() =>
             <div class="mb-8">
               <span class="section-label">{{ d.trust.label }}</span>
               <h3 class="font-display mt-3 text-xl text-mts-text">
-                {{ d.trust.title }} <span class="text-mts-accent">{{ d.trust.titleAccent }}</span>
+                <AccentHeadline :before="d.trust.title" :accent="d.trust.titleAccent" />
               </h3>
               <ul class="mt-4 space-y-2 font-body text-sm text-mts-text-secondary">
                 <li v-for="(b, bi) in d.trust.bullets" :key="bi" class="flex gap-2">
@@ -351,8 +346,8 @@ const statIcons = computed(() =>
               <div class="w-6 h-px bg-mts-accent" />
               <span class="section-label">{{ d.services.label }}</span>
             </div>
-            <h2 class="font-display text-4xl lg:text-5xl text-mts-text break-words [overflow-wrap:anywhere]">
-              {{ d.services.heading }}<span class="text-mts-accent">{{ d.services.headingAccent }}</span>{{ d.services.headingEnd }}
+            <h2 class="font-display text-4xl lg:text-5xl text-mts-text break-words [text-wrap:pretty]">
+              <AccentHeadline :before="d.services.heading" :accent="d.services.headingAccent" :after="d.services.headingEnd" />
             </h2>
           </div>
           <ButtonLink :title="d.services.all" link="/services" extra-class="hidden lg:inline-flex" />
@@ -383,10 +378,7 @@ const statIcons = computed(() =>
               <p class="font-body text-base text-mts-text-secondary mb-4">
                 {{ service.description }}
               </p>
-              <NuxtLink
-                :to="localePath(service.href)"
-                class="font-mono text-xs uppercase tracking-wide text-mts-accent opacity-0 group-hover:opacity-100 transition-opacity"
-              >
+              <NuxtLink :to="localePath(service.href)" class="mts-cta-link">
                 {{ d.services.more }}
               </NuxtLink>
             </div>
@@ -407,8 +399,8 @@ const statIcons = computed(() =>
             <span class="section-label">{{ d.process.label }}</span>
             <div class="h-px w-6 bg-mts-accent" />
           </div>
-          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [overflow-wrap:anywhere]">
-            {{ d.process.heading }}<span class="text-mts-accent"> {{ d.process.headingAccent }}</span>
+          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [text-wrap:pretty]">
+            <AccentHeadline :before="d.process.heading" :accent="d.process.headingAccent" />
           </h2>
         </div>
         <div class="grid gap-10 md:grid-cols-3 lg:gap-12">
@@ -435,13 +427,13 @@ const statIcons = computed(() =>
           <div class="w-6 h-px bg-mts-accent" />
         </div>
         <h2 class="font-display text-4xl lg:text-5xl text-mts-text mb-6">
-          {{ d.cta.title }} <span class="text-mts-accent">{{ d.cta.titleAccent }}</span>
+          <AccentHeadline :before="d.cta.title" :accent="d.cta.titleAccent" />
         </h2>
         <p class="font-body text-mts-text-secondary mb-8 max-w-xl mx-auto">
           {{ d.cta.text }}
         </p>
         <div class="flex justify-center items-center">
-          <ButtonLink :title="d.cta.button" link="/contacts" />
+          <ButtonLink :title="d.cta.button" link="/request" />
         </div>
       </div>
     </section>

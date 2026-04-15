@@ -16,7 +16,6 @@ const props = defineProps<{
 useSiteSeoMeta(props.slug)
 
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 const { breadcrumbs } = usePageBreadcrumbs()
 const api = useMarineApi()
 
@@ -57,7 +56,7 @@ const cms = computed<CrewingPageData>(() => {
 const crumbItems = computed(() =>
   breadcrumbs({
     label: t(layout.value.navI18nKey),
-    to: localePath(`/${props.slug}`),
+    to: `/${props.slug}`,
   }),
 )
 
@@ -70,7 +69,7 @@ const checklistVisible = computed(
 const checklistRows = computed(() => buildCrewingChecklistRenderRows(cms.value.checklist))
 
 const heroBgStyle = computed(() => ({
-  backgroundImage: `url(${layout.value.heroBg})`,
+  backgroundImage: `url(${cms.value.heroBackgroundImage?.trim() || layout.value.heroBg})`,
 }))
 
 const checklistHeadingId = computed(() => `${props.slug}-checklist-heading`)
@@ -109,7 +108,7 @@ const checklistPanelId = computed(() => `${props.slug}-checklist-panel`)
             ]"
           >
             <div class="h-px w-8 bg-mts-accent" />
-            <span class="section-label">{{ cms.hero.label }}</span>
+            <span class="section-label">{{ t(layout.heroEyebrowI18nKey) }}</span>
           </div>
           <h1
             :class="[
@@ -129,6 +128,17 @@ const checklistPanelId = computed(() => `${props.slug}-checklist-panel`)
           >
             {{ cms.hero.lead }}
           </p>
+          <div
+            v-if="cms.showInquiryForm"
+            :class="[
+              'mt-8 transition-all duration-600',
+              heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
+            ]"
+          >
+            <a href="#page-inquiry" class="btn-primary inline-flex items-center justify-center whitespace-nowrap">
+              {{ t('pages.lineMarketing.heroInquiryCta') }}
+            </a>
+          </div>
         </div>
       </div>
     </section>

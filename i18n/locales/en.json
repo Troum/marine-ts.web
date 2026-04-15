@@ -138,6 +138,7 @@
       "datePickerNextMonth": "Next month"
     },
     "about": {
+      "heroEyebrow": "Company profile",
       "carouselAria": "Engineering base: photo gallery",
       "compliance": "Compliance with standards",
       "certificates": "Certificates",
@@ -185,6 +186,7 @@
       "kaliningrad": "Kaliningrad"
     },
     "contacts": {
+      "heroEyebrow": "Offices & contact",
       "heroTitle": "Get in ",
       "heroAccent": "touch",
       "heroLead": "Contact our technical department. We respond within two hours and prepare a commercial proposal for your needs.",
@@ -200,6 +202,15 @@
       "formSuccess": "Message sent. Thank you for contacting us.",
       "submit": "Send",
       "officesTitle": "Offices"
+    },
+    "request": {
+      "crumb": "Request",
+      "heroEyebrow": "Commercial enquiry",
+      "label": "Request",
+      "title": "Submit a ",
+      "titleAccent": "request",
+      "titleEnd": "",
+      "lead": "Fill in the form below — we will reply by email or phone and prepare a proposal for your needs."
     },
     "pageInquiry": {
       "sectionLabel": "Request",
@@ -222,6 +233,7 @@
       "error": "Could not send the request. Please try again later or use the contacts in the site footer."
     },
     "services": {
+      "heroEyebrow": "Service catalogue",
       "heroTitle": "Full range of ",
       "heroAccent": "ship repair",
       "heroEnd": " services",
@@ -232,6 +244,7 @@
       "moreAbout": "More about our services"
     },
     "gallery": {
+      "heroEyebrow": "Yard & projects",
       "heroTitle": "Photos from ",
       "heroAccent": "projects",
       "heroEnd": " and workshops",
@@ -244,6 +257,7 @@
       "nextPhoto": "Next photo"
     },
     "projects": {
+      "heroEyebrow": "Work portfolio",
       "heroTitle": "Our ",
       "heroAccent": "completed",
       "heroEnd": " projects",
@@ -261,6 +275,7 @@
       }
     },
     "news": {
+      "heroEyebrow": "Company news",
       "heroTitle": "Latest ",
       "heroAccent": "news",
       "heroEnd": " from the company",
@@ -279,13 +294,21 @@
       "labelCareer": "Careers",
       "heroTitle": "Open ",
       "heroAccent": "positions",
-      "heroLead": "Join the Marine Technical Solutions team. We offer roles in ship repair and maritime services.",
+      "heroLead": "Join the Marine Technical Solutions team. We offer roles in ship repair and maritime services. Don't see a role that fits? You can simply fill in our application form — we'll get in touch when something relevant opens up.",
+      "openApplicationButton": "Fill in application",
+      "ctaTitle": "Questions about careers or cooperation?",
+      "ctaButton": "Request a quote",
       "loadError": "Could not load vacancies",
       "emptyHtml": "There are no open positions right now. Check back later or send your CV to",
       "applyNote": "Complete the candidate form (only from this vacancy page) — the layout matches the corporate PDF export.",
       "applyButton": "Fill in application",
       "applyAlt": "Or send your CV to",
       "safetySizes": "PPE / clothing sizes"
+    },
+    "lineMarketing": {
+      "shipHeroEyebrow": "Operations & maintenance",
+      "crewingHeroEyebrow": "Manning & crew support",
+      "heroInquiryCta": "To the request form"
     },
     "crewing": {
       "heroTitle": "Crewing solutions and ",
@@ -316,6 +339,8 @@
       "ctaContact": "Contact us"
     },
     "legal": {
+      "privacyBreadcrumb": "Personal data",
+      "termsBreadcrumb": "Legal terms",
       "termsTitle": "Terms of use",
       "termsLead": "Terms of use for the Marine Technical Solutions website will be published here.",
       "privacyTitle": "Privacy policy",

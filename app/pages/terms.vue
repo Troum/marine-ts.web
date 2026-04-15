@@ -7,7 +7,7 @@ const { t } = useI18n()
 const { breadcrumbs } = usePageBreadcrumbs()
 
 const items = computed(() =>
-  breadcrumbs({ label: t('pages.legal.termsTitle'), to: '/terms' }),
+  breadcrumbs({ label: t('pages.legal.termsBreadcrumb'), to: '/terms' }),
 )
 </script>
 

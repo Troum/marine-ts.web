@@ -2,6 +2,7 @@
 import { MapPin, Calendar, ArrowRight, Ship, Loader2 } from 'lucide-vue-next'
 import type { Project, ProjectsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { projectTypeLabel } from '~/utils/contentLabels'
 import { defaultListingData } from '~/utils/pageDefaults'
 
@@ -84,31 +85,23 @@ const filteredProjects = computed(() => {
 
 <template>
   <div class="bg-mts-bg">
-    <section class="relative pt-40 lg:pt-48 pb-16 lg:pb-20 overflow-hidden">
-      <div
-        class="absolute inset-0 bg-cover bg-center opacity-[0.5]"
-        :style="`background-image: url(${cms.heroImage || '/about-workshop.jpg'})`"
-        aria-hidden="true"
-      />
-      <div class="absolute inset-0 bg-linear-to-r from-white/95 via-white/80 to-white/60" />
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="max-w-3xl">
-          <Breadcrumbs :items="crumbItems" />
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">{{ t('nav.projects') }}</span>
-          </div>
-          <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-            >{{ cms.hero.titleEnd }}
-          </h1>
-          <div class="w-12 h-0.5 bg-mts-accent mb-6" />
-          <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ cms.hero.lead }}
-          </p>
+    <ListingHeroShell :hero-image="cms.heroImage">
+      <div class="max-w-3xl">
+        <Breadcrumbs :items="crumbItems" />
+        <div class="mb-4 flex items-center gap-3">
+          <div class="h-px w-6 bg-mts-accent" />
+          <span class="section-label">{{ t('pages.projects.heroEyebrow') }}</span>
         </div>
+        <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
+          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
+          >{{ cms.hero.titleEnd }}
+        </h1>
+        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
+        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+          {{ cms.hero.lead }}
+        </p>
       </div>
-    </section>
+    </ListingHeroShell>
 
     <section class="relative py-6">
       <div class="max-w-7xl mx-auto px-6 lg:px-12">
@@ -188,7 +181,7 @@ const filteredProjects = computed(() => {
     <section class="relative py-16 bg-white border-t border-mts-border">
       <div class="max-w-4xl mx-auto px-6 text-center">
         <h2 class="font-display text-2xl text-mts-text mb-4">{{ cms.cta?.title || t('pages.projects.ctaTitle') }}</h2>
-        <NuxtLink :to="localePath('/contacts')" class="btn-primary group">
+        <NuxtLink :to="localePath('/request')" class="btn-primary group">
           {{ cms.cta?.buttonText || t('pages.projects.ctaButton') }}
           <ArrowRight class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
         </NuxtLink>

@@ -25,12 +25,21 @@ import type {
   PageViewsSummary,
   SiteContactSettings,
   NavigationMenuSettings,
+  FooterMenuSettings,
   Stats,
   VacancyApplicationForm,
   VacancyItem,
 } from '~/types'
 
 import { buildListQuery } from '~/composables/useAdminListQuery'
+import {
+  ADMIN_USER_ID_KEY,
+  clearAdminPermissionStorages,
+  writeAdminPermissionsToBothStorages,
+  writeAdminRolesToBothStorages,
+} from '~/utils/adminPermissionStorage'
+import { normalizeFooterMenuSettingsPayload } from '~/utils/normalizeFooterMenuSettingsPayload'
+import { normalizeNavigationSettingsPayload } from '~/utils/normalizeNavigationSettingsPayload'
 import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
 
 export function useMarineApi() {
@@ -120,11 +129,10 @@ export function useMarineApi() {
       const err = e as { statusCode?: number; status?: number }
       if (err?.statusCode === 401 || err?.status === 401) {
         setToken(null)
-      if (import.meta.client) {
-        sessionStorage.removeItem('mts_admin_permissions')
-        sessionStorage.removeItem('mts_admin_user_id')
-        await navigateTo('/admin/login')
-      }
+        if (import.meta.client) {
+          clearAdminPermissionStorages()
+          await navigateTo('/admin/login')
+        }
       }
       throw e
     }
@@ -158,8 +166,7 @@ export function useMarineApi() {
       if (err?.statusCode === 401 || err?.status === 401) {
         setToken(null)
         if (import.meta.client) {
-          sessionStorage.removeItem('mts_admin_permissions')
-          sessionStorage.removeItem('mts_admin_user_id')
+          clearAdminPermissionStorages()
           await navigateTo('/admin/login')
         }
       }
@@ -185,16 +192,18 @@ export function useMarineApi() {
       })
       setToken(data.token)
       if (import.meta.client) {
-        sessionStorage.setItem('mts_admin_permissions', JSON.stringify(data.user.permissions ?? []))
-        sessionStorage.setItem('mts_admin_user_id', String(data.user.id))
+        writeAdminPermissionsToBothStorages(data.user.permissions ?? [])
+        writeAdminRolesToBothStorages(data.user.roles ?? [])
+        const uid = String(data.user.id)
+        sessionStorage.setItem(ADMIN_USER_ID_KEY, uid)
+        localStorage.setItem(ADMIN_USER_ID_KEY, uid)
       }
       return data
     },
     logout() {
       setToken(null)
       if (import.meta.client) {
-        sessionStorage.removeItem('mts_admin_permissions')
-        sessionStorage.removeItem('mts_admin_user_id')
+        clearAdminPermissionStorages()
       }
     },
     users: {
@@ -606,15 +615,28 @@ export function useMarineApi() {
     },
     navigationSettings: {
       get: async () => {
-        const res = await fetchPublic<{ data: NavigationMenuSettings }>('/navigation-settings')
-        return res.data
+        const res = await fetchPublic<unknown>('/navigation-settings')
+        return normalizeNavigationSettingsPayload(res)
       },
       update: async (body: NavigationMenuSettings) => {
-        const res = await fetchAuth<{ data: NavigationMenuSettings }>('/navigation-settings', {
+        const res = await fetchAuth<unknown>('/navigation-settings', {
           method: 'PUT',
           body,
         })
-        return res.data
+        return normalizeNavigationSettingsPayload(res)
+      },
+    },
+    footerNavigationSettings: {
+      get: async () => {
+        const res = await fetchPublic<unknown>('/footer-navigation-settings')
+        return normalizeFooterMenuSettingsPayload(res)
+      },
+      update: async (body: FooterMenuSettings) => {
+        const res = await fetchAuth<unknown>('/footer-navigation-settings', {
+          method: 'PUT',
+          body,
+        })
+        return normalizeFooterMenuSettingsPayload(res)
       },
     },
     analytics: {

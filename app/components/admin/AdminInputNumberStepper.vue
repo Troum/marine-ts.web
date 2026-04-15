@@ -11,7 +11,7 @@ const props = withDefaults(
     min?: number
     max?: number
     disabled?: boolean
-    /** `default` — узкая колонка как в форме вакансий; `full` — на всю ширину ячейки (услуги). */
+    /** `default` — узкая колонка как в форме вакансий; `full` — на всю ширину ячейки (карточки сервисов). */
     variant?: 'default' | 'full'
     decrementLabel?: string
     incrementLabel?: string

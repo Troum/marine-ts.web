@@ -29,13 +29,13 @@ const form = ref({
   translations: mergeContentPageTranslations(),
 })
 
-/** Привязка к карточке услуги или проекта (полиморфная связь в API). */
+/** Привязка к карточке сервиса или проекта (полиморфная связь в API). */
 const linkKind = ref<string>('none')
 const linkId = ref<number | null>(null)
 
 const linkKindOptions = [
   { value: 'none', label: 'Без привязки' },
-  { value: 'service', label: 'Карточка услуги' },
+  { value: 'service', label: 'Карточка сервиса' },
   { value: 'project', label: 'Карточка проекта' },
 ]
 
@@ -268,8 +268,8 @@ async function submit() {
             <div class="rounded border border-mts-border bg-mts-bg/50 p-4">
               <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Связь с карточкой каталога</p>
               <p class="mb-4 font-body text-xs text-mts-text-secondary">
-                Одна текстовая страница может быть привязана к одной услуге или одному проекту: на сайте карточка получит ссылку на эту страницу. Id смотрите в списке
-                <NuxtLink to="/admin/services" class="text-mts-accent hover:underline">услуг</NuxtLink>
+                Одна текстовая страница может быть привязана к одной карточке сервиса или одному проекту: на сайте карточка получит ссылку на эту страницу. Id смотрите в списке
+                <NuxtLink to="/admin/services" class="text-mts-accent hover:underline">сервисов</NuxtLink>
                 или
                 <NuxtLink to="/admin/projects" class="text-mts-accent hover:underline">проектов</NuxtLink>.
               </p>

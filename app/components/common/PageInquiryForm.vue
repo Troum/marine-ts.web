@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ClipboardList, Loader2 } from 'lucide-vue-next'
 
-const props = defineProps<{
-  /** Идентификатор страницы для админки (например home, about, crewing-management, services/hull). */
-  sourcePage: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    /** Идентификатор страницы для админки (например home, about, crewing-management, services/hull). */
+    sourcePage: string
+    /** Скрыть верхний блок (метка + заголовок + лид) — для страницы `/request`, где тот же текст уже в шаблоне страницы. */
+    hideIntro?: boolean
+  }>(),
+  { hideIntro: false },
+)
 
 const { t } = useI18n()
 const api = useMarineApi()
@@ -57,10 +62,14 @@ async function onSubmit() {
 </script>
 
 <template>
-  <section class="relative overflow-hidden border-t border-mts-border bg-white py-24 lg:py-32">
+  <section
+    id="page-inquiry"
+    class="relative scroll-mt-24 overflow-hidden border-t border-mts-border bg-white"
+    :class="hideIntro ? 'py-16 lg:py-20' : 'py-24 lg:py-32'"
+  >
     <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
       <div class="mx-auto w-full max-w-3xl">
-        <div class="mb-10">
+        <div v-if="!hideIntro" class="mb-10">
           <div class="mb-4 flex items-center gap-3">
             <div class="h-px w-8 bg-mts-accent" />
             <span class="section-label">{{ t('pages.pageInquiry.sectionLabel') }}</span>

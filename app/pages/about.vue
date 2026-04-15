@@ -3,6 +3,7 @@ import { Check, FileDown } from 'lucide-vue-next'
 import type { AboutPageData, AboutGeoLocation } from '~/types'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import AboutServiceGeographyMap from '~/components/about/ServiceGeographyMap.vue'
 import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
@@ -49,32 +50,30 @@ const geoLocations = computed<AboutGeoLocation[]>(() => d.value.geography.locati
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
+  <div class="bg-mts-bg">
     <!-- Hero -->
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="max-w-3xl">
-          <Breadcrumbs :items="crumbItems" />
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">{{ t('nav.about') }}</span>
-          </div>
-          <h1 class="font-display text-5xl lg:text-6xl text-mts-text leading-tight mb-4">
-            {{ d.hero.title }}<span class="text-mts-accent">{{ d.hero.titleAccent }}</span>{{ d.hero.titleEnd }}
-          </h1>
-          <p class="font-display text-xl lg:text-2xl text-mts-text-secondary mb-6">
-            {{ d.hero.subtitle }}
-          </p>
-          <div class="w-12 h-0.5 bg-mts-accent mb-6" />
-          <p class="font-body text-lg text-mts-text-secondary leading-relaxed mb-4">
-            {{ d.hero.lead }}
-          </p>
-          <p class="font-body text-lg text-mts-text leading-relaxed font-medium">
-            {{ d.hero.lead2 }}
-          </p>
+    <ListingHeroShell :hero-image="d.heroImage">
+      <div class="max-w-3xl">
+        <Breadcrumbs :items="crumbItems" />
+        <div class="mb-4 flex items-center gap-3">
+          <div class="h-px w-6 bg-mts-accent" />
+          <span class="section-label">{{ t('pages.about.heroEyebrow') }}</span>
         </div>
+        <h1 class="font-display mb-4 text-5xl leading-tight text-mts-text lg:text-6xl">
+          {{ d.hero.title }}<span class="text-mts-accent">{{ d.hero.titleAccent }}</span>{{ d.hero.titleEnd }}
+        </h1>
+        <p class="font-display mb-6 text-xl text-mts-text-secondary lg:text-2xl">
+          {{ d.hero.subtitle }}
+        </p>
+        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
+        <p class="mb-4 font-body text-lg leading-relaxed text-mts-text-secondary">
+          {{ d.hero.lead }}
+        </p>
+        <p class="font-body text-lg font-medium leading-relaxed text-mts-text">
+          {{ d.hero.lead2 }}
+        </p>
       </div>
-    </section>
+    </ListingHeroShell>
 
     <!-- Carousel + Ecosystem -->
     <section class="relative py-24 overflow-hidden">

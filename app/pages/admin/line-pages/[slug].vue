@@ -144,8 +144,10 @@ async function submit() {
     return
   }
   const inq = data.value[localeTab.value].showInquiryForm
+  const heroBg = data.value[localeTab.value].heroBackgroundImage
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].heroBackgroundImage = heroBg
   }
   saving.value = true
   try {
@@ -260,6 +262,7 @@ const previewPath = computed(() => (slug.value ? localePath(`/${slug.value}`) : 
               <label :class="sectionLabel">Лид</label>
               <textarea v-model="d.hero.lead" rows="4" :class="sectionInput" />
             </div>
+            <AdminHeroImageField v-model="d.heroBackgroundImage" label="Фон hero (по умолчанию из макета страницы)" />
           </div>
         </section>
 

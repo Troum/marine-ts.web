@@ -59,8 +59,8 @@ watch([sort, order], () => {
 
 async function handleDelete(id: number) {
   const ok = await confirm({
-    title: 'Удаление услуги',
-    message: 'Удалить эту услугу? Это действие нельзя отменить.',
+    title: 'Удаление карточки',
+    message: 'Удалить эту карточку сервиса? Это действие нельзя отменить.',
     confirmLabel: 'Удалить',
     variant: 'danger',
   })
@@ -69,10 +69,10 @@ async function handleDelete(id: number) {
   }
   try {
     await api.services.delete(id)
-    adminToast.success('Услуга удалена')
+    adminToast.success('Карточка удалена')
     services.value = services.value.filter((s) => s.id !== id)
   } catch {
-    await showAdminAlert({ message: 'Не удалось удалить услугу', variant: 'error' })
+    await showAdminAlert({ message: 'Не удалось удалить карточку', variant: 'error' })
   }
 }
 </script>
@@ -86,7 +86,7 @@ async function handleDelete(id: number) {
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
               <ArrowLeft class="w-5 h-5" />
             </NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Услуги</h1>
+            <h1 class="font-display text-xl text-mts-text">Сервисы</h1>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
@@ -129,9 +129,9 @@ async function handleDelete(id: number) {
           <tbody>
             <tr v-if="services.length === 0">
               <td colspan="6" class="p-8 text-center">
-                <p class="font-body text-mts-text-secondary">Услуг пока нет</p>
+                <p class="font-body text-mts-text-secondary">Карточек сервисов пока нет</p>
                 <NuxtLink to="/admin/services/new" class="text-mts-accent hover:underline mt-2 inline-block">
-                  Добавить первую услугу
+                  Добавить первую карточку
                 </NuxtLink>
               </td>
             </tr>

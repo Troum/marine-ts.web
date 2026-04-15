@@ -35,11 +35,29 @@
 }
 
 @layer components {
+  /** Плоские кнопки с прямыми углами (как в шапке: заявка / анкета). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 border border-transparent bg-mts-accent px-5 py-2.5 font-mono text-xs font-medium uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 border border-mts-border bg-white px-5 py-2.5 font-mono text-xs font-medium uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent;
+    @apply inline-flex items-center justify-center gap-2 rounded-none border border-mts-border bg-white px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+  }
+
+  /**
+   * Карточки главной: те же пропорции, что у btn-primary / btn-secondary.
+   */
+  .mts-cta-link {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
+  }
+  .mts-cta-link-muted {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-mts-border bg-white px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+  }
+  /** То же, что mts-cta-link / muted, но меньше — три колонки на главной. */
+  .mts-cta-link-compact {
+    @apply inline-flex items-center justify-center gap-1 rounded-none border border-transparent bg-mts-accent px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
+  }
+  .mts-cta-link-muted-compact {
+    @apply inline-flex items-center justify-center gap-1 rounded-none border border-mts-border bg-white px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
   }
 
   .section-label {

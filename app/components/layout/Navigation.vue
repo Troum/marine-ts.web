@@ -9,11 +9,21 @@ const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const api = useMarineApi()
 
-const { data: navigationRemote } = await useAsyncData('site-navigation', async () => {
-  try {
-    return await api.navigationSettings.get()
-  } catch {
-    return null
+const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncData(
+  'site-navigation',
+  async () => {
+    try {
+      return await api.navigationSettings.get()
+    } catch {
+      return null
+    }
+  },
+)
+
+/** SSR иногда не достучится до API — повторяем запрос на клиенте. */
+onMounted(async () => {
+  if (navigationRemote.value == null) {
+    await refreshNavigation()
   }
 })
 
@@ -360,7 +370,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
             <Phone class="w-4 h-4" />
           </a>
           <NuxtLink
-            :to="localePath('/contacts')"
+            :to="localePath('/request')"
             class="btn-primary shrink-0 whitespace-nowrap px-3 py-2 text-[10px] xl:px-5 xl:py-2.5 xl:text-xs"
           >
             {{ t('header.ctaContact') }}

@@ -1,86 +1,60 @@
+import {
+  ADMIN_PERMISSIONS_KEY,
+  ADMIN_ROLES_KEY,
+  mirrorAdminPermissionStorages,
+  readAdminPermissionsFromStorage,
+  readAdminRolesFromStorage,
+} from '~/utils/adminPermissionStorage'
+
 /**
- * Права из ответа логина (sessionStorage), без лишних запросов к API.
+ * Права из логина. Храним в реактивном useState + перечитываем из storage,
+ * иначе computed не обновляется (sessionStorage не реактивен) и новая вкладка
+ * не видит прав (sessionStorage изолирован).
+ *
+ * Роль `admin`: как Gate::before в API — полный доступ к разделам панели,
+ * даже если в массиве permissions нет отдельной строки (старая БД / кэш).
  */
 export function useAdminPermissions() {
-  const canManageUsers = computed(() => {
-    if (!import.meta.client) {
-      return false
-    }
-    try {
-      const raw = sessionStorage.getItem('mts_admin_permissions')
-      if (!raw) {
-        return false
-      }
-      const perms = JSON.parse(raw) as string[]
-      return Array.isArray(perms) && perms.includes('manage users')
-    } catch {
-      return false
-    }
-  })
+  const permissions = useState<string[]>('admin-permissions-effective', () => [])
+  const roles = useState<string[]>('admin-roles-effective', () => [])
 
-  const canManageContentPages = computed(() => {
+  const sync = () => {
     if (!import.meta.client) {
-      return false
+      return
     }
-    try {
-      const raw = sessionStorage.getItem('mts_admin_permissions')
-      if (!raw) {
-        return false
-      }
-      const perms = JSON.parse(raw) as string[]
-      return Array.isArray(perms) && perms.includes('manage content pages')
-    } catch {
-      return false
-    }
-  })
+    mirrorAdminPermissionStorages()
+    permissions.value = readAdminPermissionsFromStorage()
+    roles.value = readAdminRolesFromStorage()
+  }
 
-  const canManageGallery = computed(() => {
-    if (!import.meta.client) {
-      return false
-    }
-    try {
-      const raw = sessionStorage.getItem('mts_admin_permissions')
-      if (!raw) {
-        return false
+  if (import.meta.client) {
+    sync()
+    onMounted(() => {
+      sync()
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === ADMIN_PERMISSIONS_KEY || e.key === ADMIN_ROLES_KEY) {
+          sync()
+        }
       }
-      const perms = JSON.parse(raw) as string[]
-      return Array.isArray(perms) && perms.includes('manage gallery')
-    } catch {
-      return false
-    }
-  })
+      const onCustom = () => sync()
+      window.addEventListener('storage', onStorage)
+      window.addEventListener('mts-admin-permissions-changed', onCustom)
+      onUnmounted(() => {
+        window.removeEventListener('storage', onStorage)
+        window.removeEventListener('mts-admin-permissions-changed', onCustom)
+      })
+    })
+  }
 
-  const canManageContacts = computed(() => {
-    if (!import.meta.client) {
-      return false
-    }
-    try {
-      const raw = sessionStorage.getItem('mts_admin_permissions')
-      if (!raw) {
-        return false
-      }
-      const perms = JSON.parse(raw) as string[]
-      return Array.isArray(perms) && perms.includes('manage contacts')
-    } catch {
-      return false
-    }
-  })
+  const isGlobalAdmin = computed(() => roles.value.includes('admin'))
 
-  const canManageNavigation = computed(() => {
-    if (!import.meta.client) {
-      return false
-    }
-    try {
-      const raw = sessionStorage.getItem('mts_admin_permissions')
-      if (!raw) {
-        return false
-      }
-      const perms = JSON.parse(raw) as string[]
-      return Array.isArray(perms) && perms.includes('manage navigation')
-    } catch {
-      return false
-    }
-  })
+  const allow = (permission: string) => isGlobalAdmin.value || permissions.value.includes(permission)
 
-  return { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation }
+  const canManageUsers = computed(() => allow('manage users'))
+  const canManageContentPages = computed(() => allow('manage content pages'))
+  const canManageGallery = computed(() => allow('manage gallery'))
+  const canManageContacts = computed(() => allow('manage contacts'))
+  const canManageNavigation = computed(() => allow('manage navigation'))
+
+  return { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation, syncPermissions: sync }
 }

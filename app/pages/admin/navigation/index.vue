@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
+import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { NavigationMenuItem, NavigationMenuSettings } from '~/types'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 
@@ -12,6 +13,7 @@ const api = useMarineApi()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const { canManageNavigation } = useAdminPermissions()
+const { pathOptions, loadPathOptions } = useAdminPathOptions()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -45,6 +47,7 @@ onMounted(async () => {
     return
   }
   try {
+    await loadPathOptions()
     form.value = await api.navigationSettings.get()
   } catch {
     await showAdminAlert({ message: 'Не удалось загрузить меню', variant: 'error' })
@@ -160,7 +163,9 @@ async function submit() {
         <CommonAccentCorners />
 
         <p class="font-body text-sm text-mts-text-secondary mb-8">
-          Первый ряд ссылок в шапке и пункты в выпадающем списке «Ещё». Путь — внутренний (например
+          Первый ряд ссылок в шапке и пункты в выпадающем списке «Ещё». Список «Раздел сайта» строится из файлов
+          <span class="font-mono">app/pages</span> (статические маршруты) и из опубликованных контентных страниц в API
+          (в т.ч. карточки сервисов и проектов). Можно ввести путь вручную: внутренний (например
           <span class="font-mono">/news</span>) или полный URL (<span class="font-mono">https://…</span>).
         </p>
 
@@ -192,16 +197,7 @@ async function submit() {
               </button>
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Путь или URL</label
-              >
-              <input
-                v-model="row.path"
-                type="text"
-                required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                placeholder="/services или https://…"
-              />
+              <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/services или https://…" />
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
@@ -274,15 +270,12 @@ async function submit() {
                   class="grid gap-3 border border-mts-border bg-white p-3 sm:grid-cols-2"
                 >
                   <div class="sm:col-span-2">
-                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                      >Путь подпункта</label
-                    >
-                    <input
+                    <AdminNavPathPick
                       v-model="child.path"
-                      type="text"
-                      required
-                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
-                      placeholder="/ship-management"
+                      compact
+                      label="Путь подпункта"
+                      :path-options="pathOptions"
+                      input-placeholder="/ship-management или https://…"
                     />
                   </div>
                   <div>
@@ -368,16 +361,7 @@ async function submit() {
               </button>
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Путь или URL</label
-              >
-              <input
-                v-model="row.path"
-                type="text"
-                required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                placeholder="/gallery или https://…"
-              />
+              <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/gallery или https://…" />
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"

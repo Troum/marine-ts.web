@@ -49,8 +49,10 @@ onMounted(async () => {
 
 async function submit() {
   const inq = data.value[localeTab.value].showInquiryForm
+  const heroImg = data.value[localeTab.value].heroImage
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].heroImage = heroImg
   }
   saving.value = true
   try {
@@ -108,10 +110,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div>
-              <label :class="sectionLabel">Фоновое изображение (URL)</label>
-              <input v-model="d.heroImage" :class="sectionInput" placeholder="/about-workshop.jpg" />
-            </div>
+            <AdminHeroImageField v-model="d.heroImage" />
             <div class="grid md:grid-cols-3 gap-4">
               <div>
                 <label :class="sectionLabel">Заголовок (начало)</label>

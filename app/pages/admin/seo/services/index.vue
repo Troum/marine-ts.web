@@ -59,7 +59,7 @@ watch([sort, order], () => {
         <NuxtLink to="/admin/seo" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
           <ArrowLeft class="h-5 w-5" />
         </NuxtLink>
-        <h1 class="font-display text-xl text-mts-text">SEO услуг</h1>
+        <h1 class="font-display text-xl text-mts-text">SEO карточек сервисов</h1>
       </div>
     </header>
 

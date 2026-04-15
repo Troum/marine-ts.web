@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { HomePageData, ContentPage, MarineContentLocale, ServiceItem } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import { defaultHomeData, mergeHomePageData, syncHomeStructuralFields } from '~/utils/pageDefaults'
@@ -10,6 +11,7 @@ const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
 const api = useMarineApi()
+const { pathOptions, loadPathOptions } = useAdminPathOptions()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 
@@ -27,6 +29,7 @@ const d = computed(() => data.value[localeTab.value])
 
 const collapsed = ref<Record<string, boolean>>({
   hero: false,
+  funnel: true,
   stats: true,
   about: true,
   services: true,
@@ -37,6 +40,7 @@ const collapsed = ref<Record<string, boolean>>({
 function toggle(s: string) { collapsed.value[s] = !collapsed.value[s] }
 
 onMounted(async () => {
+  await loadPathOptions()
   try {
     const page = await api.contentPages.getPublicBySlug('home')
     if (page) {
@@ -185,6 +189,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField
+              v-model="d.heroImage"
+              label="Фон первого экрана"
+              hint="Необязательно. Если не задано, используется /hero-bg.jpg из сайта."
+            />
             <div>
               <label :class="sectionLabel">Метка (label)</label>
               <input v-model="d.hero.label" :class="sectionInput" />
@@ -197,7 +206,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <div><label :class="sectionLabel">Описание (lead)</label><textarea v-model="d.hero.lead" rows="3" :class="sectionInput" /></div>
             <div class="grid md:grid-cols-2 gap-4">
               <div><label :class="sectionLabel">CTA «Консультация»</label><input v-model="d.hero.ctaConsult" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">CTA «Услуги»</label><input v-model="d.hero.ctaServices" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">CTA «Сервисы»</label><input v-model="d.hero.ctaServices" :class="sectionInput" /></div>
             </div>
             <div class="grid md:grid-cols-3 gap-4">
               <div><label :class="sectionLabel">Бейдж ISO</label><input v-model="d.hero.badgeIso" :class="sectionInput" /></div>
@@ -208,11 +217,80 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <!-- 2. STATS -->
+        <!-- 2. FUNNEL CARDS -->
+        <section class="bg-white border border-mts-border shadow-tech relative">
+          <CommonAccentCorners />
+          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('funnel')">
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
+              2. Три карточки под первым экраном
+            </h2>
+            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.funnel }" />
+          </button>
+          <div v-show="!collapsed.funnel" class="px-6 pb-6 space-y-8 border-t border-mts-border pt-4">
+            <p class="font-body text-sm text-mts-text-secondary">
+              Три колонки с меткой, заголовком (акцентное слово красным), текстом и ссылками — как на главной сразу под hero.
+            </p>
+
+            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
+              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Судовой менеджмент (левая)</h3>
+              <div><label :class="sectionLabel">Метка (над заголовком)</label><input v-model="d.funnelShip.label" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelShip.title" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Акцент (красным)</label><input v-model="d.funnelShip.titleAccent" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelShip.titleEnd" :class="sectionInput" /></div>
+              </div>
+              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelShip.text" rows="3" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div><label :class="sectionLabel">Подпись кнопки</label><input v-model="d.funnelShip.cta" :class="sectionInput" /></div>
+              </div>
+              <AdminNavPathPick v-model="d.funnelShip.href" :path-options="pathOptions" input-placeholder="/ship-management" />
+            </div>
+
+            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
+              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Крюинг (центр, две ссылки)</h3>
+              <div><label :class="sectionLabel">Метка</label><input v-model="d.funnelCrewing.label" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelCrewing.title" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Акцент</label><input v-model="d.funnelCrewing.titleAccent" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelCrewing.titleEnd" :class="sectionInput" /></div>
+              </div>
+              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelCrewing.text" rows="3" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div><label :class="sectionLabel">Первая ссылка — подпись</label><input v-model="d.funnelCrewing.cta" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Вторая ссылка — подпись</label><input v-model="d.funnelCrewing.secondaryCta" :class="sectionInput" /></div>
+              </div>
+              <div>
+                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Первая ссылка</p>
+                <AdminNavPathPick v-model="d.funnelCrewing.href" :path-options="pathOptions" input-placeholder="/vacancies" />
+              </div>
+              <div>
+                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Вторая ссылка</p>
+                <AdminNavPathPick v-model="d.funnelCrewing.secondaryHref" :path-options="pathOptions" input-placeholder="/application-form" />
+              </div>
+            </div>
+
+            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
+              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Сервисы (правая)</h3>
+              <div><label :class="sectionLabel">Метка</label><input v-model="d.funnelTechnical.label" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelTechnical.title" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Акцент</label><input v-model="d.funnelTechnical.titleAccent" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelTechnical.titleEnd" :class="sectionInput" /></div>
+              </div>
+              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelTechnical.text" rows="3" :class="sectionInput" /></div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div><label :class="sectionLabel">Подпись кнопки</label><input v-model="d.funnelTechnical.cta" :class="sectionInput" /></div>
+              </div>
+              <AdminNavPathPick v-model="d.funnelTechnical.href" :path-options="pathOptions" input-placeholder="/services" />
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. STATS -->
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('stats')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. Статистика</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">3. Статистика</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.stats }" />
           </button>
           <div v-show="!collapsed.stats" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
@@ -234,11 +312,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <!-- 3. ABOUT PREVIEW -->
+        <!-- 4. ABOUT PREVIEW -->
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('about')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">3. Превью «О компании»</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">4. Превью «О компании»</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.about }" />
           </button>
           <div v-show="!collapsed.about" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
@@ -253,11 +331,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <!-- 4. SERVICES PREVIEW -->
+        <!-- 5. SERVICES PREVIEW -->
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('services')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">4. Превью услуг</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Превью сервисов</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.services }" />
           </button>
           <div v-show="!collapsed.services" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
@@ -268,14 +346,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div><label :class="sectionLabel">Окончание</label><input v-model="d.services.headingEnd" :class="sectionInput" /></div>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Текст «Все услуги»</label><input v-model="d.services.all" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Текст «Все сервисы»</label><input v-model="d.services.all" :class="sectionInput" /></div>
               <div><label :class="sectionLabel">Текст «Подробнее →»</label><input v-model="d.services.more" :class="sectionInput" /></div>
             </div>
 
             <div class="rounded-md border border-mts-accent/30 bg-mts-bg/60 p-4 space-y-3">
               <p class="font-body text-sm text-mts-text leading-relaxed">
-                <strong class="text-mts-text">Какие услуги показать на главной.</strong>
-                Тексты и фото берутся из карточек каталога (текущая локаль API). Если список пуст, блок «Услуги» на главной не отображается.
+                <strong class="text-mts-text">Какие сервисы показать на главной.</strong>
+                Тексты и фото берутся из карточек каталога (текущая локаль API). Если список пуст, блок «Сервисы» на главной не отображается.
               </p>
               <div v-if="(d.services.featuredServiceIds?.length ?? 0) > 0" class="space-y-2">
                 <div
@@ -315,12 +393,12 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   </div>
                 </div>
               </div>
-              <div v-else class="font-body text-xs text-mts-text-secondary">Список пуст — блок «Услуги» на сайте скрыт.</div>
+              <div v-else class="font-body text-xs text-mts-text-secondary">Список пуст — блок «Сервисы» на сайте скрыт.</div>
               <div class="flex flex-wrap items-end gap-3">
                 <div class="min-w-[14rem] flex-1">
                   <label :class="sectionLabel">Добавить из каталога</label>
                   <select v-model="pickServiceId" :class="sectionInput">
-                    <option value="">— выберите услугу —</option>
+                    <option value="">— выберите карточку —</option>
                     <option v-for="s in pickServiceOptions" :key="s.id" :value="String(s.id)">{{ s.title }}</option>
                   </select>
                 </div>
@@ -345,11 +423,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <!-- 5. PROCESS -->
+        <!-- 6. PROCESS -->
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('process')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Процесс работы</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. Процесс работы</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.process }" />
           </button>
           <div v-show="!collapsed.process" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
@@ -372,11 +450,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <!-- 6. CTA -->
+        <!-- 7. CTA -->
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('cta')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. Нижний CTA-блок</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">7. Нижний CTA-блок</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.cta }" />
           </button>
           <div v-show="!collapsed.cta" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">

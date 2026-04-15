@@ -1,42 +1,47 @@
 <script setup lang="ts">
 import { Phone, Mail, MapPin, ExternalLink } from 'lucide-vue-next'
+import type { FooterNavColumn, FooterNavLink } from '~/types'
+import { emptyFooterMenuSettings } from '~/utils/emptyFooterMenuSettings'
 
 const currentYear = new Date().getFullYear()
 const localePath = useLocalePath()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useMarineApi()
 
-const companyLinks = computed(() => [
-  { label: t('nav.about'), href: '/about' },
-  { label: t('nav.contacts'), href: '/contacts' },
-])
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru'))
 
-const serviceLinks = computed(() => [
-  { label: t('nav.services'), href: '/services' },
-  { label: t('nav.shipManagement'), href: '/ship-management' },
-  { label: t('nav.crewing'), href: '/crewing-management' },
-])
+const { data: footerRemote, refresh: refreshFooterNav } = await useAsyncData(
+  'site-footer-nav',
+  async () => {
+    try {
+      return await api.footerNavigationSettings.get()
+    } catch {
+      return null
+    }
+  },
+)
 
-const candidateLinks = computed(() => [
-  { label: t('nav.vacancies'), href: '/vacancies' },
-  { label: t('footer.linkApplication'), href: '/application-form' },
-])
-
-const { data: apiServices } = await useAsyncData('footer-services', () => api.services.getAll())
-
-const dynamicServiceLinks = computed(() => {
-  if (apiServices.value?.length) {
-    return apiServices.value.slice(0, 6).map((s) => ({
-      label: s.title,
-      href: s.contentPage?.slug ? `/services/${s.contentPage.slug}` : '/services',
-    }))
+onMounted(async () => {
+  if (footerRemote.value == null) {
+    await refreshFooterNav()
   }
-  return [
-    { label: t('footer.svcHull'), href: '/services' },
-    { label: t('footer.svcEngine'), href: '/services' },
-    { label: t('footer.svcElectro'), href: '/services' },
-  ]
 })
+
+const footerMenu = computed(() => footerRemote.value ?? emptyFooterMenuSettings())
+
+function isExternalPath(p: string) {
+  return /^https?:\/\//i.test(p.trim())
+}
+
+function linkLabel(link: FooterNavLink): string {
+  const l = loc.value
+  return link.label[l] || link.label.ru || link.label.en || ''
+}
+
+function columnHeading(col: FooterNavColumn): string {
+  const l = loc.value
+  return col.title[l] || col.title.ru || col.title.en || ''
+}
 </script>
 
 <template>
@@ -63,51 +68,27 @@ const dynamicServiceLinks = computed(() => {
           </p>
         </div>
 
-        <div>
-          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">{{ t('footer.sectionCompany') }}</h4>
+        <div v-for="(col, ci) in footerMenu.columns" :key="ci">
+          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">
+            {{ columnHeading(col) }}
+          </h4>
           <ul class="space-y-2">
-            <li v-for="link in companyLinks" :key="link.href">
-              <NuxtLink
-                :to="localePath(link.href)"
+            <li v-for="(link, li) in col.links" :key="`${ci}-${li}-${link.path}`">
+              <a
+                v-if="isExternalPath(link.path)"
+                :href="link.path"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="font-body text-xs text-white/60 hover:text-mts-accent transition-colors"
               >
-                {{ link.label }}
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">{{ t('footer.sectionServices') }}</h4>
-          <ul class="space-y-2">
-            <li v-for="link in serviceLinks" :key="link.href">
+                {{ linkLabel(link) }}
+              </a>
               <NuxtLink
-                :to="localePath(link.href)"
+                v-else
+                :to="localePath(link.path)"
                 class="font-body text-xs text-white/60 hover:text-mts-accent transition-colors"
               >
-                {{ link.label }}
-              </NuxtLink>
-            </li>
-            <li v-for="link in dynamicServiceLinks" :key="link.label + link.href">
-              <NuxtLink
-                :to="localePath(link.href)"
-                class="font-body text-xs text-white/50 hover:text-mts-accent transition-colors"
-              >
-                {{ link.label }}
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">{{ t('footer.sectionCandidates') }}</h4>
-          <ul class="space-y-2">
-            <li v-for="link in candidateLinks" :key="link.href">
-              <NuxtLink
-                :to="localePath(link.href)"
-                class="font-body text-xs text-white/60 hover:text-mts-accent transition-colors"
-              >
-                {{ link.label }}
+                {{ linkLabel(link) }}
               </NuxtLink>
             </li>
           </ul>
@@ -167,18 +148,24 @@ const dynamicServiceLinks = computed(() => {
             {{ t('footer.copyright', { year: currentYear }) }}
           </p>
           <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end">
-            <NuxtLink
-              :to="localePath('/privacy')"
-              class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
-            >
-              {{ t('footer.privacy') }}
-            </NuxtLink>
-            <NuxtLink
-              :to="localePath('/terms')"
-              class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
-            >
-              {{ t('footer.terms') }}
-            </NuxtLink>
+            <template v-for="(link, i) in footerMenu.legal" :key="`legal-${i}-${link.path}`">
+              <a
+                v-if="isExternalPath(link.path)"
+                :href="link.path"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
+              >
+                {{ linkLabel(link) }}
+              </a>
+              <NuxtLink
+                v-else
+                :to="localePath(link.path)"
+                class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
+              >
+                {{ linkLabel(link) }}
+              </NuxtLink>
+            </template>
             <NuxtLink to="/admin" class="font-mono text-[10px] text-white/30 hover:text-mts-accent transition-colors">
               {{ t('footer.admin') }}
             </NuxtLink>

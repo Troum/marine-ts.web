@@ -184,5 +184,6 @@ export function syncStructuralFields(
     dst.certificates.items.length = src.certificates.items.length
 
     dst.showInquiryForm = src.showInquiryForm
+    dst.heroImage = src.heroImage
   }
 }

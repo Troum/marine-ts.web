@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import type { GalleryItem, ListingPageData, MarineContentLocale } from '~/types'
 import { defaultListingData } from '~/utils/pageDefaults'
 
@@ -104,26 +105,24 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
-    <section class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="max-w-3xl">
-          <Breadcrumbs :items="crumbItems" />
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-6 h-px bg-mts-accent" />
-            <span class="section-label">{{ t('nav.gallery') }}</span>
-          </div>
-          <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
-            {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-            >{{ cms.hero.titleEnd }}
-          </h1>
-          <div class="w-12 h-0.5 bg-mts-accent mb-6" />
-          <p class="font-body text-lg text-mts-text-secondary leading-relaxed">
-            {{ cms.hero.lead }}
-          </p>
+  <div class="bg-mts-bg">
+    <ListingHeroShell :hero-image="cms.heroImage">
+      <div class="max-w-3xl">
+        <Breadcrumbs :items="crumbItems" />
+        <div class="mb-4 flex items-center gap-3">
+          <div class="h-px w-6 bg-mts-accent" />
+          <span class="section-label">{{ t('pages.gallery.heroEyebrow') }}</span>
         </div>
+        <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
+          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
+          >{{ cms.hero.titleEnd }}
+        </h1>
+        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
+        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+          {{ cms.hero.lead }}
+        </p>
       </div>
-    </section>
+    </ListingHeroShell>
 
     <section class="relative pb-24 lg:pb-32">
       <div class="max-w-7xl mx-auto px-6 lg:px-12">
