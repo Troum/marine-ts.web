@@ -30,4 +30,4 @@ jobs:
             npm ci
             npm run build
 
-            pm2 restart ${{ secrets.PM2_APP_NAME }}
+            pm2 restart ecosystem.config.cjs
