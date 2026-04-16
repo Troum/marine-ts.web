@@ -217,58 +217,74 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section class="relative border-t border-mts-border bg-white py-16 lg:py-24">
-      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+    <section class="relative bg-white py-16 lg:py-24">
+      <div
+        class="pointer-events-none absolute inset-x-0 top-0 z-0 h-24 bg-linear-to-b from-mts-bg to-transparent sm:h-28"
+        aria-hidden="true"
+      />
+      <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
         <div class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4 lg:gap-6 lg:items-stretch">
-          <div
-            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
-          >
-            <div class="mb-2 flex items-center gap-2">
-              <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label text-[10px]">{{ d.funnelShip.label }}</span>
-            </div>
-            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-              <AccentHeadline :before="d.funnelShip.title" :accent="d.funnelShip.titleAccent" :after="d.funnelShip.titleEnd" />
-            </h2>
-            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelShip.text }}</p>
-            <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
-              {{ d.funnelShip.cta }} →
-            </NuxtLink>
-          </div>
-          <div
-            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
-          >
-            <div class="mb-2 flex items-center gap-2">
-              <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label text-[10px]">{{ d.funnelCrewing.label }}</span>
-            </div>
-            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-              <AccentHeadline :before="d.funnelCrewing.title" :accent="d.funnelCrewing.titleAccent" :after="d.funnelCrewing.titleEnd" />
-            </h2>
-            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelCrewing.text }}</p>
-            <div class="mt-5 flex flex-wrap items-center gap-2">
-              <NuxtLink :to="localePath(d.funnelCrewing.href)" class="mts-cta-link-compact">
-                {{ d.funnelCrewing.cta }} →
-              </NuxtLink>
-              <NuxtLink :to="localePath(d.funnelCrewing.secondaryHref)" class="mts-cta-link-muted-compact">
-                {{ d.funnelCrewing.secondaryCta }} →
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute -bottom-16 right-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 -left-4 sm:-left-6 lg:-bottom-24 lg:-left-10 lg:-top-24"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]">{{ d.funnelShip.label }}</span>
+              </div>
+              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+                <AccentHeadline :before="d.funnelShip.title" :accent="d.funnelShip.titleAccent" :after="d.funnelShip.titleEnd" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelShip.text }}</p>
+              <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
+                {{ d.funnelShip.cta }} →
               </NuxtLink>
             </div>
           </div>
-          <div
-            class="flex h-full min-h-0 min-w-0 flex-col bg-transparent p-5 shadow-none transition-colors duration-200 sm:p-6 hover:bg-mts-bg"
-          >
-            <div class="mb-2 flex items-center gap-2">
-              <div class="h-px w-6 bg-mts-accent" />
-              <span class="section-label text-[10px]">{{ d.funnelTechnical.label }}</span>
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute inset-x-0 -bottom-16 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 lg:-bottom-24 lg:-top-24"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]">{{ d.funnelCrewing.label }}</span>
+              </div>
+              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+                <AccentHeadline :before="d.funnelCrewing.title" :accent="d.funnelCrewing.titleAccent" :after="d.funnelCrewing.titleEnd" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelCrewing.text }}</p>
+              <div class="mt-5 flex flex-wrap items-center gap-2">
+                <NuxtLink :to="localePath(d.funnelCrewing.href)" class="mts-cta-link-compact">
+                  {{ d.funnelCrewing.cta }} →
+                </NuxtLink>
+                <NuxtLink :to="localePath(d.funnelCrewing.secondaryHref)" class="mts-cta-link-muted-compact">
+                  {{ d.funnelCrewing.secondaryCta }} →
+                </NuxtLink>
+              </div>
             </div>
-            <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-              <AccentHeadline :before="d.funnelTechnical.title" :accent="d.funnelTechnical.titleAccent" :after="d.funnelTechnical.titleEnd" />
-            </h2>
-            <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelTechnical.text }}</p>
-            <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
-              {{ d.funnelTechnical.cta }} →
-            </NuxtLink>
+          </div>
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute -bottom-16 left-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 -right-4 sm:-right-6 lg:-bottom-24 lg:-right-10 lg:-top-24"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]">{{ d.funnelTechnical.label }}</span>
+              </div>
+              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
+                <AccentHeadline :before="d.funnelTechnical.title" :accent="d.funnelTechnical.titleAccent" :after="d.funnelTechnical.titleEnd" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">{{ d.funnelTechnical.text }}</p>
+              <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
+                {{ d.funnelTechnical.cta }} →
+              </NuxtLink>
+            </div>
           </div>
         </div>
       </div>
@@ -289,7 +305,7 @@ const statIcons = computed(() =>
           <div
             v-for="row in d.directions.rows"
             :key="row.title"
-            class="min-w-0 flex-1 basis-0 bg-mts-bg p-8 transition-colors duration-200 hover:bg-white"
+            class="min-w-0 flex-1 basis-0 bg-mts-bg p-8"
           >
             <h3 class="font-display text-lg text-mts-text">{{ row.title }}</h3>
             <p class="mt-3 font-body text-sm text-mts-text-secondary">{{ row.description }}</p>
@@ -360,19 +376,19 @@ const statIcons = computed(() =>
           <div
             v-for="service in visibleServiceCards"
             :key="service.key"
-            class="bg-white overflow-hidden hover:bg-mts-bg transition-colors group"
+            class="overflow-hidden bg-white"
           >
             <div class="aspect-[16/9] min-h-[11rem] sm:min-h-[13rem] overflow-hidden border-b border-mts-border">
               <img
                 :src="service.image"
                 :alt="service.title"
-                class="h-full w-full object-cover brightness-[1.04] contrast-[1.03] saturate-[1.06] transition-transform duration-500 group-hover:scale-105"
+                class="h-full w-full object-cover brightness-[1.04] contrast-[1.03] saturate-[1.06]"
                 loading="lazy"
                 decoding="async"
               />
             </div>
             <div class="p-8">
-              <h3 class="font-display text-xl text-mts-text mb-3 group-hover:text-mts-accent transition-colors">
+              <h3 class="font-display text-xl text-mts-text mb-3">
                 {{ service.title }}
               </h3>
               <p class="font-body text-base text-mts-text-secondary mb-4">

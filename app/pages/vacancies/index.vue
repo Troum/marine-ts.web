@@ -102,7 +102,7 @@ onMounted(load)
           <article
             v-for="v in vacancies"
             :key="v.id"
-            class="min-w-0 bg-mts-bg p-8 transition-colors duration-200 hover:bg-white"
+            class="min-w-0 bg-mts-bg p-8"
           >
             <div class="mb-3 flex flex-wrap items-center gap-2">
               <Briefcase class="h-4 w-4 shrink-0 text-mts-accent" aria-hidden="true" />
@@ -111,7 +111,7 @@ onMounted(load)
               </span>
             </div>
             <h2 class="font-display text-lg text-mts-text leading-snug">
-              <NuxtLink :to="localePath(`/vacancies/${v.slug}`)" class="hover:text-mts-accent">
+              <NuxtLink :to="localePath(`/vacancies/${v.slug}`)" class="text-mts-text">
                 {{ v.title }}
               </NuxtLink>
             </h2>
