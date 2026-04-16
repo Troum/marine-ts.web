@@ -91,9 +91,22 @@ export function useMarineApi() {
   }
 
   async function fetchPublic<T>(path: string): Promise<T> {
-    return await $fetch<T>(`${resolveApiBase()}${path}`, {
-      headers: publicApiHeaders(),
-    })
+    const base = resolveApiBase()
+    const pathNorm = path.startsWith('/') ? path : `/${path}`
+    const url = `${String(base).replace(/\/$/, '')}${pathNorm}`
+    const opts = { headers: publicApiHeaders() }
+    /**
+     * На SSR относительный `/api/...` без полного `NUXT_API_BASE_SERVER` иначе не резолвится в Node.
+     * `useRequestFetch` бьёт в тот же origin, что и запрос страницы (прокси Vite → Laravel).
+     */
+    if (import.meta.server && url.startsWith('/')) {
+      try {
+        return (await useRequestFetch()(url, opts)) as T
+      } catch {
+        return await $fetch<T>(url, opts)
+      }
+    }
+    return await $fetch<T>(url, opts)
   }
 
   async function fetchPublicPost<T>(path: string, body: unknown): Promise<T> {

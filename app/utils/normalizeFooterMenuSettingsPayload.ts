@@ -42,17 +42,40 @@ function normColumn(raw: unknown, fallback: FooterMenuSettings['columns'][0]): F
   }
 }
 
+/**
+ * Снимает вложенные обёртки `data` (Laravel JsonResource, прокси, двойной `data`),
+ * пока не найдёт объект с полем `columns` — массивом.
+ */
+function unwrapFooterPayload(json: unknown): Record<string, unknown> | null {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    return null
+  }
+  let cur: unknown = json
+  for (let depth = 0; depth < 8; depth++) {
+    if (!cur || typeof cur !== 'object' || Array.isArray(cur)) {
+      return null
+    }
+    const o = cur as Record<string, unknown>
+    if (Array.isArray(o.columns)) {
+      return o
+    }
+    const next = o.data
+    if (next !== undefined && next !== null && typeof next === 'object' && !Array.isArray(next)) {
+      cur = next
+      continue
+    }
+    return null
+  }
+  return null
+}
+
 /** Ответ GET `/footer-navigation-settings` (Laravel JsonResource: `{ data: … }` или корень). */
 export function normalizeFooterMenuSettingsPayload(json: unknown): FooterMenuSettings {
   const def = emptyFooterMenuSettings()
-  if (!json || typeof json !== 'object') {
+  const inner = unwrapFooterPayload(json)
+  if (!inner) {
     return def
   }
-  const root = json as Record<string, unknown>
-  const inner =
-    root.data !== undefined && root.data !== null && typeof root.data === 'object' && !Array.isArray(root.data)
-      ? (root.data as Record<string, unknown>)
-      : root
 
   const columnsRaw = inner.columns
   const columns: FooterMenuSettings['columns'] = []
