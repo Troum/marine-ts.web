@@ -3,8 +3,10 @@ import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { HomePageData, ContentPage, MarineContentLocale, ServiceItem } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
+import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
 import { defaultHomeData, mergeHomePageData, syncHomeStructuralFields } from '~/utils/pageDefaults'
 import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
 
@@ -14,6 +16,7 @@ const api = useMarineApi()
 const { pathOptions, loadPathOptions } = useAdminPathOptions()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
+const { confirm } = useConfirm()
 
 const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
 const existingId = ref<number | null>(null)
@@ -69,7 +72,15 @@ function addStat() {
   for (const loc of MARINE_CONTENT_LOCALES)
     data.value[loc].statsCard.items.push({ icon: 'Ship', value: '', label: '' })
 }
-function removeStat(i: number) {
+async function removeStat(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот показатель?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].statsCard.items.splice(i, 1)
 }
 function setFeaturedServiceIds(ids: number[]) {
@@ -99,10 +110,30 @@ function addFeaturedService() {
   pickServiceId.value = ''
 }
 
-function removeFeaturedService(index: number) {
+async function removeFeaturedService(index: number) {
+  const ok = await confirm({
+    message: 'Убрать этот сервис из списка на главной?',
+    confirmLabel: 'Убрать',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   const cur = [...(data.value.ru.services.featuredServiceIds ?? [])]
   cur.splice(index, 1)
   setFeaturedServiceIds(cur)
+}
+
+async function clearFeaturedServices() {
+  const ok = await confirm({
+    message: 'Очистить весь список избранных сервисов на главной?',
+    confirmLabel: 'Очистить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  setFeaturedServiceIds([])
 }
 
 function moveFeaturedService(index: number, dir: -1 | 1) {
@@ -126,7 +157,15 @@ function addStep() {
   for (const loc of MARINE_CONTENT_LOCALES)
     data.value[loc].process.steps.push({ title: '', text: '' })
 }
-function removeStep(i: number) {
+async function removeStep(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот шаг процесса?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].process.steps.splice(i, 1)
 }
 
@@ -192,28 +231,31 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <AdminHeroImageField
               v-model="d.heroImage"
               label="Фон первого экрана"
-              hint="Необязательно. Если не задано, используется /hero-bg.jpg из сайта."
+              hint="Необязательно. Если не задано, используется /images/marin-figma/hero-ship.jpg из сайта."
             />
             <div>
               <label :class="sectionLabel">Метка (label)</label>
-              <input v-model="d.hero.label" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.label" :multiline="false" />
             </div>
-            <div class="grid md:grid-cols-3 gap-4">
-              <div><label :class="sectionLabel">Заголовок (строка 1)</label><input v-model="d.hero.titleLine1" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Акцент (цветной)</label><input v-model="d.hero.titleAccent" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Суффикс</label><input v-model="d.hero.titleSuffix" :class="sectionInput" /></div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
-            <div><label :class="sectionLabel">Описание (lead)</label><textarea v-model="d.hero.lead" rows="3" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Описание (lead)</label><AdminThemedTextField v-model="d.hero.lead" /></div>
             <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">CTA «Консультация»</label><input v-model="d.hero.ctaConsult" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">CTA «Сервисы»</label><input v-model="d.hero.ctaServices" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">CTA клиент (заявка)</label><AdminThemedTextField v-model="d.hero.ctaClient" :multiline="false" /></div>
+              <div><label :class="sectionLabel">CTA моряк (анкета)</label><AdminThemedTextField v-model="d.hero.ctaSeafarer" :multiline="false" /></div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div><label :class="sectionLabel">Ссылка CTA клиента</label><AdminThemedTextField v-model="d.hero.ctaClientHref" :multiline="false" /></div>
+              <div><label :class="sectionLabel">Ссылка CTA моряка</label><AdminThemedTextField v-model="d.hero.ctaSeafarerHref" :multiline="false" /></div>
             </div>
             <div class="grid md:grid-cols-3 gap-4">
-              <div><label :class="sectionLabel">Бейдж ISO</label><input v-model="d.hero.badgeIso" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Бейдж IACS</label><input v-model="d.hero.badgeIacs" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Бейдж «Лет опыта»</label><input v-model="d.hero.badgeYears" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Бейдж ISO</label><AdminThemedTextField v-model="d.hero.badgeIso" :multiline="false" /></div>
+              <div><label :class="sectionLabel">Бейдж IACS</label><AdminThemedTextField v-model="d.hero.badgeIacs" :multiline="false" /></div>
+              <div><label :class="sectionLabel">Бейдж «Лет опыта»</label><AdminThemedTextField v-model="d.hero.badgeYears" :multiline="false" /></div>
             </div>
-            <div><label :class="sectionLabel">Текст «Листайте»</label><input v-model="d.hero.scroll" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Текст «Листайте»</label><AdminThemedTextField v-model="d.hero.scroll" :multiline="false" /></div>
           </div>
         </section>
 
@@ -233,31 +275,29 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
 
             <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Судовой менеджмент (левая)</h3>
-              <div><label :class="sectionLabel">Метка (над заголовком)</label><input v-model="d.funnelShip.label" :class="sectionInput" /></div>
-              <div class="grid md:grid-cols-3 gap-4">
-                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelShip.title" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Акцент (красным)</label><input v-model="d.funnelShip.titleAccent" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelShip.titleEnd" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Метка (над заголовком)</label><AdminThemedTextField v-model="d.funnelShip.label" :multiline="false" /></div>
+              <div>
+                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <AdminThemeTitleEditor v-model="d.funnelShip.titleFormatted" />
               </div>
-              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelShip.text" rows="3" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelShip.text" /></div>
               <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Подпись кнопки</label><input v-model="d.funnelShip.cta" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Подпись кнопки</label><AdminThemedTextField v-model="d.funnelShip.cta" :multiline="false" /></div>
               </div>
               <AdminNavPathPick v-model="d.funnelShip.href" :path-options="pathOptions" input-placeholder="/ship-management" />
             </div>
 
             <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Крюинг (центр, две ссылки)</h3>
-              <div><label :class="sectionLabel">Метка</label><input v-model="d.funnelCrewing.label" :class="sectionInput" /></div>
-              <div class="grid md:grid-cols-3 gap-4">
-                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelCrewing.title" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Акцент</label><input v-model="d.funnelCrewing.titleAccent" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelCrewing.titleEnd" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelCrewing.label" :multiline="false" /></div>
+              <div>
+                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <AdminThemeTitleEditor v-model="d.funnelCrewing.titleFormatted" />
               </div>
-              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelCrewing.text" rows="3" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelCrewing.text" /></div>
               <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Первая ссылка — подпись</label><input v-model="d.funnelCrewing.cta" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Вторая ссылка — подпись</label><input v-model="d.funnelCrewing.secondaryCta" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Первая ссылка — подпись</label><AdminThemedTextField v-model="d.funnelCrewing.cta" :multiline="false" /></div>
+                <div><label :class="sectionLabel">Вторая ссылка — подпись</label><AdminThemedTextField v-model="d.funnelCrewing.secondaryCta" :multiline="false" /></div>
               </div>
               <div>
                 <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Первая ссылка</p>
@@ -271,15 +311,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
 
             <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Сервисы (правая)</h3>
-              <div><label :class="sectionLabel">Метка</label><input v-model="d.funnelTechnical.label" :class="sectionInput" /></div>
-              <div class="grid md:grid-cols-3 gap-4">
-                <div><label :class="sectionLabel">Заголовок до акцента</label><input v-model="d.funnelTechnical.title" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Акцент</label><input v-model="d.funnelTechnical.titleAccent" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">После акцента</label><input v-model="d.funnelTechnical.titleEnd" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelTechnical.label" :multiline="false" /></div>
+              <div>
+                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <AdminThemeTitleEditor v-model="d.funnelTechnical.titleFormatted" />
               </div>
-              <div><label :class="sectionLabel">Текст</label><textarea v-model="d.funnelTechnical.text" rows="3" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelTechnical.text" /></div>
               <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Подпись кнопки</label><input v-model="d.funnelTechnical.cta" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Подпись кнопки</label><AdminThemedTextField v-model="d.funnelTechnical.cta" :multiline="false" /></div>
               </div>
               <AdminNavPathPick v-model="d.funnelTechnical.href" :path-options="pathOptions" input-placeholder="/services" />
             </div>
@@ -294,7 +333,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.stats }" />
           </button>
           <div v-show="!collapsed.stats" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Заголовок карточки</label><input v-model="d.statsCard.label" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Заголовок карточки</label><AdminThemedTextField v-model="d.statsCard.label" :multiline="false" /></div>
             <div class="space-y-3">
               <div v-for="(item, i) in d.statsCard.items" :key="i" class="border border-mts-border p-4 bg-mts-bg/50">
                 <div class="flex items-center justify-between mb-3">
@@ -303,8 +342,8 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 </div>
                 <div class="grid md:grid-cols-3 gap-3">
                   <div><label :class="sectionLabel">Иконка</label><AdminSelect v-model="item.icon" :options="STAT_ICON_OPTIONS" /></div>
-                  <div><label :class="sectionLabel">Значение</label><input v-model="item.value" :class="sectionInput" /></div>
-                  <div><label :class="sectionLabel">Подпись</label><input v-model="item.label" :class="sectionInput" /></div>
+                  <div><label :class="sectionLabel">Значение</label><AdminThemedTextField v-model="item.value" :multiline="false" /></div>
+                  <div><label :class="sectionLabel">Подпись</label><AdminThemedTextField v-model="item.label" :multiline="false" /></div>
                 </div>
               </div>
               <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStat"><Plus class="w-4 h-4" /> Добавить показатель</button>
@@ -320,14 +359,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.about }" />
           </button>
           <div v-show="!collapsed.about" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Метка</label><input v-model="d.about.label" :class="sectionInput" /></div>
-            <div class="grid md:grid-cols-3 gap-4">
-              <div><label :class="sectionLabel">Заголовок</label><input v-model="d.about.title" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Акцент</label><input v-model="d.about.titleAccent" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Окончание</label><input v-model="d.about.titleEnd" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.about.label" :multiline="false" /></div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.about.titleFormatted" />
             </div>
-            <div><label :class="sectionLabel">Текст</label><textarea v-model="d.about.text" rows="4" :class="sectionInput" /></div>
-            <div><label :class="sectionLabel">Текст кнопки «Подробнее»</label><input v-model="d.about.more" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.about.text" /></div>
+            <div><label :class="sectionLabel">Текст кнопки «Подробнее»</label><AdminThemedTextField v-model="d.about.more" :multiline="false" /></div>
           </div>
         </section>
 
@@ -339,15 +377,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.services }" />
           </button>
           <div v-show="!collapsed.services" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Метка</label><input v-model="d.services.label" :class="sectionInput" /></div>
-            <div class="grid md:grid-cols-3 gap-4">
-              <div><label :class="sectionLabel">Заголовок</label><input v-model="d.services.heading" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Акцент</label><input v-model="d.services.headingAccent" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Окончание</label><input v-model="d.services.headingEnd" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.services.label" :multiline="false" /></div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.services.headingFormatted" />
             </div>
             <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Текст «Все сервисы»</label><input v-model="d.services.all" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Текст «Подробнее →»</label><input v-model="d.services.more" :class="sectionInput" /></div>
+              <div><label :class="sectionLabel">Текст «Все сервисы»</label><AdminThemedTextField v-model="d.services.all" :multiline="false" /></div>
+              <div><label :class="sectionLabel">Текст «Подробнее →»</label><AdminThemedTextField v-model="d.services.more" :multiline="false" /></div>
             </div>
 
             <div class="rounded-md border border-mts-accent/30 bg-mts-bg/60 p-4 space-y-3">
@@ -414,7 +451,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   v-if="(d.services.featuredServiceIds?.length ?? 0) > 0"
                   type="button"
                   class="font-mono text-xs uppercase text-mts-text-secondary hover:text-mts-accent py-3"
-                  @click="setFeaturedServiceIds([])"
+                  @click="clearFeaturedServices"
                 >
                   Очистить список
                 </button>
@@ -431,10 +468,10 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.process }" />
           </button>
           <div v-show="!collapsed.process" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Метка</label><input v-model="d.process.label" :class="sectionInput" /></div>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Заголовок</label><input v-model="d.process.heading" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Акцент</label><input v-model="d.process.headingAccent" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.process.label" :multiline="false" /></div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.process.headingFormatted" />
             </div>
             <div class="space-y-3">
               <div v-for="(step, i) in d.process.steps" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
@@ -442,8 +479,8 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Шаг {{ i + 1 }}</span>
                   <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeStep(i)"><Trash2 class="w-4 h-4" /></button>
                 </div>
-                <div><label :class="sectionLabel">Название</label><input v-model="step.title" :class="sectionInput" /></div>
-                <div><label :class="sectionLabel">Описание</label><textarea v-model="step.text" rows="2" :class="sectionInput" /></div>
+                <div><label :class="sectionLabel">Название</label><AdminThemedTextField v-model="step.title" :multiline="false" /></div>
+                <div><label :class="sectionLabel">Описание</label><AdminThemedTextField v-model="step.text" /></div>
               </div>
               <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStep"><Plus class="w-4 h-4" /> Добавить шаг</button>
             </div>
@@ -458,15 +495,20 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.cta }" />
           </button>
           <div v-show="!collapsed.cta" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Метка</label><input v-model="d.cta.label" :class="sectionInput" /></div>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Заголовок</label><input v-model="d.cta.title" :class="sectionInput" /></div>
-              <div><label :class="sectionLabel">Акцент</label><input v-model="d.cta.titleAccent" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.cta.label" :multiline="false" /></div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.cta.titleFormatted" />
             </div>
-            <div><label :class="sectionLabel">Текст</label><textarea v-model="d.cta.text" rows="2" :class="sectionInput" /></div>
-            <div><label :class="sectionLabel">Текст кнопки</label><input v-model="d.cta.button" :class="sectionInput" /></div>
+            <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.cta.text" /></div>
+            <div><label :class="sectionLabel">Текст кнопки</label><AdminThemedTextField v-model="d.cta.button" :multiline="false" /></div>
           </div>
         </section>
+
+        <AdminCustomSectionsEditor
+          :model-value="d.customSections ?? []"
+          @update:model-value="(v) => (d.customSections = v)"
+        />
 
         <section class="bg-white border border-mts-border shadow-tech relative p-6">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">

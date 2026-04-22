@@ -5,7 +5,9 @@ import type { ContactQuickIconKey, ContactsPageData, MarineContentLocale } from 
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
-import { defaultContactsData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('contacts')
 
@@ -21,7 +23,16 @@ const { data: cmsPage } = await useAsyncData('contacts-page-cms', async () => {
 
 const cms = computed<ContactsPageData>(() => {
   const body = cmsPage.value?.body
-  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  if (body) {
+    try {
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeContactsPageData(loc.value, p)
+      }
+    } catch {
+      /* */
+    }
+  }
   return defaultContactsData(loc.value)
 })
 
@@ -95,11 +106,11 @@ async function submitFeedback() {
           <span class="section-label">{{ t('pages.contacts.heroEyebrow') }}</span>
         </div>
         <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span>
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
     </ListingHeroShell>
@@ -108,7 +119,7 @@ async function submitFeedback() {
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
         <div class="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 class="font-display text-2xl text-mts-text mb-8">{{ cms.infoTitle }}</h2>
+            <h2 class="font-display text-2xl text-mts-text mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
             <div v-if="contactsPending" class="flex items-center gap-2 text-mts-text-secondary font-body text-sm mb-12">
               <Loader2 class="h-4 w-4 animate-spin" />
               {{ t('pages.common.loading') }}
@@ -119,7 +130,7 @@ async function submitFeedback() {
                 v-for="(item, idx) in resolvedContacts.quick"
                 :key="`${item.label}-${idx}`"
                 :href="item.href || undefined"
-                class="flex items-center gap-4 p-4 bg-white border border-mts-border hover:border-mts-accent/30 transition-all"
+                class="flex items-center gap-4 p-4 bg-mts-surface border border-mts-border hover:border-mts-accent/30 transition-all"
                 :class="item.href ? '' : 'cursor-default'"
               >
                 <div class="w-10 h-10 bg-mts-bg border border-mts-border flex items-center justify-center">
@@ -135,10 +146,10 @@ async function submitFeedback() {
           <div class="card-tech border border-mts-border p-8">
             <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-mts-text">
               <Send class="h-5 w-5 text-mts-accent" />
-              {{ cms.formTitle }}
+              <ThemedContentString :content="cms.formTitle" />
             </h3>
             <p class="mb-6 font-body text-sm text-mts-text-secondary">
-              {{ cms.formLead }}
+              <ThemedContentString :content="cms.formLead" />
             </p>
             <form class="space-y-4" @submit.prevent="submitFeedback">
               <div>
@@ -206,7 +217,7 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-2xl text-mts-text mb-8">{{ cms.officesTitle }}</h2>
+          <h2 class="font-display text-2xl text-mts-text mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"
@@ -223,6 +234,8 @@ async function submitFeedback() {
         </div>
       </div>
     </section>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="contacts" />
   </div>

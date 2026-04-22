@@ -1,25 +1,28 @@
 <script setup lang="ts">
-import { accentTitleParts } from '~/utils/accentTitle'
+import type { ThemeFormattedTitle as Tft } from '~/types'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import { migrateLegacyTripleToTheme } from '~/utils/themeFormattedTitle'
 
 const props = withDefaults(
   defineProps<{
+    /** Новый формат (предпочтительно). */
+    formatted?: Tft
+    /** Совместимость: три строки как раньше. */
     before?: string
-    accent: string
+    accent?: string
     after?: string
   }>(),
-  { before: '', after: '' },
+  { before: '', accent: '', after: '' },
 )
 
-const parts = computed(() => accentTitleParts(props.before ?? '', props.accent, props.after ?? ''))
+const resolved = computed<Tft>(() => {
+  if (props.formatted && props.formatted.spans?.length) {
+    return props.formatted
+  }
+  return migrateLegacyTripleToTheme(props.before ?? '', props.accent ?? '', props.after ?? '')
+})
 </script>
 
 <template>
-  <span class="inline">
-    <template v-for="(part, i) in parts" :key="i">
-      <template v-if="i > 0">{{ ' ' }}</template>
-      <span
-        :class="part.kind === 'accent' ? 'text-mts-accent whitespace-nowrap' : ''"
-      >{{ part.text }}</span>
-    </template>
-  </span>
+  <ThemeFormattedTitle :title="resolved" />
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
 
 const route = useRoute()
@@ -70,14 +71,14 @@ watchEffect(() => {
         <Breadcrumbs class="mb-8" :items="crumbItems" />
 
         <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
-          {{ page.title }}
+          <ThemedContentString :content="page.title" />
         </h1>
 
         <p
           v-if="page.excerpt"
           class="mt-8 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary"
         >
-          {{ page.excerpt }}
+          <ThemedContentString :content="page.excerpt" />
         </p>
 
         <div v-if="bodyHtml" class="mts-markdown mt-10" v-html="bodyHtml" />

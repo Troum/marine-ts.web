@@ -7,6 +7,29 @@ export interface SeoFields {
 /** Локали динамического контента (совпадают с config marine.locales в API). */
 export type MarineContentLocale = 'ru' | 'en'
 
+/** Оттенки сегмента заголовка — только токены темы Marin (`main.css`, `@theme`). */
+export type ThemeTitleTone =
+  | 'text'
+  | 'textSecondary'
+  | 'textMuted'
+  | 'accent'
+  | 'accentLight'
+  | 'accentDark'
+  | 'marker'
+
+export interface ThemeTitleSpan {
+  text: string
+  tone: ThemeTitleTone
+}
+
+/**
+ * Заголовок из сегментов с цветом из палитры темы (вместо трёх полей «начало / акцент / окончание»).
+ * В JSON хранится как объект; старые поля title/titleAccent/titleEnd при чтении мигрируют в spans.
+ */
+export interface ThemeFormattedTitle {
+  spans: ThemeTitleSpan[]
+}
+
 export interface NewsTranslationPayload {
   title: string
   excerpt: string
@@ -283,16 +306,46 @@ export interface FeedbackMessage {
   updatedAt: string | null
 }
 
+/**
+ * Машинно-читаемые id типов судна, выбранных в форме «Оставьте заявку».
+ * Полный список и человекочитаемые подписи — в `PageInquiryForm.vue`
+ * (константа `VESSEL_TYPES`) и в Laravel-валидации
+ * (`StorePageInquiryRequest::ALLOWED_VESSEL_TYPES`).
+ */
+export type PageInquiryVesselType =
+  | 'dry_cargo'
+  | 'tanker'
+  | 'container'
+  | 'tug'
+  | 'service'
+  | 'other'
+
+/**
+ * Машинно-читаемые id запрашиваемых услуг. Синхронизирован с
+ * `PageInquiryForm.vue` и `StorePageInquiryRequest::ALLOWED_REQUIRED_SERVICES`.
+ */
+export type PageInquiryServiceId =
+  | 'technical'
+  | 'crewing'
+  | 'audit'
+  | 'commercial'
+  | 'insurance'
+  | 'other'
+
 /** Заявка с формы «подключённой» страницы (судовой менеджмент и др.). */
 export interface PageInquiry {
   id: number
   name: string
-  email: string
-  phone: string | null
   company: string | null
-  vesselName: string | null
-  imo: string | null
-  message: string
+  position: string | null
+  phone: string | null
+  email: string
+  vesselTypes: PageInquiryVesselType[]
+  vesselsCount: number | null
+  vesselFlag: string | null
+  mainPorts: string | null
+  requiredServices: PageInquiryServiceId[]
+  message: string | null
   sourcePage: string
   ip: string | null
   readAt: string | null
@@ -369,9 +422,7 @@ export interface FooterMenuSettings {
 /* ── About page structured data (CMS JSON in body) ── */
 
 export interface AboutHero {
-  title: string
-  titleAccent: string
-  titleEnd: string
+  titleFormatted: ThemeFormattedTitle
   subtitle: string
   lead: string
   lead2: string
@@ -407,8 +458,11 @@ export interface AboutWhy {
 }
 
 export interface AboutGeoLocation {
-  x: number
-  y: number
+  /** Долгота, -180..180 (Mapbox: lng). */
+  lng: number
+  /** Широта, -90..90 (Mapbox: lat). */
+  lat: number
+  /** Где разместить подпись относительно маркера: справа (true) или слева. */
   labelOnRight: boolean
   name: string
 }
@@ -441,15 +495,28 @@ export interface AboutPageData {
   showInquiryForm?: boolean
   /** Опциональный фон первого экрана (URL или путь после загрузки). */
   heroImage?: string
+  /** Фон секции «О компании» (два абзаца под тем же заголовком, что и hero). */
+  introImage?: string
+  /** Фон секции «Экосистема сервисов». */
+  ecosystemImage?: string
+  /** Фон секции «Миссия» (Figma — отдельный кадр). */
+  missionImage?: string
+  /**
+   * Фон секции «Компания в цифрах» (Figma: Rectangle 51).
+   * Поверх изображения накладывается диагональный градиент из макета.
+   * Секция «Почему выбирают MTS?» собственного изображения не имеет —
+   * у неё сплошной фон #0B1F2A.
+   */
+  statsImage?: string
+  /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
+  customSections?: LineMarketingCustomSection[]
 }
 
 /* ── Home page structured data (CMS JSON in body) ── */
 
 export interface HomeHero {
   label: string
-  titleLine1: string
-  titleAccent: string
-  titleSuffix: string
+  titleFormatted: ThemeFormattedTitle
   lead: string
   /** Клиент: заявка */
   ctaClient: string
@@ -470,9 +537,7 @@ export interface HomeHero {
 /** Акцентный блок воронки на главной (судовой менеджмент / крюинг / сервисы). */
 export interface HomeFunnelSpotlight {
   label: string
-  title: string
-  titleAccent: string
-  titleEnd: string
+  titleFormatted: ThemeFormattedTitle
   text: string
   cta: string
   href: string
@@ -493,17 +558,14 @@ export interface HomeDirectionRow {
 
 export interface HomeDirectionsSection {
   label: string
-  heading: string
-  headingAccent: string
-  headingEnd: string
+  headingFormatted: ThemeFormattedTitle
   rows: HomeDirectionRow[]
 }
 
 /** Коротко «доверие»: маркеры под «О компании». */
 export interface HomeTrustStrip {
   label: string
-  title: string
-  titleAccent: string
+  titleFormatted: ThemeFormattedTitle
   bullets: string[]
 }
 
@@ -520,18 +582,14 @@ export interface HomeStatsCard {
 
 export interface HomeAboutPreview {
   label: string
-  title: string
-  titleAccent: string
-  titleEnd: string
+  titleFormatted: ThemeFormattedTitle
   text: string
   more: string
 }
 
 export interface HomeServicesSection {
   label: string
-  heading: string
-  headingAccent: string
-  headingEnd: string
+  headingFormatted: ThemeFormattedTitle
   all: string
   more: string
   /** ID карточек сервисов из каталога (порядок = порядок на главной). Пусто — блок «Сервисы» не показывается. */
@@ -545,22 +603,20 @@ export interface HomeProcessStep {
 
 export interface HomeProcessSection {
   label: string
-  heading: string
-  headingAccent: string
+  headingFormatted: ThemeFormattedTitle
   steps: HomeProcessStep[]
 }
 
 export interface HomeCTA {
   label: string
-  title: string
-  titleAccent: string
+  titleFormatted: ThemeFormattedTitle
   text: string
   button: string
 }
 
 export interface HomePageData {
   hero: HomeHero
-  /** Опциональный фон первого экрана; если нет — используется стоковый `/hero-bg.jpg` на сайте. */
+  /** Опциональный фон первого экрана; если нет — используется `/images/marin-figma/hero-ship.jpg`. */
   heroImage?: string
   statsCard: HomeStatsCard
   funnelShip: HomeFunnelSpotlight
@@ -576,14 +632,14 @@ export interface HomePageData {
   cta: HomeCTA
   /** Показать блок формы заявки внизу главной. */
   showInquiryForm?: boolean
+  /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
+  customSections?: LineMarketingCustomSection[]
 }
 
 /* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
 
 export interface ListingHero {
-  title: string
-  titleAccent: string
-  titleEnd: string
+  titleFormatted: ThemeFormattedTitle
   lead: string
 }
 
@@ -598,6 +654,8 @@ export interface ListingPageData {
   showInquiryForm?: boolean
   /** Опциональный фон hero (листинги сервисов, проектов, галереи, новостей, вакансий). */
   heroImage?: string
+  /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
+  customSections?: LineMarketingCustomSection[]
 }
 
 export interface ProjectsPageData extends ListingPageData {}
@@ -608,7 +666,7 @@ export type VacanciesPageData = ProjectsPageData
 /* ── Contacts page structured data (CMS JSON in body) ── */
 
 export interface ContactsPageData {
-  hero: { title: string; titleAccent: string; lead: string }
+  hero: { titleFormatted: ThemeFormattedTitle; lead: string }
   infoTitle: string
   formTitle: string
   formLead: string
@@ -616,14 +674,145 @@ export interface ContactsPageData {
   showInquiryForm?: boolean
   /** Опциональный фон hero. */
   heroImage?: string
+  /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
+  customSections?: LineMarketingCustomSection[]
+}
+
+/** Кнопка в hero маркетинговых страниц линий (крюинг / судовой менеджмент), не более двух. */
+export interface LineMarketingHeroButton {
+  label: string
+  /** Внутренний путь (`/contacts`), якорь (`#page-inquiry`) или полный URL. */
+  href: string
 }
 
 /** Структурированный JSON страницы «Крюинг-менеджмент» (CMS, body в content_pages). */
 export interface CrewingDirectionItem {
   icon: string
+  /** Если true — иконка не показывается (поле иконки в админке остаётся для быстрого снятия галочки). */
+  hideIcon?: boolean
   title: string
   text: string
+  /**
+   * Slug контентной страницы (`content_pages.slug`), вложенный URL: `/{linePageSlug}/{detailSlug}`.
+   * Пусто — карточка без отдельной страницы.
+   */
+  detailSlug?: string
 }
+
+/** Карточка в пользовательском блоке «cards». */
+export interface LineMarketingCardItem {
+  icon: string
+  hideIcon?: boolean
+  title: string
+  text: string
+  detailSlug?: string
+}
+
+export interface LineMarketingCardsBlock {
+  id: string
+  type: 'cards'
+  items: LineMarketingCardItem[]
+}
+
+export interface LineMarketingTextBlock {
+  id: string
+  type: 'text'
+  title: string
+  subtitle: string
+  description: string
+}
+
+export interface LineMarketingSplitBlock {
+  id: string
+  type: 'split'
+  /** Текст левой колонки (Markdown). */
+  leftText: string
+  /** Доля ширины левой колонки (остаток — правая); вместе с gap задаёт раскладку flex/grid. */
+  leftWidthPercent: number
+  rightMode: 'image' | 'slider'
+  /** URL изображений (одно или несколько для слайдера). */
+  images: string[]
+}
+
+/** Большое баннерное изображение (полная ширина) с опциональным заголовком/подписью поверх. */
+export interface LineMarketingHeroImageBlock {
+  id: string
+  type: 'heroImage'
+  /** URL картинки (обязательное поле — иначе блок не показывается). */
+  imageUrl: string
+  /** Высота баннера: small ~ 280px / medium ~ 420px / large ~ 560px. */
+  height: 'small' | 'medium' | 'large'
+  /** Опциональный заголовок над картинкой (визуально — поверх затемнения). */
+  title: string
+  /** Опциональная подпись/подзаголовок. */
+  caption: string
+  /** Прозрачность тёмного оверлея 0–100 (нужно если поверх есть текст и фон светлый). */
+  overlayOpacity: number
+}
+
+/** Сетка изображений (3 колонки на десктопе, плитка). */
+export interface LineMarketingGalleryBlock {
+  id: string
+  type: 'gallery'
+  title: string
+  /** URL изображений в порядке отображения. */
+  images: string[]
+  /** Колонок на десктопе (1–4). */
+  columns: number
+}
+
+export interface LineMarketingAccordionItem {
+  /** Заголовок раскрывающейся строки (всегда виден). */
+  question: string
+  /** Содержимое (Markdown). */
+  answer: string
+}
+
+/** Аккордеон (FAQ-подобный список). */
+export interface LineMarketingAccordionBlock {
+  id: string
+  type: 'accordion'
+  title: string
+  items: LineMarketingAccordionItem[]
+}
+
+/** Произвольный Markdown/HTML контент. */
+export interface LineMarketingHtmlMarkdownBlock {
+  id: string
+  type: 'htmlMarkdown'
+  /** Заголовок над контентом (опционально). */
+  title: string
+  /** Текст блока — поддерживается Markdown; HTML экранируется тем же sanitizer'ом, что и body. */
+  content: string
+  /** Выравнивание контейнера: left/center (по умолчанию left). */
+  align: 'left' | 'center'
+}
+
+export type LineMarketingContentBlock =
+  | LineMarketingCardsBlock
+  | LineMarketingTextBlock
+  | LineMarketingSplitBlock
+  | LineMarketingHeroImageBlock
+  | LineMarketingGalleryBlock
+  | LineMarketingAccordionBlock
+  | LineMarketingHtmlMarkdownBlock
+
+/** Тип блока в пользовательской секции (для UI выбора и normalizers). */
+export type LineMarketingContentBlockType = LineMarketingContentBlock['type']
+
+/** Пользовательская секция после hero (набор блоков контента). */
+export interface LineMarketingCustomSection {
+  id: string
+  title: string
+  /** Показывать заголовок секции над блоками. */
+  showTitle: boolean
+  blocks: LineMarketingContentBlock[]
+}
+
+/** Алиасы для общего использования на любых CMS-страницах (главная, о компании, листинги, контакты, line-pages). */
+export type CustomPageSection = LineMarketingCustomSection
+export type CustomPageBlock = LineMarketingContentBlock
+export type CustomPageBlockType = LineMarketingContentBlockType
 
 /** Один пункт чек-листа (заголовок строки + пояснение). */
 export interface CrewingChecklistPoint {
@@ -637,25 +826,32 @@ export interface CrewingChecklistSection {
   points: CrewingChecklistPoint[]
 }
 
-/** Раскрывающийся блок «полный чек-лист» (критерии отбора экипажа). */
+/** Блок «полный чек-лист» (критерии отбора экипажа), всегда развёрнут на сайте. */
 export interface CrewingChecklistBlock {
-  /** Текст кнопки в свёрнутом состоянии */
-  toggleShow: string
-  /** Текст кнопки в развёрнутом состоянии */
-  toggleHide: string
+  /** Заголовок секции (видимый H2 на странице). */
+  sectionTitle: string
   /** Вводный абзац над списком (показывается только если есть хотя бы один пункт) */
   intro: string
   sections: CrewingChecklistSection[]
 }
 
+/** Встроенные секции маркетинговой страницы линии (после hero). */
+export type LineMarketingSectionId = 'directions' | 'checklist' | 'principles' | 'audience'
+
 export interface CrewingPageData {
   hero: {
     label: string
-    title: string
-    titleAccent: string
-    titleEnd: string
+    titleFormatted: ThemeFormattedTitle
     lead: string
   }
+  /** До двух кнопок под лидом в hero. */
+  heroButtons: LineMarketingHeroButton[]
+  /** Порядок секций после hero (hero не входит); могут быть пользовательские `custom:<uuid>`. */
+  sectionOrder: string[]
+  /** Видимость секций после hero (встроенные и пользовательские ключи). */
+  sectionVisibility: Record<string, boolean>
+  /** Пользовательские секции; id совпадает с суффиксом в `sectionOrder` (`custom:<id>`). */
+  customSections: LineMarketingCustomSection[]
   directionsSection: {
     title: string
     lead: string
@@ -675,6 +871,6 @@ export interface CrewingPageData {
   }
   checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
-  /** Переопределить фон hero (иначе из макета: `/hero-bg.jpg` и т.д.). */
+  /** Переопределить фон hero (иначе из макета: `/images/marin-figma/hero-ship.jpg` и т.д.). */
   heroBackgroundImage?: string
 }

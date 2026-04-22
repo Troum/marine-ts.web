@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, Plus, Trash2, Phone, Mail, MapPin, Clock } from 'lu
 import type { SiteContactSettings } from '~/types'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
   layout: 'admin',
@@ -13,6 +14,7 @@ const api = useMarineApi()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const { canManageContacts } = useAdminPermissions()
+const { confirm } = useConfirm()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -49,8 +51,16 @@ function addQuick() {
   })
 }
 
-function removeQuick(i: number) {
+async function removeQuick(i: number) {
   if (form.value.quick.length <= 1) {
+    return
+  }
+  const ok = await confirm({
+    message: 'Удалить эту строку быстрых контактов?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
     return
   }
   form.value.quick.splice(i, 1)
@@ -66,8 +76,16 @@ function addOffice() {
   })
 }
 
-function removeOffice(i: number) {
+async function removeOffice(i: number) {
   if (form.value.offices.length <= 1) {
+    return
+  }
+  const ok = await confirm({
+    message: 'Удалить этот офис из списка?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
     return
   }
   form.value.offices.splice(i, 1)

@@ -11,7 +11,7 @@ const minRows = 1
 const maxRows = 24
 
 const fieldClass =
-  'w-full border border-mts-border bg-white px-2.5 py-2 text-xs text-mts-text placeholder:text-mts-text-muted/70 focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
+  'w-full border border-mts-border bg-mts-bg px-2.5 py-2 text-xs text-mts-text placeholder:text-mts-text-muted/70 focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
 
 const columns: { key: keyof SeaServiceRow; label: string }[] = [
   { key: 'rank', label: 'Rank' },
@@ -41,7 +41,7 @@ function removeRow(index: number) {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-mts-border bg-white shadow-sm">
+  <section class="overflow-hidden rounded-xl border border-mts-border bg-mts-surface shadow-sm">
     <header class="border-b border-mts-border bg-gradient-to-r from-mts-bg to-white px-5 py-4">
       <h3 class="font-display text-lg text-mts-text">{{ t('pages.seaTable.title') }}</h3>
       <p class="mt-1 text-sm text-mts-text-secondary">{{ t('pages.seaTable.lead') }}</p>

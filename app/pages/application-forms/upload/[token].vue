@@ -113,7 +113,7 @@ async function submitUpload() {
         {{ loadError }}
       </div>
 
-      <div v-else-if="session" class="border border-mts-border bg-white p-8 shadow-tech">
+      <div v-else-if="session" class="border border-mts-border bg-mts-surface p-8 shadow-tech">
         <h1 class="font-display text-2xl text-mts-text">{{ t('pages.upload.title') }}</h1>
         <p class="mt-2 font-body text-sm text-mts-text-secondary">
           {{ t('pages.upload.intro', { name: session.fullName }) }}

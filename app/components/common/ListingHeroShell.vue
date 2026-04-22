@@ -17,11 +17,12 @@ defineProps<{
   >
     <template v-if="heroImage">
       <div
-        class="absolute inset-0 bg-cover bg-center opacity-[0.5]"
+        class="absolute inset-0 bg-cover bg-center opacity-[0.55]"
         :style="{ backgroundImage: `url(${heroImage})` }"
         aria-hidden="true"
       />
-      <div class="absolute inset-0 bg-linear-to-r from-white/95 via-white/80 to-white/60" aria-hidden="true" />
+      <div class="absolute inset-0 bg-linear-to-r from-mts-bg/95 via-mts-bg/85 to-mts-bg/55" aria-hidden="true" />
+      <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/35" aria-hidden="true" />
     </template>
     <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
       <slot />

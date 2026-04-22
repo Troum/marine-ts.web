@@ -2,7 +2,8 @@
 import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
 import type { ContactsPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultContactsData } from '~/utils/pageDefaults'
+import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import { defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
 
 const SLUG = 'contacts-page'
 
@@ -43,7 +44,7 @@ onMounted(async () => {
         if (body) {
           try {
             const parsed = JSON.parse(body)
-            if (parsed?.hero) data.value[loc] = { ...defaultContactsData(loc), ...parsed }
+            if (parsed?.hero) data.value[loc] = mergeContactsPageData(loc, parsed)
           } catch { /* keep defaults */ }
         }
       }
@@ -132,19 +133,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <AdminHeroImageField v-model="d.heroImage" />
-            <div class="grid md:grid-cols-2 gap-4">
-              <div>
-                <label :class="sectionLabel">Заголовок (начало)</label>
-                <input v-model="d.hero.title" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Акцент (цветной)</label>
-                <input v-model="d.hero.titleAccent" :class="sectionInput" />
-              </div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
-              <textarea v-model="d.hero.lead" rows="3" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.lead" />
             </div>
           </div>
         </section>
@@ -159,22 +154,27 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div v-show="!collapsed.sections" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <div>
               <label :class="sectionLabel">Заголовок блока контактной информации</label>
-              <input v-model="d.infoTitle" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.infoTitle" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Заголовок формы</label>
-              <input v-model="d.formTitle" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.formTitle" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Текст под заголовком формы</label>
-              <textarea v-model="d.formLead" rows="3" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.formLead" />
             </div>
             <div>
               <label :class="sectionLabel">Заголовок блока офисов</label>
-              <input v-model="d.officesTitle" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.officesTitle" :multiline="false" />
             </div>
           </div>
         </section>
+
+        <AdminCustomSectionsEditor
+          :model-value="d.customSections ?? []"
+          @update:model-value="(v) => (d.customSections = v)"
+        />
 
         <section class="bg-white border border-mts-border shadow-tech relative p-6">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">

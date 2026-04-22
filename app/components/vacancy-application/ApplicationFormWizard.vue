@@ -239,7 +239,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
             step === s.n
               ? 'border-mts-accent bg-mts-accent text-white'
               : s.n < step
-                ? 'border-mts-border bg-white text-mts-text-secondary'
+                ? 'border-mts-border bg-mts-surface text-mts-text-secondary'
                 : 'border-mts-border bg-mts-bg text-mts-text-muted'
           "
           @click="step = s.n"
@@ -248,7 +248,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
         </button>
       </div>
 
-      <div class="border border-mts-border bg-white p-6 shadow-tech md:p-10">
+      <div class="border border-mts-border bg-mts-surface p-6 shadow-tech md:p-10">
         <div v-if="submitted" class="text-center">
           <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600/10">
             <Check class="h-7 w-7 text-green-700" />
@@ -363,7 +363,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                   type="file"
                   accept="image/*"
                   :lang="locale"
-                  class="w-full border-0 bg-mts-bg p-2 font-body text-sm file:mr-3 file:border file:border-mts-border file:bg-white file:px-3 file:py-1.5 file:font-mono file:text-xs"
+                  class="w-full border-0 bg-mts-bg p-2 font-body text-sm file:mr-3 file:border file:border-mts-border file:bg-mts-surface file:px-3 file:py-1.5 file:font-mono file:text-xs"
                   @change="onPhotoChange"
                 />
                 <p v-if="form.photoFileName" class="mt-1 font-mono text-[10px] text-mts-text-secondary">
@@ -515,7 +515,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           <!-- Step 9 Education + safety -->
           <section v-show="step === 9" class="mt-8 space-y-8">
             <VacancyEducationTable v-model:rows="form.educationRows" />
-            <div class="rounded-xl border border-mts-border bg-white p-5 shadow-sm">
+            <div class="rounded-xl border border-mts-border bg-mts-surface p-5 shadow-sm">
               <h2 class="font-display mb-4 text-lg text-mts-text">{{ t('pages.vacancies.safetySizes') }}</h2>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>

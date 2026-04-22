@@ -1,8 +1,9 @@
 import type { CrewingPageData, MarineContentLocale } from '~/types'
+import { LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
+import { themeTitleTriple } from '~/utils/themeFormattedTitle'
 
 const emptyChecklist = {
-  toggleShow: '',
-  toggleHide: '',
+  sectionTitle: '',
   intro: '',
   sections: [] as CrewingPageData['checklist']['sections'],
 }
@@ -11,11 +12,18 @@ export const SHIP_MANAGEMENT_DEFAULTS: Record<MarineContentLocale, CrewingPageDa
   ru: {
     hero: {
       label: 'Судовой менеджмент',
-      title: 'Операционное и техническое ',
-      titleAccent: 'сопровождение',
-      titleEnd: ' флота',
+      titleFormatted: themeTitleTriple('Операционное и техническое ', 'сопровождение', ' флота'),
       lead: 'Единая точка ответственности за эксплуатацию судна: планирование ТОиР, контроль подрядчиков, взаимодействие с классом и береговым офисом судовладельца.',
     },
+    heroButtons: [{ label: 'К форме заявки', href: '#page-inquiry' }],
+    sectionOrder: [...LINE_MARKETING_SECTION_DEFAULT_ORDER],
+    sectionVisibility: {
+      directions: true,
+      checklist: true,
+      principles: true,
+      audience: true,
+    },
+    customSections: [],
     directionsSection: {
       title: 'Направления работы',
       lead: 'Комплексное управление жизненным циклом судна в эксплуатации: от стратегии до отчётности по флоту.',
@@ -70,19 +78,25 @@ export const SHIP_MANAGEMENT_DEFAULTS: Record<MarineContentLocale, CrewingPageDa
     },
     checklist: {
       ...emptyChecklist,
-      toggleShow: 'Показать детали компетенций',
-      toggleHide: 'Скрыть',
+      sectionTitle: 'Детали компетенций',
     },
     showInquiryForm: true,
   },
   en: {
     hero: {
       label: 'Ship management',
-      title: 'Operational & technical ',
-      titleAccent: 'fleet support',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Operational & technical ', 'fleet support', ''),
       lead: 'A single point of accountability for safe operations: maintenance planning, contractor control, class liaison and owner reporting.',
     },
+    heroButtons: [{ label: 'To the inquiry form', href: '#page-inquiry' }],
+    sectionOrder: [...LINE_MARKETING_SECTION_DEFAULT_ORDER],
+    sectionVisibility: {
+      directions: true,
+      checklist: true,
+      principles: true,
+      audience: true,
+    },
+    customSections: [],
     directionsSection: {
       title: 'What we cover',
       lead: 'End-to-end oversight of the vessel in service — from planning to fleet-level reporting.',
@@ -136,8 +150,7 @@ export const SHIP_MANAGEMENT_DEFAULTS: Record<MarineContentLocale, CrewingPageDa
     },
     checklist: {
       ...emptyChecklist,
-      toggleShow: 'Show competency details',
-      toggleHide: 'Hide',
+      sectionTitle: 'Competency details',
     },
     showInquiryForm: true,
   },

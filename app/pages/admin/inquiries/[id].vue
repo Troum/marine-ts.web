@@ -1,6 +1,36 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Trash2 } from 'lucide-vue-next'
-import type { PageInquiry } from '~/types'
+import type { PageInquiry, PageInquiryServiceId, PageInquiryVesselType } from '~/types'
+
+/**
+ * Локализованные подписи для машинных id чек-боксов формы. Идентификаторы
+ * валидируются на бэкенде (`StorePageInquiryRequest::ALLOWED_*`), здесь
+ * только UI-перевод. Если добавляется новый id — продублировать в
+ * `PageInquiryForm.vue` (источник истины для подписей пользователя).
+ */
+const VESSEL_TYPE_LABEL: Record<PageInquiryVesselType, string> = {
+  dry_cargo: 'Сухогруз',
+  tanker: 'Танкер',
+  container: 'Контейнеровоз',
+  tug: 'Буксир',
+  service: 'Служебное судно',
+  other: 'Другое',
+}
+const REQUIRED_SERVICE_LABEL: Record<PageInquiryServiceId, string> = {
+  technical: 'Технический менеджмент (ремонт, докование, снабжение)',
+  crewing: 'Крюинг (подбор и обучение экипажей)',
+  audit: 'Аудит и сертификация (ISM, ISPS, MLC)',
+  commercial: 'Коммерческий менеджмент (фрахтование, агенты)',
+  insurance: 'Страхование (P&I, КАСКО)',
+  other: 'Другое',
+}
+
+function vesselTypeLabel(id: string): string {
+  return VESSEL_TYPE_LABEL[id as PageInquiryVesselType] ?? id
+}
+function requiredServiceLabel(id: string): string {
+  return REQUIRED_SERVICE_LABEL[id as PageInquiryServiceId] ?? id
+}
 
 definePageMeta({
   layout: 'admin',
@@ -128,35 +158,69 @@ async function handleDelete() {
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Имя</dt>
             <dd class="mt-1 font-body text-mts-text">{{ item.name }}</dd>
           </div>
+          <div v-if="item.company">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Компания</dt>
+            <dd class="mt-1 font-body text-mts-text">{{ item.company }}</dd>
+          </div>
+          <div v-if="item.position">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Должность</dt>
+            <dd class="mt-1 font-body text-mts-text">{{ item.position }}</dd>
+          </div>
+          <div v-if="item.phone">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Телефон</dt>
+            <dd class="mt-1">
+              <a :href="`tel:${item.phone}`" class="font-mono text-sm text-mts-accent hover:underline">{{ item.phone }}</a>
+            </dd>
+          </div>
           <div>
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Email</dt>
             <dd class="mt-1">
               <a :href="`mailto:${item.email}`" class="font-mono text-sm text-mts-accent hover:underline">{{ item.email }}</a>
             </dd>
           </div>
-          <div v-if="item.phone">
-            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Телефон</dt>
-            <dd class="mt-1 font-body text-mts-text">{{ item.phone }}</dd>
+          <div v-if="item.vesselTypes && item.vesselTypes.length > 0">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Тип судна</dt>
+            <dd class="mt-2 flex flex-wrap gap-2">
+              <span
+                v-for="t in item.vesselTypes"
+                :key="t"
+                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-mono text-[11px] text-mts-text"
+              >
+                {{ vesselTypeLabel(t) }}
+              </span>
+            </dd>
           </div>
-          <div v-if="item.company">
-            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Компания</dt>
-            <dd class="mt-1 font-body text-mts-text">{{ item.company }}</dd>
+          <div v-if="item.vesselsCount !== null && item.vesselsCount !== undefined">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Количество судов</dt>
+            <dd class="mt-1 font-body text-mts-text">{{ item.vesselsCount }}</dd>
           </div>
-          <div v-if="item.vesselName">
-            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Судно</dt>
-            <dd class="mt-1 font-body text-mts-text">{{ item.vesselName }}</dd>
+          <div v-if="item.vesselFlag">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Флаг судна</dt>
+            <dd class="mt-1 font-body text-mts-text">{{ item.vesselFlag }}</dd>
           </div>
-          <div v-if="item.imo">
-            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">IMO</dt>
-            <dd class="mt-1 font-mono text-sm text-mts-text">{{ item.imo }}</dd>
+          <div v-if="item.mainPorts">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Основные порты захода</dt>
+            <dd class="mt-1 whitespace-pre-wrap font-body text-mts-text">{{ item.mainPorts }}</dd>
+          </div>
+          <div v-if="item.requiredServices && item.requiredServices.length > 0">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Требуемые услуги</dt>
+            <dd class="mt-2 flex flex-wrap gap-2">
+              <span
+                v-for="s in item.requiredServices"
+                :key="s"
+                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-mono text-[11px] text-mts-text"
+              >
+                {{ requiredServiceLabel(s) }}
+              </span>
+            </dd>
+          </div>
+          <div v-if="item.message">
+            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Особые требования / комментарии</dt>
+            <dd class="mt-1 whitespace-pre-wrap font-body leading-relaxed text-mts-text">{{ item.message }}</dd>
           </div>
           <div v-if="item.ip">
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">IP</dt>
             <dd class="mt-1 font-mono text-xs text-mts-text-secondary">{{ item.ip }}</dd>
-          </div>
-          <div>
-            <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Сообщение</dt>
-            <dd class="mt-1 whitespace-pre-wrap font-body leading-relaxed text-mts-text">{{ item.message }}</dd>
           </div>
         </dl>
       </div>

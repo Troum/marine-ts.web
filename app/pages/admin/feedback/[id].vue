@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Paperclip, Send, Trash2, X } from 'lucide-vue-next'
 import type { FeedbackMessage } from '~/types'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
   layout: 'admin',
@@ -9,7 +10,7 @@ definePageMeta({
 
 const route = useRoute()
 const api = useMarineApi()
-const { confirm } = useConfirmAction()
+const { confirm } = useConfirm()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const id = computed(() => Number(route.params.id))
@@ -78,7 +79,15 @@ function onReplyFilesChange(ev: Event) {
   input.value = ''
 }
 
-function removeReplyFile(index: number) {
+async function removeReplyFile(index: number) {
+  const ok = await confirm({
+    message: 'Убрать этот файл из вложений к ответу?',
+    confirmLabel: 'Убрать',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   replyFiles.value = replyFiles.value.filter((_, i) => i !== index)
 }
 
@@ -220,14 +229,9 @@ async function handleDelete() {
           <div class="mt-4 space-y-4">
             <div>
               <label for="feedback-reply-body" class="sr-only">Текст ответа</label>
-              <textarea
-                id="feedback-reply-body"
-                v-model="replyBody"
-                rows="10"
-                class="w-full resize-y bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-                placeholder="Текст ответа клиенту…"
-                :disabled="replying"
-              />
+              <div id="feedback-reply-body" :class="{ 'pointer-events-none opacity-60': replying }">
+                <AdminThemedTextField v-model="replyBody" placeholder="Текст ответа клиенту…" :compact="true" />
+              </div>
             </div>
             <div class="flex flex-wrap items-center gap-3">
               <label

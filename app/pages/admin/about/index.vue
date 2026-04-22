@@ -2,7 +2,9 @@
 import { ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink, ChevronDown } from 'lucide-vue-next'
 import type { AboutPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultAboutData, syncStructuralFields } from '~/utils/aboutPageDefaults'
+import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import { defaultAboutData, mergeAboutPageData, syncStructuralFields } from '~/utils/aboutPageDefaults'
+import { useConfirm } from '~/composables/useConfirmAction'
 import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 
 const ICON_OPTIONS = getAllLucideAdminIconOptions()
@@ -15,6 +17,7 @@ definePageMeta({
 const api = useMarineApi()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
+const { confirm } = useConfirm()
 
 const localeTab = ref<MarineContentLocale>(defaultMarineLocale())
 const existingId = ref<number | null>(null)
@@ -33,6 +36,7 @@ const collapsed = ref<Record<string, boolean>>({
   ecosystem: true,
   mission: true,
   why: true,
+  stats: true,
   geography: true,
   certificates: true,
 })
@@ -53,7 +57,7 @@ onMounted(async () => {
           try {
             const parsed = JSON.parse(body)
             if (parsed?.hero) {
-              data.value[loc] = { ...defaultAboutData(loc), ...parsed }
+              data.value[loc] = mergeAboutPageData(loc, parsed)
             }
           } catch { /* not JSON, keep defaults */ }
         }
@@ -72,7 +76,15 @@ function addService() {
     data.value[loc].ecosystem.services.push({ icon: 'Wrench', title: '', text: '' })
   }
 }
-function removeService(i: number) {
+async function removeService(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту карточку сервиса?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].ecosystem.services.splice(i, 1)
   }
@@ -82,17 +94,33 @@ function addPrinciple() {
     data.value[loc].mission.principles.push({ icon: 'ShieldCheck', text: '' })
   }
 }
-function removePrinciple(i: number) {
+async function removePrinciple(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот принцип?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].mission.principles.splice(i, 1)
   }
 }
 function addLocation() {
   for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].geography.locations.push({ x: 50, y: 50, labelOnRight: true, name: '' })
+    data.value[loc].geography.locations.push({ lng: 0, lat: 0, labelOnRight: true, name: '' })
   }
 }
-function removeLocation(i: number) {
+async function removeLocation(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту точку на карте?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].geography.locations.splice(i, 1)
   }
@@ -102,7 +130,15 @@ function addCertificate() {
     data.value[loc].certificates.items.push({ name: '', desc: '', fileUrl: '' })
   }
 }
-function removeCertificate(i: number) {
+async function removeCertificate(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот сертификат из списка?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].certificates.items.splice(i, 1)
   }
@@ -221,31 +257,26 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <AdminHeroImageField v-model="d.heroImage" />
-            <div class="grid md:grid-cols-3 gap-4">
-              <div>
-                <label :class="sectionLabel">Заголовок (начало)</label>
-                <input v-model="d.hero.title" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Акцент (цветной)</label>
-                <input v-model="d.hero.titleAccent" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Окончание</label>
-                <input v-model="d.hero.titleEnd" :class="sectionInput" />
-              </div>
+            <AdminHeroImageField
+              v-model="d.introImage"
+              label="Фон секции «О компании»"
+              hint="Блок с двумя абзацами под тем же заголовком, что и hero. Если пусто — используется изображение по умолчанию из макета."
+            />
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>
               <label :class="sectionLabel">Подзаголовок</label>
-              <input v-model="d.hero.subtitle" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.subtitle" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Абзац 1</label>
-              <textarea v-model="d.hero.lead" rows="3" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.lead" />
             </div>
             <div>
               <label :class="sectionLabel">Абзац 2 (выделенный)</label>
-              <textarea v-model="d.hero.lead2" rows="3" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.lead2" />
             </div>
           </div>
         </section>
@@ -258,13 +289,18 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.ecosystem }" />
           </button>
           <div v-show="!collapsed.ecosystem" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField
+              v-model="d.ecosystemImage"
+              label="Фон секции «Экосистема сервисов»"
+              hint="Если пусто — изображение по умолчанию из макета."
+            />
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <input v-model="d.ecosystem.title" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.ecosystem.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Вводный текст</label>
-              <textarea v-model="d.ecosystem.lead" rows="2" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.ecosystem.lead" />
             </div>
             <div class="space-y-4">
               <div v-for="(svc, i) in d.ecosystem.services" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
@@ -281,12 +317,12 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   </div>
                   <div>
                     <label :class="sectionLabel">Название</label>
-                    <input v-model="svc.title" :class="sectionInput" />
+                    <AdminThemedTextField v-model="svc.title" :multiline="false" />
                   </div>
                 </div>
                 <div>
                   <label :class="sectionLabel">Описание</label>
-                  <textarea v-model="svc.text" rows="2" :class="sectionInput" />
+                  <AdminThemedTextField v-model="svc.text" />
                 </div>
               </div>
               <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addService">
@@ -304,13 +340,18 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.mission }" />
           </button>
           <div v-show="!collapsed.mission" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField
+              v-model="d.missionImage"
+              label="Фон секции «Миссия»"
+              hint="Отдельный кадр в Figma. Если пусто — изображение по умолчанию из макета."
+            />
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <input v-model="d.mission.title" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.mission.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Вводный текст</label>
-              <textarea v-model="d.mission.lead" rows="2" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.mission.lead" />
             </div>
             <div class="space-y-3">
               <div v-for="(p, i) in d.mission.principles" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 flex items-start gap-4">
@@ -320,7 +361,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 </div>
                 <div class="flex-1">
                   <label :class="sectionLabel">Текст принципа</label>
-                  <textarea v-model="p.text" rows="2" :class="sectionInput" />
+                  <AdminThemedTextField v-model="p.text" />
                 </div>
                 <button type="button" class="mt-6 text-mts-text-secondary hover:text-red-500 transition-colors" @click="removePrinciple(i)">
                   <Trash2 class="w-4 h-4" />
@@ -341,18 +382,40 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.why }" />
           </button>
           <div v-show="!collapsed.why" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <p class="font-body text-xs text-mts-text-secondary">
+              По макету Figma эта секция использует сплошной фон #0B1F2A, без фотографии — поэтому поле фонового изображения отсутствует.
+            </p>
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <input v-model="d.why.title" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.why.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Текст</label>
-              <textarea v-model="d.why.text" rows="4" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.why.text" />
             </div>
             <div>
               <label :class="sectionLabel">Текст кнопки CTA</label>
-              <input v-model="d.why.ctaText" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.why.ctaText" :multiline="false" />
             </div>
+          </div>
+        </section>
+
+        <!-- STATS — отдельная секция «Компания в цифрах» (Figma: Rectangle 51) -->
+        <section class="bg-white border border-mts-border shadow-tech relative">
+          <CommonAccentCorners />
+          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('stats')">
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Компания в цифрах</h2>
+            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.stats }" />
+          </button>
+          <div v-show="!collapsed.stats" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+            <AdminHeroImageField
+              v-model="d.statsImage"
+              label="Фон секции «Компания в цифрах»"
+              hint="Поверх этой фотографии в публичной части накладывается диагональный градиент из макета. Если пусто — изображение по умолчанию из Figma."
+            />
+            <p class="font-body text-xs text-mts-text-secondary">
+              Сами значения и подписи (150+, 15+ и т.п.) сейчас задаются в коде/локалях. Если потребуется редактировать их через админку — сообщите.
+            </p>
           </div>
         </section>
 
@@ -360,53 +423,79 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('geography')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. География обслуживания</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. География обслуживания</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.geography }" />
           </button>
           <div v-show="!collapsed.geography" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <div class="grid md:grid-cols-3 gap-4">
               <div>
                 <label :class="sectionLabel">Метка</label>
-                <input v-model="d.geography.label" :class="sectionInput" />
+                <AdminThemedTextField v-model="d.geography.label" :multiline="false" />
               </div>
               <div class="md:col-span-2">
                 <label :class="sectionLabel">Заголовок</label>
-                <input v-model="d.geography.title" :class="sectionInput" />
+                <AdminThemedTextField v-model="d.geography.title" :multiline="false" />
               </div>
             </div>
             <div>
               <label :class="sectionLabel">Описание</label>
-              <textarea v-model="d.geography.lead" rows="2" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.geography.lead" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">
-              Координаты X и Y — проценты на карте мира (950×620). Изменяйте их для перемещения точек.
+              Долгота (lng, -180…180) и широта (lat, -90…90) — реальные географические координаты порта.
+              Введённое значение передаётся в Mapbox как есть, без округления; кнопки −/+ меняют значение
+              с шагом 0.0001° (≈ 11&nbsp;м на экваторе).
             </p>
             <div class="overflow-x-auto border border-mts-border">
-              <table class="w-full min-w-[600px] text-left text-sm">
+              <table class="w-full min-w-[640px] text-left text-sm">
                 <thead class="bg-mts-bg font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
                   <tr>
                     <th class="px-3 py-2">Название</th>
-                    <th class="px-3 py-2 w-24">X (%)</th>
-                    <th class="px-3 py-2 w-24">Y (%)</th>
+                    <th class="px-3 py-2 w-44">Долгота (lng)</th>
+                    <th class="px-3 py-2 w-44">Широта (lat)</th>
                     <th class="px-3 py-2 w-28">Подпись справа</th>
                     <th class="px-3 py-2 w-12" />
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(loc, i) in d.geography.locations" :key="i" class="border-t border-mts-border">
-                    <td class="px-3 py-1.5">
+                  <!--
+                    Колонки lng/lat — общий компонент `AdminInputNumberStepper`
+                    в дробном/знаковом режиме (`step=0.0001`, `min=-180/-90`).
+                    Введённое число хранится в `loc.lng` / `loc.lat` без
+                    округления и в таком же виде уходит в Mapbox через
+                    `Marker.setLngLat([lng, lat])`. Кнопками −/+ можно
+                    подровнять координату по шагу 0.0001.
+                  -->
+                  <tr v-for="(loc, i) in d.geography.locations" :key="i" class="border-t border-mts-border align-middle">
+                    <td class="px-3 py-2">
                       <input v-model="loc.name" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-body text-sm focus:outline-none focus:border-mts-accent" />
                     </td>
-                    <td class="px-3 py-1.5">
-                      <input v-model.number="loc.x" type="number" step="0.1" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-mono text-sm focus:outline-none focus:border-mts-accent" />
+                    <td class="px-3 py-2 w-44">
+                      <AdminInputNumberStepper
+                        v-model="loc.lng"
+                        variant="full"
+                        :min="-180"
+                        :max="180"
+                        :step="0.0001"
+                        decrement-label="Уменьшить долготу"
+                        increment-label="Увеличить долготу"
+                      />
                     </td>
-                    <td class="px-3 py-1.5">
-                      <input v-model.number="loc.y" type="number" step="0.1" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-mono text-sm focus:outline-none focus:border-mts-accent" />
+                    <td class="px-3 py-2 w-44">
+                      <AdminInputNumberStepper
+                        v-model="loc.lat"
+                        variant="full"
+                        :min="-90"
+                        :max="90"
+                        :step="0.0001"
+                        decrement-label="Уменьшить широту"
+                        increment-label="Увеличить широту"
+                      />
                     </td>
-                    <td class="px-3 py-1.5 text-center">
+                    <td class="px-3 py-2 text-center">
                       <input v-model="loc.labelOnRight" type="checkbox" class="mts-checkbox" />
                     </td>
-                    <td class="px-3 py-1.5 text-center">
+                    <td class="px-3 py-2 text-center">
                       <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeLocation(i)">
                         <Trash2 class="w-3.5 h-3.5" />
                       </button>
@@ -425,13 +514,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <section class="bg-white border border-mts-border shadow-tech relative">
           <CommonAccentCorners />
           <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('certificates')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. Сертификаты</h2>
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">7. Сертификаты</h2>
             <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.certificates }" />
           </button>
           <div v-show="!collapsed.certificates" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <input v-model="d.certificates.title" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.certificates.title" :multiline="false" />
             </div>
             <div class="space-y-3">
               <div v-for="(cert, i) in d.certificates.items" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
@@ -444,11 +533,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 <div class="grid md:grid-cols-2 gap-3">
                   <div>
                     <label :class="sectionLabel">Название</label>
-                    <input v-model="cert.name" :class="sectionInput" />
+                    <AdminThemedTextField v-model="cert.name" :multiline="false" />
                   </div>
                   <div>
                     <label :class="sectionLabel">Описание</label>
-                    <input v-model="cert.desc" :class="sectionInput" />
+                    <AdminThemedTextField v-model="cert.desc" :multiline="false" />
                   </div>
                 </div>
                 <div>
@@ -483,6 +572,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             </div>
           </div>
         </section>
+
+        <AdminCustomSectionsEditor
+          :model-value="d.customSections ?? []"
+          @update:model-value="(v) => (d.customSections = v)"
+        />
 
         <section class="bg-white border border-mts-border shadow-tech relative p-6">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">

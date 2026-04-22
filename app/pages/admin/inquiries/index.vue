@@ -143,14 +143,15 @@ async function handleDelete(id: number) {
               <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Дата</th>
               <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Страница</th>
               <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Имя</th>
-              <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Email</th>
+              <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Компания</th>
+              <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Контакты</th>
               <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Статус</th>
               <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Действия</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="items.length === 0">
-              <td colspan="7" class="p-8 text-center font-body text-mts-text-secondary">Заявок пока нет</td>
+              <td colspan="8" class="p-8 text-center font-body text-mts-text-secondary">Заявок пока нет</td>
             </tr>
             <tr
               v-for="m in items"
@@ -162,7 +163,11 @@ async function handleDelete(id: number) {
               <td class="p-4 font-body text-sm text-mts-text-secondary">{{ formatDate(m.createdAt) }}</td>
               <td class="p-4 font-mono text-xs text-mts-text-secondary">{{ m.sourcePage }}</td>
               <td class="p-4 font-body text-sm text-mts-text">{{ m.name }}</td>
-              <td class="p-4 font-mono text-xs text-mts-text-secondary">{{ m.email }}</td>
+              <td class="p-4 font-body text-sm text-mts-text">{{ m.company || '—' }}</td>
+              <td class="p-4 font-mono text-xs text-mts-text-secondary">
+                <div>{{ m.email }}</div>
+                <div v-if="m.phone" class="text-mts-text-muted">{{ m.phone }}</div>
+              </td>
               <td class="p-4 font-body text-sm">
                 <span :class="m.readAt ? 'text-mts-text-muted' : 'text-mts-accent font-mono text-xs uppercase'">
                   {{ m.readAt ? 'Прочитано' : 'Новое' }}

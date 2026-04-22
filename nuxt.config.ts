@@ -1,11 +1,8 @@
 import tailwindcss from '@tailwindcss/vite'
 
-/** Бэкенд Laravel (без завершающего слэша). Для dev-прокси и SSR по умолчанию. */
 const defaultApiOrigin = import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test'
-
 const isDev = import.meta.env.NODE_ENV !== 'production'
 
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -13,9 +10,7 @@ export default defineNuxtConfig({
   srcDir: 'app',
   modules: ['@nuxtjs/i18n'],
   i18n: {
-    /** Нужен для hreflang / SEO в useLocaleHead (иначе предупреждение в консоли). */
     baseUrl: import.meta.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
-    lazy: true,
     langDir: 'locales',
     locales: [
       { code: 'ru', language: 'ru-RU', file: 'ru.json' },
@@ -43,22 +38,18 @@ export default defineNuxtConfig({
     },
   },
   runtimeConfig: {
-    /**
-     * SSR / серверные запросы: абсолютный URL API (обход относительного `public.apiBase` в dev).
-     * В Docker: например `http://api:8000/api`.
-     */
-    apiBaseServer: process.env.NUXT_API_BASE_SERVER ?? `${defaultApiOrigin}/api`,
+    apiBaseServer:
+      import.meta.env.NUXT_API_BASE_SERVER
+      ?? import.meta.env.NUXT_PUBLIC_API_BASE
+      ?? `${defaultApiOrigin}/api`,
     public: {
-      /**
-       * В dev по умолчанию `/api` — тот же origin, что и Nuxt (Vite proxy → Laravel), без CORS.
-       * В production задайте `NUXT_PUBLIC_API_BASE` (полный URL с `/api`).
-       */
       apiBase:
-        process.env.NUXT_PUBLIC_API_BASE ?? (isDev ? '/api' : `${defaultApiOrigin}/api`),
-      /** Google Analytics 4 — измерение G-XXXXXXXX (если задано, Plausible не подключается) */
+        import.meta.env.NUXT_PUBLIC_API_BASE ?? (isDev ? '/api' : `${defaultApiOrigin}/api`),
       analyticsGtagId: import.meta.env.NUXT_PUBLIC_ANALYTICS_GTAG_ID ?? '',
-      /** Домен для Plausible (например marine-ts.com), без https */
       analyticsPlausibleDomain: import.meta.env.NUXT_PUBLIC_ANALYTICS_PLAUSIBLE_DOMAIN ?? '',
+      mapboxToken:
+        import.meta.env.NUXT_PUBLIC_MAPBOX_TOKEN
+        ?? 'pk.eyJ1IjoidHJvdW0iLCJhIjoiY2tlZWdvMWVoMTJiYzJ6bWkzbWp4NmR4ZSJ9.GUTHIgv8DFR8rwZ2WzsjhA',
     },
   },
   app: {

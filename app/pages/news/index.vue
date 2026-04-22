@@ -4,7 +4,9 @@ import type { NewsItem, ListingPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
-import { defaultListingData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('news')
 
@@ -21,7 +23,16 @@ const { data: cmsPage } = await useAsyncData('news-page-cms', async () => {
 
 const cms = computed<ListingPageData>(() => {
   const body = cmsPage.value?.body
-  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  if (body) {
+    try {
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeListingPageData('news-page', loc.value, p)
+      }
+    } catch {
+      /* */
+    }
+  }
   return defaultListingData('news-page', loc.value)
 })
 
@@ -65,12 +76,11 @@ function categoryLabel(cat: string | undefined) {
           <span class="section-label">{{ t('pages.news.heroEyebrow') }}</span>
         </div>
         <h1 class="font-display mb-6 text-5xl leading-tight text-mts-text lg:text-6xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-          >{{ cms.hero.titleEnd }}
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
     </ListingHeroShell>
@@ -83,7 +93,7 @@ function categoryLabel(cat: string | undefined) {
       <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
     </div>
     <template v-else>
-      <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-white">
+      <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-mts-surface">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
           <div class="bg-mts-bg border border-mts-border p-8 lg:p-12">
             <div class="flex items-center gap-3 mb-6">
@@ -97,8 +107,12 @@ function categoryLabel(cat: string | undefined) {
                 {{ t('pages.common.featured') }}
               </span>
             </div>
-            <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-4">{{ featuredNews.title }}</h2>
-            <p class="font-body text-mts-text-secondary mb-6 max-w-2xl">{{ featuredNews.excerpt }}</p>
+            <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-4">
+              <ThemedContentString :content="featuredNews.title" />
+            </h2>
+            <p class="font-body text-mts-text-secondary mb-6 max-w-2xl">
+              <ThemedContentString :content="featuredNews.excerpt" />
+            </p>
             <NuxtLink :to="localePath(`/news/${featuredNews.slug}`)" class="btn-primary mb-6 inline-flex">
               {{ t('pages.common.readFull') }}
               <MoveRight />
@@ -110,7 +124,7 @@ function categoryLabel(cat: string | undefined) {
               </div>
               <div class="flex items-center gap-2">
                 <User class="w-4 h-4" />
-                <span class="font-body text-sm">{{ featuredNews.author }}</span>
+                <span class="font-body text-sm"><ThemedContentString :content="featuredNews.author" /></span>
               </div>
             </div>
           </div>
@@ -130,10 +144,12 @@ function categoryLabel(cat: string | undefined) {
               </span>
               <h3 class="font-display text-xl text-mts-text mb-3">
                 <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-mts-accent transition-colors">
-                  {{ item.title }}
+                  <ThemedContentString :content="item.title" />
                 </NuxtLink>
               </h3>
-              <p class="font-body text-sm text-mts-text-secondary mb-4 line-clamp-3">{{ item.excerpt }}</p>
+              <p class="font-body text-sm text-mts-text-secondary mb-4 line-clamp-3">
+                <ThemedContentString :content="item.excerpt" />
+              </p>
               <div class="flex justify-between items-center">
                 <NuxtLink
                   :to="localePath(`/news/${item.slug}`)"
@@ -149,7 +165,7 @@ function categoryLabel(cat: string | undefined) {
                   </span>
                   <span class="flex items-center gap-1">
                     <User class="w-3.5 h-3.5" />
-                    {{ item.author }}
+                    <ThemedContentString :content="item.author" />
                   </span>
                 </div>
               </div>
@@ -158,6 +174,8 @@ function categoryLabel(cat: string | undefined) {
         </div>
       </section>
     </template>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="news" />
   </div>

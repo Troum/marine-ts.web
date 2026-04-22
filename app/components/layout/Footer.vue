@@ -45,31 +45,25 @@ function columnHeading(col: FooterNavColumn): string {
 </script>
 
 <template>
-  <footer class="relative bg-mts-dark text-white overflow-hidden">
-    <div class="absolute inset-0 opacity-5">
-      <div
-        class="absolute inset-0"
-        style="
-          background-image: linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-          background-size: 30px 30px;
-        "
-      />
-    </div>
-
+  <!--
+    Футер использует brand-surface токен (`mts-navy`), который автоматически
+    инвертируется в светлой теме. Цвета текста/фона привязаны к `mts-frost`,
+    что при `data-theme='light'` делает их тёмно-морскими.
+  -->
+  <footer class="relative bg-mts-navy text-mts-frost overflow-hidden">
     <div class="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20 relative z-10">
       <div class="grid md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8">
         <div class="md:col-span-2 lg:col-span-2">
           <NuxtLink :to="localePath('/')" class="inline-block mb-6 group">
             <AppLogo img-class="h-9 w-auto max-w-[min(100%,260px)] object-contain object-left opacity-95 group-hover:opacity-100 transition-opacity" />
           </NuxtLink>
-          <p class="font-body text-xs text-white/50 leading-relaxed">
+          <p class="font-body text-xs text-mts-frost/55 leading-relaxed">
             {{ t('footer.tagline') }}
           </p>
         </div>
 
         <div v-for="(col, ci) in footerMenu.columns" :key="ci">
-          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">
+          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-mts-frost/40 mb-6">
             {{ columnHeading(col) }}
           </h4>
           <ul class="space-y-2">
@@ -79,14 +73,14 @@ function columnHeading(col: FooterNavColumn): string {
                 :href="link.path"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="font-body text-xs text-white/60 hover:text-mts-accent transition-colors"
+                class="font-body text-xs text-mts-frost/65 hover:text-mts-accent transition-colors"
               >
                 {{ linkLabel(link) }}
               </a>
               <NuxtLink
                 v-else
                 :to="localePath(link.path)"
-                class="font-body text-xs text-white/60 hover:text-mts-accent transition-colors"
+                class="font-body text-xs text-mts-frost/65 hover:text-mts-accent transition-colors"
               >
                 {{ linkLabel(link) }}
               </NuxtLink>
@@ -95,14 +89,14 @@ function columnHeading(col: FooterNavColumn): string {
         </div>
 
         <div>
-          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-white/30 mb-6">{{ t('footer.sectionContacts') }}</h4>
+          <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-mts-frost/40 mb-6">{{ t('footer.sectionContacts') }}</h4>
           <ul class="space-y-3">
             <li>
               <a
                 href="tel:84012355290"
-                class="flex items-center gap-3 text-white/60 hover:text-mts-accent transition-colors"
+                class="flex items-center gap-3 text-mts-frost/65 hover:text-mts-accent transition-colors"
               >
-                <div class="w-7 h-7 bg-white/10 flex items-center justify-center">
+                <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center">
                   <Phone class="w-3.5 h-3.5" />
                 </div>
                 <span class="font-body text-xs">{{ t('footer.phone') }}</span>
@@ -111,16 +105,16 @@ function columnHeading(col: FooterNavColumn): string {
             <li>
               <a
                 href="mailto:info@marin-ts.com"
-                class="flex items-center gap-3 text-white/60 hover:text-mts-accent transition-colors"
+                class="flex items-center gap-3 text-mts-frost/65 hover:text-mts-accent transition-colors"
               >
-                <div class="w-7 h-7 bg-white/10 flex items-center justify-center">
+                <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center">
                   <Mail class="w-3.5 h-3.5" />
                 </div>
                 <span class="font-body text-xs">info@marin-ts.com</span>
               </a>
             </li>
-            <li class="flex items-start gap-3 text-white/60">
-              <div class="w-7 h-7 bg-white/10 flex items-center justify-center flex-shrink-0">
+            <li class="flex items-start gap-3 text-mts-frost/65">
+              <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center flex-shrink-0">
                 <MapPin class="w-3.5 h-3.5" />
               </div>
               <span class="font-body text-xs">{{ t('footer.address') }}</span>
@@ -130,9 +124,9 @@ function columnHeading(col: FooterNavColumn): string {
                 href="https://vk.com/marine_ts"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="flex items-center gap-3 text-white/60 hover:text-mts-accent transition-colors"
+                class="flex items-center gap-3 text-mts-frost/65 hover:text-mts-accent transition-colors"
               >
-                <div class="w-7 h-7 bg-white/10 flex items-center justify-center">
+                <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center">
                   <ExternalLink class="w-3.5 h-3.5" />
                 </div>
                 <span class="font-body text-xs">{{ t('footer.vk') }}</span>
@@ -142,9 +136,9 @@ function columnHeading(col: FooterNavColumn): string {
         </div>
       </div>
 
-      <div class="mt-16 pt-8 border-t border-white/10">
+      <div class="mt-16 pt-8 border-t border-mts-frost/10">
         <div class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-between md:items-center">
-          <p class="font-mono text-[10px] text-white/30 text-center md:text-left">
+          <p class="font-mono text-[10px] text-mts-frost/40 text-center md:text-left">
             {{ t('footer.copyright', { year: currentYear }) }}
           </p>
           <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 md:justify-end">
@@ -154,19 +148,19 @@ function columnHeading(col: FooterNavColumn): string {
                 :href="link.path"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
+                class="font-mono text-[10px] text-mts-frost/45 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
               >
                 {{ linkLabel(link) }}
               </a>
               <NuxtLink
                 v-else
                 :to="localePath(link.path)"
-                class="font-mono text-[10px] text-white/40 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
+                class="font-mono text-[10px] text-mts-frost/45 hover:text-mts-accent transition-colors uppercase tracking-[0.06em]"
               >
                 {{ linkLabel(link) }}
               </NuxtLink>
             </template>
-            <NuxtLink to="/admin" class="font-mono text-[10px] text-white/30 hover:text-mts-accent transition-colors">
+            <NuxtLink to="/admin" class="font-mono text-[10px] text-mts-frost/40 hover:text-mts-accent transition-colors">
               {{ t('footer.admin') }}
             </NuxtLink>
           </div>

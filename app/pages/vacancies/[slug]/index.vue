@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { MapPin, Briefcase, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
 
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
@@ -70,16 +71,16 @@ function formatContent(text: string | null | undefined) {
         </div>
 
         <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
-          {{ vacancy.title }}
+          <ThemedContentString :content="vacancy.title" />
         </h1>
 
         <div v-if="vacancy.location" class="mt-6 flex items-center gap-2 font-body text-sm text-mts-text-secondary">
           <MapPin class="h-4 w-4" />
-          {{ vacancy.location }}
+          <ThemedContentString :content="vacancy.location" />
         </div>
 
         <p class="mt-10 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ vacancy.excerpt }}
+          <ThemedContentString :content="vacancy.excerpt" />
         </p>
 
         <div v-if="vacancy.content" class="mt-10 space-y-6">
@@ -92,7 +93,7 @@ function formatContent(text: string | null | undefined) {
           </p>
         </div>
 
-        <div v-if="vacancy.requirements?.length" class="mt-12 border border-mts-border bg-white p-8">
+        <div v-if="vacancy.requirements?.length" class="mt-12 border border-mts-border bg-mts-surface p-8">
           <h2 class="font-display text-xl text-mts-text mb-4">{{ t('pages.common.requirements') }}</h2>
           <ul class="list-inside list-disc space-y-2 font-body text-sm text-mts-text-secondary">
             <li v-for="(req, i) in vacancy.requirements" :key="i">{{ req }}</li>

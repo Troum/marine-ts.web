@@ -5,6 +5,12 @@ definePageMeta({
   layout: false,
 })
 
+useHead({
+  bodyAttrs: {
+    class: 'admin-shell',
+  },
+})
+
 const username = ref('')
 const password = ref('')
 const error = ref('')
@@ -22,7 +28,7 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-mts-bg flex items-center justify-center p-6">
+  <div class="admin-shell min-h-screen bg-mts-bg flex items-center justify-center p-6">
     <div class="w-full max-w-md">
       <div class="flex flex-col items-center gap-3 mb-8">
         <AppLogo img-class="h-11 w-auto max-w-[min(100%,280px)] object-contain" />

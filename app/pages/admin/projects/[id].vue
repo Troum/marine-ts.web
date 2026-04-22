@@ -4,6 +4,7 @@ import type { MarineContentLocale, Project, SeoFields } from '~/types'
 import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
 import { mergeProjectTranslations } from '~/utils/adminTranslationForms'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
   layout: 'admin',
@@ -12,6 +13,7 @@ definePageMeta({
 
 const route = useRoute()
 const api = useMarineApi()
+const { confirm } = useConfirm()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const idParam = computed(() => route.params.id as string)
@@ -85,7 +87,15 @@ function addStat() {
   statValue.value = ''
 }
 
-function removeStat(key: string) {
+async function removeStat(key: string) {
+  const ok = await confirm({
+    message: 'Удалить этот показатель из карточки проекта?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   const t = form.value.translations[localeTab.value]
   const next = { ...t.stats }
   delete next[key]
@@ -186,7 +196,7 @@ async function submit() {
           </div>
           <div>
             <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Год *</label>
-            <input v-model="form.date" required type="text" class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm" />
+            <AdminThemedTextField v-model="form.date" :multiline="false" />
           </div>
         </section>
 
@@ -194,41 +204,22 @@ async function submit() {
           <AdminLocaleTabs v-model="localeTab" label="Тексты и SEO" />
           <div>
             <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Название *</label>
-            <input
-              v-model="form.translations[localeTab].title"
-              required
-              type="text"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
-            />
+            <AdminThemedTextField v-model="form.translations[localeTab].title" :multiline="false" />
           </div>
           <div>
             <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Подпись типа</label>
-            <input
-              v-model="form.translations[localeTab].typeLabel"
-              type="text"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
-            />
+            <AdminThemedTextField v-model="form.translations[localeTab].typeLabel" :multiline="false" />
             <p class="mt-1 font-body text-xs text-mts-text-secondary">
               Подставляется при смене типа; можно отредактировать отдельно для каждого языка.
             </p>
           </div>
           <div>
             <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Локация *</label>
-            <input
-              v-model="form.translations[localeTab].location"
-              required
-              type="text"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
-            />
+            <AdminThemedTextField v-model="form.translations[localeTab].location" :multiline="false" />
           </div>
           <div>
             <label class="block font-mono text-[10px] uppercase text-mts-text-secondary mb-2">Описание *</label>
-            <textarea
-              v-model="form.translations[localeTab].description"
-              required
-              rows="5"
-              class="w-full bg-mts-bg border border-mts-border px-4 py-3 text-sm"
-            />
+            <AdminThemedTextField v-model="form.translations[localeTab].description" />
           </div>
 
           <div>

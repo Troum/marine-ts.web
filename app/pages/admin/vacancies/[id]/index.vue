@@ -207,21 +207,13 @@ async function submit() {
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                   >Название *</label
                 >
-                <input
-                  v-model="form.translations[localeTab].title"
-                  type="text"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].title" :multiline="false" />
               </div>
               <div>
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                   >Краткое описание *</label
                 >
-                <textarea
-                  v-model="form.translations[localeTab].excerpt"
-                  rows="3"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].excerpt" />
               </div>
               <div>
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
@@ -249,21 +241,16 @@ async function submit() {
                   <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                     >Локация</label
                   >
-                  <input
-                    v-model="form.translations[localeTab].location"
-                    type="text"
-                    class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                  />
+                  <AdminThemedTextField v-model="form.translations[localeTab].location" :multiline="false" />
                 </div>
                 <div>
                   <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                     >Тип занятости</label
                   >
-                  <input
+                  <AdminThemedTextField
                     v-model="form.translations[localeTab].employmentType"
-                    type="text"
                     placeholder="Полная занятость"
-                    class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                    :multiline="false"
                   />
                 </div>
               </div>

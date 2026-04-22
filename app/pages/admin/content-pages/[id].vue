@@ -329,20 +329,11 @@ async function submit() {
             <div class="space-y-6">
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Заголовок *</label>
-                <input
-                  v-model="form.translations[localeTab].title"
-                  required
-                  type="text"
-                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].title" :multiline="false" />
               </div>
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Краткое описание</label>
-                <textarea
-                  v-model="form.translations[localeTab].excerpt"
-                  rows="3"
-                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].excerpt" />
               </div>
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2"

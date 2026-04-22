@@ -1,11 +1,11 @@
 import type { AboutPageData, MarineContentLocale } from '~/types'
+import { normalizeCustomPageSections } from '~/utils/customPageSections'
+import { mergeAboutHero, themeTitleTriple } from '~/utils/themeFormattedTitle'
 
 const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   ru: {
     hero: {
-      title: 'Marine Technical Solutions ',
-      titleAccent: '(MTS)',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Marine Technical Solutions ', '(MTS)', ''),
       subtitle: 'Интегрированный подход. Глобальный охват. Технологическое лидерство.',
       lead: 'Основанная в 2010 году, компания Marine Technical Solutions (MTS) прошла путь от амбициозного инженерного стартапа до международного EPC-контрактора и частной судоходной компании с головным офисом в Калининграде и стратегическим представительством в ОАЭ.',
       lead2: 'Мы не просто управляем судами — мы создаем условия для их безопасной, экологичной и прибыльной эксплуатации в любой точке мирового океана.',
@@ -21,7 +21,7 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
       ],
     },
     mission: {
-      title: 'Миссия и Цели: Стратегия «Трёх Нулей»',
+      title: 'Миссия и Цели: Стратегия «Трех Нулей»',
       lead: 'Наша главная цель — стать эталоном в управлении судами через постоянное обучение и инвестиции в людей. Мы строим работу на принципах:',
       principles: [
         { icon: 'ShieldCheck', text: 'Zero Incidents (Ноль инцидентов) — абсолютная безопасность экипажа и судна.' },
@@ -38,17 +38,24 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
       label: 'География',
       title: 'География технического обслуживания судов',
       lead: 'База в Калининграде, мобильные бригады и партнёрская сеть — работаем в ключевых портах по всему миру.',
+      /**
+       * Координаты — точное местоположение порта/терминала, а не центр
+       * города. Это критично при глобальном zoom 1–3 в Mapbox: маркер
+       * должен лежать на акватории, а не на «суше за портом». Те же
+       * значения зашиты в `AboutPageLocationsSeeder` (Laravel) — менять
+       * нужно в обоих местах.
+       */
       locations: [
-        { x: 23.5, y: 50.0, labelOnRight: true, name: 'Панама' },
-        { x: 30.8, y: 46.8, labelOnRight: true, name: 'Кюрасао' },
-        { x: 43.1, y: 41.0, labelOnRight: true, name: 'Лас-Пальмас' },
-        { x: 54.5, y: 38.4, labelOnRight: false, name: 'Александрия' },
-        { x: 63.0, y: 42.7, labelOnRight: false, name: 'Дубай' },
-        { x: 48.0, y: 25.2, labelOnRight: true, name: 'Халл' },
-        { x: 53.3, y: 22.3, labelOnRight: false, name: 'Стокгольм' },
-        { x: 52.8, y: 18.2, labelOnRight: false, name: 'Олесунн' },
-        { x: 53.8, y: 25.0, labelOnRight: true, name: 'Клайпеда' },
-        { x: 52.6, y: 25.5, labelOnRight: false, name: 'Калининград' },
+        { lng: 20.4945, lat: 54.7066, labelOnRight: false, name: 'Калининград' },
+        { lng: 21.1192, lat: 55.7007, labelOnRight: true, name: 'Клайпеда' },
+        { lng: -0.2589, lat: 53.7290, labelOnRight: true, name: 'Халл' },
+        { lng: 18.1117, lat: 59.3496, labelOnRight: false, name: 'Стокгольм' },
+        { lng: 6.1496, lat: 62.4724, labelOnRight: false, name: 'Олесунн' },
+        { lng: -15.4148, lat: 28.1410, labelOnRight: true, name: 'Лас-Пальмас' },
+        { lng: 29.8669, lat: 31.1925, labelOnRight: false, name: 'Александрия' },
+        { lng: 55.1107, lat: 25.0213, labelOnRight: false, name: 'Дубай (Джебель-Али)' },
+        { lng: -79.5630, lat: 8.9528, labelOnRight: true, name: 'Панама (Бальбоа)' },
+        { lng: -68.9333, lat: 12.1138, labelOnRight: true, name: 'Кюрасао (Виллемстад)' },
       ],
     },
     certificates: {
@@ -63,9 +70,7 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   },
   en: {
     hero: {
-      title: 'Marine Technical Solutions ',
-      titleAccent: '(MTS)',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Marine Technical Solutions ', '(MTS)', ''),
       subtitle: 'Integrated Approach. Global Reach. Technological Leadership.',
       lead: 'Founded in 2010, Marine Technical Solutions (MTS) has evolved from an ambitious engineering start-up into an international EPC contractor and private shipping company, headquartered in Kaliningrad with a strategic office in the UAE.',
       lead2: 'We do not simply manage vessels — we create the conditions for their safe, eco-friendly and profitable operation anywhere in the world\'s oceans.',
@@ -98,17 +103,18 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
       label: 'Coverage',
       title: 'Where we support vessels',
       lead: 'Kaliningrad headquarters, mobile teams and partner network — key ports worldwide.',
+      /** См. комментарий в `ru.geography.locations`. */
       locations: [
-        { x: 23.5, y: 50.0, labelOnRight: true, name: 'Panama' },
-        { x: 30.8, y: 46.8, labelOnRight: true, name: 'Curaçao' },
-        { x: 43.1, y: 41.0, labelOnRight: true, name: 'Las Palmas' },
-        { x: 54.5, y: 38.4, labelOnRight: false, name: 'Alexandria' },
-        { x: 63.0, y: 42.7, labelOnRight: false, name: 'Dubai' },
-        { x: 48.0, y: 25.2, labelOnRight: true, name: 'Hull' },
-        { x: 53.3, y: 22.3, labelOnRight: false, name: 'Stockholm' },
-        { x: 52.8, y: 18.2, labelOnRight: false, name: 'Ålesund' },
-        { x: 53.8, y: 25.0, labelOnRight: true, name: 'Klaipėda' },
-        { x: 52.6, y: 25.5, labelOnRight: false, name: 'Kaliningrad' },
+        { lng: 20.4945, lat: 54.7066, labelOnRight: false, name: 'Kaliningrad' },
+        { lng: 21.1192, lat: 55.7007, labelOnRight: true, name: 'Klaipėda' },
+        { lng: -0.2589, lat: 53.7290, labelOnRight: true, name: 'Hull' },
+        { lng: 18.1117, lat: 59.3496, labelOnRight: false, name: 'Stockholm' },
+        { lng: 6.1496, lat: 62.4724, labelOnRight: false, name: 'Ålesund' },
+        { lng: -15.4148, lat: 28.1410, labelOnRight: true, name: 'Las Palmas' },
+        { lng: 29.8669, lat: 31.1925, labelOnRight: false, name: 'Alexandria' },
+        { lng: 55.1107, lat: 25.0213, labelOnRight: false, name: 'Dubai (Jebel Ali)' },
+        { lng: -79.5630, lat: 8.9528, labelOnRight: true, name: 'Panama (Balboa)' },
+        { lng: -68.9333, lat: 12.1138, labelOnRight: true, name: 'Curaçao (Willemstad)' },
       ],
     },
     certificates: {
@@ -127,8 +133,23 @@ export function defaultAboutData(locale: MarineContentLocale): AboutPageData {
   return JSON.parse(JSON.stringify(DEFAULTS[locale]))
 }
 
+export function mergeAboutPageData(locale: MarineContentLocale, raw: unknown): AboutPageData {
+  const base = defaultAboutData(locale)
+  if (!raw || typeof raw !== 'object') {
+    return base
+  }
+  const p = raw as Partial<AboutPageData>
+  return {
+    ...base,
+    ...p,
+    hero: mergeAboutHero(p.hero, base.hero),
+    customSections: normalizeCustomPageSections(p.customSections),
+  }
+}
+
 /**
- * Sync non-locale fields (icon, x, y, labelOnRight, fileUrl) from source locale to all others.
+ * Sync non-locale fields (icon, lng/lat, labelOnRight, fileUrl, фоновые изображения)
+ * from source locale to all others.
  * Text fields (title, text, name, desc, lead, etc.) stay locale-specific.
  */
 export function syncStructuralFields(
@@ -166,8 +187,8 @@ export function syncStructuralFields(
       if (!dst.geography.locations[i]) {
         dst.geography.locations[i] = { ...loc_src }
       } else {
-        dst.geography.locations[i].x = loc_src.x
-        dst.geography.locations[i].y = loc_src.y
+        dst.geography.locations[i].lng = loc_src.lng
+        dst.geography.locations[i].lat = loc_src.lat
         dst.geography.locations[i].labelOnRight = loc_src.labelOnRight
       }
     })
@@ -185,5 +206,9 @@ export function syncStructuralFields(
 
     dst.showInquiryForm = src.showInquiryForm
     dst.heroImage = src.heroImage
+    dst.introImage = src.introImage
+    dst.ecosystemImage = src.ecosystemImage
+    dst.missionImage = src.missionImage
+    dst.statsImage = src.statsImage
   }
 }

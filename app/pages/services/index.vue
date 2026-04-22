@@ -5,7 +5,9 @@ import type { ServiceItem, ListingPageData, MarineContentLocale } from '~/types'
 import { resolveServiceIcon } from '~/utils/serviceIcons'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
-import { defaultListingData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('services')
 
@@ -22,7 +24,16 @@ const { data: cmsPage } = await useAsyncData('services-page-cms', async () => {
 
 const cms = computed<ListingPageData>(() => {
   const body = cmsPage.value?.body
-  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  if (body) {
+    try {
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeListingPageData('services-page', loc.value, p)
+      }
+    } catch {
+      /* */
+    }
+  }
   return defaultListingData('services-page', loc.value)
 })
 
@@ -47,12 +58,11 @@ const { data: services, pending, error } = await useAsyncData(
           <span class="section-label">{{ t('pages.services.heroEyebrow') }}</span>
         </div>
         <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-          >{{ cms.hero.titleEnd }}
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
     </ListingHeroShell>
@@ -69,7 +79,7 @@ const { data: services, pending, error } = await useAsyncData(
           <article
             v-for="service in services"
             :key="service.id"
-            class="min-w-0 overflow-hidden bg-mts-bg transition-colors duration-200 hover:bg-white"
+            class="min-w-0 overflow-hidden bg-mts-bg transition-colors duration-200 hover:bg-mts-surface"
           >
             <div v-if="service.imageUrl" class="aspect-[16/9] w-full overflow-hidden border-b border-mts-border bg-mts-bg">
               <img
@@ -92,12 +102,12 @@ const { data: services, pending, error } = await useAsyncData(
                   :to="localePath(`/services/${service.contentPage.slug}`)"
                   class="hover:text-mts-accent"
                 >
-                  {{ service.title }}
+                  <ThemedContentString :content="service.title" />
                 </NuxtLink>
-                <template v-else>{{ service.title }}</template>
+                <template v-else><ThemedContentString :content="service.title" /></template>
               </h3>
               <p class="mt-3 font-body text-sm leading-relaxed text-mts-text-secondary">
-                {{ service.description }}
+                <ThemedContentString :content="service.description" />
               </p>
               <ul v-if="service.features?.length" class="mt-4 space-y-2">
                 <li
@@ -124,6 +134,8 @@ const { data: services, pending, error } = await useAsyncData(
         </div>
       </div>
     </section>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="services" />
   </div>

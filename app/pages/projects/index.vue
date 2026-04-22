@@ -4,7 +4,9 @@ import type { Project, ProjectsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { projectTypeLabel } from '~/utils/contentLabels'
-import { defaultListingData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('projects')
 
@@ -21,7 +23,16 @@ const { data: cmsPage } = await useAsyncData('projects-page-cms', async () => {
 
 const cms = computed<ProjectsPageData>(() => {
   const body = cmsPage.value?.body
-  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  if (body) {
+    try {
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeListingPageData('projects-page', loc.value, p) as ProjectsPageData
+      }
+    } catch {
+      /* */
+    }
+  }
   return defaultListingData('projects-page', loc.value) as ProjectsPageData
 })
 
@@ -93,12 +104,11 @@ const filteredProjects = computed(() => {
           <span class="section-label">{{ t('pages.projects.heroEyebrow') }}</span>
         </div>
         <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-          >{{ cms.hero.titleEnd }}
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
     </ListingHeroShell>
@@ -144,18 +154,18 @@ const filteredProjects = computed(() => {
               <Ship class="w-4 h-4 text-mts-accent" />
               <span class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">{{ typeLabelFor(p) }}</span>
             </div>
-            <h2 class="font-display text-xl text-mts-text mb-3">{{ p.title }}</h2>
+            <h2 class="font-display text-xl text-mts-text mb-3"><ThemedContentString :content="p.title" /></h2>
             <div class="flex flex-wrap gap-4 text-mts-text-secondary text-sm mb-4">
               <span class="flex items-center gap-1">
                 <MapPin class="w-4 h-4" />
-                {{ p.location }}
+                <ThemedContentString :content="p.location" />
               </span>
               <span class="flex items-center gap-1">
                 <Calendar class="w-4 h-4" />
                 {{ p.date }}
               </span>
             </div>
-            <p class="font-body text-sm text-mts-text-secondary mb-4">{{ p.description }}</p>
+            <p class="font-body text-sm text-mts-text-secondary mb-4"><ThemedContentString :content="p.description" /></p>
             <div class="flex flex-wrap gap-3">
               <span
                 v-for="(val, key) in p.stats"
@@ -178,15 +188,19 @@ const filteredProjects = computed(() => {
       </div>
     </section>
 
-    <section class="relative py-16 bg-white border-t border-mts-border">
+    <section class="relative py-16 bg-mts-surface border-t border-mts-border">
       <div class="max-w-4xl mx-auto px-6 text-center">
-        <h2 class="font-display text-2xl text-mts-text mb-4">{{ cms.cta?.title || t('pages.projects.ctaTitle') }}</h2>
+        <h2 class="font-display text-2xl text-mts-text mb-4">
+          <ThemedContentString :content="cms.cta?.title || t('pages.projects.ctaTitle')" />
+        </h2>
         <NuxtLink :to="localePath('/request')" class="btn-primary group">
-          {{ cms.cta?.buttonText || t('pages.projects.ctaButton') }}
+          <ThemedContentString :content="cms.cta?.buttonText || t('pages.projects.ctaButton')" />
           <ArrowRight class="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
         </NuxtLink>
       </div>
     </section>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="projects" />
   </div>

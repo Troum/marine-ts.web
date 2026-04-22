@@ -6,15 +6,44 @@ import type {
   CrewingChecklistBlock,
   CrewingChecklistPoint,
   CrewingChecklistSection,
+  CrewingDirectionItem,
   CrewingPageData,
+  LineMarketingCardItem,
+  LineMarketingCardsBlock,
+  LineMarketingContentBlock,
+  LineMarketingCustomSection,
+  LineMarketingHeroButton,
+  LineMarketingSectionId,
+  LineMarketingSplitBlock,
+  LineMarketingTextBlock,
   MarineContentLocale,
 } from '~/types'
 import {
   DEFAULT_CREWING_CHECKLIST_SECTIONS_EN,
   DEFAULT_CREWING_CHECKLIST_SECTIONS_RU,
 } from '~/utils/crewingChecklistDefaults'
+import { normalizeCustomPageSections } from '~/utils/customPageSections'
 import { SHIP_MANAGEMENT_DEFAULTS } from '~/utils/extraLinePageDefaults'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
+import { LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
+import {
+  mergeContactsHero,
+  mergeCrewingHero,
+  mergeFunnelCrewing,
+  mergeFunnelShip,
+  mergeFunnelTechnical,
+  mergeHomeAboutPreview,
+  mergeHomeCTA,
+  mergeHomeDirectionsSection,
+  mergeHomeHero,
+  mergeHomeProcessSection,
+  mergeHomeServicesSection,
+  mergeHomeTrustStrip,
+  mergeListingHero,
+  migrateHomeHeroLegacy,
+  themeTitlePair,
+  themeTitleTriple,
+} from '~/utils/themeFormattedTitle'
 
 /* ── Home page ── */
 
@@ -22,9 +51,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
   ru: {
     hero: {
       label: 'Marine Technical Solutions',
-      titleLine1: 'Судовой и крюинг',
-      titleAccent: 'менеджмент',
-      titleSuffix: '',
+      titleFormatted: migrateHomeHeroLegacy('Судовой и крюинг', 'менеджмент', ''),
       lead: 'Подбор экипажей и обслуживание судов. Работаем с судовладельцами и моряками по всему миру: классификация IACS, прозрачные процессы, понятный следующий шаг.',
       ctaClient: 'Оставить заявку',
       ctaClientHref: '/request',
@@ -46,18 +73,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     funnelShip: {
       label: 'Судовой менеджмент',
-      title: 'Операционное и техническое',
-      titleAccent: 'сопровождение',
-      titleEnd: ' флота',
+      titleFormatted: themeTitleTriple('Операционное и техническое', 'сопровождение', ' флота'),
       text: 'Планирование ремонтов, снабжение, взаимодействие с классом и подрядчиками — одна команда для судовладельца.',
       cta: 'Подробнее',
       href: '/ship-management',
     },
     funnelCrewing: {
       label: 'Крюинг',
-      title: 'Работа для',
-      titleAccent: 'моряков',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Работа для', 'моряков', ''),
       text: 'Актуальные вакансии и открытая анкета в базу кандидатов — выберите удобный сценарий.',
       cta: 'Вакансии',
       href: '/vacancies',
@@ -66,18 +89,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     funnelTechnical: {
       label: 'Сервисы',
-      title: 'Инженерные ',
-      titleAccent: 'решения',
-      titleEnd: ' для флота',
+      titleFormatted: themeTitleTriple('Инженерные ', 'решения', ' для флота'),
       text: 'Каталог услуг: техническое сопровождение, проекты и консультации — выберите направление и свяжитесь с нами.',
       cta: 'Каталог сервисов',
       href: '/services',
     },
     directions: {
       label: 'Направления',
-      heading: 'Чем мы',
-      headingAccent: 'занимаемся',
-      headingEnd: '',
+      headingFormatted: themeTitleTriple('Чем мы', 'занимаемся', ''),
       rows: [
         {
           title: 'Судовой менеджмент',
@@ -95,16 +114,13 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     about: {
       label: 'О компании',
-      title: 'Marine Technical Solutions —',
-      titleAccent: 'международная',
-      titleEnd: ' команда',
+      titleFormatted: themeTitleTriple('Marine Technical Solutions —', 'международная', ' команда'),
       text: 'Инженерный и крюинговый опыт в одном окне: от заявки до сдачи работ и экипажа на борт.',
       more: 'Подробнее о компании',
     },
     trust: {
       label: 'Почему нам доверяют',
-      title: 'Опыт, география',
-      titleAccent: 'и прозрачность',
+      titleFormatted: themeTitlePair('Опыт, география', 'и прозрачность'),
       bullets: [
         'Международные проекты и классификационные общества (IACS)',
         'Более 14 лет в судоходстве и сервисе',
@@ -113,17 +129,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     services: {
       label: 'Сервисы',
-      heading: 'Полный спектр ',
-      headingAccent: 'морских',
-      headingEnd: ' услуг',
+      headingFormatted: themeTitleTriple('Полный спектр ', 'морских', ' услуг'),
       all: 'Все сервисы',
       more: 'Подробнее →',
       featuredServiceIds: [],
     },
     process: {
       label: 'Процесс',
-      heading: 'Три шага к',
-      headingAccent: 'результату',
+      headingFormatted: themeTitlePair('Три шага к', 'результату'),
       steps: [
         { title: 'Заявка и консультация', text: 'Принимаем обращение, уточняем задачу и согласуем следующий шаг.' },
         { title: 'Решение и реализация', text: 'Подбираем команду и формат работ в соответствии с требованиями класса и судовладельца.' },
@@ -132,8 +145,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     cta: {
       label: 'Свяжитесь с нами',
-      title: 'Готовы',
-      titleAccent: 'обсудить задачу?',
+      titleFormatted: themeTitlePair('Готовы', 'обсудить задачу?'),
       text: 'Оставьте заявку или напишите на почту — ответим в рабочее время и предложим следующий шаг.',
       button: 'Оставить заявку',
     },
@@ -143,9 +155,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
   en: {
     hero: {
       label: 'Marine Technical Solutions',
-      titleLine1: 'Ship & crew',
-      titleAccent: 'management',
-      titleSuffix: '',
+      titleFormatted: migrateHomeHeroLegacy('Ship & crew', 'management', ''),
       lead: 'Crewing and vessel support worldwide: IACS-aligned processes, one point of contact for owners and seafarers.',
       ctaClient: 'Request a quote',
       ctaClientHref: '/request',
@@ -167,18 +177,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     funnelShip: {
       label: 'Ship management',
-      title: 'Operational & technical',
-      titleAccent: 'support',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Operational & technical', 'support', ''),
       text: 'Repairs planning, supplies, class and yard coordination — one team for the shipowner.',
       cta: 'Learn more',
       href: '/ship-management',
     },
     funnelCrewing: {
       label: 'Crewing',
-      title: 'Careers for',
-      titleAccent: 'seafarers',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Careers for', 'seafarers', ''),
       text: 'Open vacancies or submit an open application to our candidate pool.',
       cta: 'Vacancies',
       href: '/vacancies',
@@ -187,18 +193,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     funnelTechnical: {
       label: 'Services',
-      title: 'Engineering ',
-      titleAccent: 'solutions',
-      titleEnd: '',
+      titleFormatted: themeTitleTriple('Engineering ', 'solutions', ''),
       text: 'Browse the catalogue — technical support, projects and consulting. Pick a line and get in touch.',
       cta: 'All services',
       href: '/services',
     },
     directions: {
       label: 'Focus areas',
-      heading: 'What we',
-      headingAccent: 'do',
-      headingEnd: '',
+      headingFormatted: themeTitleTriple('What we', 'do', ''),
       rows: [
         {
           title: 'Ship management',
@@ -216,16 +218,13 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     about: {
       label: 'About',
-      title: 'Marine Technical Solutions —',
-      titleAccent: 'international',
-      titleEnd: ' team',
+      titleFormatted: themeTitleTriple('Marine Technical Solutions —', 'international', ' team'),
       text: 'Engineering and crewing in one window: from enquiry to delivery and crew on board.',
       more: 'About the company',
     },
     trust: {
       label: 'Why us',
-      title: 'Experience &',
-      titleAccent: 'coverage',
+      titleFormatted: themeTitlePair('Experience &', 'coverage'),
       bullets: [
         'International projects and IACS classification societies',
         '14+ years in shipping and marine services',
@@ -234,17 +233,14 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     services: {
       label: 'Services',
-      heading: 'Full range of ',
-      headingAccent: 'marine',
-      headingEnd: ' services',
+      headingFormatted: themeTitleTriple('Full range of ', 'marine', ' services'),
       all: 'All services',
       more: 'Learn more →',
       featuredServiceIds: [],
     },
     process: {
       label: 'Process',
-      heading: 'Three steps to',
-      headingAccent: 'delivery',
+      headingFormatted: themeTitlePair('Three steps to', 'delivery'),
       steps: [
         { title: 'Request & consultation', text: 'We take your enquiry, clarify the scope and agree on the next step.' },
         { title: 'Solution & execution', text: 'We align the team and scope with class and owner requirements.' },
@@ -253,8 +249,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
     },
     cta: {
       label: 'Contact us',
-      title: 'Ready to',
-      titleAccent: 'talk?',
+      titleFormatted: themeTitlePair('Ready to', 'talk?'),
       text: 'Leave a request or email us — we reply during business hours with the next step.',
       button: 'Request a quote',
     },
@@ -273,52 +268,33 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
   if (!parsed) {
     return def
   }
-  const h = parsed.hero
-  const hero: HomePageData['hero'] = {
-    ...def.hero,
-    ...h,
-    ctaClient: h?.ctaClient ?? h?.ctaConsult ?? def.hero.ctaClient,
-    ctaClientHref: h?.ctaClientHref ?? '/request',
-    ctaSeafarer: h?.ctaSeafarer ?? h?.ctaServices ?? def.hero.ctaSeafarer,
-    ctaSeafarerHref: h?.ctaSeafarerHref ?? '/application-form',
-  }
+  const ps = parsed.services as Record<string, unknown> | undefined
+  const withoutLegacyCards = ps
+    ? (Object.fromEntries(Object.entries(ps).filter(([k]) => k !== 'cards')) as Partial<HomePageData['services']>)
+    : {}
+  const servicesMerged = mergeHomeServicesSection(parsed.services, def.services)
   return {
     ...def,
     ...parsed,
-    hero,
-    funnelShip: { ...def.funnelShip, ...parsed.funnelShip },
+    hero: mergeHomeHero(parsed.hero, def.hero),
+    funnelShip: mergeFunnelShip(parsed.funnelShip, def.funnelShip),
     funnelCrewing: {
-      ...def.funnelCrewing,
-      ...parsed.funnelCrewing,
+      ...mergeFunnelCrewing(parsed.funnelCrewing, def.funnelCrewing),
       secondaryCta: parsed.funnelCrewing?.secondaryCta ?? def.funnelCrewing.secondaryCta,
       secondaryHref: parsed.funnelCrewing?.secondaryHref ?? def.funnelCrewing.secondaryHref,
     },
-    funnelTechnical: { ...def.funnelTechnical, ...parsed.funnelTechnical },
-    directions: {
-      ...def.directions,
-      ...parsed.directions,
-      rows:
-        parsed.directions?.rows && parsed.directions.rows.length > 0
-          ? parsed.directions.rows
-          : def.directions.rows,
+    funnelTechnical: mergeFunnelTechnical(parsed.funnelTechnical, def.funnelTechnical),
+    directions: mergeHomeDirectionsSection(parsed.directions, def.directions),
+    trust: mergeHomeTrustStrip(parsed.trust, def.trust),
+    about: mergeHomeAboutPreview(parsed.about, def.about),
+    services: {
+      ...servicesMerged,
+      ...withoutLegacyCards,
+      headingFormatted: servicesMerged.headingFormatted,
+      featuredServiceIds: servicesMerged.featuredServiceIds,
     },
-    trust: { ...def.trust, ...parsed.trust, bullets: parsed.trust?.bullets?.length ? parsed.trust.bullets : def.trust.bullets },
-    about: { ...def.about, ...parsed.about },
-    services: (() => {
-      const ps = parsed.services as Record<string, unknown> | undefined
-      const withoutLegacyCards = ps
-        ? (Object.fromEntries(Object.entries(ps).filter(([k]) => k !== 'cards')) as Partial<HomePageData['services']>)
-        : {}
-      return {
-        ...def.services,
-        ...withoutLegacyCards,
-        featuredServiceIds: Array.isArray(parsed.services?.featuredServiceIds)
-          ? [...parsed.services.featuredServiceIds]
-          : def.services.featuredServiceIds,
-      }
-    })(),
-    process: { ...def.process, ...parsed.process, steps: parsed.process?.steps?.length ? parsed.process.steps : def.process.steps },
-    cta: { ...def.cta, ...parsed.cta },
+    process: mergeHomeProcessSection(parsed.process, def.process),
+    cta: mergeHomeCTA(parsed.cta, def.cta),
     statsCard: {
       ...def.statsCard,
       ...parsed.statsCard,
@@ -330,6 +306,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     showProcess: parsed.showProcess ?? def.showProcess,
     showInquiryForm: parsed.showInquiryForm ?? def.showInquiryForm,
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
+    customSections: normalizeCustomPageSections(parsed.customSections),
   }
 }
 
@@ -376,73 +353,93 @@ type ListingSlug = 'services-page' | 'projects-page' | 'gallery-page' | 'news-pa
 const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingPageData | ProjectsPageData>> = {
   'services-page': {
     ru: {
-      hero: { title: 'Полный спектр ', titleAccent: 'морских', titleEnd: ' услуг', lead: 'Мы предоставляем комплексные инженерные и сервисные решения для морского флота любого типа и размера.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Полный спектр ', 'морских', ' услуг'),
+        lead: 'Мы предоставляем комплексные инженерные и сервисные решения для морского флота любого типа и размера.',
+      },
       cta: { title: '', buttonText: 'Запросить консультацию' },
       showInquiryForm: false,
     },
     en: {
-      hero: { title: 'Full range of ', titleAccent: 'marine', titleEnd: ' services', lead: 'We deliver engineering and marine services for vessels of any type and size.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Full range of ', 'marine', ' services'),
+        lead: 'We deliver engineering and marine services for vessels of any type and size.',
+      },
       cta: { title: '', buttonText: 'Request a consultation' },
       showInquiryForm: false,
     },
   },
   'projects-page': {
     ru: {
-      hero: { title: 'Наши ', titleAccent: 'выполненные', titleEnd: ' проекты', lead: 'Портфолио выполненных работ по ремонту и техническому обслуживанию морских судов в портах по всему миру.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Наши ', 'выполненные', ' проекты'),
+        lead: 'Портфолио выполненных работ по ремонту и техническому обслуживанию морских судов в портах по всему миру.',
+      },
       cta: { title: 'Нужен расчёт по вашему судну?', buttonText: 'Оставить заявку' },
-      heroImage: '/about-workshop.jpg',
+      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
     en: {
-      hero: { title: 'Our ', titleAccent: 'completed', titleEnd: ' projects', lead: 'A portfolio of repair and maintenance work for seagoing vessels in ports worldwide.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Our ', 'completed', ' projects'),
+        lead: 'A portfolio of repair and maintenance work for seagoing vessels in ports worldwide.',
+      },
       cta: { title: 'Need an estimate for your vessel?', buttonText: 'Send a request' },
-      heroImage: '/about-workshop.jpg',
+      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
   },
   'gallery-page': {
     ru: {
-      hero: { title: 'Фото с ', titleAccent: 'объектов', titleEnd: ' и производства', lead: 'Подборка снимков выполненных работ и инфраструктуры Marine Technical Solutions. Нажмите на фото, чтобы открыть крупный план. Навигация стрелками на клавиатуре или кнопками в окне просмотра.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Фото с ', 'объектов', ' и производства'),
+        lead: 'Подборка снимков выполненных работ и инфраструктуры Marine Technical Solutions. Нажмите на фото, чтобы открыть крупный план. Навигация стрелками на клавиатуре или кнопками в окне просмотра.',
+      },
       showInquiryForm: false,
     },
     en: {
-      hero: { title: 'Photos from ', titleAccent: 'projects', titleEnd: ' and workshops', lead: 'A selection of completed work and infrastructure at Marine Technical Solutions. Click a photo for a larger view. Use keyboard arrows or the on-screen controls.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Photos from ', 'projects', ' and workshops'),
+        lead: 'A selection of completed work and infrastructure at Marine Technical Solutions. Click a photo for a larger view. Use keyboard arrows or the on-screen controls.',
+      },
       showInquiryForm: false,
     },
   },
   'news-page': {
     ru: {
-      hero: { title: 'Последние ', titleAccent: 'новости', titleEnd: ' компании', lead: 'Следите за развитием компании, новыми проектами и новостями отрасли.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Последние ', 'новости', ' компании'),
+        lead: 'Следите за развитием компании, новыми проектами и новостями отрасли.',
+      },
       showInquiryForm: false,
     },
     en: {
-      hero: { title: 'Latest ', titleAccent: 'news', titleEnd: ' from the company', lead: 'Follow our development, new projects and maritime industry updates.' },
+      hero: {
+        titleFormatted: themeTitleTriple('Latest ', 'news', ' from the company'),
+        lead: 'Follow our development, new projects and maritime industry updates.',
+      },
       showInquiryForm: false,
     },
   },
   'vacancies-page': {
     ru: {
       hero: {
-        title: 'Открытые ',
-        titleAccent: 'вакансии',
-        titleEnd: '',
+        titleFormatted: themeTitleTriple('Открытые ', 'вакансии', ''),
         lead:
           'Присоединяйтесь к команде Marine Technical Solutions. Мы предлагаем работу в судоремонте и сервисе морского флота. Среди открытых вакансий нет подходящей — можно просто заполнить анкету: мы свяжемся с вами, когда появится подходящая позиция.',
       },
       cta: { title: 'Вопросы по вакансиям и сотрудничеству?', buttonText: 'Оставить заявку' },
-      heroImage: '/about-workshop.jpg',
+      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
     en: {
       hero: {
-        title: 'Open ',
-        titleAccent: 'positions',
-        titleEnd: '',
+        titleFormatted: themeTitleTriple('Open ', 'positions', ''),
         lead:
           "Join the Marine Technical Solutions team. We offer roles in ship repair and maritime services. Don't see a role that fits? You can simply fill in our application form — we'll get in touch when something relevant opens up.",
       },
       cta: { title: 'Questions about careers or cooperation?', buttonText: 'Request a quote' },
-      heroImage: '/about-workshop.jpg',
+      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
   },
@@ -453,14 +450,34 @@ export function defaultListingData(slug: string, locale: MarineContentLocale): L
   if (LISTING_DEFAULTS[key]) {
     return JSON.parse(JSON.stringify(LISTING_DEFAULTS[key][locale]))
   }
-  return { hero: { title: '', titleAccent: '', titleEnd: '', lead: '' } }
+  return { hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' } }
+}
+
+export function mergeListingPageData(slug: string, locale: MarineContentLocale, raw: unknown): ListingPageData {
+  const base = defaultListingData(slug, locale)
+  if (!raw || typeof raw !== 'object') {
+    return base
+  }
+  const p = raw as Partial<ListingPageData>
+  return {
+    ...base,
+    ...p,
+    hero: mergeListingHero(p.hero, base.hero),
+    cta: p.cta ? { ...base.cta!, ...p.cta } : base.cta,
+    showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
+    customSections: normalizeCustomPageSections(p.customSections),
+  }
 }
 
 /* ── Contacts page ── */
 
 const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
   ru: {
-    hero: { title: 'Свяжитесь ', titleAccent: 'с нами', lead: 'Свяжитесь с нашим техническим отделом. Мы ответим в течение 2 часов и подготовим коммерческое предложение под ваши задачи.' },
+    hero: {
+      titleFormatted: themeTitlePair('Свяжитесь ', 'с нами'),
+      lead: 'Свяжитесь с нашим техническим отделом. Мы ответим в течение 2 часов и подготовим коммерческое предложение под ваши задачи.',
+    },
     infoTitle: 'Контактная информация',
     formTitle: 'Обратная связь',
     formLead: 'Заполните форму — мы ответим на email в течение рабочего дня. Для срочных вопросов звоните по телефону.',
@@ -468,7 +485,10 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     showInquiryForm: false,
   },
   en: {
-    hero: { title: 'Get in ', titleAccent: 'touch', lead: 'Contact our technical department. We respond within two hours and prepare a commercial proposal for your needs.' },
+    hero: {
+      titleFormatted: themeTitlePair('Get in ', 'touch'),
+      lead: 'Contact our technical department. We respond within two hours and prepare a commercial proposal for your needs.',
+    },
     infoTitle: 'Contact details',
     formTitle: 'Feedback',
     formLead: 'Fill in the form — we reply by email within a business day. For urgent matters, call us.',
@@ -479,6 +499,26 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
 
 export function defaultContactsData(locale: MarineContentLocale): ContactsPageData {
   return JSON.parse(JSON.stringify(CONTACTS_DEFAULTS[locale]))
+}
+
+export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown): ContactsPageData {
+  const base = defaultContactsData(locale)
+  if (!raw || typeof raw !== 'object') {
+    return base
+  }
+  const p = raw as Partial<ContactsPageData>
+  return {
+    ...base,
+    ...p,
+    hero: mergeContactsHero(p.hero, base.hero),
+    infoTitle: typeof p.infoTitle === 'string' ? p.infoTitle : base.infoTitle,
+    formTitle: typeof p.formTitle === 'string' ? p.formTitle : base.formTitle,
+    formLead: typeof p.formLead === 'string' ? p.formLead : base.formLead,
+    officesTitle: typeof p.officesTitle === 'string' ? p.officesTitle : base.officesTitle,
+    showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
+    customSections: normalizeCustomPageSections(p.customSections),
+  }
 }
 
 function mergeCrewingChecklistPoint(raw: unknown, fallback?: CrewingChecklistPoint): CrewingChecklistPoint {
@@ -498,16 +538,67 @@ function mergeCrewingChecklistSection(raw: unknown, fallback?: CrewingChecklistS
   return { heading, points }
 }
 
+/** Частичные данные чек-листа из CMS; поддерживаем устаревшие toggleShow/toggleHide. */
+type CrewingChecklistBlockPartial = Partial<CrewingChecklistBlock> & {
+  bodyMarkdown?: string
+  toggleShow?: string
+  toggleHide?: string
+}
+
+const FALLBACK_CREWING_DIRECTION: CrewingDirectionItem = {
+  icon: 'UserCheck',
+  hideIcon: false,
+  title: '',
+  text: '',
+  detailSlug: '',
+}
+
+function mergeCrewingDirections(base: CrewingDirectionItem[], raw: unknown): CrewingDirectionItem[] {
+  if (!Array.isArray(raw)) {
+    return base.map((row) => ({
+      ...row,
+      hideIcon: typeof row.hideIcon === 'boolean' ? row.hideIcon : false,
+      detailSlug: typeof row.detailSlug === 'string' ? row.detailSlug.trim() : row.detailSlug ?? '',
+    }))
+  }
+  if (raw.length === 0) {
+    return []
+  }
+  const out: CrewingDirectionItem[] = []
+  for (let i = 0; i < raw.length; i++) {
+    const b = base[i] ?? FALLBACK_CREWING_DIRECTION
+    const r = raw[i]
+    if (!r || typeof r !== 'object') {
+      out.push({ ...b })
+      continue
+    }
+    const rr = r as Partial<CrewingDirectionItem>
+    out.push({
+      icon: typeof rr.icon === 'string' && rr.icon.trim() ? rr.icon : b.icon,
+      hideIcon: typeof rr.hideIcon === 'boolean' ? rr.hideIcon : b.hideIcon ?? false,
+      title: typeof rr.title === 'string' ? rr.title : b.title,
+      text: typeof rr.text === 'string' ? rr.text : b.text,
+      detailSlug: typeof rr.detailSlug === 'string' ? rr.detailSlug.trim() : b.detailSlug ?? '',
+    })
+  }
+  return out
+}
+
 function mergeCrewingChecklistBlock(
   base: CrewingChecklistBlock,
-  p?: Partial<CrewingChecklistBlock> & { bodyMarkdown?: string },
+  p?: CrewingChecklistBlockPartial,
 ): CrewingChecklistBlock {
   if (!p) {
     return base
   }
+  const legacyShow =
+    typeof p.toggleShow === 'string' && p.toggleShow.trim() !== '' ? p.toggleShow.trim() : ''
+  const sectionTitle =
+    typeof p.sectionTitle === 'string' && p.sectionTitle.trim() !== ''
+      ? p.sectionTitle.trim()
+      : legacyShow || base.sectionTitle
   const toggles = {
-    toggleShow: p.toggleShow ?? base.toggleShow,
-    toggleHide: p.toggleHide ?? base.toggleHide,
+    sectionTitle,
     intro: typeof p.intro === 'string' ? p.intro : base.intro,
   }
   if (!Array.isArray(p.sections)) {
@@ -524,15 +615,274 @@ function mergeCrewingChecklistBlock(
 
 /* ── Line marketing pages (крюинг, судовой менеджмент) ── */
 
+const BUILTIN_SECTION_ORDER_KEYS = new Set<string>(['directions', 'checklist', 'principles', 'audience'])
+
+function newLineMarketingBlockId(): string {
+  return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `lm-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+}
+
+function mergeLineMarketingCardItem(raw: unknown, fallback: LineMarketingCardItem): LineMarketingCardItem {
+  if (!raw || typeof raw !== 'object') {
+    return { ...fallback }
+  }
+  const r = raw as Partial<LineMarketingCardItem>
+  return {
+    icon: typeof r.icon === 'string' && r.icon.trim() ? r.icon : fallback.icon,
+    hideIcon: typeof r.hideIcon === 'boolean' ? r.hideIcon : fallback.hideIcon ?? false,
+    title: typeof r.title === 'string' ? r.title : fallback.title,
+    text: typeof r.text === 'string' ? r.text : fallback.text,
+    detailSlug: typeof r.detailSlug === 'string' ? r.detailSlug.trim() : fallback.detailSlug ?? '',
+  }
+}
+
+function mergeCardsBlock(raw: unknown, fallback: LineMarketingCardsBlock): LineMarketingCardsBlock {
+  if (!raw || typeof raw !== 'object') {
+    return { ...fallback, items: fallback.items.map((x) => ({ ...x })) }
+  }
+  const r = raw as Partial<LineMarketingCardsBlock>
+  const itemsRaw = Array.isArray(r.items) ? r.items : []
+  const items = itemsRaw.map((it, i) =>
+    mergeLineMarketingCardItem(it, fallback.items[i] ?? { icon: 'UserCheck', hideIcon: false, title: '', text: '', detailSlug: '' }),
+  )
+  return {
+    id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : fallback.id,
+    type: 'cards',
+    items: items.length > 0 ? items : [{ icon: 'UserCheck', hideIcon: false, title: '', text: '', detailSlug: '' }],
+  }
+}
+
+function mergeTextBlock(raw: unknown, fallback: LineMarketingTextBlock): LineMarketingTextBlock {
+  if (!raw || typeof raw !== 'object') {
+    return { ...fallback }
+  }
+  const r = raw as Partial<LineMarketingTextBlock>
+  return {
+    id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : fallback.id,
+    type: 'text',
+    title: typeof r.title === 'string' ? r.title : fallback.title,
+    subtitle: typeof r.subtitle === 'string' ? r.subtitle : fallback.subtitle,
+    description: typeof r.description === 'string' ? r.description : fallback.description,
+  }
+}
+
+function mergeSplitBlock(raw: unknown, fallback: LineMarketingSplitBlock): LineMarketingSplitBlock {
+  if (!raw || typeof raw !== 'object') {
+    return { ...fallback, images: [...fallback.images] }
+  }
+  const r = raw as Partial<LineMarketingSplitBlock>
+  const imgs = Array.isArray(r.images) ? r.images.filter((u): u is string => typeof u === 'string') : fallback.images
+  const left =
+    typeof r.leftWidthPercent === 'number' && Number.isFinite(r.leftWidthPercent)
+      ? Math.min(90, Math.max(10, Math.round(r.leftWidthPercent)))
+      : fallback.leftWidthPercent
+  const mode = r.rightMode === 'slider' || r.rightMode === 'image' ? r.rightMode : fallback.rightMode
+  return {
+    id: typeof r.id === 'string' && r.id.trim() ? r.id.trim() : fallback.id,
+    type: 'split',
+    leftText: typeof r.leftText === 'string' ? r.leftText : fallback.leftText,
+    leftWidthPercent: left,
+    rightMode: mode,
+    images: imgs.length > 0 ? imgs : [''],
+  }
+}
+
+function mergeContentBlock(raw: unknown, fallback?: LineMarketingContentBlock): LineMarketingContentBlock {
+  const fb =
+    fallback ??
+    ({
+      id: newLineMarketingBlockId(),
+      type: 'cards',
+      items: [{ icon: 'UserCheck', hideIcon: false, title: '', text: '', detailSlug: '' }],
+    } as LineMarketingCardsBlock)
+  if (!raw || typeof raw !== 'object') {
+    return JSON.parse(JSON.stringify(fb)) as LineMarketingContentBlock
+  }
+  const r = raw as Partial<LineMarketingContentBlock>
+  const t = r.type
+  if (t === 'text') {
+    return mergeTextBlock(raw, fb.type === 'text' ? fb : { id: newLineMarketingBlockId(), type: 'text', title: '', subtitle: '', description: '' })
+  }
+  if (t === 'split') {
+    return mergeSplitBlock(
+      raw,
+      fb.type === 'split'
+        ? fb
+        : {
+            id: newLineMarketingBlockId(),
+            type: 'split',
+            leftText: '',
+            leftWidthPercent: 50,
+            rightMode: 'image',
+            images: [''],
+          },
+    )
+  }
+  return mergeCardsBlock(raw, fb.type === 'cards' ? fb : { id: newLineMarketingBlockId(), type: 'cards', items: [{ icon: 'UserCheck', hideIcon: false, title: '', text: '', detailSlug: '' }] })
+}
+
+function mergeOneCustomSection(raw: unknown, fallback?: LineMarketingCustomSection): LineMarketingCustomSection {
+  const fb =
+    fallback ??
+    ({
+      id: newLineMarketingBlockId(),
+      title: '',
+      showTitle: true,
+      blocks: [],
+    } as LineMarketingCustomSection)
+  if (!raw || typeof raw !== 'object') {
+    return JSON.parse(JSON.stringify(fb)) as LineMarketingCustomSection
+  }
+  const p = raw as Partial<LineMarketingCustomSection>
+  const id = typeof p.id === 'string' && p.id.trim() ? p.id.trim() : fb.id
+  const blocksRaw = Array.isArray(p.blocks) ? p.blocks : []
+  const blocks = blocksRaw.map((b, i) => mergeContentBlock(b, fb.blocks[i]))
+  return {
+    id,
+    title: typeof p.title === 'string' ? p.title : fb.title,
+    showTitle: typeof p.showTitle === 'boolean' ? p.showTitle : fb.showTitle,
+    blocks,
+  }
+}
+
+function mergeCustomSections(raw: unknown, base: LineMarketingCustomSection[]): LineMarketingCustomSection[] {
+  if (!Array.isArray(raw)) {
+    return base.map((s) => mergeOneCustomSection(s, s))
+  }
+  if (raw.length === 0) {
+    return []
+  }
+  return raw.map((r, i) => mergeOneCustomSection(r, base[i]))
+}
+
+function mergeSectionOrder(raw: unknown, customIds: string[]): string[] {
+  const defaultOrder = [...LINE_MARKETING_SECTION_DEFAULT_ORDER]
+  const customKeys = customIds.map((id) => `custom:${id}`)
+  const validCustom = new Set(customKeys)
+  if (!Array.isArray(raw)) {
+    return [...defaultOrder, ...customKeys]
+  }
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const x of raw) {
+    if (typeof x !== 'string') {
+      continue
+    }
+    if (BUILTIN_SECTION_ORDER_KEYS.has(x) && !seen.has(x)) {
+      out.push(x)
+      seen.add(x)
+    } else if (x.startsWith('custom:') && validCustom.has(x) && !seen.has(x)) {
+      out.push(x)
+      seen.add(x)
+    }
+  }
+  for (const k of defaultOrder) {
+    if (!seen.has(k)) {
+      out.push(k)
+      seen.add(k)
+    }
+  }
+  for (const ck of customKeys) {
+    if (!seen.has(ck)) {
+      out.push(ck)
+      seen.add(ck)
+    }
+  }
+  return out
+}
+
+function mergeSectionVisibility(raw: unknown, allKeys: string[]): Record<string, boolean> {
+  const base: Record<string, boolean> = {
+    directions: true,
+    checklist: true,
+    principles: true,
+    audience: true,
+  }
+  for (const k of allKeys) {
+    if (!(k in base)) {
+      base[k] = true
+    }
+  }
+  if (!raw || typeof raw !== 'object') {
+    return base
+  }
+  const p = raw as Record<string, boolean>
+  for (const k of Object.keys(base)) {
+    if (typeof p[k] === 'boolean') {
+      base[k] = p[k]
+    }
+  }
+  for (const k of allKeys) {
+    if (typeof p[k] === 'boolean') {
+      base[k] = p[k]
+    }
+  }
+  return base
+}
+
+function mergeLineMarketingHeroButtons(
+  locale: MarineContentLocale,
+  base: LineMarketingHeroButton[],
+  raw: unknown,
+  legacyShowInquiry: boolean | undefined,
+  hadHeroButtonsKey: boolean,
+): LineMarketingHeroButton[] {
+  const MAX = 2
+  const legacyDefault = (): LineMarketingHeroButton[] =>
+    legacyShowInquiry === false
+      ? []
+      : [
+          {
+            label: locale === 'en' ? 'To the inquiry form' : 'К форме заявки',
+            href: '#page-inquiry',
+          },
+        ]
+
+  if (!hadHeroButtonsKey) {
+    return legacyDefault()
+  }
+  if (!Array.isArray(raw)) {
+    return base.map((b) => ({ ...b })).slice(0, MAX)
+  }
+  if (raw.length === 0) {
+    return []
+  }
+  const out: LineMarketingHeroButton[] = []
+  for (let i = 0; i < MAX; i++) {
+    const b = base[i] ?? { label: '', href: '' }
+    const r = raw[i]
+    if (r === undefined || r === null) {
+      out.push({ label: '', href: '' })
+      continue
+    }
+    if (typeof r !== 'object') {
+      out.push({ ...b })
+      continue
+    }
+    const rr = r as Partial<LineMarketingHeroButton>
+    out.push({
+      label: typeof rr.label === 'string' ? rr.label : b.label,
+      href: typeof rr.href === 'string' ? rr.href : b.href,
+    })
+  }
+  return out
+}
+
 const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
   ru: {
     hero: {
       label: 'Судовой и крюинг менеджмент',
-      title: 'Подбор ',
-      titleAccent: 'экипажей и обслуживание',
-      titleEnd: ' судов',
+      titleFormatted: themeTitleTriple('Подбор ', 'экипажей и обслуживание', ' судов'),
       lead: 'Комплексный крюинг-менеджмент для судовладельцев: от подбора моряков до документооборота и логистики смены экипажа. Мы помогаем снизить риски и административную нагрузку, сохраняя фокус на безопасной эксплуатации судна.',
     },
+    heroButtons: [{ label: 'К форме заявки', href: '#page-inquiry' }],
+    sectionOrder: [...LINE_MARKETING_SECTION_DEFAULT_ORDER],
+    sectionVisibility: {
+      directions: true,
+      checklist: true,
+      principles: true,
+      audience: true,
+    },
+    customSections: [],
     directionsSection: {
       title: 'Направления работы',
       lead: 'Единый подход к кадрам на море: от стратегии комплектования до операционного сопровождения в портах и офисе.',
@@ -587,8 +937,7 @@ const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
       ctaHref: '/contacts',
     },
     checklist: {
-      toggleShow: 'Показать полный чек-лист',
-      toggleHide: 'Скрыть чек-лист',
+      sectionTitle: 'Полный чек-лист',
       intro:
         'Мы не просто проверяем наличие «корок», мы гарантируем профпригодность каждого члена экипажа по следующим критериям:',
       sections: JSON.parse(JSON.stringify(DEFAULT_CREWING_CHECKLIST_SECTIONS_RU)),
@@ -598,11 +947,18 @@ const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
   en: {
     hero: {
       label: 'Ship & crew management',
-      title: 'Crew ',
-      titleAccent: 'recruitment & ship',
-      titleEnd: ' services',
+      titleFormatted: themeTitleTriple('Crew ', 'recruitment & ship', ' services'),
       lead: 'End-to-end crew management for shipowners: from seafarer selection to paperwork and crew-change logistics. We help reduce risk and admin load while you keep focus on safe vessel operations.',
     },
+    heroButtons: [{ label: 'To the inquiry form', href: '#page-inquiry' }],
+    sectionOrder: [...LINE_MARKETING_SECTION_DEFAULT_ORDER],
+    sectionVisibility: {
+      directions: true,
+      checklist: true,
+      principles: true,
+      audience: true,
+    },
+    customSections: [],
     directionsSection: {
       title: 'What we cover',
       lead: 'One approach to people at sea: from manning strategy to day-to-day support in ports and ashore.',
@@ -657,8 +1013,7 @@ const CREWING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
       ctaHref: '/contacts',
     },
     checklist: {
-      toggleShow: 'Show full checklist',
-      toggleHide: 'Hide checklist',
+      sectionTitle: 'Full checklist',
       intro:
         'We do not only verify certificates — we ensure professional suitability of every crew member against the following criteria:',
       sections: JSON.parse(JSON.stringify(DEFAULT_CREWING_CHECKLIST_SECTIONS_EN)),
@@ -691,14 +1046,34 @@ export function mergeLinePageData(
     return base
   }
   const p = raw as Partial<CrewingPageData>
-  const dirs = base.directions.map((row, i) => ({
-    ...row,
-    ...(Array.isArray(p.directions) ? p.directions[i] : {}),
-  }))
+  const dirs = mergeCrewingDirections(base.directions, p.directions)
   const checklist = mergeCrewingChecklistBlock(base.checklist, p.checklist)
+  const hadHeroButtonsKey = typeof raw === 'object' && raw !== null && 'heroButtons' in raw
+  // Используем общий normalizer — он понимает все типы блоков
+  // (cards/text/split + heroImage/gallery/accordion/htmlMarkdown).
+  // Старая локальная функция `mergeCustomSections` сохранена ниже для
+  // обратной совместимости с возможными внешними импортами, но в новом
+  // пайплайне не используется (поглощала бы новые типы блоков под cards).
+  const customSections =
+    Array.isArray(p.customSections)
+      ? normalizeCustomPageSections(p.customSections)
+      : base.customSections.map((s) => normalizeCustomPageSections([s])[0]!)
+  const customIds = customSections.map((s) => s.id)
+  const sectionOrder = mergeSectionOrder(p.sectionOrder, customIds)
+  const sectionVisibility = mergeSectionVisibility(p.sectionVisibility, sectionOrder)
 
   return {
-    hero: { ...base.hero, ...p.hero },
+    hero: mergeCrewingHero(p.hero, base.hero),
+    heroButtons: mergeLineMarketingHeroButtons(
+      locale,
+      base.heroButtons,
+      p.heroButtons,
+      p.showInquiryForm,
+      hadHeroButtonsKey,
+    ),
+    sectionOrder,
+    sectionVisibility,
+    customSections,
     directionsSection: { ...base.directionsSection, ...p.directionsSection },
     directions: dirs,
     principles: {

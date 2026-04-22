@@ -871,23 +871,35 @@ export function useMarineApi() {
     pageInquiries: {
       submit: async (body: {
         name: string
+        company: string
+        position?: string | null
+        phone: string
         email: string
-        phone?: string | null
-        company?: string | null
-        vesselName?: string | null
-        imo?: string | null
-        message: string
+        /** Машинные id выбранных типов судна (см. `PageInquiryVesselType`). */
+        vesselTypes: string[]
+        vesselsCount: number
+        vesselFlag: string
+        mainPorts?: string | null
+        /** Машинные id выбранных услуг (см. `PageInquiryServiceId`). */
+        requiredServices: string[]
+        message?: string | null
         sourcePage: string
+        consent: boolean
       }) => {
         await fetchPublicPost<unknown>('/page-inquiries', {
           name: body.name,
+          company: body.company,
+          position: body.position ?? null,
+          phone: body.phone,
           email: body.email,
-          phone: body.phone ?? null,
-          company: body.company ?? null,
-          vessel_name: body.vesselName ?? null,
-          imo: body.imo ?? null,
-          message: body.message,
+          vessel_types: body.vesselTypes,
+          vessels_count: body.vesselsCount,
+          vessel_flag: body.vesselFlag,
+          main_ports: body.mainPorts ?? null,
+          required_services: body.requiredServices,
+          message: body.message ?? null,
           source_page: body.sourcePage,
+          consent: body.consent,
         })
       },
       getManageAll: async (params?: {

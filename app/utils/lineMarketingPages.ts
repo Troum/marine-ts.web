@@ -1,4 +1,4 @@
-import type { CrewingPageData, MarineContentLocale } from '~/types'
+import type { CrewingPageData, LineMarketingSectionId, MarineContentLocale } from '~/types'
 
 /** Маркетинговые страницы линий бизнеса (единая структура JSON, как у крюинга). */
 export const LINE_MARKETING_PAGE_SLUGS = [
@@ -23,7 +23,7 @@ export const LINE_MARKETING_PAGE_LAYOUT: Record<
     heroEyebrowI18nKey: 'pages.lineMarketing.crewingHeroEyebrow',
   },
   'ship-management': {
-    heroBg: '/hero-bg.jpg',
+    heroBg: '/images/marin-figma/hero-ship.jpg',
     navI18nKey: 'nav.shipManagement',
     heroEyebrowI18nKey: 'pages.lineMarketing.shipHeroEyebrow',
   },
@@ -42,4 +42,20 @@ export const LINE_MARKETING_PAGE_CONTENT_TITLES: Record<
 export const LINE_MARKETING_PAGE_ADMIN_LABELS: Record<LineMarketingPageSlug, string> = {
   'crewing-management': 'Крюинг-менеджмент',
   'ship-management': 'Судовой менеджмент',
+}
+
+/** Порядок секций по умолчанию (после hero). */
+export const LINE_MARKETING_SECTION_DEFAULT_ORDER: LineMarketingSectionId[] = [
+  'directions',
+  'checklist',
+  'principles',
+  'audience',
+]
+
+/** Подписи для админки (порядок и видимость секций). */
+export const LINE_MARKETING_SECTION_ADMIN_LABELS: Record<LineMarketingSectionId, string> = {
+  directions: 'Направления работы',
+  checklist: 'Чек-лист',
+  principles: 'Принципы',
+  audience: 'Кому подходит + CTA',
 }

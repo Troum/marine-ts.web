@@ -148,8 +148,8 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
 <template>
   <nav
     :class="[
-      'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-      isScrolled ? 'bg-white/95 backdrop-blur-sm border-b border-mts-border shadow-tech' : 'bg-transparent',
+      'fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b border-mts-frost/10',
+      isScrolled ? 'bg-mts-navy shadow-[0_4px_24px_rgba(0,0,0,0.25)]' : 'bg-mts-navy',
     ]"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
@@ -174,7 +174,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               <template v-if="item.path === '#'">
                 <button
                   type="button"
-                  class="font-mono text-[10px] xl:text-xs font-medium tracking-[0.06em] xl:tracking-[0.08em] uppercase transition-colors duration-200 relative group inline-flex items-center gap-0.5 whitespace-nowrap text-mts-text-secondary hover:text-mts-accent"
+                  class="font-display text-[11px] font-normal tracking-normal transition-colors duration-200 relative group inline-flex items-center gap-0.5 whitespace-nowrap text-mts-slate-muted hover:text-mts-frost"
                   :class="[isNavGroupActive(item) || openDropdownIndex === i ? 'text-mts-accent' : '']"
                   :aria-expanded="openDropdownIndex === i"
                   @click="toggleNavDropdown(i, $event)"
@@ -192,7 +192,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               <template v-else>
                 <NuxtLink
                   :to="localePath(item.path)"
-                  class="font-mono text-[10px] xl:text-xs font-medium tracking-[0.06em] xl:tracking-[0.08em] uppercase transition-colors duration-200 relative group whitespace-nowrap text-mts-text-secondary hover:text-mts-accent"
+                  class="font-display text-[11px] font-normal tracking-normal transition-colors duration-200 relative group whitespace-nowrap text-mts-slate-muted hover:text-mts-frost"
                   :class="[isNavGroupActive(item) ? 'text-mts-accent' : '']"
                 >
                   {{ labelForLocale(item) }}
@@ -205,7 +205,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                 </NuxtLink>
                 <button
                   type="button"
-                  class="p-0.5 shrink-0 rounded-sm text-mts-text-secondary hover:text-mts-accent transition-colors"
+                  class="p-0.5 shrink-0 rounded-sm text-mts-slate-muted hover:text-mts-accent transition-colors"
                   :aria-expanded="openDropdownIndex === i"
                   :aria-label="labelForLocale(item)"
                   @click="toggleNavDropdown(i, $event)"
@@ -224,7 +224,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               >
                 <div
                   v-show="openDropdownIndex === i"
-                  class="absolute left-0 top-[calc(100%+0.5rem)] z-[60] min-w-[12rem] border border-mts-border bg-white py-1 shadow-tech"
+                  class="absolute left-0 top-[calc(100%+0.5rem)] z-[60] min-w-[12rem] border border-mts-frost/15 bg-mts-navy py-1 shadow-tech"
                   role="menu"
                 >
                   <template v-for="(child, ci) in item.children" :key="`nav-c-${i}-${ci}-${child.path}`">
@@ -234,7 +234,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                       target="_blank"
                       rel="noopener noreferrer"
                       role="menuitem"
-                      class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent"
+                      class="block px-4 py-2.5 font-display text-xs font-normal transition-colors text-mts-slate-muted hover:bg-mts-frost/5 hover:text-mts-accent"
                       @click="closeNavOverlays"
                     >
                       {{ labelForLocale(child) }}
@@ -243,9 +243,9 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                       v-else
                       :to="localePath(child.path)"
                       role="menuitem"
-                      class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors"
+                      class="block px-4 py-2.5 font-display text-xs font-normal transition-colors"
                       :class="[
-                        isActivePath(child.path) ? 'bg-mts-bg text-mts-accent' : 'text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent',
+                        isActivePath(child.path) ? 'bg-mts-frost/10 text-mts-accent' : 'text-mts-slate-muted hover:bg-mts-frost/5 hover:text-mts-accent',
                       ]"
                       @click="closeNavOverlays"
                     >
@@ -263,7 +263,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                 :href="item.path"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="font-mono text-[10px] xl:text-xs font-medium tracking-[0.06em] xl:tracking-[0.08em] uppercase transition-colors duration-200 relative group whitespace-nowrap text-mts-text-secondary hover:text-mts-accent"
+                class="font-display text-[11px] font-normal tracking-normal transition-colors duration-200 relative group whitespace-nowrap text-mts-slate-muted hover:text-mts-frost"
               >
                 {{ labelForLocale(item) }}
                 <span class="absolute -bottom-1 left-0 h-px bg-mts-accent transition-all duration-200 w-0 group-hover:w-full" />
@@ -272,8 +272,8 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                 v-else
                 :to="localePath(item.path)"
                 :class="[
-                  'font-mono text-[10px] xl:text-xs font-medium tracking-[0.06em] xl:tracking-[0.08em] uppercase transition-colors duration-200 relative group whitespace-nowrap',
-                  isActivePath(item.path) ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
+                  'font-display text-[11px] font-normal tracking-normal transition-colors duration-200 relative group whitespace-nowrap',
+                  isActivePath(item.path) ? 'text-mts-accent' : 'text-mts-slate-muted hover:text-mts-frost',
                 ]"
               >
                 {{ labelForLocale(item) }}
@@ -290,9 +290,9 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
           <div v-if="showMoreBlock" ref="moreMenuRoot" data-nav-dropdown class="relative">
             <button
               type="button"
-              class="flex items-center gap-1 font-mono text-[10px] xl:text-xs font-medium tracking-[0.06em] xl:tracking-[0.08em] uppercase transition-colors duration-200 relative group whitespace-nowrap"
+              class="flex items-center gap-1 font-display text-[11px] font-normal tracking-normal transition-colors duration-200 relative group whitespace-nowrap"
               :class="[
-                isMoreSectionActive || moreOpen ? 'text-mts-accent' : 'text-mts-text-secondary hover:text-mts-accent',
+                isMoreSectionActive || moreOpen ? 'text-mts-accent' : 'text-mts-slate-muted hover:text-mts-frost',
               ]"
               :aria-expanded="moreOpen"
               :aria-haspopup="true"
@@ -318,7 +318,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
             >
               <div
                 v-show="moreOpen"
-                class="absolute right-0 top-[calc(100%+0.5rem)] z-[60] min-w-[12rem] border border-mts-border bg-white py-1 shadow-tech"
+                class="absolute right-0 top-[calc(100%+0.5rem)] z-[60] min-w-[12rem] border border-mts-frost/15 bg-mts-navy py-1 shadow-tech"
                 role="menu"
               >
                 <template v-for="(link, mi) in moreLinks" :key="`nav-m-${mi}-${link.path}`">
@@ -328,7 +328,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                     target="_blank"
                     rel="noopener noreferrer"
                     role="menuitem"
-                    class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent"
+                    class="block px-4 py-2.5 font-display text-xs font-normal transition-colors text-mts-slate-muted hover:bg-mts-frost/5 hover:text-mts-accent"
                     @click="moreOpen = false"
                   >
                     {{ link.label }}
@@ -337,9 +337,9 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                     v-else
                     :to="localePath(link.path)"
                     role="menuitem"
-                    class="block px-4 py-2.5 font-mono text-xs font-medium uppercase tracking-[0.08em] transition-colors"
+                    class="block px-4 py-2.5 font-display text-xs font-normal transition-colors"
                     :class="[
-                      isActivePath(link.path) ? 'bg-mts-bg text-mts-accent' : 'text-mts-text-secondary hover:bg-mts-bg hover:text-mts-accent',
+                      isActivePath(link.path) ? 'bg-mts-frost/10 text-mts-accent' : 'text-mts-slate-muted hover:bg-mts-frost/5 hover:text-mts-accent',
                     ]"
                     @click="moreOpen = false"
                   >
@@ -352,36 +352,38 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
         </div>
 
         <div class="hidden lg:flex shrink-0 items-center gap-2 xl:gap-4 2xl:gap-6 min-w-0">
-          <LanguageSwitch class="shrink-0" />
+          <CommonMarinThemeToggle class="shrink-0" />
+          <LanguageSwitch dark class="shrink-0" />
           <a
             href="tel:84012355290"
-            class="hidden xl:flex items-center gap-1.5 text-mts-text shrink-0"
+            class="hidden xl:flex items-center gap-1.5 text-mts-slate-muted hover:text-mts-frost shrink-0"
           >
-            <Phone class="w-3.5 h-3.5 shrink-0" />
-            <span class="font-mono text-xs font-medium tracking-wide whitespace-nowrap">{{
+            <Phone class="w-3 h-3 shrink-0" />
+            <span class="font-display text-[11px] font-normal whitespace-nowrap">{{
               t('header.phoneDisplay')
             }}</span>
           </a>
           <a
             href="tel:84012355290"
-            class="flex shrink-0 p-1 text-mts-text hover:text-mts-accent xl:hidden"
+            class="flex shrink-0 p-1 text-mts-slate-muted hover:text-mts-accent xl:hidden"
             :aria-label="t('header.phoneDisplay')"
           >
             <Phone class="w-4 h-4" />
           </a>
           <NuxtLink
             :to="localePath('/request')"
-            class="btn-primary shrink-0 whitespace-nowrap px-3 py-2 text-[10px] xl:px-5 xl:py-2.5 xl:text-xs"
+            class="shrink-0 whitespace-nowrap rounded-none border border-mts-accent bg-mts-navy px-3 py-2 text-[11px] font-display font-normal text-mts-accent transition-colors hover:bg-mts-accent/15 xl:px-4 xl:py-2.5"
           >
             {{ t('header.ctaContact') }}
           </NuxtLink>
         </div>
 
         <div class="flex lg:hidden items-center gap-3">
-          <LanguageSwitch />
+          <CommonMarinThemeToggle />
+          <LanguageSwitch dark />
           <button
             type="button"
-            class="p-2 border border-mts-border text-mts-text hover:text-mts-accent hover:border-mts-accent transition-colors"
+            class="p-2 border border-mts-frost/25 text-mts-frost hover:text-mts-accent hover:border-mts-accent transition-colors"
             @click="isMobileMenuOpen = !isMobileMenuOpen"
           >
             <X v-if="isMobileMenuOpen" class="w-5 h-5" />
@@ -398,23 +400,23 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
       isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible',
     ]"
   >
-    <div class="absolute inset-0 bg-mts-text/20 backdrop-blur-sm" @click="isMobileMenuOpen = false" />
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="isMobileMenuOpen = false" />
     <div
       :class="[
-        'absolute top-16 left-0 right-0 bg-white border-b border-mts-border p-6 transition-all duration-300 max-h-[calc(100vh-4rem)] overflow-y-auto',
+        'absolute top-16 left-0 right-0 border-b border-mts-frost/10 bg-mts-navy p-6 transition-all duration-300 max-h-[calc(100vh-4rem)] overflow-y-auto',
         isMobileMenuOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0',
       ]"
     >
       <div class="space-y-1">
         <template v-for="(item, i) in mainItems" :key="`nav-mob-p-${i}-${item.path}`">
-          <div v-if="item.children?.length" class="border-b border-mts-border/60 pb-1 mb-1 last:border-0">
+          <div v-if="item.children?.length" class="border-b border-mts-frost/10 pb-1 mb-1 last:border-0">
             <div class="flex items-stretch gap-1">
               <NuxtLink
                 v-if="item.path !== '#'"
                 :to="localePath(item.path)"
-                class="flex-1 font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors"
+                class="flex-1 font-display text-xs font-normal px-4 py-3 transition-colors"
                 :class="[
-                  isNavGroupActive(item) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+                  isNavGroupActive(item) ? 'text-mts-accent bg-mts-frost/10' : 'text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5',
                 ]"
                 @click="isMobileMenuOpen = false"
               >
@@ -423,8 +425,8 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               <button
                 v-else
                 type="button"
-                class="flex flex-1 items-center justify-between gap-2 font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 text-left transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
-                :class="[isNavGroupActive(item) ? 'text-mts-accent bg-mts-bg' : '']"
+                class="flex flex-1 items-center justify-between gap-2 font-display text-xs font-normal px-4 py-3 text-left transition-colors text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5"
+                :class="[isNavGroupActive(item) ? 'text-mts-accent bg-mts-frost/10' : '']"
                 :aria-expanded="mobileOpenSubIndex === i"
                 @click="toggleMobileSub(i)"
               >
@@ -437,7 +439,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               <button
                 v-if="item.path !== '#'"
                 type="button"
-                class="shrink-0 px-3 border-l border-mts-border text-mts-text-secondary hover:text-mts-accent"
+                class="shrink-0 px-3 border-l border-mts-frost/15 text-mts-slate-muted hover:text-mts-accent"
                 :aria-expanded="mobileOpenSubIndex === i"
                 @click="toggleMobileSub(i)"
               >
@@ -447,14 +449,14 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                 />
               </button>
             </div>
-            <div v-show="mobileOpenSubIndex === i" class="mt-1 space-y-0.5 pl-2 border-l-2 border-mts-accent/30 ml-4">
+            <div v-show="mobileOpenSubIndex === i" class="mt-1 space-y-0.5 pl-2 border-l-2 border-mts-accent/40 ml-4">
               <template v-for="(child, ci) in item.children" :key="`nav-mob-c-${i}-${ci}`">
                 <a
                   v-if="isExternalPath(child.path)"
                   :href="child.path"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-2.5 transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
+                  class="block font-display text-xs font-normal px-4 py-2.5 transition-colors text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5"
                   @click="isMobileMenuOpen = false"
                 >
                   {{ labelForLocale(child) }}
@@ -462,9 +464,9 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
                 <NuxtLink
                   v-else
                   :to="localePath(child.path)"
-                  class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-2.5 transition-colors"
+                  class="block font-display text-xs font-normal px-4 py-2.5 transition-colors"
                   :class="[
-                    isActivePath(child.path) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+                    isActivePath(child.path) ? 'text-mts-accent bg-mts-frost/10' : 'text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5',
                   ]"
                   @click="isMobileMenuOpen = false"
                 >
@@ -479,7 +481,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               :href="item.path"
               target="_blank"
               rel="noopener noreferrer"
-              class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
+              class="block font-display text-xs font-normal px-4 py-3 transition-colors text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5"
             >
               {{ labelForLocale(item) }}
             </a>
@@ -487,8 +489,8 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               v-else
               :to="localePath(item.path)"
               :class="[
-                'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
-                isActivePath(item.path) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+                'block font-display text-xs font-normal px-4 py-3 transition-colors',
+                isActivePath(item.path) ? 'text-mts-accent bg-mts-frost/10' : 'text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5',
               ]"
             >
               {{ labelForLocale(item) }}
@@ -497,7 +499,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
         </template>
         <template v-if="showMoreBlock">
           <div class="px-4 pt-3 pb-1">
-            <p class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">{{ t('nav.more') }}</p>
+            <p class="font-display text-[10px] uppercase tracking-widest text-mts-slate-muted">{{ t('nav.more') }}</p>
           </div>
           <template v-for="(link, mi) in moreLinks" :key="`nav-mob-m-${mi}-${link.path}`">
             <a
@@ -505,7 +507,7 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               :href="link.path"
               target="_blank"
               rel="noopener noreferrer"
-              class="block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg"
+              class="block font-display text-xs font-normal px-4 py-3 transition-colors text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5"
             >
               {{ link.label }}
             </a>
@@ -513,8 +515,8 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
               v-else
               :to="localePath(link.path)"
               :class="[
-                'block font-mono text-xs font-medium uppercase tracking-wide px-4 py-3 transition-colors',
-                isActivePath(link.path) ? 'text-mts-accent bg-mts-bg' : 'text-mts-text-secondary hover:text-mts-accent hover:bg-mts-bg',
+                'block font-display text-xs font-normal px-4 py-3 transition-colors',
+                isActivePath(link.path) ? 'text-mts-accent bg-mts-frost/10' : 'text-mts-slate-muted hover:text-mts-frost hover:bg-mts-frost/5',
               ]"
             >
               {{ link.label }}
@@ -522,12 +524,12 @@ const isMoreSectionActive = computed(() => moreLinks.value.some((link) => isActi
           </template>
         </template>
       </div>
-      <div class="mt-4 pt-4 border-t border-mts-border">
-        <a href="tel:84012355290" class="flex items-center gap-3 text-mts-text px-4 py-3">
-          <div class="w-10 h-10 bg-mts-accent/10 flex items-center justify-center">
+      <div class="mt-4 pt-4 border-t border-mts-frost/10">
+        <a href="tel:84012355290" class="flex items-center gap-3 text-mts-frost px-4 py-3">
+          <div class="w-10 h-10 bg-mts-accent/20 flex items-center justify-center">
             <Phone class="w-4 h-4 text-mts-accent" />
           </div>
-          <span class="font-mono text-sm font-medium">{{ t('header.phoneDisplay') }}</span>
+          <span class="font-display text-sm font-normal">{{ t('header.phoneDisplay') }}</span>
         </a>
       </div>
     </div>

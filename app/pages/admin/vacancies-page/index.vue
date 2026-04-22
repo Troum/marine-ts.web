@@ -2,7 +2,8 @@
 import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
 import type { ContentPage, MarineContentLocale, VacanciesPageData } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultListingData } from '~/utils/pageDefaults'
+import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 const SLUG = 'vacancies-page'
 
@@ -41,7 +42,7 @@ onMounted(async () => {
           try {
             const parsed = JSON.parse(body)
             if (parsed?.hero) {
-              data.value[loc] = { ...defaultListingData(SLUG, loc), ...parsed } as VacanciesPageData
+              data.value[loc] = mergeListingPageData(SLUG, loc, parsed) as VacanciesPageData
             }
           } catch {
             /* keep defaults */
@@ -146,23 +147,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               label="Фон hero страницы «Вакансии»"
               hint="Необязательно. Нажмите «Загрузить файл» (jpeg, png, webp) или вставьте URL — фон отображается над списком вакансий на /vacancies. Один файл для обоих языков."
             />
-            <div class="grid gap-4 md:grid-cols-3">
-              <div>
-                <label :class="sectionLabel">Заголовок (начало)</label>
-                <input v-model="d.hero.title" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Акцент (цветной)</label>
-                <input v-model="d.hero.titleAccent" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Окончание</label>
-                <input v-model="d.hero.titleEnd" :class="sectionInput" />
-              </div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
-              <textarea v-model="d.hero.lead" rows="4" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.lead" />
             </div>
           </div>
         </section>
@@ -180,14 +171,19 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div v-show="!collapsed.cta" class="space-y-4 border-t border-mts-border px-6 pt-4 pb-6">
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <input v-model="d.cta!.title" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.cta!.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Текст кнопки (ведёт на страницу заявки)</label>
-              <input v-model="d.cta!.buttonText" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.cta!.buttonText" :multiline="false" />
             </div>
           </div>
         </section>
+
+        <AdminCustomSectionsEditor
+          :model-value="d.customSections ?? []"
+          @update:model-value="(v) => (d.customSections = v)"
+        />
 
         <section class="relative border border-mts-border bg-white p-6 shadow-tech">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">

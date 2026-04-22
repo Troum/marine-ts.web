@@ -2,7 +2,8 @@
 import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
 import type { ListingPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import { defaultListingData } from '~/utils/pageDefaults'
+import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 const SLUG = 'gallery-page'
 
@@ -38,7 +39,7 @@ onMounted(async () => {
         if (body) {
           try {
             const parsed = JSON.parse(body)
-            if (parsed?.hero) data.value[loc] = { ...defaultListingData(SLUG, loc), ...parsed }
+            if (parsed?.hero) data.value[loc] = mergeListingPageData(SLUG, loc, parsed)
           } catch { /* keep defaults */ }
         }
       }
@@ -111,26 +112,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </button>
           <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
             <AdminHeroImageField v-model="d.heroImage" />
-            <div class="grid md:grid-cols-3 gap-4">
-              <div>
-                <label :class="sectionLabel">Заголовок (начало)</label>
-                <input v-model="d.hero.title" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Акцент (цветной)</label>
-                <input v-model="d.hero.titleAccent" :class="sectionInput" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Окончание</label>
-                <input v-model="d.hero.titleEnd" :class="sectionInput" />
-              </div>
+            <div>
+              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
-              <textarea v-model="d.hero.lead" rows="4" :class="sectionInput" />
+              <AdminThemedTextField v-model="d.hero.lead" />
             </div>
           </div>
         </section>
+
+        <AdminCustomSectionsEditor
+          :model-value="d.customSections ?? []"
+          @update:model-value="(v) => (d.customSections = v)"
+        />
 
         <section class="bg-white border border-mts-border shadow-tech relative p-6">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">

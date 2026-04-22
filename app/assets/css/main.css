@@ -1,18 +1,56 @@
 @import 'tailwindcss';
 
+/*
+ * Классы тонов из TipTap (ThemeToneMark) и из HTML в CMS — не всегда
+ * попадают в сканер контента; иначе `text-mts-accent` и др. не попадают в CSS.
+ */
+@source inline("text-mts-text");
+@source inline("text-mts-text-secondary");
+@source inline("text-mts-text-muted");
+@source inline("text-mts-accent");
+@source inline("text-mts-accent-light");
+@source inline("text-mts-accent-dark");
+@source inline("text-mts-marker");
+
 @theme {
-  --color-mts-bg: #f8f9fa;
-  --color-mts-surface: #ffffff;
-  --color-mts-accent: #c14041;
-  --color-mts-accent-light: #d45455;
-  --color-mts-accent-dark: #a33536;
-  --color-mts-text: #1c1c1e;
-  --color-mts-text-secondary: #6c757d;
-  --color-mts-text-muted: #adb5bd;
-  --color-mts-border: #dee2e6;
-  --color-mts-border-light: #e9ecef;
-  --color-mts-grid: #e9ecef;
-  --color-mts-dark: #212529;
+  /*
+   * Базовая тема Marin — DARK MODE.
+   * Эти значения активны по умолчанию и переопределяются в
+   * `:root[data-theme='light']` ниже для светлой темы.
+   *
+   * ВСЕ цветовые токены mts-* реагируют на data-theme. Семантика:
+   *  • mts-bg / mts-surface — фон страницы и карточек.
+   *  • mts-text / mts-text-secondary / mts-text-muted — типографика.
+   *  • mts-border / mts-border-light / mts-grid — линии и решётки.
+   *  • mts-navy / mts-navy-deep / mts-dark — «brand surface»: фон шапки,
+   *    футера, hero и плотных блоков. В светлой теме мягко инвертируются
+   *    в светлый off-white, чтобы Nav/Footer тоже переключались.
+   *  • mts-frost — типографика на brand-surface (всегда контрастна к navy).
+   *    В светлой теме становится navy (тёмный текст на белом).
+   *  • mts-slate-muted — приглушённый текст / служебные надписи.
+   *  • mts-accent / mts-accent-light / mts-accent-dark / mts-marker —
+   *    кросс-тёмные акценты, общие для обеих тем (с точечной коррекцией).
+   */
+  --color-mts-bg: #0b1f2a;
+  --color-mts-surface: #11293a;
+  /* Акцент Marin — красно-розовый из макета. */
+  --color-mts-accent: #de7879;
+  --color-mts-accent-light: #e89495;
+  --color-mts-accent-dark: #c96667;
+  --color-mts-text: #e6edf2;
+  --color-mts-text-secondary: #a8b8c2;
+  --color-mts-text-muted: #6e7f88;
+  --color-mts-border: #1a3c50;
+  --color-mts-border-light: #15334a;
+  --color-mts-grid: #1a3c50;
+  /* Дополнительные оттенки тёмной палитры — НЕ меняются между темами. */
+  --color-mts-dark: #0b1f2a;
+  --color-mts-navy: #0b1f2a;
+  --color-mts-navy-deep: #061520;
+  --color-mts-frost: #e6edf2;
+  --color-mts-slate-muted: #6e7f88;
+  /* Технический «маркерный» акцент (точки карты, индикаторы) */
+  --color-mts-marker: #2ea3ff;
 
   --font-display: 'Inter', sans-serif;
   --font-body: 'Manrope', sans-serif;
@@ -31,6 +69,111 @@
   }
   body {
     @apply bg-mts-bg text-mts-text antialiased font-body;
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+  }
+
+  /*
+   * LIGHT MODE — комплиментарная светлая тема, построенная вокруг
+   * фирменного navy (#0b1f2a). Активируется когда Nuxt ставит
+   * <html data-theme="light"> (см. composables/useMarinTheme.ts).
+   *
+   * Принципы палитры:
+   *  • Основной фон — холодный off-white с лёгким сине-серым подтоном
+   *    (морской воздух).
+   *  • Brand surface (navy/dark) — белый/светлый off-white, чтобы
+   *    Nav/Footer/hero мягко инвертировались, не теряя «островную»
+   *    плотность дизайна.
+   *  • Текст (text/frost) — фирменный navy (#0b1f2a). Тот же оттенок,
+   *    что был фоном в dark, становится доминирующим цветом типографики.
+   *  • Сетки/бордеры — мягкий blue-grey.
+   *  • Акцент — оставлен #de7879 (узнаваемый), accent-dark чуть глубже
+   *    для адекватного контраста на белом.
+   */
+  :root[data-theme='light'] {
+    --color-mts-bg: #f4f6f8;
+    --color-mts-surface: #ffffff;
+    --color-mts-text: #0b1f2a;
+    --color-mts-text-secondary: #4a5d68;
+    --color-mts-text-muted: #8da0ac;
+    --color-mts-border: #d4dde3;
+    --color-mts-border-light: #e4ebef;
+    --color-mts-grid: #dbe3e8;
+    --color-mts-accent-dark: #b85e5f;
+
+    /* Brand surface переходит в светлый off-white,
+       чтобы Nav/Footer/hero «дышали» в светлой теме. */
+    --color-mts-dark: #ffffff;
+    --color-mts-navy: #ffffff;
+    --color-mts-navy-deep: #eef2f5;
+    --color-mts-frost: #0b1f2a;
+    --color-mts-slate-muted: #4a5d68;
+
+    --shadow-tech: 0 2px 8px rgba(11, 31, 42, 0.06);
+    --shadow-tech-lg: 0 6px 20px rgba(11, 31, 42, 0.08);
+    --shadow-accent: 0 4px 20px rgba(184, 94, 95, 0.18);
+  }
+
+  /*
+   * Плавные «склейки» между секциями раздела «О компании».
+   *
+   * В тёмной теме секции страницы — это плотные тёмные полотна с
+   * фотографиями и navy-overlay'ями; жёсткие границы между ними
+   * выглядят естественно. В светлой же теме `mts-navy` становится
+   * белым, и стык секций превращается в видимую линию.
+   *
+   * Чтобы этого избежать, в светлой теме мы накладываем поверх каждой
+   * секции в `.mts-about-shell` тонкие градиентные «вуали» сверху и
+   * снизу. Они идут от brand-surface (`mts-navy` = #ffffff в light) к
+   * прозрачному и закрывают стык, не затрагивая центральный контент.
+   *
+   * `pointer-events: none` гарантирует, что вуали не перехватывают
+   * клики/наведение — все интерактивные элементы внутри секций
+   * остаются полностью кликабельны.
+   */
+  :root[data-theme='light'] .mts-about-shell > section {
+    position: relative;
+  }
+  :root[data-theme='light'] .mts-about-shell > section::before,
+  :root[data-theme='light'] .mts-about-shell > section::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 96px;
+    pointer-events: none;
+    z-index: 5;
+  }
+  :root[data-theme='light'] .mts-about-shell > section::before {
+    top: 0;
+    background: linear-gradient(to bottom, var(--color-mts-navy) 0%, transparent 100%);
+  }
+  :root[data-theme='light'] .mts-about-shell > section::after {
+    bottom: 0;
+    background: linear-gradient(to top, var(--color-mts-navy) 0%, transparent 100%);
+  }
+  /* На hero-секции (первой) верхняя вуаль не нужна — над ней нет другой
+     секции, под которой надо было бы спрятать стык. */
+  :root[data-theme='light'] .mts-about-shell > section:first-child::before {
+    display: none;
+  }
+  /* На последней секции — аналогично снизу. */
+  :root[data-theme='light'] .mts-about-shell > section:last-child::after {
+    display: none;
+  }
+
+  .admin-shell {
+    --color-mts-bg: #f8f9fa;
+    --color-mts-surface: #ffffff;
+    --color-mts-text: #1c1c1e;
+    --color-mts-text-secondary: #6c757d;
+    --color-mts-text-muted: #adb5bd;
+    --color-mts-border: #dee2e6;
+    --color-mts-border-light: #e9ecef;
+    --color-mts-grid: #e9ecef;
+    color: var(--color-mts-text);
+    background-color: var(--color-mts-bg);
   }
 }
 
@@ -40,7 +183,7 @@
     @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-none border border-mts-border bg-white px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-2 rounded-none border border-mts-border bg-mts-surface px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
   }
 
   /**
@@ -50,32 +193,24 @@
     @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
   }
   .mts-cta-link-muted {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-mts-border bg-white px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-mts-border bg-mts-surface px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
   }
   /** То же, что mts-cta-link / muted, но меньше — три колонки на главной. */
   .mts-cta-link-compact {
     @apply inline-flex items-center justify-center gap-1 rounded-none border border-transparent bg-mts-accent px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
   }
   .mts-cta-link-muted-compact {
-    @apply inline-flex items-center justify-center gap-1 rounded-none border border-mts-border bg-white px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-1 rounded-none border border-mts-border bg-mts-surface px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
   }
 
   .section-label {
     @apply font-mono text-xs font-medium uppercase tracking-widest text-mts-text-secondary;
   }
 
-  /**
-   * Единый стиль нативных checkbox (border, акцент, focus ring).
-   * При необходимости выровнять с многострочным текстом: `mts-checkbox mt-0.5` или `mt-1`.
-   */
   .mts-checkbox {
-    @apply size-4 shrink-0 cursor-pointer rounded border border-mts-border bg-white accent-mts-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:opacity-50;
+    @apply size-4 shrink-0 cursor-pointer rounded border border-mts-border bg-mts-surface accent-mts-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:opacity-50;
   }
 
-  /**
-   * Контент из Markdown / TipTap (v-html после DOMPurify).
-   * Таблицы, подсветка, код, картинки и YouTube — в линии с админ-редактором.
-   */
   .mts-markdown {
     @apply max-w-none min-w-0 font-body text-mts-text;
     overflow-x: auto;
@@ -157,5 +292,39 @@
   }
   .mts-markdown :where([data-youtube-video] iframe) {
     @apply absolute inset-0 h-full w-full border-0;
+  }
+
+  /**
+   * TipTap в админке: марки `data-mts-tone` + классы темы.
+   * Глобально (не scoped), с токенами — иначе наследование `color` от `.admin-shell`
+   * и ненадёжный `v-bind` в SFC не дают видимого цвета в редакторе.
+   */
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='text'] {
+    color: var(--color-mts-text) !important;
+    -webkit-text-fill-color: var(--color-mts-text) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='textSecondary'] {
+    color: var(--color-mts-text-secondary) !important;
+    -webkit-text-fill-color: var(--color-mts-text-secondary) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='textMuted'] {
+    color: var(--color-mts-text-muted) !important;
+    -webkit-text-fill-color: var(--color-mts-text-muted) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='accent'] {
+    color: var(--color-mts-accent) !important;
+    -webkit-text-fill-color: var(--color-mts-accent) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='accentLight'] {
+    color: var(--color-mts-accent-light) !important;
+    -webkit-text-fill-color: var(--color-mts-accent-light) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='accentDark'] {
+    color: var(--color-mts-accent-dark) !important;
+    -webkit-text-fill-color: var(--color-mts-accent-dark) !important;
+  }
+  .admin-shell .tiptap.ProseMirror span[data-mts-tone='marker'] {
+    color: var(--color-mts-marker) !important;
+    -webkit-text-fill-color: var(--color-mts-marker) !important;
   }
 }

@@ -54,3 +54,8 @@ export function useConfirmAction() {
     dismiss,
   }
 }
+
+/** То же, что `useConfirmAction` — удобное имя для подтверждений в админке. */
+export function useConfirm() {
+  return useConfirmAction()
+}

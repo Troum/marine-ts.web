@@ -17,6 +17,10 @@
     "ctaContact": "Request a quote",
     "phoneDisplay": "+7 (4012) 35-52-90"
   },
+  "themeToggle": {
+    "switchToLight": "Switch to light theme",
+    "switchToDark": "Switch to dark theme"
+  },
   "footer": {
     "tagline": "Ship & crew management: manning, maintenance and repairs.",
     "sectionCompany": "Company",
@@ -126,6 +130,7 @@
       "toNewsList": "Back to news",
       "toProjects": "Back to projects",
       "toServices": "Back to services",
+      "backToLinePage": "Back to “{name}”",
       "toVacancies": "Back to vacancies",
       "toVacancy": "Back to vacancy",
       "requirements": "Requirements",
@@ -166,6 +171,7 @@
       "mission3": "Sustainable Management — a transition to green technologies on board and ashore.",
       "whyTitle": "Why Choose MTS?",
       "whyText": "We speak the language of results-driven shipowners. Our experience allows us to turn complex technical challenges into transparent and profitable business processes. If you are looking for a reliable management company capable of protecting your fleet and increasing its capitalisation — welcome aboard MTS.",
+      "statsHeading": "Company in figures",
       "certIsoQ": "Quality management system",
       "certIsoE": "Environmental management system",
       "certIsoS": "Occupational health and safety management system"
@@ -217,20 +223,51 @@
       "title": "Submit a ",
       "titleAccent": "request",
       "titleEnd": "",
-      "lead": "Fill in the form and we will get back to you with a solution for your ship management or crewing needs.",
-      "formTitle": "Request details",
-      "formLead": "Provide your contacts and a short description. Vessel and company fields help us respond faster.",
-      "labelName": "Contact person *",
-      "labelEmail": "Email *",
-      "labelPhone": "Phone",
-      "labelCompany": "Company / owner",
-      "labelVessel": "Vessel name",
-      "labelImo": "IMO",
-      "labelMessage": "Message *",
-      "placeholderMessage": "Scope, timeline, port or region…",
-      "submit": "Send request",
+      "lead": "We will quote ship management within 24 hours.",
+      "formTitle": "Submit a request",
+      "formSubtitle": "We will quote ship management within 24 hours",
+      "formLead": "We will answer your questions, prepare a tailored proposal and send a quote.",
+      "labelName": "Your name*",
+      "labelCompany": "Company*",
+      "labelPosition": "Position (optional)",
+      "labelPhone": "Phone*",
+      "labelEmail": "E-mail*",
+      "labelVesselTypes": "Vessel type *",
+      "labelVesselsCount": "Number of vessels*",
+      "labelVesselFlag": "Vessel flag*",
+      "labelMainPorts": "Main ports of call (optional)",
+      "labelRequiredServices": "Required services *",
+      "labelMessage": "Special requirements / comments (optional)",
+      "placeholderMessage": "For example: \"Urgent pre-PSC audit needed\", \"Crew with Arctic experience required\"",
+      "consent": "I agree with the ",
+      "consentLink": "Privacy Policy",
+      "submit": "Send",
       "success": "Your request has been sent. We will contact you shortly.",
-      "error": "Could not send the request. Please try again later or use the contacts in the site footer."
+      "error": "Could not send the request. Please try again later or use the contacts in the site footer.",
+      "afterTitle": "What happens next?",
+      "afterStep1": "A manager will contact you within 24 hours",
+      "afterStep2": "We will discuss the details and prepare a quote",
+      "afterStep3": "We will send a commercial proposal with a breakdown by service",
+      "urgentTitle": "Urgent?",
+      "urgentLead": "Call us right now:",
+      "noFormTitle": "Don't want to fill the form?",
+      "noFormLead": "Write to our email, we usually answer within 2 hours:",
+      "vesselTypes": {
+        "dry_cargo": "Dry cargo",
+        "tanker": "Tanker",
+        "container": "Container ship",
+        "tug": "Tug",
+        "service": "Service vessel",
+        "other": "Other"
+      },
+      "requiredServices": {
+        "technical": "Technical management (repair, docking, supply)",
+        "crewing": "Crewing (recruitment and training)",
+        "audit": "Audit and certification (ISM, ISPS, MLC)",
+        "commercial": "Commercial management (chartering, agents)",
+        "insurance": "Insurance (P&I, H&M)",
+        "other": "Other"
+      }
     },
     "services": {
       "heroEyebrow": "Service catalogue",
@@ -308,7 +345,8 @@
     "lineMarketing": {
       "shipHeroEyebrow": "Operations & maintenance",
       "crewingHeroEyebrow": "Manning & crew support",
-      "heroInquiryCta": "To the request form"
+      "heroInquiryCta": "To the request form",
+      "checklistSection": "Checklist criteria"
     },
     "crewing": {
       "heroTitle": "Crewing solutions and ",

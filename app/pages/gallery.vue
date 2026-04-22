@@ -3,7 +3,9 @@ import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import type { GalleryItem, ListingPageData, MarineContentLocale } from '~/types'
-import { defaultListingData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('gallery')
 
@@ -19,7 +21,16 @@ const { data: cmsPage } = await useAsyncData('gallery-page-cms', async () => {
 
 const cms = computed<ListingPageData>(() => {
   const body = cmsPage.value?.body
-  if (body) { try { const p = JSON.parse(body); if (p?.hero) return p } catch { /* */ } }
+  if (body) {
+    try {
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeListingPageData('gallery-page', loc.value, p)
+      }
+    } catch {
+      /* */
+    }
+  }
   return defaultListingData('gallery-page', loc.value)
 })
 
@@ -114,12 +125,11 @@ onUnmounted(() => {
           <span class="section-label">{{ t('pages.gallery.heroEyebrow') }}</span>
         </div>
         <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-          >{{ cms.hero.titleEnd }}
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
     </ListingHeroShell>
@@ -139,7 +149,7 @@ onUnmounted(() => {
           <li v-for="(item, index) in slidesList" :key="item.id">
             <button
               type="button"
-              class="group relative w-full overflow-hidden border border-mts-border bg-white shadow-tech text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent focus-visible:ring-offset-2"
+              class="group relative w-full overflow-hidden border border-mts-border bg-mts-surface shadow-tech text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent focus-visible:ring-offset-2"
               @click="openAt(index)"
             >
               <div class="aspect-[4/3] overflow-hidden bg-mts-bg">
@@ -161,6 +171,8 @@ onUnmounted(() => {
         </ul>
       </div>
     </section>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="gallery" />
 

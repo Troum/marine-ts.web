@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Calendar, User, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
 
 const route = useRoute()
@@ -78,7 +79,7 @@ const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category
         </div>
 
         <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
-          {{ article.title }}
+          <ThemedContentString :content="article.title" />
         </h1>
 
         <div class="mt-6 flex flex-wrap items-center gap-6 text-mts-text-secondary">
@@ -88,12 +89,12 @@ const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category
           </span>
           <span class="flex items-center gap-2 font-body text-sm">
             <User class="h-4 w-4" />
-            {{ article.author }}
+            <ThemedContentString :content="article.author" />
           </span>
         </div>
 
         <p class="mt-10 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ article.excerpt }}
+          <ThemedContentString :content="article.excerpt" />
         </p>
 
         <div v-if="article.content" class="prose-mts mt-10 space-y-6">

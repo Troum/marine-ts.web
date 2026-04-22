@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { NavigationMenuItem, NavigationMenuSettings } from '~/types'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
   layout: 'admin',
@@ -14,6 +15,7 @@ const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const { canManageNavigation } = useAdminPermissions()
 const { pathOptions, loadPathOptions } = useAdminPathOptions()
+const { confirm } = useConfirm()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -61,7 +63,15 @@ function addMain() {
   form.value.main.push(emptyItem())
 }
 
-function removeMain(i: number) {
+async function removeMain(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот пункт главного меню?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   form.value.main.splice(i, 1)
 }
 
@@ -81,7 +91,15 @@ function addMore() {
   form.value.more.push(emptyItem())
 }
 
-function removeMore(i: number) {
+async function removeMore(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот пункт блока «Ещё»?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   form.value.more.splice(i, 1)
 }
 
@@ -108,7 +126,15 @@ function addMainChild(i: number) {
   row.children.push(emptyItem())
 }
 
-function removeMainChild(i: number, ci: number) {
+async function removeMainChild(i: number, ci: number) {
+  const ok = await confirm({
+    message: 'Удалить этот подпункт?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   const row = form.value.main[i]
   if (!row?.children) {
     return
@@ -119,7 +145,15 @@ function removeMainChild(i: number, ci: number) {
   }
 }
 
-function clearMainChildren(i: number) {
+async function clearMainChildren(i: number) {
+  const ok = await confirm({
+    message: 'Удалить все подпункты у этого пункта?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   const row = form.value.main[i]
   if (row) {
     delete row.children
@@ -203,25 +237,13 @@ async function submit() {
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Подпись (RU)</label
               >
-              <input
-                v-model="row.label.ru"
-                type="text"
-                required
-                maxlength="120"
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+              <AdminThemedTextField v-model="row.label.ru" :multiline="false" />
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Подпись (EN)</label
               >
-              <input
-                v-model="row.label.en"
-                type="text"
-                required
-                maxlength="120"
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+              <AdminThemedTextField v-model="row.label.en" :multiline="false" />
             </div>
 
             <div class="sm:col-span-2 border-t border-mts-border pt-4 mt-1">
@@ -282,25 +304,13 @@ async function submit() {
                     <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                       >Подпись (RU)</label
                     >
-                    <input
-                      v-model="child.label.ru"
-                      type="text"
-                      required
-                      maxlength="120"
-                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
-                    />
+                    <AdminThemedTextField v-model="child.label.ru" :multiline="false" />
                   </div>
                   <div>
                     <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                       >Подпись (EN)</label
                     >
-                    <input
-                      v-model="child.label.en"
-                      type="text"
-                      required
-                      maxlength="120"
-                      class="w-full border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
-                    />
+                    <AdminThemedTextField v-model="child.label.en" :multiline="false" />
                   </div>
                   <div class="sm:col-span-2 flex justify-end">
                     <button
@@ -367,25 +377,13 @@ async function submit() {
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Подпись (RU)</label
               >
-              <input
-                v-model="row.label.ru"
-                type="text"
-                required
-                maxlength="120"
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+              <AdminThemedTextField v-model="row.label.ru" :multiline="false" />
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Подпись (EN)</label
               >
-              <input
-                v-model="row.label.en"
-                type="text"
-                required
-                maxlength="120"
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+              <AdminThemedTextField v-model="row.label.en" :multiline="false" />
             </div>
             <div class="sm:col-span-2 flex justify-end">
               <button

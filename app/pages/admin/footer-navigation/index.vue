@@ -4,6 +4,7 @@ import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { FooterMenuSettings, FooterNavLink } from '~/types'
 import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
 import { emptyFooterMenuSettings } from '~/utils/emptyFooterMenuSettings'
+import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
@@ -12,6 +13,7 @@ const { pathOptions, loadPathOptions } = useAdminPathOptions()
 const { show: showAdminAlert } = useAdminAlert()
 const adminToast = useAdminToast()
 const { canManageNavigation } = useAdminPermissions()
+const { confirm } = useConfirm()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -59,7 +61,15 @@ function addLink(colIndex: number) {
   form.value.columns[colIndex]?.links.push(emptyLink())
 }
 
-function removeLink(colIndex: number, li: number) {
+async function removeLink(colIndex: number, li: number) {
+  const ok = await confirm({
+    message: 'Удалить эту ссылку?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   const col = form.value.columns[colIndex]
   if (!col) {
     return
@@ -71,7 +81,15 @@ function addLegal() {
   form.value.legal.push(emptyLink())
 }
 
-function removeLegal(i: number) {
+async function removeLegal(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту ссылку в юридическом блоке?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
   form.value.legal.splice(i, 1)
 }
 
@@ -144,11 +162,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="grid gap-4 sm:grid-cols-2 mb-6">
             <div>
               <label :class="sectionLabel">Заголовок колонки (RU)</label>
-              <input v-model="col.title.ru" required :class="sectionInput" />
+              <AdminThemedTextField v-model="col.title.ru" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Заголовок колонки (EN)</label>
-              <input v-model="col.title.en" required :class="sectionInput" />
+              <AdminThemedTextField v-model="col.title.en" :multiline="false" />
             </div>
           </div>
           <div class="space-y-4">
@@ -170,11 +188,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label :class="sectionLabel">Подпись (RU)</label>
-                  <input v-model="link.label.ru" required maxlength="120" :class="sectionInput" />
+                  <AdminThemedTextField v-model="link.label.ru" :multiline="false" />
                 </div>
                 <div>
                   <label :class="sectionLabel">Подпись (EN)</label>
-                  <input v-model="link.label.en" required maxlength="120" :class="sectionInput" />
+                  <AdminThemedTextField v-model="link.label.en" :multiline="false" />
                 </div>
               </div>
               <AdminNavPathPick v-model="link.path" :path-options="pathOptions" />
@@ -201,11 +219,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label :class="sectionLabel">Подпись (RU)</label>
-                  <input v-model="link.label.ru" required maxlength="120" :class="sectionInput" />
+                  <AdminThemedTextField v-model="link.label.ru" :multiline="false" />
                 </div>
                 <div>
                   <label :class="sectionLabel">Подпись (EN)</label>
-                  <input v-model="link.label.en" required maxlength="120" :class="sectionInput" />
+                  <AdminThemedTextField v-model="link.label.en" :multiline="false" />
                 </div>
               </div>
               <AdminNavPathPick v-model="link.path" :path-options="pathOptions" />

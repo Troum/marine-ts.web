@@ -16,7 +16,7 @@ const { t } = useI18n()
 const minExtra = 1
 
 const fieldClass =
-  'w-full border border-mts-border bg-white px-3 py-2 text-sm text-mts-text placeholder:text-mts-text-muted/70 focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
+  'w-full border border-mts-border bg-mts-bg px-3 py-2 text-sm text-mts-text placeholder:text-mts-text-muted/70 focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
 
 function addExtra() {
   extraRows.value.push(emptyCertRowExtra())
@@ -31,7 +31,7 @@ function removeExtra(index: number) {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-mts-border bg-white shadow-sm">
+  <section class="overflow-hidden rounded-xl border border-mts-border bg-mts-surface shadow-sm">
     <header class="border-b border-mts-border bg-gradient-to-r from-mts-bg to-white px-5 py-4">
       <h3 class="font-display text-lg leading-snug text-mts-text">
         {{ title }}
@@ -123,7 +123,7 @@ function removeExtra(index: number) {
 
         <button
           type="button"
-          class="mt-4 inline-flex w-full items-center justify-center gap-2 border border-mts-border border-dashed bg-white px-4 py-3 font-mono text-xs uppercase tracking-wide text-mts-accent transition-colors hover:border-mts-accent hover:bg-mts-accent/5 sm:w-auto"
+          class="mt-4 inline-flex w-full items-center justify-center gap-2 border border-mts-border border-dashed bg-mts-surface px-4 py-3 font-mono text-xs uppercase tracking-wide text-mts-accent transition-colors hover:border-mts-accent hover:bg-mts-accent/5 sm:w-auto"
           @click="addExtra"
         >
           <Plus class="h-4 w-4" />

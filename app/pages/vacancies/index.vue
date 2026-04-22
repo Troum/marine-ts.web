@@ -3,7 +3,9 @@ import { MapPin, Briefcase, Loader2, ArrowRight } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import type { MarineContentLocale, VacancyItem, VacanciesPageData } from '~/types'
-import { defaultListingData } from '~/utils/pageDefaults'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
 
 useSiteSeoMeta('vacancies')
 
@@ -28,9 +30,9 @@ const cms = computed<VacanciesPageData>(() => {
   const body = cmsPage.value?.body
   if (body) {
     try {
-      const p = JSON.parse(body)
-      if (p?.hero) {
-        return p as VacanciesPageData
+      const p = JSON.parse(body) as unknown
+      if (p && typeof p === 'object' && 'hero' in (p as object)) {
+        return mergeListingPageData('vacancies-page', loc.value, p) as VacanciesPageData
       }
     } catch {
       /* use defaults */
@@ -70,12 +72,11 @@ onMounted(load)
           <span class="section-label">{{ t('pages.vacancies.labelCareer') }}</span>
         </div>
         <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
-          {{ cms.hero.title }}<span class="text-mts-accent">{{ cms.hero.titleAccent }}</span
-          >{{ cms.hero.titleEnd }}
+          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
         <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
-          {{ cms.hero.lead }}
+          <ThemedContentString :content="cms.hero.lead" />
         </p>
         <div class="mt-8">
           <NuxtLink :to="applicationFormHref" class="btn-primary inline-flex items-center justify-center">
@@ -112,15 +113,15 @@ onMounted(load)
             </div>
             <h2 class="font-display text-lg text-mts-text leading-snug">
               <NuxtLink :to="localePath(`/vacancies/${v.slug}`)" class="text-mts-text">
-                {{ v.title }}
+                <ThemedContentString :content="v.title" />
               </NuxtLink>
             </h2>
             <p class="mt-3 line-clamp-3 font-body text-sm leading-relaxed text-mts-text-secondary">
-              {{ v.excerpt }}
+              <ThemedContentString :content="v.excerpt" />
             </p>
             <div v-if="v.location" class="mt-4 flex items-center gap-2 font-body text-xs text-mts-text-secondary">
               <MapPin class="h-3.5 w-3.5 shrink-0 text-mts-accent/80" aria-hidden="true" />
-              {{ v.location }}
+              <ThemedContentString :content="v.location" />
             </div>
             <NuxtLink
               :to="localePath(`/vacancies/${v.slug}`)"
@@ -133,17 +134,19 @@ onMounted(load)
       </div>
     </section>
 
-    <section class="relative border-t border-mts-border bg-white py-16">
+    <section class="relative border-t border-mts-border bg-mts-surface py-16">
       <div class="mx-auto max-w-4xl px-6 text-center">
         <h2 class="font-display mb-4 text-2xl text-mts-text">
-          {{ cms.cta?.title || t('pages.vacancies.ctaTitle') }}
+          <ThemedContentString :content="cms.cta?.title || t('pages.vacancies.ctaTitle')" />
         </h2>
         <NuxtLink :to="localePath('/request')" class="btn-primary group inline-flex items-center">
-          {{ cms.cta?.buttonText || t('pages.vacancies.ctaButton') }}
+          <ThemedContentString :content="cms.cta?.buttonText || t('pages.vacancies.ctaButton')" />
           <ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </NuxtLink>
       </div>
     </section>
+
+    <CommonCustomPageSectionsRender :sections="cms.customSections" />
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="vacancies" />
   </div>
