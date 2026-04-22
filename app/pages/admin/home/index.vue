@@ -247,8 +247,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div><label :class="sectionLabel">CTA моряк (анкета)</label><AdminThemedTextField v-model="d.hero.ctaSeafarer" :multiline="false" /></div>
             </div>
             <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Ссылка CTA клиента</label><AdminThemedTextField v-model="d.hero.ctaClientHref" :multiline="false" /></div>
-              <div><label :class="sectionLabel">Ссылка CTA моряка</label><AdminThemedTextField v-model="d.hero.ctaSeafarerHref" :multiline="false" /></div>
+              <div>
+                <label :class="sectionLabel">Ссылка CTA клиента</label>
+                <input v-model="d.hero.ctaClientHref" type="text" :class="sectionInput" placeholder="/contacts" />
+              </div>
+              <div>
+                <label :class="sectionLabel">Ссылка CTA моряка</label>
+                <input v-model="d.hero.ctaSeafarerHref" type="text" :class="sectionInput" placeholder="/vacancies" />
+              </div>
             </div>
             <div class="grid md:grid-cols-3 gap-4">
               <div><label :class="sectionLabel">Бейдж ISO</label><AdminThemedTextField v-model="d.hero.badgeIso" :multiline="false" /></div>

@@ -10,6 +10,7 @@ import type {
 } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import { defaultLinePageData, mergeLinePageData } from '~/utils/pageDefaults'
+import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
@@ -842,17 +843,19 @@ function directionPreviewPath(detailSlug: string) {
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <label :class="sectionLabel">Иконка</label>
-                  <AdminSelect v-model="row.icon" :options="crewingIconSelectOptions" />
+                  <AdminIconSelect
+                    :icon="row.icon"
+                    :hide-icon="row.hideIcon"
+                    :options="crewingIconSelectOptions"
+                    @update:icon="(v) => (row.icon = v)"
+                    @update:hide-icon="(v) => (row.hideIcon = v)"
+                  />
                 </div>
                 <div>
                   <label :class="sectionLabel">Заголовок</label>
                   <AdminThemedTextField v-model="row.title" :multiline="false" />
                 </div>
               </div>
-              <label class="flex cursor-pointer items-center gap-2 font-body text-xs text-mts-text-secondary">
-                <input v-model="row.hideIcon" type="checkbox" class="mts-checkbox" />
-                Без иконки
-              </label>
               <div>
                 <label :class="sectionLabel">Текст</label>
                 <AdminThemedTextField v-model="row.text" />
@@ -988,8 +991,10 @@ function directionPreviewPath(detailSlug: string) {
               <label :class="sectionLabel">Заголовок блока</label>
               <AdminThemedTextField v-model="d.principles.title" :multiline="false" />
             </div>
-            <div v-for="(line, pi) in d.principles.items" :key="pi" class="flex gap-2">
-              <AdminThemedTextField v-model="d.principles.items[pi]" />
+            <div v-for="(line, pi) in d.principles.items" :key="pi" class="flex items-stretch gap-2">
+              <div class="min-w-0 flex-1">
+                <AdminThemedTextField v-model="d.principles.items[pi]" :multiline="false" />
+              </div>
               <button
                 v-if="d.principles.items.length > 1"
                 type="button"
@@ -1037,7 +1042,12 @@ function directionPreviewPath(detailSlug: string) {
               </div>
               <div>
                 <label :class="sectionLabel">Ссылка кнопки (путь, напр. /contacts)</label>
-                <AdminThemedTextField v-model="d.audience.ctaHref" :multiline="false" />
+                <input
+                  v-model="d.audience.ctaHref"
+                  type="text"
+                  :class="sectionInput"
+                  placeholder="/contacts"
+                />
               </div>
             </div>
           </div>
@@ -1176,17 +1186,19 @@ function directionPreviewPath(detailSlug: string) {
                     <div class="grid gap-4 md:grid-cols-2">
                       <div>
                         <label :class="sectionLabel">Иконка</label>
-                        <AdminSelect v-model="card.icon" :options="crewingIconSelectOptions" />
+                        <AdminIconSelect
+                          :icon="card.icon"
+                          :hide-icon="card.hideIcon"
+                          :options="crewingIconSelectOptions"
+                          @update:icon="(v) => (card.icon = v)"
+                          @update:hide-icon="(v) => (card.hideIcon = v)"
+                        />
                       </div>
                       <div>
                         <label :class="sectionLabel">Заголовок</label>
                         <AdminThemedTextField v-model="card.title" :multiline="false" />
                       </div>
                     </div>
-                    <label class="flex cursor-pointer items-center gap-2 font-body text-xs text-mts-text-secondary">
-                      <input v-model="card.hideIcon" type="checkbox" class="mts-checkbox" />
-                      Без иконки
-                    </label>
                     <div>
                       <label :class="sectionLabel">Текст</label>
                       <AdminThemedTextField v-model="card.text" />

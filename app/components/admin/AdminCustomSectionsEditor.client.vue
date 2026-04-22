@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import { useConfirm } from '~/composables/useConfirmAction'
@@ -415,17 +416,19 @@ function blockTypeLabel(b: CustomPageBlock): string {
                 <div class="grid gap-4 md:grid-cols-2">
                   <div>
                     <label :class="sectionLabel">Иконка</label>
-                    <AdminSelect v-model="card.icon" :options="crewingIconSelectOptions" />
+                    <AdminIconSelect
+                      :icon="card.icon"
+                      :hide-icon="card.hideIcon"
+                      :options="crewingIconSelectOptions"
+                      @update:icon="(v) => (card.icon = v)"
+                      @update:hide-icon="(v) => (card.hideIcon = v)"
+                    />
                   </div>
                   <div>
                     <label :class="sectionLabel">Заголовок</label>
                     <AdminThemedTextField v-model="card.title" :multiline="false" />
                   </div>
                 </div>
-                <label class="flex cursor-pointer items-center gap-2 font-body text-xs text-mts-text-secondary">
-                  <input v-model="card.hideIcon" type="checkbox" class="mts-checkbox" />
-                  Без иконки
-                </label>
                 <div>
                   <label :class="sectionLabel">Текст</label>
                   <AdminThemedTextField v-model="card.text" />

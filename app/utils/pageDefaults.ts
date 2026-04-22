@@ -22,6 +22,7 @@ import {
   DEFAULT_CREWING_CHECKLIST_SECTIONS_EN,
   DEFAULT_CREWING_CHECKLIST_SECTIONS_RU,
 } from '~/utils/crewingChecklistDefaults'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 import { normalizeCustomPageSections } from '~/utils/customPageSections'
 import { SHIP_MANAGEMENT_DEFAULTS } from '~/utils/extraLinePageDefaults'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
@@ -1083,7 +1084,16 @@ export function mergeLinePageData(
           ? p.principles.items
           : base.principles.items,
     },
-    audience: { ...base.audience, ...p.audience },
+    audience: {
+      ...base.audience,
+      ...p.audience,
+      /* ctaHref — URL: исторически мог быть сохранён как HTML (через AdminThemedTextField).
+         Срезаем теги к плейн-строке, чтобы новый <input type="text"> показывал чистый путь. */
+      ctaHref:
+        typeof p.audience?.ctaHref === 'string'
+          ? stripHtmlToPlain(p.audience.ctaHref).trim()
+          : base.audience.ctaHref,
+    },
     checklist,
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
     heroBackgroundImage:

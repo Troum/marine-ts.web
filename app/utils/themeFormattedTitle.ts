@@ -16,6 +16,12 @@ import type {
   ThemeTitleSpan,
   ThemeTitleTone,
 } from '~/types'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
+
+/** Локальный helper: строка → plain без тегов и whitespace по краям. */
+function stripHtmlToPlainTrim(raw: string): string {
+  return stripHtmlToPlain(raw).trim()
+}
 
 const TONES: ThemeTitleTone[] = [
   'text',
@@ -294,9 +300,12 @@ export function mergeHomeHero(parsed: Partial<HomeHero> | undefined, base: HomeH
     titleFormatted,
     lead: typeof h.lead === 'string' ? h.lead : base.lead,
     ctaClient: typeof h.ctaClient === 'string' ? h.ctaClient : (h.ctaConsult as string) ?? base.ctaClient,
-    ctaClientHref: typeof h.ctaClientHref === 'string' ? h.ctaClientHref : '/request',
+    /* href — URL: ранее ввод шёл через AdminThemedTextField и мог содержать HTML.
+       Срезаем теги к плейн-строке перед отдачей в форму. */
+    ctaClientHref: typeof h.ctaClientHref === 'string' ? stripHtmlToPlainTrim(h.ctaClientHref) : '/request',
     ctaSeafarer: typeof h.ctaSeafarer === 'string' ? h.ctaSeafarer : (h.ctaServices as string) ?? base.ctaSeafarer,
-    ctaSeafarerHref: typeof h.ctaSeafarerHref === 'string' ? h.ctaSeafarerHref : '/application-form',
+    ctaSeafarerHref:
+      typeof h.ctaSeafarerHref === 'string' ? stripHtmlToPlainTrim(h.ctaSeafarerHref) : '/application-form',
     badgeIso: typeof h.badgeIso === 'string' ? h.badgeIso : base.badgeIso,
     badgeIacs: typeof h.badgeIacs === 'string' ? h.badgeIacs : base.badgeIacs,
     badgeYears: typeof h.badgeYears === 'string' ? h.badgeYears : base.badgeYears,

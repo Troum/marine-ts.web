@@ -109,10 +109,26 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-3">
     <p v-if="!compact" class="font-body text-xs text-mts-text-secondary">
-      Выделите слова, откройте палитру в тулбаре и выберите цвет текста или подсветку.
+      Выделите слова, откройте палитру и выберите цвет текста или подсветку.
     </p>
 
+    <!--
+      Однострочный режим (заголовок, текст кнопки и т.п.) — поповер слева от поля,
+      экономит вертикаль и аккуратно выглядит для коротких строк.
+      Многострочный (лиды, абзацы) — тулбар сверху как раньше.
+    -->
     <div
+      v-if="!multiline"
+      class="flex items-stretch rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
+    >
+      <div class="flex shrink-0 items-center border-r border-mts-border/60 bg-white/60 px-2">
+        <AdminColorTextPopover :editor="editor as Editor | null" />
+      </div>
+      <EditorContent v-if="editor" :editor="editor" class="admin-html-tiptap-field min-w-0 flex-1" />
+    </div>
+
+    <div
+      v-else
       class="rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex flex-wrap items-center gap-2 border-b border-mts-border/60 bg-white/60 px-2 py-1.5">
