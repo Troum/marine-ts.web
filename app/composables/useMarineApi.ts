@@ -189,7 +189,7 @@ export function useMarineApi() {
 
   return {
     async login(username: string, password: string) {
-      const data = await $fetch<{
+      type LoginPayload = {
         token: string
         user: {
           id: number
@@ -198,20 +198,34 @@ export function useMarineApi() {
           roles?: string[]
           permissions?: string[]
         }
-      }>(`${resolveApiBase()}/auth/login`, {
+      }
+      /*
+       * Бэкенд оборачивает ответ в `{ data: { token, user } }`.
+       * Поддерживаем обе формы (с обёрткой и без), чтобы не сломаться при изменении контракта.
+       */
+      const raw = await $fetch<LoginPayload | { data: LoginPayload }>(`${resolveApiBase()}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: { username, password },
       })
-      setToken(data.token)
+      const payload: LoginPayload =
+        raw && typeof raw === 'object' && 'data' in raw && (raw as { data?: unknown }).data
+          ? (raw as { data: LoginPayload }).data
+          : (raw as LoginPayload)
+
+      if (!payload?.token || !payload?.user) {
+        throw new Error('Login response missing token/user')
+      }
+
+      setToken(payload.token)
       if (import.meta.client) {
-        writeAdminPermissionsToBothStorages(data.user.permissions ?? [])
-        writeAdminRolesToBothStorages(data.user.roles ?? [])
-        const uid = String(data.user.id)
+        writeAdminPermissionsToBothStorages(payload.user.permissions ?? [])
+        writeAdminRolesToBothStorages(payload.user.roles ?? [])
+        const uid = String(payload.user.id)
         sessionStorage.setItem(ADMIN_USER_ID_KEY, uid)
         localStorage.setItem(ADMIN_USER_ID_KEY, uid)
       }
-      return data
+      return payload
     },
     logout() {
       setToken(null)
