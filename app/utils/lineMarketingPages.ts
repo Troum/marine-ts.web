@@ -18,12 +18,12 @@ export const LINE_MARKETING_PAGE_LAYOUT: Record<
   { heroBg: string; navI18nKey: string; heroEyebrowI18nKey: string }
 > = {
   'crewing-management': {
-    heroBg: '/hero-crewing-bg.jpeg',
+    heroBg: '',
     navI18nKey: 'nav.crewing',
     heroEyebrowI18nKey: 'pages.lineMarketing.crewingHeroEyebrow',
   },
   'ship-management': {
-    heroBg: '/images/marin-figma/hero-ship.jpg',
+    heroBg: '',
     navI18nKey: 'nav.shipManagement',
     heroEyebrowI18nKey: 'pages.lineMarketing.shipHeroEyebrow',
   },

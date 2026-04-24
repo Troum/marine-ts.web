@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { Config } from 'dompurify'
 import DOMPurify from 'isomorphic-dompurify'
-import type { ThemeFormattedTitle } from '~/types'
+import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
+import type { ThemeFormattedTitle as ThemeFormattedTitleModel } from '~/types'
 import { normalizeThemeFormattedTitle } from '~/utils/themeFormattedTitle'
 
 const props = defineProps<{
@@ -19,7 +20,7 @@ const THEMED_INLINE_CONFIG: Config = {
   ALLOWED_ATTR: ['class', 'data-mts-tone', 'style'],
 }
 
-const parsedTft = computed<ThemeFormattedTitle | null>(() => {
+const parsedTft = computed<ThemeFormattedTitleModel | null>(() => {
   const raw = props.content ?? ''
   if (!raw.trimStart().startsWith('{')) {
     return null

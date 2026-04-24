@@ -175,14 +175,14 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
     class="relative scroll-mt-24 overflow-hidden border-t border-mts-border bg-mts-surface"
     :class="hideIntro ? 'py-16 lg:py-20' : 'py-24 lg:py-32'"
   >
-    <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-      <div class="mx-auto w-full max-w-4xl">
+    <div class="relative z-10 mts-content-wrap">
+      <div class="mx-auto w-full max-w-7xl">
         <div v-if="!hideIntro" class="mb-10">
           <div class="mb-4 flex items-center gap-3">
             <div class="h-px w-8 bg-mts-accent" />
             <span class="section-label">{{ t('pages.pageInquiry.sectionLabel') }}</span>
           </div>
-          <h2 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
+          <h2 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
             {{ t('pages.pageInquiry.title') }}<span class="text-mts-accent">{{ t('pages.pageInquiry.titleAccent') }}</span
             >{{ t('pages.pageInquiry.titleEnd') }}
           </h2>
@@ -194,7 +194,7 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
 
         <div class="border border-mts-border bg-mts-bg p-8 lg:p-10">
           <div class="mb-8 text-center">
-            <h3 class="font-display text-2xl text-mts-text lg:text-3xl">
+            <h3 class="font-display text-xl text-mts-text lg:text-2xl">
               {{ t('pages.pageInquiry.formTitle') }}
             </h3>
             <p class="mt-3 font-body text-sm font-semibold text-mts-text lg:text-base">

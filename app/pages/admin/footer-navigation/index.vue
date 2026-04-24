@@ -136,7 +136,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto flex h-16 max-w-4xl items-center px-6 lg:px-12">
+      <div class="mx-auto flex h-16 max-w-7xl items-center px-6 lg:px-12">
         <NuxtLink to="/admin" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
           <ArrowLeft class="h-5 w-5" />
         </NuxtLink>
@@ -144,7 +144,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       </div>
     </header>
 
-    <main class="mx-auto max-w-4xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>

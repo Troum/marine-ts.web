@@ -2,6 +2,17 @@ import { Mark, mergeAttributes, type JSONContent } from '@tiptap/core'
 import type { ThemeFormattedTitle, ThemeTitleSpan, ThemeTitleTone } from '~/types'
 import { THEME_TITLE_TONE_CLASSES, emptyThemeTitle, isThemeTitleTone } from '~/utils/themeFormattedTitle'
 
+/** CSS-переменные тона — общие для ThemeToneMark и SSR-сериализации в HTML. */
+export const THEME_TONE_CSS_VARS: Record<ThemeTitleTone, string> = {
+  text: 'var(--color-mts-text)',
+  textSecondary: 'var(--color-mts-text-secondary)',
+  textMuted: 'var(--color-mts-text-muted)',
+  accent: 'var(--color-mts-accent)',
+  accentLight: 'var(--color-mts-accent-light)',
+  accentDark: 'var(--color-mts-accent-dark)',
+  marker: 'var(--color-mts-marker)',
+}
+
 /** Inline-mark цвета темы Marin (только допустимые тона). */
 export const ThemeToneMark = Mark.create({
   name: 'themeTone',
@@ -39,21 +50,13 @@ export const ThemeToneMark = Mark.create({
      * На публичном сайте --color-mts-* подставляется тёмной/светлой темой —
      * цвет всегда корректный.
      */
-    const cssVarByTone: Record<ThemeTitleTone, string> = {
-      text: 'var(--color-mts-text)',
-      textSecondary: 'var(--color-mts-text-secondary)',
-      textMuted: 'var(--color-mts-text-muted)',
-      accent: 'var(--color-mts-accent)',
-      accentLight: 'var(--color-mts-accent-light)',
-      accentDark: 'var(--color-mts-accent-dark)',
-      marker: 'var(--color-mts-marker)',
-    }
+    const v = THEME_TONE_CSS_VARS[tone]
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
         'data-mts-tone': tone,
         class: cls,
-        style: `color: ${cssVarByTone[tone]}; -webkit-text-fill-color: ${cssVarByTone[tone]};`,
+        style: `color: ${v}; -webkit-text-fill-color: ${v};`,
       }),
       0,
     ]
@@ -91,6 +94,45 @@ export function themeTitleToTiptapDoc(title: ThemeFormattedTitle): JSONContent {
     type: 'doc',
     content: [{ type: 'paragraph', content: content.length > 0 ? content : [] }],
   }
+}
+
+function escapeHtmlText(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+/**
+ * Документ из `themeTitleToTiptapDoc` → HTML без TipTap `generateHTML`
+ * (на SSR нет `window`; разметка совпадает с ThemeToneMark + Paragraph + HardBreak).
+ */
+export function serializeThemeTitleTiptapDocToHtml(doc: JSONContent): string {
+  const first = doc.content?.[0]
+  if (!first || first.type !== 'paragraph') {
+    return '<p></p>'
+  }
+  const chunks: string[] = []
+  for (const node of first.content ?? []) {
+    if (node.type === 'hardBreak') {
+      chunks.push('<br class="mts-hard-break">')
+      continue
+    }
+    if (node.type === 'text' && node.text != null && node.text !== '') {
+      const marks = node.marks ?? []
+      const themeM = marks.find((m) => m.type === 'themeTone')
+      const toneRaw = themeM?.attrs?.tone
+      const tone: ThemeTitleTone = isThemeTitleTone(toneRaw) ? toneRaw : 'text'
+      const cls = THEME_TITLE_TONE_CLASSES[tone]
+      const v = THEME_TONE_CSS_VARS[tone]
+      const style = `color: ${v}; -webkit-text-fill-color: ${v};`
+      chunks.push(
+        `<span data-mts-tone="${tone}" class="${cls}" style="${style}">${escapeHtmlText(node.text)}</span>`,
+      )
+    }
+  }
+  return `<p>${chunks.join('')}</p>`
 }
 
 export function themeTitleFromTiptapDoc(doc: JSONContent | null | undefined): ThemeFormattedTitle {

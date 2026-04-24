@@ -194,7 +194,7 @@ const statCards = computed(() => [
                 <BarChart3 class="h-5 w-5 text-mts-accent" />
                 <h2 class="font-display text-xl text-mts-text">Просмотры публичного сайта</h2>
               </div>
-              <p class="font-body text-sm text-mts-text-secondary max-w-2xl">
+              <p class="font-body text-sm text-mts-text-secondary max-w-7xl">
                 Данные из собственного счётчика (маршруты без <span class="font-mono text-xs">/admin</span>). Внешняя
                 аналитика (GA / Plausible) ведётся отдельно.
               </p>

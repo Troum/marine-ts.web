@@ -1,9 +1,19 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
+import { ArrowLeft, Loader2 } from 'lucide-vue-next'
+import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type { ContactsPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
-import { defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
+import {
+  themeFormattedTitleToThemedHtml,
+  themedHtmlToThemeFormattedTitle,
+} from '~/utils/themedHtmlToThemeFormattedTitle'
+import {
+  CONTACTS_SECTION_ADMIN_LABELS,
+  CONTACTS_SECTION_DEFAULT_ORDER,
+  defaultContactsData,
+  mergeContactsPageData,
+} from '~/utils/pageDefaults'
+import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 const SLUG = 'contacts-page'
 
@@ -28,9 +38,62 @@ const data = ref<Record<MarineContentLocale, ContactsPageData>>({
 
 const d = computed(() => data.value[localeTab.value])
 
-const collapsed = ref<Record<string, boolean>>({ hero: false, sections: true })
+/** Hero-заголовок TFT ↔ HTML того же TipTap, что и `AdminThemedTextField`. */
+const heroTitleFormattedWire = computed({
+  get() {
+    return themeFormattedTitleToThemedHtml(data.value[localeTab.value].hero.titleFormatted)
+  },
+  set(html: string) {
+    data.value[localeTab.value].hero.titleFormatted = themedHtmlToThemeFormattedTitle(html)
+  },
+})
+
+const collapsed = ref<Record<string, boolean>>({ hero: false, contacts: true })
 function toggle(s: string) {
   collapsed.value[s] = !collapsed.value[s]
+}
+
+const effectiveSectionOrder = computed<string[]>(() => {
+  const cur = data.value[localeTab.value]
+  return resolveSectionOrder(cur.sectionOrder, CONTACTS_SECTION_DEFAULT_ORDER, cur.customSections)
+})
+
+function sectionVisible(id: string): boolean {
+  return isSectionVisible(data.value[localeTab.value].sectionVisibility, id)
+}
+
+function setSectionVisible(id: string, v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const cur = data.value[loc].sectionVisibility ?? {}
+    data.value[loc].sectionVisibility = { ...cur, [id]: v }
+  }
+}
+
+function indexInOrder(id: string): number {
+  return effectiveSectionOrder.value.indexOf(id)
+}
+
+function canMove(id: string, delta: number): boolean {
+  const idx = indexInOrder(id)
+  if (idx < 0) return false
+  const j = idx + delta
+  return j >= 0 && j < effectiveSectionOrder.value.length
+}
+
+function moveSection(id: string, delta: number) {
+  const order = effectiveSectionOrder.value
+  const idx = order.indexOf(id)
+  if (idx < 0) return
+  const next = moveOrderItem(order, idx, delta)
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].sectionOrder = [...next]
+  }
+}
+
+function sectionTitle(id: string): string {
+  const pos = indexInOrder(id) + 2
+  const label = CONTACTS_SECTION_ADMIN_LABELS[id as keyof typeof CONTACTS_SECTION_ADMIN_LABELS] ?? id
+  return `${pos}. ${label}`
 }
 
 onMounted(async () => {
@@ -56,11 +119,16 @@ onMounted(async () => {
 })
 
 async function submit() {
-  const inq = data.value[localeTab.value].showInquiryForm
-  const heroImg = data.value[localeTab.value].heroImage
+  const src = data.value[localeTab.value]
+  const inq = src.showInquiryForm
+  const heroImg = src.heroImage
+  const order = src.sectionOrder
+  const visibility = src.sectionVisibility
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
     data.value[loc].heroImage = heroImg
+    data.value[loc].sectionOrder = order ? [...order] : undefined
+    data.value[loc].sectionVisibility = visibility ? { ...visibility } : undefined
   }
   saving.value = true
   try {
@@ -124,34 +192,43 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- Hero -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('hero')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Hero-блок</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
-          </button>
-          <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <!-- 1. HERO — фиксирована, не скрывается, не переносится. -->
+        <AdminCollapsibleSection
+          title="1. Hero-блок"
+          :collapsed="collapsed.hero"
+          @update:collapsed="(v) => (collapsed.hero = v)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
             <div>
               <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
-              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
+              <AdminThemedTextField
+                v-model="heroTitleFormattedWire"
+                :multiline="false"
+                :compact="false"
+                use-theme-tone-popover
+              />
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
               <AdminThemedTextField v-model="d.hero.lead" />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- Contact sections -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('sections')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. Секции контактов</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.sections }" />
-          </button>
-          <div v-show="!collapsed.sections" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('contacts')"
+          :collapsed="collapsed.contacts"
+          :visible="sectionVisible('contacts')"
+          :can-move-up="canMove('contacts', -1)"
+          :can-move-down="canMove('contacts', 1)"
+          @update:collapsed="(v) => (collapsed.contacts = v)"
+          @update:visible="(v) => setSectionVisible('contacts', v)"
+          @move-up="moveSection('contacts', -1)"
+          @move-down="moveSection('contacts', 1)"
+        >
+          <div class="space-y-4">
             <div>
               <label :class="sectionLabel">Заголовок блока контактной информации</label>
               <AdminThemedTextField v-model="d.infoTitle" :multiline="false" />
@@ -169,7 +246,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.officesTitle" :multiline="false" />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <AdminCustomSectionsEditor
           :model-value="d.customSections ?? []"

@@ -3,6 +3,7 @@ import {type Editor, EditorContent, useEditor} from '@tiptap/vue-3'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { createThemedHtmlTiptapExtensions } from '~/utils/themedHtmlTiptapExtensions'
 import AdminColorTextPopover from './AdminColorTextPopover.client.vue'
+import AdminThemeTonePopover from './AdminThemeTonePopover.client.vue'
 
 const model = defineModel<string>({ required: true })
 
@@ -11,12 +12,15 @@ const props = withDefaults(
     placeholder?: string
     multiline?: boolean
     compact?: boolean
+    /** Палитра тонов темы вместо произвольного цвета/подсветки (заголовки TFT на сайте). */
+    useThemeTonePopover?: boolean
     editorClass?: string
   }>(),
   {
     placeholder: 'Текст…',
     multiline: true,
     compact: true,
+    useThemeTonePopover: false,
     editorClass: '',
   },
 )
@@ -109,7 +113,12 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-3">
     <p v-if="!compact" class="font-body text-xs text-mts-text-secondary">
-      Выделите слова, откройте палитру и выберите цвет текста или подсветку.
+      <template v-if="useThemeTonePopover">
+        Выделите слова, откройте палитру и выберите тон темы.
+      </template>
+      <template v-else>
+        Выделите слова, откройте палитру и выберите цвет текста или подсветку.
+      </template>
     </p>
 
     <!--
@@ -122,7 +131,8 @@ onBeforeUnmount(() => {
       class="flex items-stretch rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex shrink-0 items-center border-r border-mts-border/60 bg-white/60 px-2">
-        <AdminColorTextPopover :editor="editor as Editor | null" />
+        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="editor as Editor | null" />
+        <AdminColorTextPopover v-else :editor="editor as Editor | null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-html-tiptap-field min-w-0 flex-1" />
     </div>
@@ -132,7 +142,8 @@ onBeforeUnmount(() => {
       class="rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex flex-wrap items-center gap-2 border-b border-mts-border/60 bg-white/60 px-2 py-1.5">
-        <AdminColorTextPopover :editor="editor as Editor | null" />
+        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="editor as Editor | null" />
+        <AdminColorTextPopover v-else :editor="editor as Editor | null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-html-tiptap-field" />
     </div>

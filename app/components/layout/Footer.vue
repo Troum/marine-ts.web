@@ -45,13 +45,9 @@ function columnHeading(col: FooterNavColumn): string {
 </script>
 
 <template>
-  <!--
-    Футер использует brand-surface токен (`mts-navy`), который автоматически
-    инвертируется в светлой теме. Цвета текста/фона привязаны к `mts-frost`,
-    что при `data-theme='light'` делает их тёмно-морскими.
-  -->
+  <!-- Футер на brand-surface (`bg-mts-navy`, текст `mts-frost`). -->
   <footer class="relative bg-mts-navy text-mts-frost overflow-hidden">
-    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-20 relative z-10">
+    <div class="mts-content-wrap py-16 lg:py-20 relative z-10">
       <div class="grid md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8">
         <div class="md:col-span-2 lg:col-span-2">
           <NuxtLink :to="localePath('/')" class="inline-block mb-6 group">

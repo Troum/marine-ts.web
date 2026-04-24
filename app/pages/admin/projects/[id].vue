@@ -165,7 +165,7 @@ async function submit() {
 <template>
   <div>
     <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-6 lg:px-12">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="flex items-center h-16">
           <NuxtLink to="/admin/projects" class="text-mts-text-secondary hover:text-mts-accent mr-4">
             <ArrowLeft class="w-5 h-5" />
@@ -177,7 +177,7 @@ async function submit() {
       </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-6 lg:px-12 py-8">
+    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>

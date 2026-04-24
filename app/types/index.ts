@@ -422,7 +422,8 @@ export interface FooterMenuSettings {
 /* ── About page structured data (CMS JSON in body) ── */
 
 export interface AboutHero {
-  titleFormatted: ThemeFormattedTitle
+  /** HTML из TipTap (цвета, подсветка, тона темы через marks). */
+  title: string
   subtitle: string
   lead: string
   lead2: string
@@ -510,6 +511,10 @@ export interface AboutPageData {
   statsImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
+  /** Порядок секций (включая `custom:<uuid>`). Если не задан — берётся дефолт. */
+  sectionOrder?: string[]
+  /** Карта видимости секций по id; отсутствие ключа считается «показывать». */
+  sectionVisibility?: Record<string, boolean>
 }
 
 /* ── Home page structured data (CMS JSON in body) ── */
@@ -616,9 +621,11 @@ export interface HomeCTA {
 
 export interface HomePageData {
   hero: HomeHero
-  /** Опциональный фон первого экрана; если нет — используется `/images/marin-figma/hero-ship.jpg`. */
+  /** Опциональный фон первого экрана (URL); если пусто — без фонового фото. */
   heroImage?: string
   statsCard: HomeStatsCard
+  /** Показывать карточку «В цифрах» внутри Hero. */
+  showStatsCard?: boolean
   funnelShip: HomeFunnelSpotlight
   funnelCrewing: HomeFunnelCrewingSpotlight
   funnelTechnical: HomeFunnelSpotlight
@@ -634,6 +641,10 @@ export interface HomePageData {
   showInquiryForm?: boolean
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
+  /** Порядок секций (включая `custom:<uuid>`); hero фиксирован первым и не входит. */
+  sectionOrder?: string[]
+  /** Карта видимости секций по id; отсутствие ключа = показывать. */
+  sectionVisibility?: Record<string, boolean>
 }
 
 /* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
@@ -656,6 +667,10 @@ export interface ListingPageData {
   heroImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
+  /** Порядок секций (включая `custom:<uuid>`); hero фиксирован первым и не входит. */
+  sectionOrder?: string[]
+  /** Карта видимости секций по id; отсутствие ключа = показывать. */
+  sectionVisibility?: Record<string, boolean>
 }
 
 export interface ProjectsPageData extends ListingPageData {}
@@ -676,6 +691,10 @@ export interface ContactsPageData {
   heroImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
+  /** Порядок секций (включая `custom:<uuid>`); hero фиксирован первым и не входит. */
+  sectionOrder?: string[]
+  /** Карта видимости секций по id; отсутствие ключа = показывать. */
+  sectionVisibility?: Record<string, boolean>
 }
 
 /** Кнопка в hero маркетинговых страниц линий (крюинг / судовой менеджмент), не более двух. */
@@ -871,6 +890,6 @@ export interface CrewingPageData {
   }
   checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
-  /** Переопределить фон hero (иначе из макета: `/images/marin-figma/hero-ship.jpg` и т.д.). */
+  /** Фон hero (URL); если пусто — только градиенты/фон страницы без фото. */
   heroBackgroundImage?: string
 }

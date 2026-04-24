@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, ClipboardList } from 'lucide-vue-next'
 import type { MarineContentLocale, SeoFields } from '~/types'
 import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
 import { mergeVacancyTranslations } from '~/utils/adminTranslationForms'
+import { htmlToPlainLinesForBullets } from '~/utils/adminHtmlField'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
@@ -83,10 +84,7 @@ onMounted(async () => {
 
 function applyRequirementsTextToTranslations() {
   for (const loc of MARINE_CONTENT_LOCALES) {
-    form.value.translations[loc].requirements = requirementsText.value[loc]
-      .split('\n')
-      .map((l) => l.trim())
-      .filter(Boolean)
+    form.value.translations[loc].requirements = htmlToPlainLinesForBullets(requirementsText.value[loc])
   }
 }
 
@@ -135,7 +133,7 @@ async function submit() {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto max-w-4xl px-6 lg:px-12">
+      <div class="mx-auto max-w-7xl px-6 lg:px-12">
         <div class="flex h-16 flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin/vacancies" class="text-mts-text-secondary transition-colors hover:text-mts-accent">
@@ -157,7 +155,7 @@ async function submit() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-4xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>
@@ -219,22 +217,13 @@ async function submit() {
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                   >Полный текст</label
                 >
-                <textarea
-                  v-model="form.translations[localeTab].content"
-                  rows="8"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].content" />
               </div>
               <div>
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Требования (каждый пункт с новой строки)</label
+                  >Требования (каждый пункт — новый абзац или новая строка)</label
                 >
-                <textarea
-                  v-model="requirementsText[localeTab]"
-                  rows="8"
-                  placeholder="Пункт 1&#10;Пункт 2"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-mono text-xs focus:border-mts-accent focus:outline-none"
-                />
+                <AdminThemedTextField v-model="requirementsText[localeTab]" />
               </div>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>

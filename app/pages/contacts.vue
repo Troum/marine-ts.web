@@ -7,7 +7,8 @@ import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import { defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
+import { CONTACTS_SECTION_DEFAULT_ORDER, defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
+import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('contacts')
 
@@ -75,6 +76,18 @@ const sending = ref(false)
 const formError = ref<string | null>(null)
 const formSuccess = ref(false)
 
+/**
+ * Эффективный порядок секций (после hero) с учётом сохранённого `sectionOrder`,
+ * актуальных кастомных секций и дефолтов.
+ */
+const sectionOrderEffective = computed(() =>
+  resolveSectionOrder(cms.value.sectionOrder, CONTACTS_SECTION_DEFAULT_ORDER, cms.value.customSections),
+)
+
+function sectionShown(id: string): boolean {
+  return isSectionVisible(cms.value.sectionVisibility, id)
+}
+
 async function submitFeedback() {
   formError.value = null
   formSuccess.value = false
@@ -99,13 +112,13 @@ async function submitFeedback() {
 <template>
   <div class="bg-mts-bg">
     <ListingHeroShell :hero-image="cms.heroImage">
-      <div class="max-w-3xl">
+      <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
           <div class="h-px w-6 bg-mts-accent" />
           <span class="section-label">{{ t('pages.contacts.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-4xl leading-tight text-mts-text lg:text-5xl">
+        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
@@ -115,11 +128,12 @@ async function submitFeedback() {
       </div>
     </ListingHeroShell>
 
-    <section class="relative py-24 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+    <template v-for="sid in sectionOrderEffective" :key="sid">
+      <section v-if="sid === 'contacts' && sectionShown('contacts')" class="relative py-24 overflow-hidden">
+      <div class="mts-content-wrap relative z-10">
         <div class="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 class="font-display text-2xl text-mts-text mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
+            <h2 class="font-display text-xl text-mts-text mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
             <div v-if="contactsPending" class="flex items-center gap-2 text-mts-text-secondary font-body text-sm mb-12">
               <Loader2 class="h-4 w-4 animate-spin" />
               {{ t('pages.common.loading') }}
@@ -217,7 +231,7 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-2xl text-mts-text mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
+          <h2 class="font-display text-xl text-mts-text mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"
@@ -235,7 +249,11 @@ async function submitFeedback() {
       </div>
     </section>
 
-    <CommonCustomPageSectionsRender :sections="cms.customSections" />
+      <CommonCustomPageSectionsRender
+        v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
+        :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+      />
+    </template>
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="contacts" />
   </div>

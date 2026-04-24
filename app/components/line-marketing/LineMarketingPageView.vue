@@ -71,9 +71,17 @@ const checklistVisible = computed(
 
 const checklistRows = computed(() => buildCrewingChecklistRenderRows(cms.value.checklist))
 
-const heroBgStyle = computed(() => ({
-  backgroundImage: `url(${cms.value.heroBackgroundImage?.trim() || layout.value.heroBg})`,
-}))
+const heroBgUrl = computed(() => {
+  const fromCms = cms.value.heroBackgroundImage?.trim()
+  const fromLayout = layout.value.heroBg?.trim()
+  return fromCms || fromLayout || ''
+})
+
+const heroBgStyle = computed(() => {
+  const u = heroBgUrl.value
+  if (!u) return {}
+  return { backgroundImage: `url(${u})` }
+})
 
 const checklistHeadingId = computed(() => `${props.slug}-checklist-heading`)
 
@@ -166,8 +174,8 @@ function heroButtonClass(idx: number): string {
         />
       </div>
 
-      <div class="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-28 lg:px-12">
-        <div class="w-full max-w-3xl xl:max-w-4xl">
+      <div class="relative z-10 mts-content-wrap w-full pb-20 pt-28">
+        <div class="w-full max-w-7xl">
           <Breadcrumbs :items="crumbItems" />
           <div
             :class="[
@@ -180,7 +188,7 @@ function heroButtonClass(idx: number): string {
           </div>
           <h1
             :class="[
-              'font-display mb-6 text-4xl leading-tight text-mts-text transition-all duration-600 lg:text-5xl',
+              'font-display mb-6 text-3xl leading-tight text-mts-text transition-all duration-600 lg:text-4xl',
               heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
             ]"
           >
@@ -231,11 +239,11 @@ function heroButtonClass(idx: number): string {
         v-if="chunk.kind === 'directions' && cms.directions.length > 0"
         class="relative overflow-hidden bg-mts-surface py-24"
       >
-        <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-          <h2 class="font-display mb-4 text-center text-2xl text-mts-text md:text-3xl">
+        <div class="relative z-10 mts-content-wrap">
+          <h2 class="font-display mb-4 text-center text-xl text-mts-text md:text-2xl">
             <ThemedContentString :content="cms.directionsSection.title" />
           </h2>
-          <p class="mx-auto mb-14 max-w-2xl text-center font-body text-mts-text-secondary">
+          <p class="mx-auto mb-14 max-w-7xl text-center font-body text-mts-text-secondary">
             <ThemedContentString :content="cms.directionsSection.lead" />
           </p>
           <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -282,12 +290,12 @@ function heroButtonClass(idx: number): string {
         :aria-labelledby="checklistHeadingId"
         class="border-t border-mts-border bg-mts-bg py-16"
       >
-        <div class="relative z-10 mx-auto w-full max-w-7xl px-6 lg:px-12">
+        <div class="relative z-10 mts-content-wrap">
           <h2
             :id="checklistHeadingId"
             :class="
               cms.checklist.sectionTitle.trim()
-                ? 'font-display mb-8 text-2xl text-mts-text md:text-3xl'
+                ? 'font-display mb-8 text-xl text-mts-text md:text-2xl'
                 : 'sr-only'
             "
           >
@@ -328,13 +336,13 @@ function heroButtonClass(idx: number): string {
       </section>
 
       <section v-else-if="chunk.kind === 'pair'" class="relative overflow-hidden py-24">
-        <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+        <div class="relative z-10 mts-content-wrap">
           <div class="grid items-start gap-16 lg:grid-cols-2">
             <template v-for="col in [chunk.left, chunk.right]" :key="col">
               <div v-if="col === 'principles'" class="relative">
                 <CommonAccentCorners size="lg" />
                 <div class="border border-mts-border bg-mts-bg p-8 shadow-tech">
-                  <h2 class="font-display mb-6 text-2xl text-mts-text">
+                  <h2 class="font-display mb-6 text-xl text-mts-text">
                     <ThemedContentString :content="cms.principles.title" />
                   </h2>
                   <ul class="space-y-4">
@@ -350,7 +358,7 @@ function heroButtonClass(idx: number): string {
                 </div>
               </div>
               <div v-else>
-                <h2 class="font-display mb-6 text-2xl text-mts-text">
+                <h2 class="font-display mb-6 text-xl text-mts-text">
                   <ThemedContentString :content="cms.audience.title" />
                 </h2>
                 <p class="mb-6 font-body leading-relaxed text-mts-text-secondary">
@@ -373,11 +381,11 @@ function heroButtonClass(idx: number): string {
       />
 
       <section v-else-if="chunk.kind === 'single'" class="relative overflow-hidden py-24">
-        <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-          <div v-if="chunk.id === 'principles'" class="relative max-w-3xl">
+        <div class="relative z-10 mts-content-wrap">
+          <div v-if="chunk.id === 'principles'" class="relative max-w-7xl">
             <CommonAccentCorners size="lg" />
             <div class="border border-mts-border bg-mts-bg p-8 shadow-tech">
-              <h2 class="font-display mb-6 text-2xl text-mts-text">
+              <h2 class="font-display mb-6 text-xl text-mts-text">
                 <ThemedContentString :content="cms.principles.title" />
               </h2>
               <ul class="space-y-4">
@@ -392,8 +400,8 @@ function heroButtonClass(idx: number): string {
               </ul>
             </div>
           </div>
-          <div v-else class="max-w-3xl">
-            <h2 class="font-display mb-6 text-2xl text-mts-text">
+          <div v-else class="max-w-7xl">
+            <h2 class="font-display mb-6 text-xl text-mts-text">
               <ThemedContentString :content="cms.audience.title" />
             </h2>
             <p class="mb-6 font-body leading-relaxed text-mts-text-secondary">

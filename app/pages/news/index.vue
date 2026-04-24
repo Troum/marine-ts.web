@@ -6,7 +6,8 @@ import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
+import { defaultListingData, listingDefaultOrder, mergeListingPageData } from '~/utils/pageDefaults'
+import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('news')
 
@@ -64,18 +65,26 @@ const regularNews = computed(() => news.value.filter((n) => n.id !== featuredNew
 function categoryLabel(cat: string | undefined) {
   return newsCategoryLabel(cat, t)
 }
+
+const sectionOrderEffective = computed(() =>
+  resolveSectionOrder(cms.value.sectionOrder, listingDefaultOrder('news-page'), cms.value.customSections),
+)
+
+function sectionShown(id: string): boolean {
+  return isSectionVisible(cms.value.sectionVisibility, id)
+}
 </script>
 
 <template>
   <div class="bg-mts-bg">
     <ListingHeroShell :hero-image="cms.heroImage">
-      <div class="max-w-3xl">
+      <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
           <div class="h-px w-6 bg-mts-accent" />
           <span class="section-label">{{ t('pages.news.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-5xl leading-tight text-mts-text lg:text-6xl">
+        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
         <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
@@ -85,97 +94,104 @@ function categoryLabel(cat: string | undefined) {
       </div>
     </ListingHeroShell>
 
-    <div v-if="pending" class="flex justify-center py-24">
-      <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
-    </div>
-    <div v-else-if="error" class="text-center py-24">
-      <p class="font-body text-mts-text-secondary mb-4">{{ error }}</p>
-      <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
-    </div>
-    <template v-else>
-      <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-mts-surface">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-          <div class="bg-mts-bg border border-mts-border p-8 lg:p-12">
-            <div class="flex items-center gap-3 mb-6">
-              <span class="font-mono text-xs uppercase tracking-wide text-mts-accent bg-mts-accent/10 px-3 py-1">
-                {{ categoryLabel(featuredNews.category) }}
-              </span>
-              <span
-                v-if="featuredNews.featured"
-                class="font-mono text-xs uppercase tracking-wide text-white bg-mts-accent px-3 py-1"
-              >
-                {{ t('pages.common.featured') }}
-              </span>
-            </div>
-            <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-4">
-              <ThemedContentString :content="featuredNews.title" />
-            </h2>
-            <p class="font-body text-mts-text-secondary mb-6 max-w-2xl">
-              <ThemedContentString :content="featuredNews.excerpt" />
-            </p>
-            <NuxtLink :to="localePath(`/news/${featuredNews.slug}`)" class="btn-primary mb-6 inline-flex">
-              {{ t('pages.common.readFull') }}
-              <MoveRight />
-            </NuxtLink>
-            <div class="flex items-center gap-6 text-mts-text-secondary">
-              <div class="flex items-center gap-2">
-                <Calendar class="w-4 h-4" />
-                <span class="font-body text-sm">{{ featuredNews.date }}</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <User class="w-4 h-4" />
-                <span class="font-body text-sm"><ThemedContentString :content="featuredNews.author" /></span>
-              </div>
-            </div>
-          </div>
+    <template v-for="sid in sectionOrderEffective" :key="sid">
+      <template v-if="sid === 'listing' && sectionShown('listing')">
+        <div v-if="pending" class="flex justify-center py-24">
+          <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
         </div>
-      </section>
-
-      <section class="relative py-24 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-          <div class="grid md:grid-cols-2 gap-6">
-            <article
-              v-for="item in regularNews"
-              :key="item.id"
-              class="card-tech p-8 border border-mts-border hover:border-mts-accent/30"
-            >
-              <span class="font-mono text-xs uppercase tracking-wide text-mts-accent mb-3 inline-block">
-                {{ categoryLabel(item.category) }}
-              </span>
-              <h3 class="font-display text-xl text-mts-text mb-3">
-                <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-mts-accent transition-colors">
-                  <ThemedContentString :content="item.title" />
-                </NuxtLink>
-              </h3>
-              <p class="font-body text-sm text-mts-text-secondary mb-4 line-clamp-3">
-                <ThemedContentString :content="item.excerpt" />
-              </p>
-              <div class="flex justify-between items-center">
-                <NuxtLink
-                  :to="localePath(`/news/${item.slug}`)"
-                  class="btn-primary px-4 py-2 text-[11px]"
-                >
-                  {{ t('pages.common.readMore') }}
-                  <MoveRight class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-                </NuxtLink>
-                <div class="flex items-center gap-4 text-xs text-mts-text-secondary">
-                  <span class="flex items-center gap-1">
-                    <Calendar class="w-3.5 h-3.5" />
-                    {{ item.date }}
+        <div v-else-if="error" class="text-center py-24">
+          <p class="font-body text-mts-text-secondary mb-4">{{ error }}</p>
+          <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
+        </div>
+        <template v-else>
+          <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-mts-surface">
+            <div class="mts-content-wrap relative z-10">
+              <div class="bg-mts-bg border border-mts-border p-8 lg:p-12">
+                <div class="flex items-center gap-3 mb-6">
+                  <span class="font-mono text-xs uppercase tracking-wide text-mts-accent bg-mts-accent/10 px-3 py-1">
+                    {{ categoryLabel(featuredNews.category) }}
                   </span>
-                  <span class="flex items-center gap-1">
-                    <User class="w-3.5 h-3.5" />
-                    <ThemedContentString :content="item.author" />
+                  <span
+                    v-if="featuredNews.featured"
+                    class="font-mono text-xs uppercase tracking-wide text-white bg-mts-accent px-3 py-1"
+                  >
+                    {{ t('pages.common.featured') }}
                   </span>
                 </div>
+                <h2 class="font-display text-2xl lg:text-3xl text-mts-text mb-4">
+                  <ThemedContentString :content="featuredNews.title" />
+                </h2>
+                <p class="font-body text-mts-text-secondary mb-6 max-w-7xl">
+                  <ThemedContentString :content="featuredNews.excerpt" />
+                </p>
+                <NuxtLink :to="localePath(`/news/${featuredNews.slug}`)" class="btn-primary mb-6 inline-flex">
+                  {{ t('pages.common.readFull') }}
+                  <MoveRight />
+                </NuxtLink>
+                <div class="flex items-center gap-6 text-mts-text-secondary">
+                  <div class="flex items-center gap-2">
+                    <Calendar class="w-4 h-4" />
+                    <span class="font-body text-sm">{{ featuredNews.date }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <User class="w-4 h-4" />
+                    <span class="font-body text-sm"><ThemedContentString :content="featuredNews.author" /></span>
+                  </div>
+                </div>
               </div>
-            </article>
-          </div>
-        </div>
-      </section>
-    </template>
+            </div>
+          </section>
 
-    <CommonCustomPageSectionsRender :sections="cms.customSections" />
+          <section class="relative py-24 overflow-hidden">
+            <div class="mts-content-wrap relative z-10">
+              <div class="grid md:grid-cols-2 gap-6">
+                <article
+                  v-for="item in regularNews"
+                  :key="item.id"
+                  class="card-tech p-8 border border-mts-border hover:border-mts-accent/30"
+                >
+                  <span class="font-mono text-xs uppercase tracking-wide text-mts-accent mb-3 inline-block">
+                    {{ categoryLabel(item.category) }}
+                  </span>
+                  <h3 class="font-display text-xl text-mts-text mb-3">
+                    <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-mts-accent transition-colors">
+                      <ThemedContentString :content="item.title" />
+                    </NuxtLink>
+                  </h3>
+                  <p class="font-body text-sm text-mts-text-secondary mb-4 line-clamp-3">
+                    <ThemedContentString :content="item.excerpt" />
+                  </p>
+                  <div class="flex justify-between items-center">
+                    <NuxtLink
+                      :to="localePath(`/news/${item.slug}`)"
+                      class="btn-primary px-4 py-2 text-[11px]"
+                    >
+                      {{ t('pages.common.readMore') }}
+                      <MoveRight class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </NuxtLink>
+                    <div class="flex items-center gap-4 text-xs text-mts-text-secondary">
+                      <span class="flex items-center gap-1">
+                        <Calendar class="w-3.5 h-3.5" />
+                        {{ item.date }}
+                      </span>
+                      <span class="flex items-center gap-1">
+                        <User class="w-3.5 h-3.5" />
+                        <ThemedContentString :content="item.author" />
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+        </template>
+      </template>
+
+      <CommonCustomPageSectionsRender
+        v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
+        :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+      />
+    </template>
 
     <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="news" />
   </div>

@@ -270,10 +270,10 @@ function blockTypeLabel(b: CustomPageBlock): string {
       <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
         Пользовательские секции
       </h2>
-      <p v-if="helperText" class="mt-2 max-w-3xl font-body text-xs text-mts-text-secondary">
+      <p v-if="helperText" class="mt-2 max-w-7xl font-body text-xs text-mts-text-secondary">
         {{ helperText }}
       </p>
-      <p v-else class="mt-2 max-w-3xl font-body text-xs text-mts-text-secondary">
+      <p v-else class="mt-2 max-w-7xl font-body text-xs text-mts-text-secondary">
         Добавляйте свои блоки контента — они появятся на сайте после штатных секций и перед формой
         заявки. Внутри секции можно сортировать блоки и менять их типы.
       </p>

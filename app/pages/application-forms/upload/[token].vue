@@ -104,7 +104,7 @@ async function submitUpload() {
 
 <template>
   <div class="bg-mts-bg pt-20 pb-24">
-    <div class="mx-auto max-w-2xl px-6">
+    <div class="mx-auto max-w-7xl px-6">
       <div v-if="pending" class="flex justify-center py-24">
         <Loader2 class="h-10 w-10 animate-spin text-mts-accent" />
       </div>

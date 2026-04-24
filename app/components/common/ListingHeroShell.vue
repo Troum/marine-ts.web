@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Hero листингов: опциональный фон + контент в max-w-7xl.
+ * Hero листингов: опциональный фон + контент в `.mts-content-wrap`.
  * Без фона — отступ сверху под фикс. шапку (pt-16), как у старых страниц.
  */
 defineProps<{
@@ -24,7 +24,7 @@ defineProps<{
       <div class="absolute inset-0 bg-linear-to-r from-mts-bg/95 via-mts-bg/85 to-mts-bg/55" aria-hidden="true" />
       <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/35" aria-hidden="true" />
     </template>
-    <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+    <div class="relative z-10 mts-content-wrap">
       <slot />
     </div>
   </section>

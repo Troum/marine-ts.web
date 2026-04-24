@@ -76,25 +76,30 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
         aria-hidden="true"
       />
       <div class="pointer-events-none absolute inset-0 z-40">
-        <div class="max-w-7xl mx-auto h-full px-6 lg:px-12 py-12 lg:py-20 flex">
-          <div class="max-w-xl pointer-events-auto">
+        <div
+          class="mts-content-wrap flex h-full pt-20 pb-10 sm:pt-24 sm:pb-12 lg:pt-32 lg:pb-16 xl:pt-36"
+        >
+          <div class="max-w-7xl pointer-events-auto">
             <div v-if="theme === 'light'" class="flex items-center gap-3 mb-4">
               <div class="w-6 h-px bg-mts-accent" />
               <span class="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-mts-text-secondary">
                 <ThemedContentString :content="displayLabel" />
               </span>
             </div>
-            <h2
+            <!-- Не <h2>: из админки приходит HTML с <p>/<br> (многострочный заголовок). -->
+            <div
               id="service-geography-heading"
+              role="heading"
+              aria-level="2"
               :class="[
                 'font-display font-bold leading-tight mb-4 lg:mb-6',
                 theme === 'dark'
-                  ? 'text-3xl lg:text-[40px] text-mts-accent lg:leading-12'
-                  : 'text-3xl lg:text-4xl text-mts-text',
+                  ? 'text-2xl lg:text-[34px] text-mts-accent lg:leading-10'
+                  : 'text-2xl lg:text-3xl text-mts-text',
               ]"
             >
               <ThemedContentString :content="displayTitle" />
-            </h2>
+            </div>
             <p
               v-if="displayLead"
               :class="[

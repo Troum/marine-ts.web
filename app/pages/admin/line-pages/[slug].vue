@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowLeft, ArrowUp, Loader2, ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowDown, ArrowLeft, ArrowUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
+import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type {
   ContentPage,
   CrewingPageData,
@@ -230,13 +231,6 @@ function sectionVisibilityToggle(id: string, checked: boolean) {
   }
 }
 
-function onSectionVisibilityChange(id: string, ev: Event) {
-  const el = ev.target as HTMLInputElement | null
-  if (el) {
-    sectionVisibilityToggle(id, el.checked)
-  }
-}
-
 function newLmId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
@@ -250,6 +244,32 @@ function sectionOrderRowLabel(sid: string): string {
     return sec?.title?.trim() ? sec.title : 'Пользовательская секция'
   }
   return LINE_MARKETING_SECTION_ADMIN_LABELS[sid as LineMarketingSectionId]
+}
+
+function sectionVisible(sid: string): boolean {
+  return d.value?.sectionVisibility?.[sid] !== false
+}
+
+function setSectionVisible(sid: string, v: boolean) {
+  sectionVisibilityToggle(sid, v)
+}
+
+function indexInOrder(sid: string): number {
+  return d.value?.sectionOrder?.indexOf(sid) ?? -1
+}
+
+function canMove(sid: string, delta: number): boolean {
+  const idx = indexInOrder(sid)
+  const len = d.value?.sectionOrder?.length ?? 0
+  if (idx < 0) return false
+  const j = idx + delta
+  return j >= 0 && j < len
+}
+
+function moveSection(sid: string, delta: number) {
+  const idx = indexInOrder(sid)
+  if (idx < 0) return
+  moveSectionOrder(idx, delta)
 }
 
 function getCustomSectionById(id: string): LineMarketingCustomSection | undefined {
@@ -663,138 +683,86 @@ function directionPreviewPath(detailSlug: string) {
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <div class="p-6">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
-              Порядок и видимость секций
-            </h2>
-            <p class="mt-2 max-w-3xl font-body text-xs text-mts-text-secondary">
-              Секция Hero не переносится. Блоки «Принципы» и «Кому подходит + CTA», если стоят в списке рядом,
-              на сайте показываются в одном ряду (две колонки) в заданном порядке.
+        <!-- Hero — фиксирована, не скрывается, не переносится. -->
+        <AdminCollapsibleSection
+          title="1. Hero"
+          :collapsed="collapsed.hero"
+          @update:collapsed="(v) => (collapsed.hero = v)"
+        >
+          <div>
+            <label :class="sectionLabel">Подпись над заголовком (как в макете)</label>
+            <AdminThemedTextField v-model="d.hero.label" :multiline="false" />
+          </div>
+          <div>
+            <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+            <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
+          </div>
+          <div>
+            <label :class="sectionLabel">Лид</label>
+            <AdminThemedTextField v-model="d.hero.lead" />
+          </div>
+          <div class="space-y-4 border-t border-mts-border pt-4">
+            <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Кнопки в hero (до 2)</p>
+            <p class="font-body text-xs text-mts-text-secondary">
+              Внутренние страницы: <code class="font-mono text-[11px]">/contacts</code>,
+              <code class="font-mono text-[11px]">/services</code> и т.д.; форма внизу этой страницы:
+              <code class="font-mono text-[11px]">#page-inquiry</code>; внешние ссылки — полный URL.
             </p>
-            <ul class="mt-4 w-full space-y-2">
-              <li
-                v-for="(sid, si) in d.sectionOrder"
-                :key="sid"
-                class="flex flex-wrap items-center gap-2 border border-mts-border bg-mts-bg/50 px-3 py-2"
-              >
-                <span class="min-w-0 flex-1 font-body text-sm text-mts-text">{{ sectionOrderRowLabel(sid) }}</span>
-                <label class="flex shrink-0 cursor-pointer items-center gap-2 font-body text-xs text-mts-text-secondary">
-                  <input
-                    type="checkbox"
-                    class="mts-checkbox"
-                    :checked="d.sectionVisibility[sid]"
-                    @change="onSectionVisibilityChange(sid, $event)"
-                  />
-                  Показывать
-                </label>
-                <div class="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    class="btn-secondary p-1.5 disabled:opacity-40"
-                    :disabled="si === 0"
-                    aria-label="Выше"
-                    @click="moveSectionOrder(si, -1)"
-                  >
-                    <ArrowUp class="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-secondary p-1.5 disabled:opacity-40"
-                    :disabled="si >= d.sectionOrder.length - 1"
-                    aria-label="Ниже"
-                    @click="moveSectionOrder(si, 1)"
-                  >
-                    <ArrowDown class="h-4 w-4" />
-                  </button>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        <!-- Hero -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('hero')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Hero</h2>
-            <ChevronDown class="h-4 w-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
-          </button>
-          <div v-show="!collapsed.hero" class="space-y-4 border-t border-mts-border px-6 pb-6 pt-4">
-            <div>
-              <label :class="sectionLabel">Подпись над заголовком (как в макете)</label>
-              <AdminThemedTextField v-model="d.hero.label" :multiline="false" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
-              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Лид</label>
-              <AdminThemedTextField v-model="d.hero.lead" />
-            </div>
-            <div class="space-y-4 border-t border-mts-border pt-4">
-              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Кнопки в hero (до 2)</p>
-              <p class="font-body text-xs text-mts-text-secondary">
-                Внутренние страницы: <code class="font-mono text-[11px]">/contacts</code>,
-                <code class="font-mono text-[11px]">/services</code> и т.д.; форма внизу этой страницы:
-                <code class="font-mono text-[11px]">#page-inquiry</code>; внешние ссылки — полный URL.
-              </p>
-              <div
-                v-for="(row, hi) in d.heroButtons"
-                :key="hi"
-                class="space-y-2 rounded border border-mts-border bg-mts-bg/50 p-3"
-              >
-                <div class="flex flex-wrap items-start justify-between gap-2">
-                  <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Кнопка {{ hi + 1 }}</p>
-                  <button
-                    type="button"
-                    class="btn-secondary shrink-0 px-2 py-1 text-xs text-red-700"
-                    @click="removeHeroButton(hi)"
-                  >
-                    Удалить
-                  </button>
-                </div>
-                <div>
-                  <label :class="sectionLabel">Подпись</label>
-                  <AdminThemedTextField v-model="row.label" :multiline="false" />
-                </div>
-                <div>
-                  <label :class="sectionLabel">Ссылка</label>
-                  <input
-                    v-model="row.href"
-                    type="text"
-                    :class="sectionInput"
-                    placeholder="#page-inquiry или /contacts"
-                  />
-                </div>
+            <div
+              v-for="(row, hi) in d.heroButtons"
+              :key="hi"
+              class="space-y-2 rounded border border-mts-border bg-mts-bg/50 p-3"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Кнопка {{ hi + 1 }}</p>
+                <button
+                  type="button"
+                  class="btn-secondary shrink-0 px-2 py-1 text-xs text-red-700"
+                  @click="removeHeroButton(hi)"
+                >
+                  Удалить
+                </button>
               </div>
-              <button
-                v-if="d.heroButtons.length < 2"
-                type="button"
-                class="btn-secondary inline-flex items-center gap-2"
-                @click="addHeroButton"
-              >
-                <Plus class="h-4 w-4" />
-                Добавить кнопку
-              </button>
+              <div>
+                <label :class="sectionLabel">Подпись</label>
+                <AdminThemedTextField v-model="row.label" :multiline="false" />
+              </div>
+              <div>
+                <label :class="sectionLabel">Ссылка</label>
+                <input
+                  v-model="row.href"
+                  type="text"
+                  :class="sectionInput"
+                  placeholder="#page-inquiry или /contacts"
+                />
+              </div>
             </div>
-            <AdminHeroImageField v-model="d.heroBackgroundImage" label="Фон hero (по умолчанию из макета страницы)" />
+            <button
+              v-if="d.heroButtons.length < 2"
+              type="button"
+              class="btn-secondary inline-flex items-center gap-2"
+              @click="addHeroButton"
+            >
+              <Plus class="h-4 w-4" />
+              Добавить кнопку
+            </button>
           </div>
-        </section>
+          <AdminHeroImageField v-model="d.heroBackgroundImage" label="Фон hero (по умолчанию из макета страницы)" />
+        </AdminCollapsibleSection>
 
         <!-- Directions -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('directions')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. Направления работы</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.directions }"
-            />
-          </button>
-          <div v-show="!collapsed.directions" class="space-y-6 border-t border-mts-border px-6 pb-6 pt-4">
+        <AdminCollapsibleSection
+          :title="`${indexInOrder('directions') + 2}. ${sectionOrderRowLabel('directions')}`"
+          :collapsed="collapsed.directions"
+          :visible="sectionVisible('directions')"
+          :can-move-up="canMove('directions', -1)"
+          :can-move-down="canMove('directions', 1)"
+          @update:collapsed="(v) => (collapsed.directions = v)"
+          @update:visible="(v) => setSectionVisible('directions', v)"
+          @move-up="moveSection('directions', -1)"
+          @move-down="moveSection('directions', 1)"
+        >
+          <div class="space-y-6">
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
               <AdminThemedTextField v-model="d.directionsSection.title" :multiline="false" />
@@ -898,19 +866,20 @@ function directionPreviewPath(detailSlug: string) {
               Добавить карточку
             </button>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- Checklist -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('checklist')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">3. Чек-лист</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.checklist }"
-            />
-          </button>
-          <div v-show="!collapsed.checklist" class="space-y-4 border-t border-mts-border px-6 pb-6 pt-4">
+        <AdminCollapsibleSection
+          :title="`${indexInOrder('checklist') + 2}. ${sectionOrderRowLabel('checklist')}`"
+          :collapsed="collapsed.checklist"
+          :visible="sectionVisible('checklist')"
+          :can-move-up="canMove('checklist', -1)"
+          :can-move-down="canMove('checklist', 1)"
+          @update:collapsed="(v) => (collapsed.checklist = v)"
+          @update:visible="(v) => setSectionVisible('checklist', v)"
+          @move-up="moveSection('checklist', -1)"
+          @move-down="moveSection('checklist', 1)"
+        >
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
               <AdminThemedTextField v-model="d.checklist.sectionTitle" :multiline="false" />
@@ -973,20 +942,20 @@ function directionPreviewPath(detailSlug: string) {
               <Plus class="h-4 w-4" />
               Добавить секцию
             </button>
-          </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- Principles -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('principles')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">4. Принципы</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.principles }"
-            />
-          </button>
-          <div v-show="!collapsed.principles" class="space-y-4 border-t border-mts-border px-6 pb-6 pt-4">
+        <AdminCollapsibleSection
+          :title="`${indexInOrder('principles') + 2}. ${sectionOrderRowLabel('principles')}`"
+          :collapsed="collapsed.principles"
+          :visible="sectionVisible('principles')"
+          :can-move-up="canMove('principles', -1)"
+          :can-move-down="canMove('principles', 1)"
+          @update:collapsed="(v) => (collapsed.principles = v)"
+          @update:visible="(v) => setSectionVisible('principles', v)"
+          @move-up="moveSection('principles', -1)"
+          @move-down="moveSection('principles', 1)"
+        >
             <div>
               <label :class="sectionLabel">Заголовок блока</label>
               <AdminThemedTextField v-model="d.principles.title" :multiline="false" />
@@ -1009,49 +978,48 @@ function directionPreviewPath(detailSlug: string) {
               <Plus class="h-4 w-4" />
               Добавить пункт
             </button>
-          </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- Audience -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('audience')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Кому подходит + CTA</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.audience }"
-            />
-          </button>
-          <div v-show="!collapsed.audience" class="space-y-4 border-t border-mts-border px-6 pb-6 pt-4">
+        <AdminCollapsibleSection
+          :title="`${indexInOrder('audience') + 2}. ${sectionOrderRowLabel('audience')}`"
+          :collapsed="collapsed.audience"
+          :visible="sectionVisible('audience')"
+          :can-move-up="canMove('audience', -1)"
+          :can-move-down="canMove('audience', 1)"
+          @update:collapsed="(v) => (collapsed.audience = v)"
+          @update:visible="(v) => setSectionVisible('audience', v)"
+          @move-up="moveSection('audience', -1)"
+          @move-down="moveSection('audience', 1)"
+        >
+          <div>
+            <label :class="sectionLabel">Заголовок</label>
+            <AdminThemedTextField v-model="d.audience.title" :multiline="false" />
+          </div>
+          <div>
+            <label :class="sectionLabel">Абзац 1</label>
+            <AdminThemedTextField v-model="d.audience.paragraph1" />
+          </div>
+          <div>
+            <label :class="sectionLabel">Абзац 2</label>
+            <AdminThemedTextField v-model="d.audience.paragraph2" />
+          </div>
+          <div class="grid gap-4 md:grid-cols-2">
             <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.audience.title" :multiline="false" />
+              <label :class="sectionLabel">Текст кнопки</label>
+              <AdminThemedTextField v-model="d.audience.ctaLabel" :multiline="false" />
             </div>
             <div>
-              <label :class="sectionLabel">Абзац 1</label>
-              <AdminThemedTextField v-model="d.audience.paragraph1" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Абзац 2</label>
-              <AdminThemedTextField v-model="d.audience.paragraph2" />
-            </div>
-            <div class="grid gap-4 md:grid-cols-2">
-              <div>
-                <label :class="sectionLabel">Текст кнопки</label>
-                <AdminThemedTextField v-model="d.audience.ctaLabel" :multiline="false" />
-              </div>
-              <div>
-                <label :class="sectionLabel">Ссылка кнопки (путь, напр. /contacts)</label>
-                <input
-                  v-model="d.audience.ctaHref"
-                  type="text"
-                  :class="sectionInput"
-                  placeholder="/contacts"
-                />
-              </div>
+              <label :class="sectionLabel">Ссылка кнопки (путь, напр. /contacts)</label>
+              <input
+                v-model="d.audience.ctaHref"
+                type="text"
+                :class="sectionInput"
+                placeholder="/contacts"
+              />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- Custom marketing sections -->
         <section class="relative border border-mts-border bg-white shadow-tech">
@@ -1060,7 +1028,7 @@ function directionPreviewPath(detailSlug: string) {
             <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
               Пользовательские секции
             </h2>
-            <p class="mt-2 max-w-3xl font-body text-xs text-mts-text-secondary">
+            <p class="mt-2 max-w-7xl font-body text-xs text-mts-text-secondary">
               Порядок в списке выше задаётся теми же строками с ключами
               <code class="font-mono text-[11px]">custom:…</code>. При добавлении и удалении блоков структура
               совпадает на RU и EN; тексты редактируются отдельно для каждого языка.
@@ -1073,38 +1041,28 @@ function directionPreviewPath(detailSlug: string) {
         </section>
 
         <template v-for="sid in d.sectionOrder.filter((x) => x.startsWith('custom:'))" :key="sid">
-          <section
+          <AdminCollapsibleSection
             v-if="getCustomSectionById(sid.slice(7))"
-            class="relative border border-mts-border bg-white shadow-tech"
+            :title="`Секция: ${getCustomSectionById(sid.slice(7))!.title.trim() || 'Без названия'}`"
+            :collapsed="collapsed['custom-' + sid.slice(7)] !== false"
+            :visible="sectionVisible(sid)"
+            :can-move-up="canMove(sid, -1)"
+            :can-move-down="canMove(sid, 1)"
+            @update:collapsed="(v) => (collapsed['custom-' + sid.slice(7)] = v)"
+            @update:visible="(v) => setSectionVisible(sid, v)"
+            @move-up="moveSection(sid, -1)"
+            @move-down="moveSection(sid, 1)"
           >
-            <CommonAccentCorners />
-            <div class="flex flex-wrap items-start justify-between gap-2 border-b border-mts-border p-6">
-              <button
-                type="button"
-                class="flex min-w-0 flex-1 items-center justify-between gap-4 text-left"
-                @click="toggle('custom-' + sid.slice(7))"
-              >
-                <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
-                  Секция:
-                  {{ getCustomSectionById(sid.slice(7))!.title.trim() || 'Без названия' }}
-                </h2>
-                <ChevronDown
-                  class="h-4 w-4 shrink-0 text-mts-text-secondary transition-transform"
-                  :class="{ 'rotate-180': !collapsed['custom-' + sid.slice(7)] }"
-                />
-              </button>
+            <template #headerExtra>
               <button
                 type="button"
                 class="btn-secondary shrink-0 px-2 py-1 text-xs text-red-700"
-                @click="removeCustomSection(sid.slice(7))"
+                @click.stop="removeCustomSection(sid.slice(7))"
               >
                 Удалить секцию
               </button>
-            </div>
-            <div
-              v-show="!collapsed['custom-' + sid.slice(7)]"
-              class="space-y-6 border-t border-mts-border px-6 pb-6 pt-4"
-            >
+            </template>
+            <div class="space-y-6">
               <div class="grid gap-4 md:grid-cols-2">
                 <div class="md:col-span-2">
                   <label :class="sectionLabel">Заголовок секции (на сайте)</label>
@@ -1309,7 +1267,7 @@ function directionPreviewPath(detailSlug: string) {
                 </button>
               </div>
             </div>
-          </section>
+          </AdminCollapsibleSection>
         </template>
 
         <section class="relative border border-mts-border bg-white p-6 shadow-tech">

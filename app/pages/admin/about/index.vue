@@ -1,11 +1,18 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink, ChevronDown } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink } from 'lucide-vue-next'
+import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type { AboutPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
-import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
-import { defaultAboutData, mergeAboutPageData, syncStructuralFields } from '~/utils/aboutPageDefaults'
+import {
+  ABOUT_SECTION_ADMIN_LABELS,
+  ABOUT_SECTION_DEFAULT_ORDER,
+  defaultAboutData,
+  mergeAboutPageData,
+  syncStructuralFields,
+} from '~/utils/aboutPageDefaults'
 import { useConfirm } from '~/composables/useConfirmAction'
 import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
+import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 const ICON_OPTIONS = getAllLucideAdminIconOptions()
 
@@ -43,6 +50,53 @@ const collapsed = ref<Record<string, boolean>>({
 
 function toggle(section: string) {
   collapsed.value[section] = !collapsed.value[section]
+}
+
+/**
+ * Эффективный порядок секций (без hero) с учётом сохранённого `sectionOrder`,
+ * актуальных кастомных секций и дефолтов. Используется для inline-контролов.
+ */
+const effectiveSectionOrder = computed<string[]>(() => {
+  const cur = data.value[localeTab.value]
+  return resolveSectionOrder(cur.sectionOrder, ABOUT_SECTION_DEFAULT_ORDER, cur.customSections)
+})
+
+function sectionVisible(id: string): boolean {
+  return isSectionVisible(data.value[localeTab.value].sectionVisibility, id)
+}
+
+function setSectionVisible(id: string, v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const cur = data.value[loc].sectionVisibility ?? {}
+    data.value[loc].sectionVisibility = { ...cur, [id]: v }
+  }
+}
+
+function indexInOrder(id: string): number {
+  return effectiveSectionOrder.value.indexOf(id)
+}
+
+function canMove(id: string, delta: number): boolean {
+  const idx = indexInOrder(id)
+  if (idx < 0) return false
+  const j = idx + delta
+  return j >= 0 && j < effectiveSectionOrder.value.length
+}
+
+function moveSection(id: string, delta: number) {
+  const order = effectiveSectionOrder.value
+  const idx = order.indexOf(id)
+  if (idx < 0) return
+  const next = moveOrderItem(order, idx, delta)
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].sectionOrder = [...next]
+  }
+}
+
+function sectionTitle(id: string): string {
+  const pos = indexInOrder(id) + 2
+  const label = ABOUT_SECTION_ADMIN_LABELS[id as keyof typeof ABOUT_SECTION_ADMIN_LABELS] ?? id
+  return `${pos}. ${label}`
 }
 
 onMounted(async () => {
@@ -248,14 +302,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- HERO -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('hero')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Начальное описание (Hero)</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
-          </button>
-          <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <!-- 1. HERO — фиксирована, не скрывается, не переносится. -->
+        <AdminCollapsibleSection
+          title="1. Начальное описание (Hero)"
+          :collapsed="collapsed.hero"
+          @update:collapsed="(v) => (collapsed.hero = v)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
             <AdminHeroImageField
               v-model="d.introImage"
@@ -263,8 +316,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               hint="Блок с двумя абзацами под тем же заголовком, что и hero. Если пусто — используется изображение по умолчанию из макета."
             />
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
-              <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.hero.title" :multiline="false" />
+              <p class="mt-1 font-body text-xs text-mts-text-secondary">
+                Тот же редактор, что у абзацев: палитра текста и подсветки, тона темы через разметку.
+              </p>
             </div>
             <div>
               <label :class="sectionLabel">Подзаголовок</label>
@@ -279,16 +335,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.hero.lead2" />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- ECOSYSTEM -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('ecosystem')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. Экосистема сервисов</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.ecosystem }" />
-          </button>
-          <div v-show="!collapsed.ecosystem" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('ecosystem')"
+          :collapsed="collapsed.ecosystem"
+          :visible="sectionVisible('ecosystem')"
+          :can-move-up="canMove('ecosystem', -1)"
+          :can-move-down="canMove('ecosystem', 1)"
+          @update:collapsed="(v) => (collapsed.ecosystem = v)"
+          @update:visible="(v) => setSectionVisible('ecosystem', v)"
+          @move-up="moveSection('ecosystem', -1)"
+          @move-down="moveSection('ecosystem', 1)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.ecosystemImage"
               label="Фон секции «Экосистема сервисов»"
@@ -330,16 +391,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               </button>
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- MISSION -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('mission')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">3. Миссия и Цели</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.mission }" />
-          </button>
-          <div v-show="!collapsed.mission" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('mission')"
+          :collapsed="collapsed.mission"
+          :visible="sectionVisible('mission')"
+          :can-move-up="canMove('mission', -1)"
+          :can-move-down="canMove('mission', 1)"
+          @update:collapsed="(v) => (collapsed.mission = v)"
+          @update:visible="(v) => setSectionVisible('mission', v)"
+          @move-up="moveSection('mission', -1)"
+          @move-down="moveSection('mission', 1)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.missionImage"
               label="Фон секции «Миссия»"
@@ -372,16 +438,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               </button>
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- WHY MTS -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('why')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">4. Почему выбирают MTS?</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.why }" />
-          </button>
-          <div v-show="!collapsed.why" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('why')"
+          :collapsed="collapsed.why"
+          :visible="sectionVisible('why')"
+          :can-move-up="canMove('why', -1)"
+          :can-move-down="canMove('why', 1)"
+          @update:collapsed="(v) => (collapsed.why = v)"
+          @update:visible="(v) => setSectionVisible('why', v)"
+          @move-up="moveSection('why', -1)"
+          @move-down="moveSection('why', 1)"
+        >
+          <div class="space-y-4">
             <p class="font-body text-xs text-mts-text-secondary">
               По макету Figma эта секция использует сплошной фон #0B1F2A, без фотографии — поэтому поле фонового изображения отсутствует.
             </p>
@@ -398,16 +469,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.why.ctaText" :multiline="false" />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- STATS — отдельная секция «Компания в цифрах» (Figma: Rectangle 51) -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('stats')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Компания в цифрах</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.stats }" />
-          </button>
-          <div v-show="!collapsed.stats" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('stats')"
+          :collapsed="collapsed.stats"
+          :visible="sectionVisible('stats')"
+          :can-move-up="canMove('stats', -1)"
+          :can-move-down="canMove('stats', 1)"
+          @update:collapsed="(v) => (collapsed.stats = v)"
+          @update:visible="(v) => setSectionVisible('stats', v)"
+          @move-up="moveSection('stats', -1)"
+          @move-down="moveSection('stats', 1)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.statsImage"
               label="Фон секции «Компания в цифрах»"
@@ -417,16 +493,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               Сами значения и подписи (150+, 15+ и т.п.) сейчас задаются в коде/локалях. Если потребуется редактировать их через админку — сообщите.
             </p>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- GEOGRAPHY -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('geography')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. География обслуживания</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.geography }" />
-          </button>
-          <div v-show="!collapsed.geography" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('geography')"
+          :collapsed="collapsed.geography"
+          :visible="sectionVisible('geography')"
+          :can-move-up="canMove('geography', -1)"
+          :can-move-down="canMove('geography', 1)"
+          @update:collapsed="(v) => (collapsed.geography = v)"
+          @update:visible="(v) => setSectionVisible('geography', v)"
+          @move-up="moveSection('geography', -1)"
+          @move-down="moveSection('geography', 1)"
+        >
+          <div class="space-y-4">
             <div class="grid md:grid-cols-3 gap-4">
               <div>
                 <label :class="sectionLabel">Метка</label>
@@ -434,7 +515,10 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               </div>
               <div class="md:col-span-2">
                 <label :class="sectionLabel">Заголовок</label>
-                <AdminThemedTextField v-model="d.geography.title" :multiline="false" />
+                <AdminThemedTextField v-model="d.geography.title" :multiline="true" />
+                <p class="mt-1 font-body text-xs text-mts-text-secondary">
+                  Перенос строки (Enter) отображается на сайте в заголовке секции.
+                </p>
               </div>
             </div>
             <div>
@@ -508,16 +592,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <Plus class="w-4 h-4" /> Добавить локацию
             </button>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- CERTIFICATES -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('certificates')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">7. Сертификаты</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.certificates }" />
-          </button>
-          <div v-show="!collapsed.certificates" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('certificates')"
+          :collapsed="collapsed.certificates"
+          :visible="sectionVisible('certificates')"
+          :can-move-up="canMove('certificates', -1)"
+          :can-move-down="canMove('certificates', 1)"
+          @update:collapsed="(v) => (collapsed.certificates = v)"
+          @update:visible="(v) => setSectionVisible('certificates', v)"
+          @move-up="moveSection('certificates', -1)"
+          @move-down="moveSection('certificates', 1)"
+        >
+          <div class="space-y-4">
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
               <AdminThemedTextField v-model="d.certificates.title" :multiline="false" />
@@ -571,7 +660,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               </button>
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <AdminCustomSectionsEditor
           :model-value="d.customSections ?? []"

@@ -1,11 +1,11 @@
 import type { AboutPageData, MarineContentLocale } from '~/types'
 import { normalizeCustomPageSections } from '~/utils/customPageSections'
-import { mergeAboutHero, themeTitleTriple } from '~/utils/themeFormattedTitle'
+import { mergeAboutHero, themeFormattedTitleToHtml, themeTitleTriple } from '~/utils/themeFormattedTitle'
 
 const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   ru: {
     hero: {
-      titleFormatted: themeTitleTriple('Marine Technical Solutions ', '(MTS)', ''),
+      title: themeFormattedTitleToHtml(themeTitleTriple('Marine Technical Solutions ', '(MTS)', '')),
       subtitle: 'Интегрированный подход. Глобальный охват. Технологическое лидерство.',
       lead: 'Основанная в 2010 году, компания Marine Technical Solutions (MTS) прошла путь от амбициозного инженерного стартапа до международного EPC-контрактора и частной судоходной компании с головным офисом в Калининграде и стратегическим представительством в ОАЭ.',
       lead2: 'Мы не просто управляем судами — мы создаем условия для их безопасной, экологичной и прибыльной эксплуатации в любой точке мирового океана.',
@@ -70,7 +70,7 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   },
   en: {
     hero: {
-      titleFormatted: themeTitleTriple('Marine Technical Solutions ', '(MTS)', ''),
+      title: themeFormattedTitleToHtml(themeTitleTriple('Marine Technical Solutions ', '(MTS)', '')),
       subtitle: 'Integrated Approach. Global Reach. Technological Leadership.',
       lead: 'Founded in 2010, Marine Technical Solutions (MTS) has evolved from an ambitious engineering start-up into an international EPC contractor and private shipping company, headquartered in Kaliningrad with a strategic office in the UAE.',
       lead2: 'We do not simply manage vessels — we create the conditions for their safe, eco-friendly and profitable operation anywhere in the world\'s oceans.',
@@ -129,8 +129,36 @@ const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
   },
 }
 
+/**
+ * Дефолтный порядок секций раздела «О компании», применяемый, когда в данных
+ * нет сохранённого `sectionOrder`. Hero фиксирован первым и не входит сюда.
+ */
+export const ABOUT_SECTION_DEFAULT_ORDER = [
+  'ecosystem',
+  'mission',
+  'why',
+  'stats',
+  'geography',
+  'certificates',
+] as const
+
+export type AboutSectionId = (typeof ABOUT_SECTION_DEFAULT_ORDER)[number]
+
+/** Подписи разделов в админке для inline-контролов. */
+export const ABOUT_SECTION_ADMIN_LABELS: Record<AboutSectionId, string> = {
+  ecosystem: 'Экосистема сервисов',
+  mission: 'Миссия и Цели',
+  why: 'Почему выбирают MTS?',
+  stats: 'Компания в цифрах',
+  geography: 'География обслуживания',
+  certificates: 'Сертификаты',
+}
+
 export function defaultAboutData(locale: MarineContentLocale): AboutPageData {
-  return JSON.parse(JSON.stringify(DEFAULTS[locale]))
+  const base = JSON.parse(JSON.stringify(DEFAULTS[locale])) as AboutPageData
+  base.sectionOrder = [...ABOUT_SECTION_DEFAULT_ORDER]
+  base.sectionVisibility = {}
+  return base
 }
 
 export function mergeAboutPageData(locale: MarineContentLocale, raw: unknown): AboutPageData {
@@ -144,6 +172,8 @@ export function mergeAboutPageData(locale: MarineContentLocale, raw: unknown): A
     ...p,
     hero: mergeAboutHero(p.hero, base.hero),
     customSections: normalizeCustomPageSections(p.customSections),
+    sectionOrder: p.sectionOrder ?? base.sectionOrder,
+    sectionVisibility: p.sectionVisibility ?? base.sectionVisibility,
   }
 }
 

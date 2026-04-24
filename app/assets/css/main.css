@@ -14,19 +14,16 @@
 
 @theme {
   /*
-   * Базовая тема Marin — DARK MODE.
-   * Эти значения активны по умолчанию и переопределяются в
-   * `:root[data-theme='light']` ниже для светлой темы.
+   * Единственная тема публичного сайта — тёмная (фирменный Marin).
+   * Токены mts-* задают палитру целиком; `data-theme` на <html> = dark.
    *
-   * ВСЕ цветовые токены mts-* реагируют на data-theme. Семантика:
+   * Семантика:
    *  • mts-bg / mts-surface — фон страницы и карточек.
    *  • mts-text / mts-text-secondary / mts-text-muted — типографика.
    *  • mts-border / mts-border-light / mts-grid — линии и решётки.
-   *  • mts-navy / mts-navy-deep / mts-dark — «brand surface»: фон шапки,
-   *    футера, hero и плотных блоков. В светлой теме мягко инвертируются
-   *    в светлый off-white, чтобы Nav/Footer тоже переключались.
-   *  • mts-frost — типографика на brand-surface (всегда контрастна к navy).
-   *    В светлой теме становится navy (тёмный текст на белом).
+   *  • mts-navy / mts-navy-deep / mts-dark — «brand surface»: шапка,
+   *    футер, hero и плотные блоки.
+   *  • mts-frost — типографика на brand-surface (контрастна к navy).
    *  • mts-slate-muted — приглушённый текст / служебные надписи.
    *  • mts-accent / mts-accent-light / mts-accent-dark / mts-marker —
    *    кросс-тёмные акценты, общие для обеих тем (с точечной коррекцией).
@@ -65,102 +62,14 @@
 @layer base {
   html {
     scroll-behavior: smooth;
-    font-size: 17px;
+    /* База для rem: чуть меньше 17px — спокойнее для длинных текстов и UI. */
+    font-size: 16px;
   }
   body {
     @apply bg-mts-bg text-mts-text antialiased font-body;
     transition:
       background-color 200ms ease,
       color 200ms ease;
-  }
-
-  /*
-   * LIGHT MODE — комплиментарная светлая тема, построенная вокруг
-   * фирменного navy (#0b1f2a). Активируется когда Nuxt ставит
-   * <html data-theme="light"> (см. composables/useMarinTheme.ts).
-   *
-   * Принципы палитры:
-   *  • Основной фон — холодный off-white с лёгким сине-серым подтоном
-   *    (морской воздух).
-   *  • Brand surface (navy/dark) — белый/светлый off-white, чтобы
-   *    Nav/Footer/hero мягко инвертировались, не теряя «островную»
-   *    плотность дизайна.
-   *  • Текст (text/frost) — фирменный navy (#0b1f2a). Тот же оттенок,
-   *    что был фоном в dark, становится доминирующим цветом типографики.
-   *  • Сетки/бордеры — мягкий blue-grey.
-   *  • Акцент — оставлен #de7879 (узнаваемый), accent-dark чуть глубже
-   *    для адекватного контраста на белом.
-   */
-  :root[data-theme='light'] {
-    --color-mts-bg: #f4f6f8;
-    --color-mts-surface: #ffffff;
-    --color-mts-text: #0b1f2a;
-    --color-mts-text-secondary: #4a5d68;
-    --color-mts-text-muted: #8da0ac;
-    --color-mts-border: #d4dde3;
-    --color-mts-border-light: #e4ebef;
-    --color-mts-grid: #dbe3e8;
-    --color-mts-accent-dark: #b85e5f;
-
-    /* Brand surface переходит в светлый off-white,
-       чтобы Nav/Footer/hero «дышали» в светлой теме. */
-    --color-mts-dark: #ffffff;
-    --color-mts-navy: #ffffff;
-    --color-mts-navy-deep: #eef2f5;
-    --color-mts-frost: #0b1f2a;
-    --color-mts-slate-muted: #4a5d68;
-
-    --shadow-tech: 0 2px 8px rgba(11, 31, 42, 0.06);
-    --shadow-tech-lg: 0 6px 20px rgba(11, 31, 42, 0.08);
-    --shadow-accent: 0 4px 20px rgba(184, 94, 95, 0.18);
-  }
-
-  /*
-   * Плавные «склейки» между секциями раздела «О компании».
-   *
-   * В тёмной теме секции страницы — это плотные тёмные полотна с
-   * фотографиями и navy-overlay'ями; жёсткие границы между ними
-   * выглядят естественно. В светлой же теме `mts-navy` становится
-   * белым, и стык секций превращается в видимую линию.
-   *
-   * Чтобы этого избежать, в светлой теме мы накладываем поверх каждой
-   * секции в `.mts-about-shell` тонкие градиентные «вуали» сверху и
-   * снизу. Они идут от brand-surface (`mts-navy` = #ffffff в light) к
-   * прозрачному и закрывают стык, не затрагивая центральный контент.
-   *
-   * `pointer-events: none` гарантирует, что вуали не перехватывают
-   * клики/наведение — все интерактивные элементы внутри секций
-   * остаются полностью кликабельны.
-   */
-  :root[data-theme='light'] .mts-about-shell > section {
-    position: relative;
-  }
-  :root[data-theme='light'] .mts-about-shell > section::before,
-  :root[data-theme='light'] .mts-about-shell > section::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 96px;
-    pointer-events: none;
-    z-index: 5;
-  }
-  :root[data-theme='light'] .mts-about-shell > section::before {
-    top: 0;
-    background: linear-gradient(to bottom, var(--color-mts-navy) 0%, transparent 100%);
-  }
-  :root[data-theme='light'] .mts-about-shell > section::after {
-    bottom: 0;
-    background: linear-gradient(to top, var(--color-mts-navy) 0%, transparent 100%);
-  }
-  /* На hero-секции (первой) верхняя вуаль не нужна — над ней нет другой
-     секции, под которой надо было бы спрятать стык. */
-  :root[data-theme='light'] .mts-about-shell > section:first-child::before {
-    display: none;
-  }
-  /* На последней секции — аналогично снизу. */
-  :root[data-theme='light'] .mts-about-shell > section:last-child::after {
-    display: none;
   }
 
   .admin-shell {
@@ -178,6 +87,83 @@
 }
 
 @layer components {
+  /**
+   * Общий контейнер публичного сайта: `max-w-7xl` (1280px) + горизонтальные поля.
+   * Шапка и футер используют тот же класс.
+   */
+  .mts-content-wrap {
+    @apply mx-auto w-full max-w-7xl px-6 lg:px-12;
+  }
+
+  /**
+   * Только выбранные разделы (класс на `<main>` из default layout):
+   * верхнеуровневые секции на всю высоту `100svh` + вертикальное центрирование.
+   * Вложенные `<section>` и админка не затрагиваются.
+   */
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > section,
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > div > section {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > section > *,
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > div > section > * {
+    width: 100%;
+  }
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > section section,
+  body:not(.admin-shell) main.mts-main--full-viewport-sections > div > section section {
+    min-height: 0;
+  }
+
+  /** Оверлеи на фото на странице «О нас» (токены `--color-mts-*`). */
+  .mts-about-overlay-intro {
+    background: linear-gradient(
+      144.35deg,
+      color-mix(in srgb, var(--color-mts-navy) 92%, transparent) 19.24%,
+      color-mix(in srgb, var(--color-mts-navy) 82%, transparent) 35.4%,
+      transparent 95.91%
+    );
+  }
+  .mts-about-overlay-mission {
+    background: linear-gradient(
+      123.38deg,
+      color-mix(in srgb, var(--color-mts-navy-deep) 86%, transparent) 5.42%,
+      color-mix(in srgb, var(--color-mts-navy) 84%, transparent) 38.63%,
+      color-mix(in srgb, var(--color-mts-navy) 72%, transparent) 52.47%,
+      color-mix(in srgb, var(--color-mts-navy) 35%, transparent) 93.97%
+    );
+  }
+  .mts-about-overlay-stats {
+    background: linear-gradient(
+      111.6deg,
+      color-mix(in srgb, var(--color-mts-navy-deep) 80%, transparent) 5.42%,
+      color-mix(in srgb, var(--color-mts-navy) 80%, transparent) 38.63%,
+      color-mix(in srgb, var(--color-mts-navy) 71%, transparent) 52.47%,
+      color-mix(in srgb, var(--color-mts-navy) 32%, transparent) 93.97%
+    );
+  }
+
+  .mts-about-hero-veil-r {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-mts-navy) 92%, transparent),
+      color-mix(in srgb, var(--color-mts-navy) 60%, transparent),
+      color-mix(in srgb, var(--color-mts-navy) 20%, transparent)
+    );
+  }
+  .mts-about-hero-veil-t {
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--color-mts-navy) 80%, transparent),
+      transparent,
+      color-mix(in srgb, var(--color-mts-navy) 60%, transparent)
+    );
+  }
+  .mts-about-ecosystem-veil {
+    background: color-mix(in srgb, var(--color-mts-navy) 82%, transparent);
+  }
+
   /** Плоские кнопки с прямыми углами (как в шапке: заявка / анкета). */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;

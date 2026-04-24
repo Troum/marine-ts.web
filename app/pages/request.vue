@@ -14,14 +14,14 @@ const crumbItems = computed(() =>
 <template>
   <div class="bg-mts-bg pt-16">
     <section class="relative py-16 lg:py-20 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="max-w-3xl">
+      <div class="mts-content-wrap relative z-10">
+        <div class="max-w-7xl">
           <Breadcrumbs :items="crumbItems" />
           <div class="flex items-center gap-3 mb-4">
             <div class="w-6 h-px bg-mts-accent" />
             <span class="section-label">{{ t('pages.request.heroEyebrow') }}</span>
           </div>
-          <h1 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
+          <h1 class="font-display text-3xl lg:text-4xl text-mts-text leading-tight mb-6">
             {{ t('pages.request.title') }}<span class="text-mts-accent">{{ t('pages.request.titleAccent') }}</span
             >{{ t('pages.request.titleEnd') }}
           </h1>

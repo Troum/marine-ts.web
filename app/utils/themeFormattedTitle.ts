@@ -16,7 +16,8 @@ import type {
   ThemeTitleSpan,
   ThemeTitleTone,
 } from '~/types'
-import { stripHtmlToPlain } from '~/utils/adminHtmlField'
+import { incomingCmsValueToHtml, stripHtmlToPlain } from '~/utils/adminHtmlField'
+import { serializeThemeTitleTiptapDocToHtml, themeTitleToTiptapDoc } from '~/utils/themeToneTiptap'
 
 /** Локальный helper: строка → plain без тегов и whitespace по краям. */
 function stripHtmlToPlainTrim(raw: string): string {
@@ -92,6 +93,12 @@ export function themeToneInlineStyle(tone: ThemeTitleTone): string {
 
 export function emptyThemeTitle(): ThemeFormattedTitle {
   return { spans: [{ text: '', tone: 'text' }] }
+}
+
+/** Миграция `ThemeFormattedTitle` → HTML (поля, перешедшие на `AdminThemedTextField`). */
+export function themeFormattedTitleToHtml(parsed: unknown): string {
+  const tft = normalizeThemeFormattedTitle(parsed as ThemeFormattedTitle)
+  return serializeThemeTitleTiptapDocToHtml(themeTitleToTiptapDoc(tft))
 }
 
 /** Три сегмента: текст — акцент — текст (как бывшие три поля). */
@@ -232,25 +239,35 @@ export function mergeContactsHero(
   }
 }
 
+function isLegacyAboutHeroTriple(h: Record<string, unknown>): boolean {
+  return 'titleAccent' in h || 'titleEnd' in h
+}
+
 export function mergeAboutHero(raw: unknown, base: AboutHero): AboutHero {
   if (!raw || typeof raw !== 'object') {
     return base
   }
   const h = raw as Record<string, unknown>
-  if (h.titleFormatted !== undefined) {
-    return {
-      titleFormatted: mergeThemeFormattedTitle(h.titleFormatted, base.titleFormatted),
-      subtitle: typeof h.subtitle === 'string' ? h.subtitle : base.subtitle,
-      lead: typeof h.lead === 'string' ? h.lead : base.lead,
-      lead2: typeof h.lead2 === 'string' ? h.lead2 : base.lead2,
-    }
+
+  let title: string
+  if (typeof h.title === 'string' && h.title.trim() !== '') {
+    title = incomingCmsValueToHtml(h.title)
+  } else if (h.titleFormatted !== undefined) {
+    title = themeFormattedTitleToHtml(h.titleFormatted)
+  } else if (isLegacyAboutHeroTriple(h)) {
+    title = themeFormattedTitleToHtml(
+      migrateLegacyTripleToTheme(
+        typeof h.title === 'string' ? h.title : '',
+        typeof h.titleAccent === 'string' ? h.titleAccent : '',
+        typeof h.titleEnd === 'string' ? h.titleEnd : '',
+      ),
+    )
+  } else {
+    title = base.title
   }
+
   return {
-    titleFormatted: migrateLegacyTripleToTheme(
-      typeof h.title === 'string' ? h.title : '',
-      typeof h.titleAccent === 'string' ? h.titleAccent : '',
-      typeof h.titleEnd === 'string' ? h.titleEnd : '',
-    ),
+    title,
     subtitle: typeof h.subtitle === 'string' ? h.subtitle : base.subtitle,
     lead: typeof h.lead === 'string' ? h.lead : base.lead,
     lead2: typeof h.lead2 === 'string' ? h.lead2 : base.lead2,

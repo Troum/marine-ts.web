@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
+import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type { HomePageData, ContentPage, MarineContentLocale, ServiceItem } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
-import { defaultHomeData, mergeHomePageData, syncHomeStructuralFields } from '~/utils/pageDefaults'
+import {
+  HOME_SECTION_ADMIN_LABELS,
+  HOME_SECTION_DEFAULT_ORDER,
+  defaultHomeData,
+  mergeHomePageData,
+  syncHomeStructuralFields,
+} from '~/utils/pageDefaults'
 import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 import { useConfirm } from '~/composables/useConfirmAction'
+import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
 
@@ -33,7 +41,6 @@ const d = computed(() => data.value[localeTab.value])
 const collapsed = ref<Record<string, boolean>>({
   hero: false,
   funnel: true,
-  stats: true,
   about: true,
   services: true,
   process: true,
@@ -41,6 +48,53 @@ const collapsed = ref<Record<string, boolean>>({
 })
 
 function toggle(s: string) { collapsed.value[s] = !collapsed.value[s] }
+
+/**
+ * Эффективный порядок секций (без hero) с учётом сохранённого `sectionOrder`,
+ * актуальных кастомных секций и дефолтов. Используется для inline-контролов.
+ */
+const effectiveSectionOrder = computed<string[]>(() => {
+  const cur = data.value[localeTab.value]
+  return resolveSectionOrder(cur.sectionOrder, HOME_SECTION_DEFAULT_ORDER, cur.customSections)
+})
+
+function sectionVisible(id: string): boolean {
+  return isSectionVisible(data.value[localeTab.value].sectionVisibility, id)
+}
+
+function setSectionVisible(id: string, v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const cur = data.value[loc].sectionVisibility ?? {}
+    data.value[loc].sectionVisibility = { ...cur, [id]: v }
+  }
+}
+
+function indexInOrder(id: string): number {
+  return effectiveSectionOrder.value.indexOf(id)
+}
+
+function canMove(id: string, delta: number): boolean {
+  const idx = indexInOrder(id)
+  if (idx < 0) return false
+  const j = idx + delta
+  return j >= 0 && j < effectiveSectionOrder.value.length
+}
+
+function moveSection(id: string, delta: number) {
+  const order = effectiveSectionOrder.value
+  const idx = order.indexOf(id)
+  if (idx < 0) return
+  const next = moveOrderItem(order, idx, delta)
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].sectionOrder = [...next]
+  }
+}
+
+function sectionTitle(id: string): string {
+  const pos = indexInOrder(id) + 2
+  const label = HOME_SECTION_ADMIN_LABELS[id as keyof typeof HOME_SECTION_ADMIN_LABELS] ?? id
+  return `${pos}. ${label}`
+}
 
 onMounted(async () => {
   await loadPathOptions()
@@ -220,18 +274,17 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- 1. HERO -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('hero')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Hero-блок</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.hero }" />
-          </button>
-          <div v-show="!collapsed.hero" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <!-- 1. HERO — фиксирована, не скрывается, не переносится. -->
+        <AdminCollapsibleSection
+          title="1. Hero-блок"
+          :collapsed="collapsed.hero"
+          @update:collapsed="(v) => (collapsed.hero = v)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.heroImage"
               label="Фон первого экрана"
-              hint="Необязательно. Если не задано, используется /images/marin-figma/hero-ship.jpg из сайта."
+              hint="Необязательно. Если не задано, на главной показывается сплошной фон без фото."
             />
             <div>
               <label :class="sectionLabel">Метка (label)</label>
@@ -262,19 +315,45 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div><label :class="sectionLabel">Бейдж «Лет опыта»</label><AdminThemedTextField v-model="d.hero.badgeYears" :multiline="false" /></div>
             </div>
             <div><label :class="sectionLabel">Текст «Листайте»</label><AdminThemedTextField v-model="d.hero.scroll" :multiline="false" /></div>
+
+            <div class="mt-4 border border-mts-border bg-mts-bg/40 p-4 space-y-4">
+              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Карточка «В цифрах» (внутри hero)</h3>
+              <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="d.showStatsCard" type="checkbox" class="mts-checkbox" />
+                Показывать карточку в Hero
+              </label>
+              <div><label :class="sectionLabel">Заголовок карточки</label><AdminThemedTextField v-model="d.statsCard.label" :multiline="false" /></div>
+              <div class="space-y-3">
+                <div v-for="(item, i) in d.statsCard.items" :key="i" class="border border-mts-border p-4 bg-mts-bg/50">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Показатель {{ i + 1 }}</span>
+                    <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeStat(i)"><Trash2 class="w-4 h-4" /></button>
+                  </div>
+                  <div class="grid md:grid-cols-3 gap-3">
+                    <div><label :class="sectionLabel">Иконка</label><AdminSelect v-model="item.icon" :options="STAT_ICON_OPTIONS" /></div>
+                    <div><label :class="sectionLabel">Значение</label><AdminThemedTextField v-model="item.value" :multiline="false" /></div>
+                    <div><label :class="sectionLabel">Подпись</label><AdminThemedTextField v-model="item.label" :multiline="false" /></div>
+                  </div>
+                </div>
+                <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStat"><Plus class="w-4 h-4" /> Добавить показатель</button>
+              </div>
+            </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- 2. FUNNEL CARDS -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('funnel')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
-              2. Три карточки под первым экраном
-            </h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.funnel }" />
-          </button>
-          <div v-show="!collapsed.funnel" class="px-6 pb-6 space-y-8 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('funnel')"
+          :collapsed="collapsed.funnel"
+          :visible="sectionVisible('funnel')"
+          :can-move-up="canMove('funnel', -1)"
+          :can-move-down="canMove('funnel', 1)"
+          @update:collapsed="(v) => (collapsed.funnel = v)"
+          @update:visible="(v) => setSectionVisible('funnel', v)"
+          @move-up="moveSection('funnel', -1)"
+          @move-down="moveSection('funnel', 1)"
+        >
+          <div class="space-y-8">
             <p class="font-body text-sm text-mts-text-secondary">
               Три колонки с меткой, заголовком (акцентное слово красным), текстом и ссылками — как на главной сразу под hero.
             </p>
@@ -329,42 +408,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminNavPathPick v-model="d.funnelTechnical.href" :path-options="pathOptions" input-placeholder="/services" />
             </div>
           </div>
-        </section>
-
-        <!-- 3. STATS -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('stats')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">3. Статистика</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.stats }" />
-          </button>
-          <div v-show="!collapsed.stats" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
-            <div><label :class="sectionLabel">Заголовок карточки</label><AdminThemedTextField v-model="d.statsCard.label" :multiline="false" /></div>
-            <div class="space-y-3">
-              <div v-for="(item, i) in d.statsCard.items" :key="i" class="border border-mts-border p-4 bg-mts-bg/50">
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Показатель {{ i + 1 }}</span>
-                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeStat(i)"><Trash2 class="w-4 h-4" /></button>
-                </div>
-                <div class="grid md:grid-cols-3 gap-3">
-                  <div><label :class="sectionLabel">Иконка</label><AdminSelect v-model="item.icon" :options="STAT_ICON_OPTIONS" /></div>
-                  <div><label :class="sectionLabel">Значение</label><AdminThemedTextField v-model="item.value" :multiline="false" /></div>
-                  <div><label :class="sectionLabel">Подпись</label><AdminThemedTextField v-model="item.label" :multiline="false" /></div>
-                </div>
-              </div>
-              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStat"><Plus class="w-4 h-4" /> Добавить показатель</button>
-            </div>
-          </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- 4. ABOUT PREVIEW -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('about')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">4. Превью «О компании»</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.about }" />
-          </button>
-          <div v-show="!collapsed.about" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('about')"
+          :collapsed="collapsed.about"
+          :visible="sectionVisible('about')"
+          :can-move-up="canMove('about', -1)"
+          :can-move-down="canMove('about', 1)"
+          @update:collapsed="(v) => (collapsed.about = v)"
+          @update:visible="(v) => setSectionVisible('about', v)"
+          @move-up="moveSection('about', -1)"
+          @move-down="moveSection('about', 1)"
+        >
+          <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.about.label" :multiline="false" /></div>
             <div>
               <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
@@ -373,16 +431,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.about.text" /></div>
             <div><label :class="sectionLabel">Текст кнопки «Подробнее»</label><AdminThemedTextField v-model="d.about.more" :multiline="false" /></div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- 5. SERVICES PREVIEW -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('services')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">5. Превью сервисов</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.services }" />
-          </button>
-          <div v-show="!collapsed.services" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('services')"
+          :collapsed="collapsed.services"
+          :visible="sectionVisible('services')"
+          :can-move-up="canMove('services', -1)"
+          :can-move-down="canMove('services', 1)"
+          @update:collapsed="(v) => (collapsed.services = v)"
+          @update:visible="(v) => setSectionVisible('services', v)"
+          @move-up="moveSection('services', -1)"
+          @move-down="moveSection('services', 1)"
+        >
+          <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.services.label" :multiline="false" /></div>
             <div>
               <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
@@ -464,16 +527,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               </div>
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- 6. PROCESS -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('process')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">6. Процесс работы</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.process }" />
-          </button>
-          <div v-show="!collapsed.process" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('process')"
+          :collapsed="collapsed.process"
+          :visible="sectionVisible('process')"
+          :can-move-up="canMove('process', -1)"
+          :can-move-down="canMove('process', 1)"
+          @update:collapsed="(v) => (collapsed.process = v)"
+          @update:visible="(v) => setSectionVisible('process', v)"
+          @move-up="moveSection('process', -1)"
+          @move-down="moveSection('process', 1)"
+        >
+          <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.process.label" :multiline="false" /></div>
             <div>
               <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
@@ -491,16 +559,21 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStep"><Plus class="w-4 h-4" /> Добавить шаг</button>
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <!-- 7. CTA -->
-        <section class="bg-white border border-mts-border shadow-tech relative">
-          <CommonAccentCorners />
-          <button type="button" class="w-full flex items-center justify-between p-6" @click="toggle('cta')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">7. Нижний CTA-блок</h2>
-            <ChevronDown class="w-4 h-4 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': !collapsed.cta }" />
-          </button>
-          <div v-show="!collapsed.cta" class="px-6 pb-6 space-y-4 border-t border-mts-border pt-4">
+        <AdminCollapsibleSection
+          :title="sectionTitle('cta')"
+          :collapsed="collapsed.cta"
+          :visible="sectionVisible('cta')"
+          :can-move-up="canMove('cta', -1)"
+          :can-move-down="canMove('cta', 1)"
+          @update:collapsed="(v) => (collapsed.cta = v)"
+          @update:visible="(v) => setSectionVisible('cta', v)"
+          @move-up="moveSection('cta', -1)"
+          @move-down="moveSection('cta', 1)"
+        >
+          <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.cta.label" :multiline="false" /></div>
             <div>
               <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
@@ -509,7 +582,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.cta.text" /></div>
             <div><label :class="sectionLabel">Текст кнопки</label><AdminThemedTextField v-model="d.cta.button" :multiline="false" /></div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
 
         <AdminCustomSectionsEditor
           :model-value="d.customSections ?? []"

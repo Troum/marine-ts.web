@@ -8,11 +8,13 @@ const props = withDefaults(
     placeholder?: string
     multiline?: boolean
     compact?: boolean
+    useThemeTonePopover?: boolean
   }>(),
   {
     placeholder: 'Текст…',
     multiline: true,
     compact: true,
+    useThemeTonePopover: false,
   },
 )
 </script>
@@ -23,5 +25,6 @@ const props = withDefaults(
     :placeholder="props.placeholder"
     :multiline="props.multiline"
     :compact="props.compact"
+    :use-theme-tone-popover="props.useThemeTonePopover"
   />
 </template>

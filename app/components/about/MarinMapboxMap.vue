@@ -193,14 +193,14 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background-color: var(--color-mts-marker, #2ea3ff);
+  background-color: var(--color-mts-accent-dark, #c96667);
   box-shadow: 0 0 0 2px rgba(46, 163, 255, 0.25);
 }
 .mts-mb-marker__ping {
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background-color: var(--color-mts-marker, #2ea3ff);
+  background-color: var(--color-mts-accent-dark, #c96667);
   opacity: 0.55;
   animation: mts-mb-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }

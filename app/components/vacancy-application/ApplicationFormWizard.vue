@@ -202,11 +202,11 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
     <div v-if="showPending" class="flex justify-center py-24">
       <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
     </div>
-    <div v-else-if="showNotFound" class="mx-auto max-w-3xl px-6 py-24 text-center">
+    <div v-else-if="showNotFound" class="mx-auto max-w-7xl px-6 py-24 text-center">
       <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundVacancy') }}</p>
       <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
     </div>
-    <div v-else-if="form" class="relative mx-auto max-w-4xl px-6 pb-24 pt-8 lg:px-12">
+    <div v-else-if="form" class="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-12">
       <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
         <NuxtLink
           v-if="variant === 'vacancy' && vacancySlug"

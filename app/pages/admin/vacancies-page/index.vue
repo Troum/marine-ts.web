@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, ChevronDown } from 'lucide-vue-next'
+import { ArrowLeft, Loader2 } from 'lucide-vue-next'
+import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type { ContentPage, MarineContentLocale, VacanciesPageData } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
-import { defaultListingData, mergeListingPageData } from '~/utils/pageDefaults'
+import {
+  LISTING_SECTION_ADMIN_LABELS,
+  defaultListingData,
+  listingDefaultOrder,
+  mergeListingPageData,
+} from '~/utils/pageDefaults'
+import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 const SLUG = 'vacancies-page'
 
@@ -25,9 +32,52 @@ const data = ref<Record<MarineContentLocale, VacanciesPageData>>({
 
 const d = computed(() => data.value[localeTab.value])
 
-const collapsed = ref<Record<string, boolean>>({ hero: false, cta: true })
+const collapsed = ref<Record<string, boolean>>({ hero: false, listing: true, cta: true })
 function toggle(s: string) {
   collapsed.value[s] = !collapsed.value[s]
+}
+
+const effectiveSectionOrder = computed<string[]>(() => {
+  const cur = data.value[localeTab.value]
+  return resolveSectionOrder(cur.sectionOrder, listingDefaultOrder(SLUG), cur.customSections)
+})
+
+function sectionVisible(id: string): boolean {
+  return isSectionVisible(data.value[localeTab.value].sectionVisibility, id)
+}
+
+function setSectionVisible(id: string, v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const cur = data.value[loc].sectionVisibility ?? {}
+    data.value[loc].sectionVisibility = { ...cur, [id]: v }
+  }
+}
+
+function indexInOrder(id: string): number {
+  return effectiveSectionOrder.value.indexOf(id)
+}
+
+function canMove(id: string, delta: number): boolean {
+  const idx = indexInOrder(id)
+  if (idx < 0) return false
+  const j = idx + delta
+  return j >= 0 && j < effectiveSectionOrder.value.length
+}
+
+function moveSection(id: string, delta: number) {
+  const order = effectiveSectionOrder.value
+  const idx = order.indexOf(id)
+  if (idx < 0) return
+  const next = moveOrderItem(order, idx, delta)
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].sectionOrder = [...next]
+  }
+}
+
+function sectionTitle(id: string): string {
+  const pos = indexInOrder(id) + 2
+  const label = LISTING_SECTION_ADMIN_LABELS[id as keyof typeof LISTING_SECTION_ADMIN_LABELS] ?? id
+  return `${pos}. ${label}`
 }
 
 onMounted(async () => {
@@ -58,11 +108,16 @@ onMounted(async () => {
 })
 
 async function submit() {
-  const inq = data.value[localeTab.value].showInquiryForm
-  const heroImg = data.value[localeTab.value].heroImage
+  const src = data.value[localeTab.value]
+  const inq = src.showInquiryForm
+  const heroImg = src.heroImage
+  const order = src.sectionOrder
+  const visibility = src.sectionVisibility
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
     data.value[loc].heroImage = heroImg
+    data.value[loc].sectionOrder = order ? [...order] : undefined
+    data.value[loc].sectionVisibility = visibility ? { ...visibility } : undefined
   }
   saving.value = true
   try {
@@ -131,17 +186,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- HERO -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('hero')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">1. Hero-блок</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.hero }"
-            />
-          </button>
-          <div v-show="!collapsed.hero" class="space-y-4 border-t border-mts-border px-6 pt-4 pb-6">
+        <!-- 1. HERO — фиксирован первым. -->
+        <AdminCollapsibleSection
+          title="1. Hero-блок"
+          :collapsed="collapsed.hero"
+          @update:collapsed="(v) => (collapsed.hero = v)"
+        >
+          <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.heroImage"
               label="Фон hero страницы «Вакансии»"
@@ -156,29 +207,47 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.hero.lead" />
             </div>
           </div>
-        </section>
+        </AdminCollapsibleSection>
+
+        <!-- Список вакансий. -->
+        <AdminCollapsibleSection
+          :title="sectionTitle('listing')"
+          :collapsed="collapsed.listing"
+          :visible="sectionVisible('listing')"
+          :can-move-up="canMove('listing', -1)"
+          :can-move-down="canMove('listing', 1)"
+          hint="Сами карточки вакансий берутся из админки «Вакансии». Здесь — управление видимостью и положением блока."
+          @update:collapsed="(v) => (collapsed.listing = v)"
+          @update:visible="(v) => setSectionVisible('listing', v)"
+          @move-up="moveSection('listing', -1)"
+          @move-down="moveSection('listing', 1)"
+        >
+          <p class="font-body text-sm text-mts-text-secondary">
+            Чтобы скрыть весь список вакансий на публичной странице — снимите чекбокс «Показывать» в шапке.
+          </p>
+        </AdminCollapsibleSection>
 
         <!-- CTA -->
-        <section class="relative border border-mts-border bg-white shadow-tech">
-          <CommonAccentCorners />
-          <button type="button" class="flex w-full items-center justify-between p-6" @click="toggle('cta')">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">2. CTA под списком вакансий</h2>
-            <ChevronDown
-              class="h-4 w-4 text-mts-text-secondary transition-transform"
-              :class="{ 'rotate-180': !collapsed.cta }"
-            />
-          </button>
-          <div v-show="!collapsed.cta" class="space-y-4 border-t border-mts-border px-6 pt-4 pb-6">
-            <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.cta!.title" :multiline="false" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Текст кнопки (ведёт на страницу заявки)</label>
-              <AdminThemedTextField v-model="d.cta!.buttonText" :multiline="false" />
-            </div>
+        <AdminCollapsibleSection
+          :title="sectionTitle('cta')"
+          :collapsed="collapsed.cta"
+          :visible="sectionVisible('cta')"
+          :can-move-up="canMove('cta', -1)"
+          :can-move-down="canMove('cta', 1)"
+          @update:collapsed="(v) => (collapsed.cta = v)"
+          @update:visible="(v) => setSectionVisible('cta', v)"
+          @move-up="moveSection('cta', -1)"
+          @move-down="moveSection('cta', 1)"
+        >
+          <div>
+            <label :class="sectionLabel">Заголовок</label>
+            <AdminThemedTextField v-model="d.cta!.title" :multiline="false" />
           </div>
-        </section>
+          <div>
+            <label :class="sectionLabel">Текст кнопки (ведёт на страницу заявки)</label>
+            <AdminThemedTextField v-model="d.cta!.buttonText" :multiline="false" />
+          </div>
+        </AdminCollapsibleSection>
 
         <AdminCustomSectionsEditor
           :model-value="d.customSections ?? []"

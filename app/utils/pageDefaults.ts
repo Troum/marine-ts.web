@@ -72,6 +72,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
         { icon: 'Calendar', value: '14+', label: 'Лет на рынке' },
       ],
     },
+    showStatsCard: true,
     funnelShip: {
       label: 'Судовой менеджмент',
       titleFormatted: themeTitleTriple('Операционное и техническое', 'сопровождение', ' флота'),
@@ -176,6 +177,7 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
         { icon: 'Calendar', value: '14+', label: 'Years in business' },
       ],
     },
+    showStatsCard: true,
     funnelShip: {
       label: 'Ship management',
       titleFormatted: themeTitleTriple('Operational & technical', 'support', ''),
@@ -259,6 +261,34 @@ const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
   },
 }
 
+/**
+ * Дефолтный порядок секций на главной (без hero, который всегда первый).
+ * Используется и в админке для inline-контролов порядка/видимости,
+ * и в публичной `pages/index.vue` для рендера секций.
+ *
+ * `stats` — карточка цифр внутри hero, поэтому в порядок не входит
+ * (в админке у неё нет тогглов скрытия/порядка).
+ * `directions` (Чем мы занимаемся) пока без админ-панели и всегда
+ * видима — её тоже не контролируем тут.
+ */
+export const HOME_SECTION_DEFAULT_ORDER = [
+  'funnel',
+  'about',
+  'services',
+  'process',
+  'cta',
+] as const
+
+export type HomeSectionId = (typeof HOME_SECTION_DEFAULT_ORDER)[number]
+
+export const HOME_SECTION_ADMIN_LABELS: Record<HomeSectionId, string> = {
+  funnel: 'Три карточки под первым экраном',
+  about: 'Превью «О компании»',
+  services: 'Превью сервисов',
+  process: 'Процесс работы',
+  cta: 'Нижний CTA-блок',
+}
+
 export function defaultHomeData(locale: MarineContentLocale): HomePageData {
   return JSON.parse(JSON.stringify(HOME_DEFAULTS[locale]))
 }
@@ -304,11 +334,29 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
           ? parsed.statsCard.items
           : def.statsCard.items,
     },
+    showStatsCard: parsed.showStatsCard ?? def.showStatsCard,
     showProcess: parsed.showProcess ?? def.showProcess,
     showInquiryForm: parsed.showInquiryForm ?? def.showInquiryForm,
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
     customSections: normalizeCustomPageSections(parsed.customSections),
+    sectionOrder: parsed.sectionOrder,
+    sectionVisibility: migrateLegacyVisibility(parsed),
   }
+}
+
+/**
+ * Миграция: если в данных нет `sectionVisibility.process`, синхронизируем его
+ * с устаревшим флагом `showProcess`, чтобы видимость секции «Процесс работы»
+ * не менялась после введения общего механизма видимости.
+ */
+function migrateLegacyVisibility(parsed: Partial<HomePageData>): Record<string, boolean> | undefined {
+  const sv = parsed.sectionVisibility ? { ...parsed.sectionVisibility } : undefined
+  if (parsed.showProcess !== undefined && (!sv || sv.process === undefined)) {
+    const next = sv ?? {}
+    next.process = parsed.showProcess === true
+    return next
+  }
+  return sv
 }
 
 export function syncHomeStructuralFields(
@@ -334,6 +382,7 @@ export function syncHomeStructuralFields(
     }
     d.process.steps.length = src.process.steps.length
     d.showInquiryForm = src.showInquiryForm
+    d.showStatsCard = src.showStatsCard
     d.showProcess = src.showProcess
     d.heroImage = src.heroImage
     while (d.directions.rows.length < src.directions.rows.length) {
@@ -377,7 +426,6 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
         lead: 'Портфолио выполненных работ по ремонту и техническому обслуживанию морских судов в портах по всему миру.',
       },
       cta: { title: 'Нужен расчёт по вашему судну?', buttonText: 'Оставить заявку' },
-      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
     en: {
@@ -386,7 +434,6 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
         lead: 'A portfolio of repair and maintenance work for seagoing vessels in ports worldwide.',
       },
       cta: { title: 'Need an estimate for your vessel?', buttonText: 'Send a request' },
-      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
   },
@@ -430,7 +477,6 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
           'Присоединяйтесь к команде Marine Technical Solutions. Мы предлагаем работу в судоремонте и сервисе морского флота. Среди открытых вакансий нет подходящей — можно просто заполнить анкету: мы свяжемся с вами, когда появится подходящая позиция.',
       },
       cta: { title: 'Вопросы по вакансиям и сотрудничеству?', buttonText: 'Оставить заявку' },
-      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
     en: {
@@ -440,18 +486,42 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
           "Join the Marine Technical Solutions team. We offer roles in ship repair and maritime services. Don't see a role that fits? You can simply fill in our application form — we'll get in touch when something relevant opens up.",
       },
       cta: { title: 'Questions about careers or cooperation?', buttonText: 'Request a quote' },
-      heroImage: '/images/marin-figma/mission-dock.jpg',
       showInquiryForm: false,
     } as ProjectsPageData,
   },
 }
 
+/**
+ * Дефолтный порядок секций листинговых страниц (`news-page`, `projects-page`,
+ * `services-page`, `gallery-page`, `vacancies-page`). На листинге одна штатная
+ * секция — `listing` (карточки/featured/grid).
+ */
+export const LISTING_SECTION_DEFAULT_ORDER = ['listing'] as const
+
+export type ListingSectionId = 'listing' | 'cta'
+
+export const LISTING_SECTION_ADMIN_LABELS: Record<ListingSectionId, string> = {
+  listing: 'Список (содержимое страницы)',
+  cta: 'CTA-блок',
+}
+
+/** Какие листинговые слаги имеют свой CTA-блок на публичной странице. */
+const LISTING_SLUGS_WITH_CTA = new Set<ListingSlug>(['projects-page', 'services-page', 'vacancies-page'])
+
+export function listingDefaultOrder(slug: string): readonly string[] {
+  return LISTING_SLUGS_WITH_CTA.has(slug as ListingSlug)
+    ? (['listing', 'cta'] as const)
+    : LISTING_SECTION_DEFAULT_ORDER
+}
+
 export function defaultListingData(slug: string, locale: MarineContentLocale): ListingPageData {
   const key = slug as ListingSlug
-  if (LISTING_DEFAULTS[key]) {
-    return JSON.parse(JSON.stringify(LISTING_DEFAULTS[key][locale]))
-  }
-  return { hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' } }
+  const base = LISTING_DEFAULTS[key]
+    ? (JSON.parse(JSON.stringify(LISTING_DEFAULTS[key][locale])) as ListingPageData)
+    : ({ hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' } } as ListingPageData)
+  base.sectionOrder = [...listingDefaultOrder(slug)]
+  base.sectionVisibility = {}
+  return base
 }
 
 export function mergeListingPageData(slug: string, locale: MarineContentLocale, raw: unknown): ListingPageData {
@@ -468,6 +538,8 @@ export function mergeListingPageData(slug: string, locale: MarineContentLocale, 
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
     heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
     customSections: normalizeCustomPageSections(p.customSections),
+    sectionOrder: p.sectionOrder ?? base.sectionOrder,
+    sectionVisibility: p.sectionVisibility ?? base.sectionVisibility,
   }
 }
 
@@ -498,8 +570,23 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
   },
 }
 
+/**
+ * Дефолтный порядок секций страницы «Контакты». Hero фиксирован, штатная
+ * пользовательская секция — `contacts` (инфо + форма + офисы).
+ */
+export const CONTACTS_SECTION_DEFAULT_ORDER = ['contacts'] as const
+
+export type ContactsSectionId = (typeof CONTACTS_SECTION_DEFAULT_ORDER)[number]
+
+export const CONTACTS_SECTION_ADMIN_LABELS: Record<ContactsSectionId, string> = {
+  contacts: 'Контактная информация и форма',
+}
+
 export function defaultContactsData(locale: MarineContentLocale): ContactsPageData {
-  return JSON.parse(JSON.stringify(CONTACTS_DEFAULTS[locale]))
+  const base = JSON.parse(JSON.stringify(CONTACTS_DEFAULTS[locale])) as ContactsPageData
+  base.sectionOrder = [...CONTACTS_SECTION_DEFAULT_ORDER]
+  base.sectionVisibility = {}
+  return base
 }
 
 export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown): ContactsPageData {
@@ -519,6 +606,8 @@ export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown)
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
     heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
     customSections: normalizeCustomPageSections(p.customSections),
+    sectionOrder: p.sectionOrder ?? base.sectionOrder,
+    sectionVisibility: p.sectionVisibility ?? base.sectionVisibility,
   }
 }
 

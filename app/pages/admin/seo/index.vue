@@ -70,7 +70,7 @@ watch([sort, order], () => {
     </header>
 
     <main class="mx-auto max-w-7xl px-6 py-10 lg:px-12">
-      <p class="font-body mb-8 max-w-2xl text-mts-text-secondary">
+      <p class="font-body mb-8 max-w-7xl text-mts-text-secondary">
         Meta title, description и keywords для разделов сайта и отдельных материалов (новости, проекты, сервисы).
       </p>
 

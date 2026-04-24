@@ -1,26 +1,30 @@
 <script setup lang="ts">
-import { FileDown } from 'lucide-vue-next'
+import { ChevronDown, FileDown } from 'lucide-vue-next'
 import type { AboutPageData, AboutGeoLocation, MarineContentLocale } from '~/types'
 import AboutServiceGeographyMap from '~/components/about/ServiceGeographyMap.vue'
-import MarinDecorRail from '~/components/about/MarinDecorRail.vue'
 import MarinHalfRombs from '~/components/about/MarinHalfRombs.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
-import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import { defaultAboutData, mergeAboutPageData } from '~/utils/aboutPageDefaults'
+import { ABOUT_SECTION_DEFAULT_ORDER, defaultAboutData, mergeAboutPageData } from '~/utils/aboutPageDefaults'
+import { resolveServiceIcon } from '~/utils/serviceIcons'
+import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('about')
 
 const { t, locale } = useI18n()
+const localePath = useLocalePath()
 const api = useMarineApi()
 
-const FIGMA_BG = {
-  hero: '/images/marin-figma/hero-ship.webp',
-  intro: '/images/marin-figma/about-ship.webp',
-  ecosystem: '/images/marin-figma/ecosystem-cranes.webp',
-  mission: '/images/marin-figma/mission-dock.webp',
-  stats: '/images/marin-figma/stats-port.webp',
-} as const
+/** Бейджи как на главной (ISO / IACS / опыт). */
+const aboutHeroBadges = computed(() => [
+  { k: 'ISO', v: t('home.hero.badgeIso') },
+  { k: 'IACS', v: t('home.hero.badgeIacs') },
+  { k: '14+', v: t('home.hero.badgeYears') },
+])
+
+function scrollToIntro() {
+  document.getElementById('about-intro')?.scrollIntoView({ behavior: 'smooth' })
+}
 
 const cms = ref<AboutPageData | null>(null)
 
@@ -72,72 +76,135 @@ function splitPrinciple(text: string): { heading: string; tail: string } {
 function isThemedCmsString(raw: string): boolean {
   return (raw ?? '').trimStart().startsWith('{')
 }
+
+/**
+ * Эффективный порядок секций (после hero/intro) с учётом сохранённого
+ * `sectionOrder`, актуальных кастомных секций и дефолтов.
+ */
+const sectionOrderEffective = computed(() =>
+  resolveSectionOrder(d.value.sectionOrder, ABOUT_SECTION_DEFAULT_ORDER, d.value.customSections),
+)
+
+function sectionShown(id: string): boolean {
+  return isSectionVisible(d.value.sectionVisibility, id)
+}
+
+/** Линии между карточками без заливки сетки (`gap-px` + `bg-*`). */
+function ecosystemServiceCellClass(index: number, total: number): string {
+  const row = Math.floor(index / 2)
+  const rowCount = Math.ceil(total / 2)
+  const isLastRow = row === rowCount - 1
+  const hasRightNeighbor = index % 2 === 0 && index + 1 < total
+  const parts = [
+    'min-w-0 border-mts-frost/25 p-8',
+    'border-b max-md:last:border-b-0',
+    'md:border-b',
+    hasRightNeighbor ? 'md:border-r' : '',
+    isLastRow ? 'md:border-b-0' : '',
+  ]
+  return parts.filter(Boolean).join(' ')
+}
 </script>
 
 <template>
-  <!--
-    Класс `mts-about-shell` подключает плавные градиентные «склейки» между
-    секциями в светлой теме (см. assets/css/main.css). В тёмной теме класс
-    ничего не меняет — секции остаются как в макете Figma.
-  -->
+  <!-- Оверлеи на фото — `.mts-about-overlay-*` и токены `--color-mts-*` в main.css. -->
   <div class="mts-about-shell bg-mts-navy text-mts-frost">
     <!-- Hero -->
-    <section class="relative min-h-[min(100svh,920px)] flex items-end lg:items-center overflow-hidden">
+    <section
+      class="relative min-h-[100svh] flex items-end lg:items-center overflow-hidden"
+    >
       <div class="absolute inset-0">
         <img
-          :src="d.heroImage || FIGMA_BG.hero"
+          v-if="d.heroImage?.trim()"
+          :src="d.heroImage"
           alt=""
           class="absolute inset-0 size-full object-cover object-center"
           loading="eager"
           decoding="async"
         />
-        <div
-          class="absolute inset-0 bg-linear-to-r from-mts-navy/92 via-mts-navy/60 to-mts-navy/20"
-          aria-hidden="true"
-        />
-        <div class="absolute inset-0 bg-linear-to-t from-mts-navy/80 via-transparent to-mts-navy/60" aria-hidden="true" />
+        <div v-else class="absolute inset-0 bg-mts-navy" aria-hidden="true" />
+        <div class="absolute inset-0 mts-about-hero-veil-r" aria-hidden="true" />
+        <div class="absolute inset-0 mts-about-hero-veil-t" aria-hidden="true" />
       </div>
 
-      <!-- Декоративный правый rail (общий для всех секций страницы). -->
-      <MarinDecorRail />
+      <div class="relative z-10 mts-content-wrap w-full pb-24 pt-28 lg:pb-28 lg:pt-36">
+        <div class="max-w-7xl">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="h-px w-8 shrink-0 bg-mts-accent" aria-hidden="true" />
+            <span class="section-label text-mts-frost/75">{{ t('pages.about.heroEyebrow') }}</span>
+          </div>
 
-      <div class="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 pt-28 lg:px-12 lg:pb-24 lg:pt-36">
-        <h1 class="max-w-[720px] font-display text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-[1.25]">
-          <ThemeFormattedTitle :title="d.hero.titleFormatted" />
-        </h1>
-        <p class="mt-5 max-w-[720px] font-display text-lg font-medium leading-[1.4] text-mts-frost lg:text-2xl lg:leading-[34px]">
-          <ThemedContentString :content="d.hero.subtitle" />
-        </p>
+          <h1
+            class="mb-6 max-w-[720px] font-display text-3xl leading-[1.1] text-mts-frost sm:text-4xl lg:text-5xl"
+          >
+            <ThemedContentString :content="d.hero.title" />
+          </h1>
+
+          <p class="mb-8 max-w-lg font-body text-lg leading-relaxed text-mts-frost/85">
+            <ThemedContentString :content="d.hero.subtitle" />
+          </p>
+
+          <div class="mb-10 flex flex-wrap items-center gap-4">
+            <NuxtLink :to="localePath('/request')" class="btn-primary inline-flex items-center justify-center">
+              {{ t('header.ctaContact') }}
+            </NuxtLink>
+            <NuxtLink
+              :to="localePath('/application-form')"
+              class="btn-secondary inline-flex items-center justify-center border-mts-frost/30 bg-transparent text-mts-frost hover:border-mts-accent hover:text-mts-accent"
+            >
+              {{ t('pages.vacancies.openApplicationButton') }}
+            </NuxtLink>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-8">
+            <div v-for="(badge, bi) in aboutHeroBadges" :key="bi" class="flex items-center gap-2">
+              <div class="h-1.5 w-1.5 shrink-0 bg-mts-accent" aria-hidden="true" />
+              <div>
+                <span class="font-mono text-sm font-medium text-mts-frost">{{ badge.k }}</span>
+                <span class="ml-1 font-mono text-xs text-mts-frost/70">{{ badge.v }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-mts-frost/70 transition-colors hover:text-mts-accent"
+          @click="scrollToIntro"
+        >
+          <span class="font-mono text-xs uppercase tracking-wide">{{ t('home.hero.scroll') }}</span>
+          <ChevronDown class="h-4 w-4 animate-bounce" aria-hidden="true" />
+        </button>
       </div>
     </section>
 
     <!-- О компании: текст на фоне снимка -->
-    <section class="relative overflow-hidden py-20 lg:py-28">
+    <section id="about-intro" class="relative overflow-hidden py-20 lg:py-28">
       <div class="absolute inset-0">
         <img
-          :src="d.introImage || FIGMA_BG.intro"
+          v-if="d.introImage?.trim()"
+          :src="d.introImage"
           alt=""
           class="absolute inset-0 size-full object-cover"
           loading="lazy"
           decoding="async"
         />
-        <div
-          class="absolute inset-0"
-          style="background: linear-gradient(144.35deg, rgba(31, 58, 74, 0.92) 19.24%, rgba(31, 58, 74, 0.82) 35.4%, rgba(38, 106, 144, 0) 95.91%)"
-          aria-hidden="true"
-        />
+        <div v-else class="absolute inset-0 bg-mts-navy" aria-hidden="true" />
+        <div class="mts-about-overlay-intro absolute inset-0" aria-hidden="true" />
       </div>
 
-      <MarinDecorRail />
-
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="relative z-10 mts-content-wrap">
         <MarinReveal>
-          <h2 class="max-w-[720px] font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight">
-            <ThemeFormattedTitle :title="d.hero.titleFormatted" />
+          <div class="mb-6 flex items-center gap-3">
+            <div class="h-px w-8 shrink-0 bg-mts-accent" aria-hidden="true" />
+            <span class="section-label text-mts-frost/75">{{ t('nav.about') }}</span>
+          </div>
+          <h2 class="max-w-[720px] font-display text-3xl leading-[1.1] text-mts-frost sm:text-4xl lg:text-5xl">
+            <ThemedContentString :content="d.hero.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
-          <div class="mt-8 max-w-[630px] space-y-5 font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
+          <div class="mt-8 max-w-lg space-y-5 font-body text-lg leading-relaxed text-mts-frost/85">
             <p><ThemedContentString :content="d.hero.lead" /></p>
             <p><ThemedContentString :content="d.hero.lead2" /></p>
           </div>
@@ -146,30 +213,36 @@ function isThemedCmsString(raw: string): boolean {
     </section>
 
     <!--
+      Динамический блок секций. Порядок и видимость управляются админкой
+      (`sectionOrder` / `sectionVisibility`). Hero и intro фиксированы выше,
+      т.к. это один смысловой блок с одним заголовком.
+    -->
+    <template v-for="sid in sectionOrderEffective" :key="sid">
+    <!--
       Экосистема сервисов.
       `overflow-hidden` оставлен ТОЛЬКО на обёртке фона, чтобы фотография
       не «вытекала» за пределы секции, но при этом ромбы из Figma могли
       выходить вверх за линию раздела (правая вершина ромба ложится на
       границу с предыдущей секцией).
     -->
-    <section class="relative py-20 lg:py-32">
+    <section v-if="sid === 'ecosystem' && sectionShown('ecosystem')" class="relative py-20 lg:py-32">
       <div class="absolute inset-0 overflow-hidden">
         <img
-          :src="d.ecosystemImage || FIGMA_BG.ecosystem"
+          v-if="d.ecosystemImage?.trim()"
+          :src="d.ecosystemImage"
           alt=""
           class="absolute inset-0 size-full object-cover object-[center_40%]"
           loading="lazy"
           decoding="async"
         />
-        <div class="absolute inset-0 bg-mts-navy/82" aria-hidden="true" />
+        <div v-else class="absolute inset-0 bg-mts-navy" aria-hidden="true" />
+        <div class="absolute inset-0 mts-about-ecosystem-veil" aria-hidden="true" />
       </div>
 
       <!-- Декоративные «полуромбы» из Figma (Group 17, пара на стыке с «О компании»). -->
       <MarinHalfRombs />
 
-      <MarinDecorRail />
-
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="relative z-10 mts-content-wrap">
         <MarinReveal>
           <h2 class="font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight text-mts-accent">
             <ThemedContentString :content="d.ecosystem.title" />
@@ -181,42 +254,52 @@ function isThemedCmsString(raw: string): boolean {
           </p>
         </MarinReveal>
         <MarinReveal :delay-ms="220">
-          <ul class="mt-10 max-w-[980px] space-y-7">
-            <li v-for="svc in d.ecosystem.services" :key="svc.title" class="flex gap-5">
-              <span
-                class="mt-3 h-0 w-0 shrink-0 border-y-[7px] border-l-[12px] border-y-transparent border-l-mts-accent"
-                aria-hidden="true"
-              />
-              <p class="font-body text-lg leading-[34px] text-mts-frost lg:text-xl">
-                <span class="font-semibold text-mts-frost inline"><ThemedContentString :content="svc.title" /></span
-                ><span class="text-mts-frost">:</span> <ThemedContentString :content="svc.text" />
-              </p>
-            </li>
-          </ul>
+          <div
+            v-if="d.ecosystem.services.length"
+            class="mt-10 grid w-full grid-cols-1 md:mt-12 md:grid-cols-2"
+          >
+            <article
+              v-for="(svc, i) in d.ecosystem.services"
+              :key="`ecosystem-svc-${i}`"
+              :class="ecosystemServiceCellClass(i, d.ecosystem.services.length)"
+            >
+              <div class="flex items-start gap-3">
+                <component
+                  :is="resolveServiceIcon(svc.icon || 'Wrench')"
+                  class="mt-1 h-5 w-5 shrink-0 text-mts-accent"
+                  aria-hidden="true"
+                />
+                <div class="min-w-0 flex-1">
+                  <h3 class="font-display text-lg leading-snug text-mts-frost">
+                    <ThemedContentString :content="svc.title" />
+                  </h3>
+                  <div class="mt-3 font-body text-sm leading-relaxed text-mts-frost/85 lg:text-base">
+                    <ThemedContentString :content="svc.text" />
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
         </MarinReveal>
       </div>
     </section>
 
     <!-- Миссия — отдельная секция со своим фоном (Figma). -->
-    <section class="relative overflow-hidden py-20 lg:py-32">
+    <section v-else-if="sid === 'mission' && sectionShown('mission')" class="relative overflow-hidden py-20 lg:py-32">
       <div class="absolute inset-0">
         <img
-          :src="d.missionImage || FIGMA_BG.mission"
+          v-if="d.missionImage?.trim()"
+          :src="d.missionImage"
           alt=""
           class="absolute inset-0 size-full object-cover"
           loading="lazy"
           decoding="async"
         />
-        <div
-          class="absolute inset-0"
-          style="background: linear-gradient(123.38deg, rgba(20, 42, 54, 0.86) 5.42%, rgba(31, 58, 74, 0.84) 38.63%, rgba(31, 58, 74, 0.72) 52.47%, rgba(31, 58, 74, 0.35) 93.97%)"
-          aria-hidden="true"
-        />
+        <div v-else class="absolute inset-0 bg-mts-navy" aria-hidden="true" />
+        <div class="mts-about-overlay-mission absolute inset-0" aria-hidden="true" />
       </div>
 
-      <MarinDecorRail />
-
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="relative z-10 mts-content-wrap">
         <MarinReveal>
           <h2 class="max-w-[900px] font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight text-mts-accent">
             <ThemedContentString :content="d.mission.title" />
@@ -258,13 +341,11 @@ function isThemedCmsString(raw: string): boolean {
       (Figma: Rectangle 22, height ≈ 448px). Без фотографии и без градиента.
       Заголовок 40/34 bold #DE7879, параграф 24/34 regular #E6EDF2.
     -->
-    <section class="relative overflow-hidden bg-mts-bg py-20 lg:py-[6.125rem]">
-      <MarinDecorRail />
-
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+    <section v-else-if="sid === 'why' && sectionShown('why')" class="relative overflow-hidden bg-mts-bg py-20 lg:py-[6.125rem]">
+      <div class="relative z-10 mts-content-wrap">
         <MarinReveal>
           <h2
-            class="font-display text-3xl font-bold text-mts-accent lg:text-[40px] lg:leading-[34px]"
+            class="font-display text-2xl font-bold text-mts-accent lg:text-[34px] lg:leading-[30px]"
           >
             <ThemedContentString :content="d.why.title" />
           </h2>
@@ -285,34 +366,30 @@ function isThemedCmsString(raw: string): boolean {
       linear-gradient(111.6deg, #050D12cc → #0B1F2Acc → #0E2735b6 → #102E3F52).
       Заголовок и значения — Inter 700, 40/34, цвет #DE7879.
     -->
-    <section class="relative overflow-hidden py-20 lg:py-[6.125rem]">
+    <section v-else-if="sid === 'stats' && sectionShown('stats')" class="relative overflow-hidden py-20 lg:py-[6.125rem]" data-rail-ignore="true">
       <div class="absolute inset-0">
         <img
-          :src="d.statsImage || FIGMA_BG.stats"
+          v-if="d.statsImage?.trim()"
+          :src="d.statsImage"
           alt=""
           class="absolute inset-0 size-full object-cover"
           loading="lazy"
           decoding="async"
         />
-        <div
-          class="absolute inset-0"
-          style="background: linear-gradient(111.6deg, rgba(5, 13, 18, 0.8) 5.42%, rgba(11, 31, 42, 0.8) 38.63%, rgba(14, 39, 53, 0.7128) 52.47%, rgba(16, 46, 63, 0.32) 93.97%)"
-          aria-hidden="true"
-        />
+        <div v-else class="absolute inset-0 bg-mts-navy" aria-hidden="true" />
+        <div class="mts-about-overlay-stats absolute inset-0" aria-hidden="true" />
       </div>
 
-      <MarinDecorRail />
-
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="relative z-10 mts-content-wrap">
         <MarinReveal>
           <h2
-            class="font-display text-3xl font-bold text-mts-accent lg:text-[40px] lg:leading-[48px]"
+            class="font-display text-2xl font-bold text-mts-accent lg:text-[34px] lg:leading-[40px]"
           >
             {{ t('pages.about.statsHeading') }}
           </h2>
         </MarinReveal>
 
-        <div class="mt-10 grid grid-cols-2 gap-x-16 gap-y-12 md:max-w-2xl md:mx-auto lg:mt-14">
+        <div class="mt-10 grid grid-cols-2 gap-x-16 gap-y-12 md:max-w-7xl md:mx-auto lg:mt-14">
           <!--
             Каждая цифра появляется с собственной задержкой (по 100ms),
             создаёт эффект «нарастающего счётчика» статистики.
@@ -322,7 +399,7 @@ function isThemedCmsString(raw: string): boolean {
             :key="si"
             :delay-ms="120 + si * 100"
           >
-            <p class="font-display text-[40px] font-bold leading-tight text-mts-accent">
+            <p class="font-display text-[34px] font-bold leading-tight text-mts-accent">
               {{ s.value }}
             </p>
             <p class="mt-1 font-body text-xl leading-tight text-mts-frost">
@@ -337,7 +414,7 @@ function isThemedCmsString(raw: string): boolean {
       вылезти вверх за линию раздела (правая вершина ложится на стык
       с «Компанией в цифрах»). Компонент карты сам обрезает свой контент.
     -->
-    <section class="relative">
+    <section v-else-if="sid === 'geography' && sectionShown('geography')" class="relative">
       <AboutServiceGeographyMap
         class="relative z-10"
         theme="dark"
@@ -354,18 +431,16 @@ function isThemedCmsString(raw: string): boolean {
       -->
       <MarinHalfRombs class="!z-30" />
 
-      <!-- На карте поднимаем rail выше overlay-градиента (z-30). -->
-      <MarinDecorRail class="z-30" />
     </section>
 
     <!-- Сертификаты -->
     <section
-      v-if="d.certificates?.items?.length"
+      v-else-if="sid === 'certificates' && sectionShown('certificates') && d.certificates?.items?.length"
       class="relative overflow-hidden bg-mts-navy py-16 lg:py-24"
     >
-      <div class="mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="mts-content-wrap">
         <MarinReveal>
-          <h2 class="text-center font-display text-3xl font-bold text-mts-accent lg:text-4xl">
+          <h2 class="text-center font-display text-2xl font-bold text-mts-accent lg:text-3xl">
             <ThemedContentString :content="d.certificates.title" />
           </h2>
         </MarinReveal>
@@ -394,7 +469,12 @@ function isThemedCmsString(raw: string): boolean {
       </div>
     </section>
 
-    <CommonCustomPageSectionsRender :sections="d.customSections" />
+      <!-- ===== Custom section (одна на итерацию) ===== -->
+      <CommonCustomPageSectionsRender
+        v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
+        :sections="(d.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+      />
+    </template>
 
     <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="about" />
   </div>

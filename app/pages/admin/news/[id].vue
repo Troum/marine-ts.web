@@ -137,7 +137,7 @@ async function submit() {
 <template>
   <div>
     <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-4xl mx-auto px-6 lg:px-12">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin/news" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
@@ -151,7 +151,7 @@ async function submit() {
       </div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-6 lg:px-12 py-8">
+    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>
@@ -210,11 +210,7 @@ async function submit() {
               </div>
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Текст</label>
-                <textarea
-                  v-model="form.translations[localeTab].content"
-                  rows="8"
-                  class="w-full bg-mts-bg border border-mts-border px-4 py-3 font-body text-sm focus:outline-none focus:border-mts-accent"
-                />
+                <AdminThemedTextField v-model="form.translations[localeTab].content" />
               </div>
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Категория</label>

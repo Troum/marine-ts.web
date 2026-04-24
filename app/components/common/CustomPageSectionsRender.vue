@@ -23,10 +23,10 @@ function isVisible(s: CustomPageSection): boolean {
   <template v-if="sections && sections.length > 0">
     <template v-for="section in sections.filter(isVisible)" :key="section.id">
       <section class="relative overflow-hidden border-t border-mts-border bg-mts-bg py-16">
-        <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
+        <div class="relative z-10 mts-content-wrap">
           <h2
             v-if="section.showTitle && section.title.trim()"
-            class="font-display mb-10 text-center text-2xl text-mts-text md:text-3xl"
+            class="font-display mb-10 text-center text-xl text-mts-text md:text-2xl"
           >
             <ThemedContentString :content="section.title" />
           </h2>

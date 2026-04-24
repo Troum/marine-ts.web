@@ -51,7 +51,9 @@ onUnmounted(() => {
       class="relative z-10 w-full aspect-[4/3] min-h-[14rem] sm:min-h-[18rem] overflow-hidden bg-mts-bg"
       role="region"
       aria-roledescription="carousel"
-      :aria-label="`${ariaLabel}: кадр ${index + 1} из ${slides.length}`"
+      :aria-label="
+        slides.length ? `${ariaLabel}: кадр ${index + 1} из ${slides.length}` : ariaLabel
+      "
     >
       <img
         v-for="(slide, i) in slides"

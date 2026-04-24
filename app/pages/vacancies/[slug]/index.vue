@@ -55,13 +55,16 @@ function formatContent(text: string | null | undefined) {
     <div v-if="pending" class="flex justify-center py-24">
       <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
     </div>
-    <div v-else-if="!vacancy" class="mx-auto max-w-3xl px-6 py-24 text-center">
-      <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundVacancy') }}</p>
-      <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
+    <div v-else-if="!vacancy" class="mts-content-wrap py-24 text-center">
+      <div class="mx-auto max-w-7xl">
+        <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundVacancy') }}</p>
+        <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
+      </div>
     </div>
     <article v-else class="relative overflow-hidden pb-24">
-      <div class="relative z-10 mx-auto max-w-3xl px-6 lg:px-12">
-        <Breadcrumbs class="mb-8" :items="crumbItems" />
+      <div class="relative z-10 mts-content-wrap">
+        <div class="mx-auto max-w-7xl">
+          <Breadcrumbs class="mb-8" :items="crumbItems" />
 
         <div class="mb-4 flex flex-wrap items-center gap-3">
           <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-mts-accent">
@@ -70,7 +73,7 @@ function formatContent(text: string | null | undefined) {
           </span>
         </div>
 
-        <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
+        <h1 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
           <ThemedContentString :content="vacancy.title" />
         </h1>
 
@@ -111,6 +114,7 @@ function formatContent(text: string | null | undefined) {
             {{ t('pages.vacancies.applyAlt') }}
             <a href="mailto:crewing@marin-ts.com" class="text-mts-accent hover:underline">crewing@marin-ts.com</a>
           </p>
+        </div>
         </div>
       </div>
     </article>

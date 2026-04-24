@@ -1,24 +1,21 @@
 <script setup lang="ts">
-/**
- * Регистрируем тему как можно раньше, чтобы Nuxt отрисовал
- * <html data-theme="…"> уже на SSR — иначе при гидратации возможна
- * «вспышка» противоположной палитры.
- */
+/** Фиксируем `data-theme="dark"` на `<html>` (см. useMarinTheme). */
 useMarinTheme()
+
+const fullViewportMainSections = useFullViewportMainSections()
 </script>
 
 <template>
   <!--
-    Навигация имеет `fixed top-0` и высоту 4rem (`h-16` в Navigation.vue).
-    Чтобы контент страниц не подлезал под шапку, даём <main> верхний
-    отступ той же высоты (`pt-16`). Если когда-нибудь высота шапки
-    поменяется — поправить и здесь.
+    Навигация прозрачная и наложена поверх контента (`fixed top-0`).
+    На части разделов секции на всю высоту viewport — см. `mts-main--full-viewport-sections` в main.css.
   -->
   <div class="min-h-screen bg-mts-bg text-mts-text flex flex-col">
     <LayoutNavigation />
-    <main class="flex-grow pt-16">
+    <main class="flex-grow" :class="{ 'mts-main--full-viewport-sections': fullViewportMainSections }">
       <slot />
     </main>
+    <CommonSectionScrollRail />
     <LayoutFooter />
     <CommonScrollToTop />
   </div>

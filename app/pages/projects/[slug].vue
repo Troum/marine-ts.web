@@ -62,26 +62,30 @@ watchEffect(() => {
     <div v-if="pending" class="flex justify-center py-24">
       <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
     </div>
-    <div v-else-if="!page" class="mx-auto max-w-3xl px-6 py-24 text-center">
-      <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundPage') }}</p>
-      <NuxtLink :to="localePath('/projects')" class="btn-primary inline-flex">{{ t('pages.common.toProjects') }}</NuxtLink>
+    <div v-else-if="!page" class="mts-content-wrap py-24 text-center">
+      <div class="mx-auto max-w-7xl">
+        <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundPage') }}</p>
+        <NuxtLink :to="localePath('/projects')" class="btn-primary inline-flex">{{ t('pages.common.toProjects') }}</NuxtLink>
+      </div>
     </div>
     <article v-else class="relative overflow-hidden pb-24">
-      <div class="relative z-10 mx-auto max-w-3xl px-6 lg:px-12">
-        <Breadcrumbs class="mb-8" :items="crumbItems" />
+      <div class="relative z-10 mts-content-wrap">
+        <div class="mx-auto max-w-7xl">
+          <Breadcrumbs class="mb-8" :items="crumbItems" />
 
-        <h1 class="font-display text-3xl leading-tight text-mts-text lg:text-4xl">
-          <ThemedContentString :content="page.title" />
-        </h1>
+          <h1 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
+            <ThemedContentString :content="page.title" />
+          </h1>
 
-        <p
-          v-if="page.excerpt"
-          class="mt-8 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary"
-        >
-          <ThemedContentString :content="page.excerpt" />
-        </p>
+          <p
+            v-if="page.excerpt"
+            class="mt-8 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary"
+          >
+            <ThemedContentString :content="page.excerpt" />
+          </p>
 
-        <div v-if="bodyHtml" class="mts-markdown mt-10" v-html="bodyHtml" />
+          <div v-if="bodyHtml" class="mts-markdown mt-10" v-html="bodyHtml" />
+        </div>
       </div>
 
       <CommonPageInquiryForm v-if="page.showInquiryForm" :source-page="`projects/${slug}`" />

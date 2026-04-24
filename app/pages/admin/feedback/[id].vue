@@ -156,7 +156,7 @@ async function handleDelete() {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto max-w-4xl px-6 lg:px-12">
+      <div class="mx-auto max-w-7xl px-6 lg:px-12">
         <div class="flex h-16 items-center justify-between">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin/feedback" class="text-mts-text-secondary transition-colors hover:text-mts-accent">
@@ -178,7 +178,7 @@ async function handleDelete() {
       </div>
     </header>
 
-    <main class="mx-auto max-w-4xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>

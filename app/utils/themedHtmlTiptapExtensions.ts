@@ -10,7 +10,7 @@ import { TextStyle } from '@tiptap/extension-text-style'
 import { UndoRedo } from '@tiptap/extensions'
 import { ThemeToneMark } from '~/utils/themeToneTiptap'
 
-/** Один и тот же набор расширений для редактора и для `generateHTML` (миграция TFT → HTML). */
+/** Набор расширений для редактора; TFT → HTML на SSR — `serializeThemeTitleTiptapDocToHtml`. */
 export function createThemedHtmlTiptapExtensions(options: { placeholder: string }): Extensions {
   return [
     Document,

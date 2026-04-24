@@ -15,16 +15,14 @@ export interface ColorOption {
  */
 export const TEXT_COLORS: ColorOption[] = [
   { value: '', label: 'По умолчанию' },
-  { value: '#0f172a', label: 'Чёрный' },
-  { value: '#475569', label: 'Серый' },
-  { value: '#dc2626', label: 'Красный' },
-  { value: '#ea580c', label: 'Оранжевый' },
-  { value: '#ca8a04', label: 'Жёлтый' },
-  { value: '#16a34a', label: 'Зелёный' },
-  { value: '#0ea5e9', label: 'Голубой' },
-  { value: '#2563eb', label: 'Синий' },
-  { value: '#9333ea', label: 'Фиолетовый' },
-  { value: '#db2777', label: 'Розовый' },
+  /* Цвета темы Marin (как фиксированные swatch-значения, без семантических тонов). */
+  { value: '#1c1c1e', label: 'Тема: Основной' },
+  { value: '#6c757d', label: 'Тема: Вторичный' },
+  { value: '#adb5bd', label: 'Тема: Приглушённый' },
+  { value: '#de7879', label: 'Тема: Акцент' },
+  { value: '#e89495', label: 'Тема: Акцент светлый' },
+  { value: '#b85e5f', label: 'Тема: Акцент тёмный' },
+  { value: '#2ea3ff', label: 'Тема: Маркер' },
 ]
 
 /**

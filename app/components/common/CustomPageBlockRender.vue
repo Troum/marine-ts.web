@@ -129,8 +129,8 @@ function isAccordionOpen(idx: number): boolean {
   </div>
 
   <!-- Text -->
-  <div v-else-if="block.type === 'text'" class="mx-auto max-w-3xl text-center">
-    <h3 v-if="block.title.trim()" class="font-display mb-2 text-2xl text-mts-text">
+  <div v-else-if="block.type === 'text'" class="mx-auto max-w-7xl text-center">
+    <h3 v-if="block.title.trim()" class="font-display mb-2 text-xl text-mts-text">
       <ThemedContentString :content="block.title" />
     </h3>
     <p
@@ -199,10 +199,10 @@ function isAccordionOpen(idx: number): boolean {
       v-if="block.title.trim() || block.caption.trim()"
       class="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white"
     >
-      <h3 v-if="block.title.trim()" class="font-display text-2xl md:text-3xl">
+      <h3 v-if="block.title.trim()" class="font-display text-xl md:text-2xl">
         <ThemedContentString :content="block.title" />
       </h3>
-      <p v-if="block.caption.trim()" class="mt-3 max-w-2xl font-body text-sm md:text-base">
+      <p v-if="block.caption.trim()" class="mt-3 max-w-7xl font-body text-sm md:text-base">
         <ThemedContentString :content="block.caption" />
       </p>
     </div>
@@ -210,7 +210,7 @@ function isAccordionOpen(idx: number): boolean {
 
   <!-- Gallery -->
   <div v-else-if="block.type === 'gallery'">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-2xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-mts-text">
       <ThemedContentString :content="block.title" />
     </h3>
     <div :class="['grid gap-4', galleryGridClass]">
@@ -229,8 +229,8 @@ function isAccordionOpen(idx: number): boolean {
   </div>
 
   <!-- Accordion -->
-  <div v-else-if="block.type === 'accordion'" class="mx-auto max-w-3xl">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-2xl text-mts-text">
+  <div v-else-if="block.type === 'accordion'" class="mx-auto max-w-7xl">
+    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-mts-text">
       <ThemedContentString :content="block.title" />
     </h3>
     <ul class="space-y-2">
@@ -265,9 +265,9 @@ function isAccordionOpen(idx: number): boolean {
   <!-- HTML / Markdown -->
   <div
     v-else-if="block.type === 'htmlMarkdown'"
-    :class="block.align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl'"
+    :class="block.align === 'center' ? 'mx-auto max-w-7xl text-center' : 'max-w-7xl'"
   >
-    <h3 v-if="block.title.trim()" class="font-display mb-4 text-2xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-4 text-xl text-mts-text">
       <ThemedContentString :content="block.title" />
     </h3>
     <div

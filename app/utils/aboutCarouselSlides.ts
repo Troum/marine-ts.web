@@ -3,12 +3,10 @@ export type AboutCarouselSlide = {
   alt: string
 }
 
-/** Единый набор кадров для блока «О компании» на главной и на странице /about */
-export const aboutCarouselSlides: AboutCarouselSlide[] = [
-  { src: '/images/marin-figma/mission-dock.jpg', alt: 'Сварочные работы в мастерской' },
-  { src: '/images/services/hull.jpg', alt: 'Ремонт корпуса и палубного оборудования' },
-  { src: '/images/services/electro.jpg', alt: 'Электротехнические работы на судне' },
-  { src: '/images/services/general.jpg', alt: 'Техническое обслуживание судового оборудования' },
-]
+/**
+ * Кадры карусели «О компании» на главной. По умолчанию пусто — изображения задаются в CMS
+ * или добавляются сюда вручную при необходимости.
+ */
+export const aboutCarouselSlides: AboutCarouselSlide[] = []
 
 export const ABOUT_CAROUSEL_INTERVAL_MS = 6000

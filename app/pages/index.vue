@@ -6,9 +6,10 @@ import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
-import { mergeHomePageData } from '~/utils/pageDefaults'
+import { HOME_SECTION_DEFAULT_ORDER, mergeHomePageData } from '~/utils/pageDefaults'
 import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import { resolveLucideIcon } from '~/utils/lucideIconRegistry'
+import { resolveSectionOrder, isSectionVisible } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('home')
 
@@ -87,6 +88,18 @@ const statIcons = computed(() =>
     iconComponent: resolveLucideIcon(item.icon),
   })),
 )
+
+/**
+ * Эффективный порядок секций (после hero) с учётом сохранённого
+ * `sectionOrder`, актуальных кастомных секций и дефолтов.
+ */
+const sectionOrderEffective = computed(() =>
+  resolveSectionOrder(d.value.sectionOrder, HOME_SECTION_DEFAULT_ORDER, d.value.customSections),
+)
+
+function sectionShown(id: string): boolean {
+  return isSectionVisible(d.value.sectionVisibility, id)
+}
 </script>
 
 <template>
@@ -94,19 +107,21 @@ const statIcons = computed(() =>
     <section class="relative min-h-screen flex items-center overflow-hidden">
       <div class="absolute inset-0">
         <div
+          v-if="d.heroImage?.trim()"
           :class="[
             'absolute inset-0 bg-cover bg-center transition-all duration-1000',
             isVisible ? 'scale-100 opacity-100' : 'scale-105 opacity-0',
           ]"
-          :style="{ backgroundImage: `url(${d.heroImage || '/images/marin-figma/hero-ship.jpg'})` }"
+          :style="{ backgroundImage: `url(${d.heroImage})` }"
         />
+        <div v-else class="absolute inset-0 bg-mts-bg" aria-hidden="true" />
         <div class="absolute inset-0 bg-linear-to-r from-mts-bg via-mts-bg/82 to-mts-bg/55" />
         <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/40" />
       </div>
 
-      <div class="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 pt-28 pb-20">
+      <div class="relative z-10 mts-content-wrap w-full py-0">
         <div class="grid lg:grid-cols-5 gap-12 items-start">
-          <div class="lg:col-span-3 max-w-2xl">
+          <div class="lg:col-span-3 max-w-7xl">
             <div
               :class="[
                 'flex items-center gap-3 mb-6 transform transition-all duration-600',
@@ -119,7 +134,7 @@ const statIcons = computed(() =>
 
             <h1
               :class="[
-                'font-display text-4xl sm:text-5xl lg:text-6xl text-mts-text leading-[1.1] mb-6 whitespace-pre-line transform transition-all duration-600',
+                'font-display text-3xl sm:text-4xl lg:text-5xl text-mts-text leading-[1.1] mb-6 whitespace-pre-line transform transition-all duration-600',
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
@@ -180,6 +195,7 @@ const statIcons = computed(() =>
           </div>
 
           <div
+            v-if="d.showStatsCard !== false"
             :class="[
               'lg:col-span-2 transform transition-all duration-700',
               isVisible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0',
@@ -217,93 +233,19 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section class="relative bg-mts-surface py-16 lg:py-24">
-      <div
-        class="pointer-events-none absolute inset-x-0 top-0 z-0 h-24 bg-linear-to-b from-mts-bg to-transparent sm:h-28"
-        aria-hidden="true"
-      />
-      <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
-        <div class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4 lg:gap-6 lg:items-stretch">
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute -bottom-16 right-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 -left-4 sm:-left-6 lg:-bottom-24 lg:-left-10 lg:-top-24"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
-              <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
-                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelShip.label" /></span>
-              </div>
-              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-                <ThemeFormattedTitle :title="d.funnelShip.titleFormatted" />
-              </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
-                <ThemedContentString :content="d.funnelShip.text" />
-              </p>
-              <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
-                <ThemedContentString :content="d.funnelShip.cta" /> →
-              </NuxtLink>
-            </div>
-          </div>
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute inset-x-0 -bottom-16 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 lg:-bottom-24 lg:-top-24"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
-              <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
-                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelCrewing.label" /></span>
-              </div>
-              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-                <ThemeFormattedTitle :title="d.funnelCrewing.titleFormatted" />
-              </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
-                <ThemedContentString :content="d.funnelCrewing.text" />
-              </p>
-              <div class="mt-5 flex flex-wrap items-center gap-2">
-                <NuxtLink :to="localePath(d.funnelCrewing.href)" class="mts-cta-link-compact">
-                  <ThemedContentString :content="d.funnelCrewing.cta" /> →
-                </NuxtLink>
-                <NuxtLink :to="localePath(d.funnelCrewing.secondaryHref)" class="mts-cta-link-muted-compact">
-                  <ThemedContentString :content="d.funnelCrewing.secondaryCta" /> →
-                </NuxtLink>
-              </div>
-            </div>
-          </div>
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute -bottom-16 left-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-16 -right-4 sm:-right-6 lg:-bottom-24 lg:-right-10 lg:-top-24"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
-              <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
-                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelTechnical.label" /></span>
-              </div>
-              <h2 class="font-display text-lg leading-snug text-mts-text md:text-xl lg:text-2xl break-words [text-wrap:pretty]">
-                <ThemeFormattedTitle :title="d.funnelTechnical.titleFormatted" />
-              </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
-                <ThemedContentString :content="d.funnelTechnical.text" />
-              </p>
-              <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
-                <ThemedContentString :content="d.funnelTechnical.cta" /> →
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
+    <!--
+      Секция «Направления» (без админ-формы контента) всегда фиксирована
+      сразу после hero. Остальные секции отрисовываются динамически ниже
+      по `sectionOrder` / `sectionVisibility`.
+    -->
     <section class="relative bg-mts-bg py-20 lg:py-28">
-      <div class="mx-auto max-w-7xl px-6 lg:px-12">
-        <div class="mb-12 max-w-3xl">
+      <div class="mts-content-wrap">
+        <div class="mb-12 max-w-7xl">
           <div class="mb-4 flex items-center gap-3">
             <div class="h-px w-6 bg-mts-accent" />
             <span class="section-label"><ThemedContentString :content="d.directions.label" /></span>
           </div>
-          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [text-wrap:pretty]">
+          <h2 class="font-display text-3xl text-mts-text lg:text-4xl break-words [text-wrap:pretty]">
             <ThemeFormattedTitle :title="d.directions.headingFormatted" />
           </h2>
         </div>
@@ -323,15 +265,105 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section id="about-section" class="relative py-24 lg:py-32 overflow-hidden">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
-        <div class="grid lg:grid-cols-2 gap-16 items-center">
+    <!--
+      Динамический блок секций. Порядок задаётся `sectionOrder` (без hero),
+      видимость — `sectionVisibility`. Кастомные секции (`custom:<id>`) также
+      участвуют в общем порядке.
+    -->
+    <template v-for="sid in sectionOrderEffective" :key="sid">
+      <!-- ===== FUNNEL (3 cards) ===== -->
+      <section v-if="sid === 'funnel' && sectionShown('funnel')" class="relative bg-mts-surface py-16 lg:py-24">
+      <div
+        class="pointer-events-none absolute inset-x-0 top-0 z-0 h-24 bg-linear-to-b from-mts-bg to-transparent sm:h-28"
+        aria-hidden="true"
+      />
+      <div class="relative z-10 mts-content-wrap">
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4 lg:gap-6 lg:items-stretch">
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute right-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh] -left-4 sm:-left-6 lg:-left-10"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelShip.label" /></span>
+              </div>
+              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+                <ThemeFormattedTitle :title="d.funnelShip.titleFormatted" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+                <ThemedContentString :content="d.funnelShip.text" />
+              </p>
+              <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
+                <ThemedContentString :content="d.funnelShip.cta" /> →
+              </NuxtLink>
+            </div>
+          </div>
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute inset-x-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh]"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelCrewing.label" /></span>
+              </div>
+              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+                <ThemeFormattedTitle :title="d.funnelCrewing.titleFormatted" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+                <ThemedContentString :content="d.funnelCrewing.text" />
+              </p>
+              <div class="mt-5 flex flex-wrap items-center gap-2">
+                <NuxtLink :to="localePath(d.funnelCrewing.href)" class="mts-cta-link-compact">
+                  <ThemedContentString :content="d.funnelCrewing.cta" /> →
+                </NuxtLink>
+                <NuxtLink :to="localePath(d.funnelCrewing.secondaryHref)" class="mts-cta-link-muted-compact">
+                  <ThemedContentString :content="d.funnelCrewing.secondaryCta" /> →
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
+            <div
+              class="pointer-events-none absolute left-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh] -right-4 sm:-right-6 lg:-right-10"
+              aria-hidden="true"
+            />
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+              <div class="mb-2 flex items-center gap-2">
+                <div class="h-px w-6 bg-mts-accent" />
+                <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelTechnical.label" /></span>
+              </div>
+              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+                <ThemeFormattedTitle :title="d.funnelTechnical.titleFormatted" />
+              </h2>
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+                <ThemedContentString :content="d.funnelTechnical.text" />
+              </p>
+              <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
+                <ThemedContentString :content="d.funnelTechnical.cta" /> →
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+      <!-- ===== ABOUT ===== -->
+      <section v-else-if="sid === 'about' && sectionShown('about')" id="about-section" class="relative py-24 lg:py-32 overflow-hidden">
+      <div class="mts-content-wrap relative z-10">
+        <div
+          class="grid gap-16 items-center"
+          :class="aboutCarouselSlides.length ? 'lg:grid-cols-2' : ''"
+        >
           <div>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-6 h-px bg-mts-accent" />
               <span class="section-label"><ThemedContentString :content="d.about.label" /></span>
             </div>
-            <h2 class="font-display text-4xl lg:text-5xl text-mts-text leading-tight mb-6">
+            <h2 class="font-display text-3xl lg:text-4xl text-mts-text leading-tight mb-6">
               <ThemeFormattedTitle :title="d.about.titleFormatted" />
             </h2>
             <div class="w-12 h-0.5 bg-mts-accent mb-6" />
@@ -352,7 +384,7 @@ const statIcons = computed(() =>
             </div>
             <ButtonLink :title="flattenEncodedOrPlain(d.about.more)" link="/about" />
           </div>
-          <div class="relative">
+          <div v-if="aboutCarouselSlides.length" class="relative">
             <CommonAccentCorners size="lg" bottom="bottom-5" />
             <ImageFadeCarousel :slides="aboutCarouselSlides" />
           </div>
@@ -360,15 +392,16 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section v-if="visibleServiceCards.length" class="relative py-24 lg:py-32 overflow-hidden bg-mts-surface">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+      <!-- ===== SERVICES ===== -->
+      <section v-else-if="sid === 'services' && sectionShown('services') && visibleServiceCards.length" class="relative py-24 lg:py-32 overflow-hidden bg-mts-surface">
+      <div class="mts-content-wrap relative z-10">
         <div class="flex items-start justify-between mb-12">
           <div>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-6 h-px bg-mts-accent" />
               <span class="section-label"><ThemedContentString :content="d.services.label" /></span>
             </div>
-            <h2 class="font-display text-4xl lg:text-5xl text-mts-text break-words [text-wrap:pretty]">
+            <h2 class="font-display text-3xl lg:text-4xl text-mts-text break-words [text-wrap:pretty]">
               <ThemeFormattedTitle :title="d.services.headingFormatted" />
             </h2>
           </div>
@@ -413,15 +446,16 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section v-if="d.showProcess" class="relative border-t border-mts-border bg-mts-surface py-20 lg:py-28">
-      <div class="relative z-10 mx-auto max-w-7xl px-6 lg:px-12">
-        <div class="mx-auto mb-14 max-w-2xl text-center">
+      <!-- ===== PROCESS ===== -->
+      <section v-else-if="sid === 'process' && sectionShown('process')" class="relative border-t border-mts-border bg-mts-surface py-20 lg:py-28">
+      <div class="relative z-10 mts-content-wrap">
+        <div class="mx-auto mb-14 max-w-7xl text-center">
           <div class="mb-4 flex items-center justify-center gap-3">
             <div class="h-px w-6 bg-mts-accent" />
             <span class="section-label"><ThemedContentString :content="d.process.label" /></span>
             <div class="h-px w-6 bg-mts-accent" />
           </div>
-          <h2 class="font-display text-4xl text-mts-text lg:text-5xl break-words [text-wrap:pretty]">
+          <h2 class="font-display text-3xl text-mts-text lg:text-4xl break-words [text-wrap:pretty]">
             <ThemeFormattedTitle :title="d.process.headingFormatted" />
           </h2>
         </div>
@@ -441,17 +475,18 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <section class="relative py-24 overflow-hidden bg-mts-bg">
-      <div class="max-w-4xl mx-auto px-6 lg:px-12 relative z-10 text-center">
+      <!-- ===== CTA ===== -->
+      <section v-else-if="sid === 'cta' && sectionShown('cta')" class="relative py-24 overflow-hidden bg-mts-bg">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 text-center">
         <div class="flex items-center justify-center gap-3 mb-4">
           <div class="w-6 h-px bg-mts-accent" />
             <span class="section-label"><ThemedContentString :content="d.cta.label" /></span>
           <div class="w-6 h-px bg-mts-accent" />
         </div>
-        <h2 class="font-display text-4xl lg:text-5xl text-mts-text mb-6">
+        <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-6">
           <ThemeFormattedTitle :title="d.cta.titleFormatted" />
         </h2>
-        <p class="font-body text-mts-text-secondary mb-8 max-w-xl mx-auto">
+        <p class="font-body text-mts-text-secondary mb-8 max-w-7xl mx-auto">
           <ThemedContentString :content="d.cta.text" />
         </p>
         <div class="flex justify-center items-center">
@@ -460,7 +495,12 @@ const statIcons = computed(() =>
       </div>
     </section>
 
-    <CommonCustomPageSectionsRender :sections="d.customSections" />
+      <!-- ===== Custom section (одна на итерацию) ===== -->
+      <CommonCustomPageSectionsRender
+        v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
+        :sections="(d.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+      />
+    </template>
 
     <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="home" />
   </div>
