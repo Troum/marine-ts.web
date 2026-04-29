@@ -25,7 +25,7 @@ function defaultMenuItems(): NavigationMenuItem[] {
   return [
     { path: '/', label: { ru: 'Главная', en: 'Home' } },
     { path: '/about', label: { ru: 'О компании', en: 'About' } },
-    { path: '/services', label: { ru: 'Услуги', en: 'Services' } },
+    { path: '/services', label: { ru: 'Судоремонт', en: 'Ship Repair' } },
     { path: '/projects', label: { ru: 'Проекты', en: 'Projects' } },
     { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
     { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crewing management' } },

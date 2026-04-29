@@ -245,7 +245,7 @@ async function submit() {
         page.hero.titleFormatted = themeTitleTriple(page.servicesV2.sec1Hero.title, '', '')
       }
       translations[loc] = {
-        title: loc === 'ru' ? 'Сервисы' : 'Services',
+        title: loc === 'ru' ? 'Судоремонт' : 'Ship Repair',
         excerpt: '', body: JSON.stringify(page),
         seoTitle: '', seoDescription: '', seoKeywords: '',
       }
@@ -257,7 +257,7 @@ async function submit() {
       const created = await api.contentPages.create({ slug: SLUG, isPublished: true, sortOrder: 0, translations })
       existingId.value = (created as ContentPage).id
     }
-    adminToast.success('Страница «Сервисы» сохранена')
+    adminToast.success('Страница «Судоремонт» сохранена')
   }
   catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
@@ -276,7 +276,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors"><ArrowLeft class="w-5 h-5" /></NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Страница «Сервисы»</h1>
+            <h1 class="font-display text-xl text-mts-text">Страница «Судоремонт»</h1>
           </div>
           <div class="flex items-center gap-4">
             <NuxtLink to="/services" target="_blank" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">Открыть на сайте ↗</NuxtLink>
@@ -615,7 +615,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           :visible="sectionVisible('listing')"
           :can-move-up="canMove('listing', -1)"
           :can-move-down="canMove('listing', 1)"
-          hint="Карточки сервисов редактируются в разделе «Сервисы»."
+          hint="Карточки сервисов редактируются в разделе «Судоремонт»."
           @update:collapsed="(v) => (collapsed.listing = v)"
           @update:visible="(v) => setSectionVisible('listing', v)"
           @move-up="moveSection('listing', -1)"
@@ -652,7 +652,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <section class="bg-white border border-mts-border shadow-tech relative p-6 space-y-3">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox">
-            Показать форму заявки внизу страницы «Сервисы»
+            Показать форму заявки внизу страницы «Судоремонт»
           </label>
           <label
             v-if="d.showInquiryForm && isServicesV2"

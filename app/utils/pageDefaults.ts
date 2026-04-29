@@ -276,7 +276,7 @@ export function syncHomeStructuralFields(
   }
 }
 
-/* ── Listing pages (Services, Projects, Gallery, News) ── */
+/* ── Listing pages (Ship Repair, Projects, Gallery, News) ── */
 
 type ListingSlug = 'services-page' | 'projects-page' | 'gallery-page' | 'news-page' | 'vacancies-page'
 
@@ -370,7 +370,7 @@ export function listingDefaultOrder(slug: string): readonly string[] {
     : LISTING_SECTION_DEFAULT_ORDER
 }
 
-/** Встроенный порядок секций листинга (учитывает v2 для «Сервисы»). */
+/** Встроенный порядок секций листинга (учитывает v2 для «Судоремонт»). */
 export function listingBuiltinOrder(slug: string, page?: Partial<ListingPageData>): readonly string[] {
   if (slug === 'services-page' && page && !servicesPageDataIsLegacy(page)) {
     return SERVICES_MARKETING_V2_SECTION_ORDER

@@ -32,6 +32,7 @@ import {
   Image as ImageIcon,
   ImagePlus,
   Images,
+  GalleryVerticalEnd,
   Italic,
   LayoutGrid,
   Link as LinkIcon,
@@ -61,15 +62,19 @@ import { applyTiptapDarkEditingCanvas } from '~/utils/tiptapAdminDarkCanvas'
 import {
   isAllowedRichMapIframeSrc,
   insertImageCarouselInEditor,
+  insertImageGalleryInEditor,
   isSafeCarouselImgSrc,
+  MTS_RICH_GALLERY_COLUMNS,
   MtsRichGrid,
   MtsRichGridCell,
   MtsRichImageCarousel,
+  MtsRichImageGallery,
   MtsRichMapEmbed,
 } from '~/utils/tiptapMtsRichLayout'
 import {
   attrsForBulletListStyle,
   attrsForOrderedListStyle,
+  isSafeListMarkerUrl,
   MtsBulletList,
   MtsOrderedList,
   type BulletListStyleType,
@@ -84,8 +89,9 @@ const props = withDefaults(
     modelValue: string
     disabled?: boolean
     placeholder?: string
+    allowImages?: boolean
   }>(),
-  { disabled: false, placeholder: 'Текст страницы…' },
+  { disabled: false, placeholder: 'Текст страницы…', allowImages: true },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -138,6 +144,21 @@ const carouselMediaPanelOpen = ref(false)
 const carouselMediaItems = ref<MediaLibraryItem[]>([])
 const carouselMediaLoading = ref(false)
 const carouselMediaSelectedUrls = ref<string[]>([])
+
+/* ── Галерея (Masonry) — параллельный набор state к карусели ─────────── */
+const galleryDialogOpen = ref(false)
+const galleryEditingPos = ref<number | null>(null)
+const galleryImages = ref<{ src: string; alt: string }[]>([])
+const galleryColumns = ref<number>(3)
+const galleryAriaLabel = ref('Галерея изображений')
+const galleryNewUrl = ref('')
+const galleryNewUrlInputRef = ref<HTMLInputElement | null>(null)
+const galleryUploading = ref(false)
+const galleryMediaPanelOpen = ref(false)
+const galleryMediaItems = ref<MediaLibraryItem[]>([])
+const galleryMediaLoading = ref(false)
+const galleryMediaSelectedUrls = ref<string[]>([])
+
 const editorRootRef = ref<HTMLDivElement | null>(null)
 
 const listStyleOpen = ref(false)
@@ -159,6 +180,24 @@ const ORDERED_LIST_STYLE_OPTIONS: { key: OrderedListStyleKey; label: string }[] 
   { key: 'lower-roman', label: 'i ii' },
   { key: 'upper-roman', label: 'I II' },
 ]
+
+const imageExtensions = props.allowImages
+  ? [
+      Image.configure({
+        HTMLAttributes: {
+          class: 'block max-w-full rounded-sm object-contain',
+        },
+        resize: {
+          enabled: true,
+          alwaysPreserveAspectRatio: true,
+          minWidth: 64,
+          minHeight: 48,
+        },
+      }),
+      MtsRichImageCarousel,
+      MtsRichImageGallery,
+    ]
+  : []
 
 const editor = useEditor({
   content: props.modelValue?.trim() ? props.modelValue : '<p></p>',
@@ -195,20 +234,9 @@ const editor = useEditor({
     TableKit.configure({
       table: { resizable: false },
     }),
-    Image.configure({
-      HTMLAttributes: {
-        class: 'block max-w-full rounded-sm object-contain',
-      },
-      resize: {
-        enabled: true,
-        alwaysPreserveAspectRatio: true,
-        minWidth: 64,
-        minHeight: 48,
-      },
-    }),
+    ...imageExtensions,
     MtsRichGridCell,
     MtsRichGrid,
-    MtsRichImageCarousel,
     MtsRichMapEmbed,
     YoutubeExtension.configure({
       controls: true,
@@ -315,6 +343,19 @@ watch(carouselDialogOpen, async (open) => {
   }
 })
 
+watch(galleryDialogOpen, async (open) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  if (open) {
+    document.body.style.overflow = 'hidden'
+    await nextTick()
+    galleryNewUrlInputRef.value?.focus()
+  } else {
+    document.body.style.overflow = ''
+  }
+})
+
 const inBulletList = computed(() => editor.value?.isActive('bulletList'))
 const inOrderedList = computed(() => editor.value?.isActive('orderedList'))
 
@@ -365,6 +406,13 @@ function applyBulletListPreset(style: Exclude<BulletListStyleType, 'custom'>) {
 function applyBulletListCustom() {
   const raw = listCustomMarkerInput.value.trim()
   if (!raw || !editor.value) {
+    return
+  }
+  if (!props.allowImages && isSafeListMarkerUrl(raw)) {
+    adminToast.show({
+      title: 'Изображения отключены',
+      message: 'В этом редакторе можно использовать только текстовый символ маркера.',
+    })
     return
   }
   editor.value
@@ -1008,29 +1056,15 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
 }
 
 function onCarouselNodeViewEdit(e: Event) {
+  if (!props.allowImages) {
+    return
+  }
   const detail = (e as CustomEvent<{ pos?: number; attrs?: Record<string, unknown> }>).detail
   if (!detail || typeof detail.pos !== 'number' || !detail.attrs) {
     return
   }
   openCarouselDialogForEdit(detail.pos, detail.attrs)
 }
-
-onMounted(() => {
-  editorRootRef.value?.addEventListener(
-    'mts-rich-carousel-edit',
-    onCarouselNodeViewEdit as EventListener,
-  )
-})
-
-onBeforeUnmount(() => {
-  editorRootRef.value?.removeEventListener(
-    'mts-rich-carousel-edit',
-    onCarouselNodeViewEdit as EventListener,
-  )
-  if (typeof document !== 'undefined') {
-    document.body.style.overflow = ''
-  }
-})
 
 const canEditCarouselFromToolbar = computed(() => {
   void tiptapUiTick.value
@@ -1070,6 +1104,404 @@ function openCarouselFromToolbar() {
   }
   openCarouselDialog()
 }
+
+/* ── Galleries (Masonry): полностью параллельный набор функций ─────── */
+
+function resetGalleryDialogState() {
+  galleryImages.value = []
+  galleryColumns.value = 3
+  galleryAriaLabel.value = 'Галерея изображений'
+  galleryNewUrl.value = ''
+  galleryMediaPanelOpen.value = false
+  galleryMediaItems.value = []
+  galleryMediaSelectedUrls.value = []
+  galleryEditingPos.value = null
+}
+
+function openGalleryDialog() {
+  if (!editor.value) {
+    return
+  }
+  resetGalleryDialogState()
+  galleryDialogOpen.value = true
+}
+
+function openGalleryDialogForEdit(
+  pos: number,
+  attrs: { images?: unknown; columns?: unknown; ariaLabel?: unknown },
+) {
+  if (!editor.value) {
+    return
+  }
+  resetGalleryDialogState()
+  galleryEditingPos.value = pos
+  const rawImages = Array.isArray(attrs.images) ? attrs.images : []
+  galleryImages.value = rawImages
+    .map((s) => {
+      if (!s || typeof s !== 'object') {
+        return null
+      }
+      const src = typeof (s as { src?: unknown }).src === 'string' ? ((s as { src: string }).src) : ''
+      const alt = typeof (s as { alt?: unknown }).alt === 'string' ? ((s as { alt: string }).alt) : ''
+      if (!src || !isSafeCarouselImgSrc(src)) {
+        return null
+      }
+      return { src, alt }
+    })
+    .filter((x): x is { src: string; alt: string } => x !== null)
+  const colsRaw = Number(attrs.columns)
+  const found = (MTS_RICH_GALLERY_COLUMNS as readonly number[]).find((c) => c === Math.round(colsRaw))
+  galleryColumns.value = found ?? 3
+  galleryAriaLabel.value =
+    typeof attrs.ariaLabel === 'string' && attrs.ariaLabel.trim()
+      ? attrs.ariaLabel.trim()
+      : 'Галерея изображений'
+  galleryDialogOpen.value = true
+}
+
+function applyGalleryDialog() {
+  const ed = editor.value
+  if (!ed) {
+    galleryDialogOpen.value = false
+    return
+  }
+  const images = galleryImages.value
+    .map((s) => ({ src: (s.src ?? '').trim(), alt: (s.alt ?? '').trim() }))
+    .filter((s) => s.src && isSafeCarouselImgSrc(s.src))
+  if (images.length === 0) {
+    adminToast.show({
+      title: 'Ошибка',
+      message: 'Добавьте хотя бы одно корректное изображение (https:// или /storage/…).',
+    })
+    return
+  }
+  const ariaLabel = galleryAriaLabel.value.trim() || 'Галерея изображений'
+  const columns = galleryColumns.value
+
+  const editingPos = galleryEditingPos.value
+  if (editingPos !== null) {
+    const node = ed.state.doc.nodeAt(editingPos)
+    if (!node || node.type.name !== 'mtsRichImageGallery') {
+      const ok = insertImageGalleryInEditor(ed, { images, columns, ariaLabel })
+      if (!ok) {
+        adminToast.show({ title: 'Ошибка', message: 'Не удалось сохранить галерею' })
+        return
+      }
+      adminToast.success('Галерея сохранена (как новая, исходный блок не найден)')
+    } else {
+      const tr = ed.state.tr.setNodeMarkup(editingPos, undefined, {
+        images,
+        columns,
+        ariaLabel,
+      })
+      ed.view.dispatch(tr)
+      adminToast.success('Галерея обновлена')
+    }
+  } else {
+    const ok = insertImageGalleryInEditor(ed, { images, columns, ariaLabel })
+    if (!ok) {
+      adminToast.show({
+        title: 'Ошибка',
+        message: 'Нужно хотя бы одно корректное изображение (https:// или /storage/…).',
+      })
+      return
+    }
+    adminToast.success('Галерея вставлена')
+  }
+  galleryDialogOpen.value = false
+}
+
+function cancelGalleryDialog() {
+  galleryDialogOpen.value = false
+}
+
+function galleryImageExists(src: string) {
+  return galleryImages.value.some((s) => s.src === src)
+}
+
+function tryAppendGalleryImage(rawSrc: string, rawAlt = '', notify = true): boolean {
+  const src = rawSrc.trim()
+  if (!src) {
+    return false
+  }
+  if (!isSafeCarouselImgSrc(src)) {
+    if (notify) {
+      adminToast.show({
+        title: 'Некорректный URL',
+        message: 'Поддерживаются только https:// и относительные пути /storage/…',
+      })
+    }
+    return false
+  }
+  if (galleryImageExists(src)) {
+    if (notify) {
+      adminToast.show({ title: 'Уже добавлено', message: 'Этот URL уже есть в галерее' })
+    }
+    return false
+  }
+  galleryImages.value = [...galleryImages.value, { src, alt: rawAlt.trim() }]
+  return true
+}
+
+function setGalleryImageSrc(idx: number, value: string) {
+  if (idx < 0 || idx >= galleryImages.value.length) {
+    return
+  }
+  const next = [...galleryImages.value]
+  const cur = next[idx]
+  if (!cur) {
+    return
+  }
+  next[idx] = { ...cur, src: value }
+  galleryImages.value = next
+}
+
+function setGalleryImageAlt(idx: number, value: string) {
+  if (idx < 0 || idx >= galleryImages.value.length) {
+    return
+  }
+  const next = [...galleryImages.value]
+  const cur = next[idx]
+  if (!cur) {
+    return
+  }
+  next[idx] = { ...cur, alt: value }
+  galleryImages.value = next
+}
+
+function moveGalleryImage(from: number, delta: -1 | 1) {
+  const to = from + delta
+  if (
+    from < 0 ||
+    from >= galleryImages.value.length ||
+    to < 0 ||
+    to >= galleryImages.value.length ||
+    from === to
+  ) {
+    return
+  }
+  const next = [...galleryImages.value]
+  const [moved] = next.splice(from, 1)
+  if (moved === undefined) {
+    return
+  }
+  next.splice(to, 0, moved)
+  galleryImages.value = next
+}
+
+function removeGalleryImage(idx: number) {
+  if (idx < 0 || idx >= galleryImages.value.length) {
+    return
+  }
+  galleryImages.value = galleryImages.value.filter((_, i) => i !== idx)
+}
+
+function submitGalleryNewUrl() {
+  if (tryAppendGalleryImage(galleryNewUrl.value)) {
+    galleryNewUrl.value = ''
+  }
+}
+
+function toggleGalleryMediaPanel() {
+  if (props.disabled || galleryUploading.value) {
+    return
+  }
+  galleryMediaPanelOpen.value = !galleryMediaPanelOpen.value
+  if (
+    galleryMediaPanelOpen.value &&
+    galleryMediaItems.value.length === 0 &&
+    !galleryMediaLoading.value
+  ) {
+    void loadGalleryMediaLibrary()
+  }
+}
+
+async function loadGalleryMediaLibrary() {
+  galleryMediaLoading.value = true
+  try {
+    galleryMediaItems.value = await api.media.listManage()
+  } catch {
+    adminToast.show({
+      title: 'Ошибка',
+      message: 'Не удалось загрузить список файлов из медиатеки',
+    })
+  } finally {
+    galleryMediaLoading.value = false
+  }
+}
+
+function toggleGalleryMediaPick(url: string) {
+  const cur = galleryMediaSelectedUrls.value
+  const i = cur.indexOf(url)
+  galleryMediaSelectedUrls.value = i === -1 ? [...cur, url] : cur.filter((u) => u !== url)
+}
+
+function isGalleryMediaPicked(url: string) {
+  return galleryMediaSelectedUrls.value.includes(url)
+}
+
+function appendGalleryMediaPicked() {
+  const urls = [...galleryMediaSelectedUrls.value]
+  if (!urls.length) {
+    return
+  }
+  let added = 0
+  for (const url of urls) {
+    const it = galleryMediaItems.value.find((x) => x.url === url)
+    if (tryAppendGalleryImage(url, altFromFilename(it?.filename), false)) {
+      added++
+    }
+  }
+  galleryMediaSelectedUrls.value = []
+  if (added > 0) {
+    adminToast.success(`Добавлено из медиатеки: ${added}`)
+  } else {
+    adminToast.show({
+      title: 'Уже добавлено',
+      message: 'Все выбранные ссылки уже есть в галерее или не прошли проверку URL.',
+    })
+  }
+}
+
+async function onGalleryFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const files = input.files ? Array.from(input.files) : []
+  input.value = ''
+  if (!files.length) {
+    return
+  }
+  galleryUploading.value = true
+  let added = 0
+  const failures: string[] = []
+  try {
+    for (const file of files) {
+      try {
+        const res = await api.media.upload(file)
+        const u = res.url?.trim()
+        if (!u) {
+          failures.push(`${file.name}: сервер не вернул URL`)
+          continue
+        }
+        const altBase = file.name.replace(/\.[^.]+$/i, '').replace(/[-_]+/g, ' ').trim()
+        if (tryAppendGalleryImage(u, altBase, false)) {
+          added++
+        }
+      }
+      catch (err: unknown) {
+        failures.push(`${file.name}: ${formatMediaUploadError(err)}`)
+      }
+    }
+    if (added === 0 && failures.length === 0) {
+      adminToast.show({
+        title: 'Уже добавлено',
+        message: 'Загруженные файлы уже есть в галерее — дубликаты не добавляются.',
+      })
+      return
+    }
+    if (added === 0) {
+      const msg =
+        failures.length === 1
+          ? (failures[0] ?? 'Сервер не вернул URL для загруженных файлов')
+          : failures.join('\n') || 'Сервер не вернул URL для загруженных файлов'
+      adminToast.show({ title: 'Ошибка', message: msg })
+      return
+    }
+    adminToast.success(`Добавлено изображений: ${added}`)
+    if (failures.length) {
+      adminToast.show({
+        title: 'Часть файлов не загружена',
+        message: failures.join('\n'),
+      })
+    }
+  }
+  catch (e: unknown) {
+    adminToast.show({ title: 'Ошибка', message: formatMediaUploadError(e) })
+  }
+  finally {
+    galleryUploading.value = false
+  }
+}
+
+function onGalleryNodeViewEdit(e: Event) {
+  if (!props.allowImages) {
+    return
+  }
+  const detail = (e as CustomEvent<{ pos?: number; attrs?: Record<string, unknown> }>).detail
+  if (!detail || typeof detail.pos !== 'number' || !detail.attrs) {
+    return
+  }
+  openGalleryDialogForEdit(detail.pos, detail.attrs)
+}
+
+const canEditGalleryFromToolbar = computed(() => {
+  void tiptapUiTick.value
+  const ed = editor.value
+  if (!ed) {
+    return false
+  }
+  return ed.isActive('mtsRichImageGallery')
+})
+
+function openGalleryFromToolbar() {
+  const ed = editor.value
+  if (!ed) {
+    return
+  }
+  if (!ed.isActive('mtsRichImageGallery')) {
+    openGalleryDialog()
+    return
+  }
+  const { from } = ed.state.selection
+  let pos: number | null = null
+  let nodeAttrs: Record<string, unknown> | null = null
+  ed.state.doc.nodesBetween(
+    Math.max(0, from - 1),
+    Math.min(ed.state.doc.content.size, from + 1),
+    (n, p) => {
+      if (nodeAttrs) {
+        return false
+      }
+      if (n.type.name === 'mtsRichImageGallery') {
+        pos = p
+        nodeAttrs = { ...n.attrs }
+        return false
+      }
+      return true
+    },
+  )
+  if (pos !== null && nodeAttrs) {
+    openGalleryDialogForEdit(pos, nodeAttrs)
+    return
+  }
+  openGalleryDialog()
+}
+
+onMounted(() => {
+  if (props.allowImages) {
+    editorRootRef.value?.addEventListener(
+      'mts-rich-carousel-edit',
+      onCarouselNodeViewEdit as EventListener,
+    )
+    editorRootRef.value?.addEventListener(
+      'mts-rich-gallery-edit',
+      onGalleryNodeViewEdit as EventListener,
+    )
+  }
+})
+
+onBeforeUnmount(() => {
+  editorRootRef.value?.removeEventListener(
+    'mts-rich-carousel-edit',
+    onCarouselNodeViewEdit as EventListener,
+  )
+  editorRootRef.value?.removeEventListener(
+    'mts-rich-gallery-edit',
+    onGalleryNodeViewEdit as EventListener,
+  )
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = ''
+  }
+})
 </script>
 
 <template>
@@ -1233,13 +1665,15 @@ function openCarouselFromToolbar() {
                 Нет
               </button>
             </div>
-            <label class="mb-1 block text-xs text-mts-text-secondary">Свой символ или URL картинки (https…)</label>
+            <label class="mb-1 block text-xs text-mts-text-secondary">
+              {{ props.allowImages ? 'Свой символ или URL картинки (https…)' : 'Свой символ маркера' }}
+            </label>
             <div class="flex gap-2">
               <input
                 v-model="listCustomMarkerInput"
                 type="text"
                 class="min-w-0 flex-1 rounded border border-mts-border bg-white px-2 py-1.5 text-sm dark:border-white/15 dark:bg-transparent"
-                placeholder="⭐ или https://…"
+                :placeholder="props.allowImages ? '⭐ или https://…' : '⭐'"
                 @keydown.enter.prevent="applyBulletListCustom"
               >
               <button
@@ -1387,6 +1821,7 @@ function openCarouselFromToolbar() {
         <MapPin class="h-4 w-4" />
       </button>
       <button
+        v-if="props.allowImages"
         type="button"
         :class="btnClass(canEditCarouselFromToolbar)"
         :disabled="disabled"
@@ -1397,11 +1832,24 @@ function openCarouselFromToolbar() {
       >
         <Images class="h-4 w-4" />
       </button>
-      <span class="mx-1 w-px self-stretch bg-mts-border" />
-      <button type="button" :class="btnClass(false)" title="Изображение (URL / файл). После вставки — выделите и тяните угол для размера" @click="openImageDialog">
+      <button
+        v-if="props.allowImages"
+        type="button"
+        :class="btnClass(canEditGalleryFromToolbar)"
+        :disabled="disabled"
+        :title="canEditGalleryFromToolbar
+          ? 'Управление выбранной галереей (Masonry)'
+          : 'Галерея (Masonry) — изображения в каменной кладке, как Pinterest'"
+        @click="openGalleryFromToolbar"
+      >
+        <GalleryVerticalEnd class="h-4 w-4" />
+      </button>
+      <span v-if="props.allowImages" class="mx-1 w-px self-stretch bg-mts-border" />
+      <button v-if="props.allowImages" type="button" :class="btnClass(false)" title="Изображение (URL / файл). После вставки — выделите и тяните угол для размера" @click="openImageDialog">
         <ImageIcon class="h-4 w-4" />
       </button>
       <button
+        v-if="props.allowImages"
         type="button"
         :class="btnClass(false)"
         :disabled="disabled || imageUploading"
@@ -1484,7 +1932,7 @@ function openCarouselFromToolbar() {
 
     <Teleport to="body">
       <div
-        v-if="imageDialogOpen"
+        v-if="props.allowImages && imageDialogOpen"
         class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4"
         role="dialog"
         aria-modal="true"
@@ -1705,7 +2153,7 @@ function openCarouselFromToolbar() {
 
     <Teleport to="body">
       <div
-        v-if="carouselDialogOpen"
+        v-if="props.allowImages && carouselDialogOpen"
         class="fixed inset-0 z-[245] flex items-stretch justify-center p-4 sm:items-center sm:p-6"
         role="presentation"
         @click.self="cancelCarouselDialog"
@@ -2005,7 +2453,307 @@ function openCarouselFromToolbar() {
       </div>
     </Teleport>
 
+    <Teleport to="body">
+      <div
+        v-if="props.allowImages && galleryDialogOpen"
+        class="fixed inset-0 z-[245] flex items-stretch justify-center p-4 sm:items-center sm:p-6"
+        role="presentation"
+        @click.self="cancelGalleryDialog"
+      >
+        <div class="absolute inset-0 bg-black/55" aria-hidden="true" />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-rich-gallery-title"
+          class="relative z-10 flex max-h-[min(94vh,1100px)] w-full max-w-5xl flex-col overflow-hidden rounded-md border border-mts-border bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)]"
+          @click.stop
+        >
+          <header class="flex items-start justify-between gap-3 border-b border-mts-border bg-mts-bg/40 px-6 py-4">
+            <div class="min-w-0">
+              <h2 id="admin-rich-gallery-title" class="font-display text-lg text-mts-text">
+                {{ galleryEditingPos === null ? 'Новая галерея (Masonry)' : 'Галерея (Masonry)' }}
+              </h2>
+              <p class="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                {{ galleryImages.length }} изображени<span v-if="galleryImages.length % 10 === 1 && galleryImages.length % 100 !== 11">е</span><span v-else-if="[2,3,4].includes(galleryImages.length % 10) && ![12,13,14].includes(galleryImages.length % 100)">я</span><span v-else>й</span>
+                · на сайте — каменная кладка с разной высотой
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Закрыть"
+              class="inline-flex h-9 w-9 items-center justify-center text-mts-text-secondary transition-colors hover:text-mts-accent"
+              @click="cancelGalleryDialog"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </header>
+
+          <div class="flex-1 overflow-y-auto px-6 py-5">
+            <p class="mb-3 font-body text-xs text-mts-text-secondary">
+              Добавьте изображения через <strong>URL</strong>, <strong>загрузите файлы с диска</strong>
+              или выберите из <strong>медиатеки</strong>. На сайте блок отрисуется как
+              <code class="font-mono">MasonryImageGallery</code> с лайтбоксом по клику.
+            </p>
+
+            <div
+              v-if="galleryImages.length === 0"
+              class="mb-5 flex items-center justify-center rounded border border-dashed border-mts-border bg-mts-bg/50 px-3 py-10 font-body text-sm text-mts-text-secondary"
+            >
+              Список пуст. Добавьте изображения ниже — через URL, диск или медиатеку.
+            </div>
+            <div
+              v-else
+              class="mb-5 grid gap-3"
+              style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"
+            >
+              <div
+                v-for="(image, idx) in galleryImages"
+                :key="`gallery-image-${idx}`"
+                class="flex flex-col border border-mts-border bg-white"
+              >
+                <div class="relative aspect-[4/3] overflow-hidden bg-mts-bg">
+                  <img
+                    v-if="image.src && isSafeCarouselImgSrc(image.src)"
+                    :src="image.src"
+                    :alt="image.alt || ''"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                  <div
+                    v-else
+                    class="flex h-full w-full items-center justify-center font-mono text-[10px] uppercase tracking-widest text-red-500"
+                  >
+                    Неверный URL
+                  </div>
+                  <span
+                    class="absolute left-2 top-2 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-sm bg-black/60 px-1.5 font-mono text-[11px] font-semibold text-white"
+                  >
+                    {{ idx + 1 }}
+                  </span>
+                </div>
+                <div class="space-y-2 border-t border-mts-border p-3">
+                  <input
+                    :value="image.src"
+                    type="text"
+                    placeholder="https://… или /storage/…"
+                    class="w-full border border-mts-border bg-mts-bg px-2 py-1.5 font-mono text-[11px] text-mts-text focus:border-mts-accent focus:outline-none"
+                    @input="(e) => setGalleryImageSrc(idx, (e.target as HTMLInputElement).value)"
+                  >
+                  <input
+                    :value="image.alt"
+                    type="text"
+                    placeholder="alt (для доступности)"
+                    class="w-full border border-mts-border bg-mts-bg px-2 py-1.5 font-body text-xs text-mts-text focus:border-mts-accent focus:outline-none"
+                    @input="(e) => setGalleryImageAlt(idx, (e.target as HTMLInputElement).value)"
+                  >
+                  <div class="flex items-center justify-between gap-1">
+                    <div class="flex items-center gap-1">
+                      <button
+                        type="button"
+                        title="Сдвинуть выше"
+                        aria-label="Сдвинуть выше"
+                        class="inline-flex h-7 w-7 items-center justify-center border border-mts-border bg-white text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="idx === 0"
+                        @click="moveGalleryImage(idx, -1)"
+                      >
+                        <ArrowUp class="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Сдвинуть ниже"
+                        aria-label="Сдвинуть ниже"
+                        class="inline-flex h-7 w-7 items-center justify-center border border-mts-border bg-white text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="idx === galleryImages.length - 1"
+                        @click="moveGalleryImage(idx, 1)"
+                      >
+                        <ArrowDown class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      class="inline-flex h-7 items-center gap-1 border border-mts-border bg-white px-2 font-mono text-[10px] uppercase tracking-wide text-red-700 transition-colors hover:border-red-500 hover:text-red-700"
+                      @click="removeGalleryImage(idx)"
+                    >
+                      <Trash2 class="h-3 w-3" />
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-2 flex flex-wrap items-center gap-3">
+              <h3 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                Параметры галереи
+              </h3>
+              <span class="text-mts-text-muted">·</span>
+              <label class="flex items-center gap-2 font-body text-sm text-mts-text">
+                <span class="text-mts-text-secondary">Колонок (md+)</span>
+                <select
+                  v-model.number="galleryColumns"
+                  class="border border-mts-border bg-white px-2 py-1 text-sm outline-none focus:border-mts-accent"
+                >
+                  <option v-for="c in MTS_RICH_GALLERY_COLUMNS" :key="c" :value="c">{{ c }}</option>
+                </select>
+              </label>
+              <span class="text-xs text-mts-text-muted">
+                На мобильном всегда 2 колонки
+              </span>
+            </div>
+            <label class="mb-1 block font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+              Подпись для screen reader (aria-label)
+            </label>
+            <input
+              v-model="galleryAriaLabel"
+              type="text"
+              class="w-full border border-mts-border bg-white px-3 py-2 text-sm text-mts-text outline-none focus:border-mts-accent"
+              placeholder="Галерея изображений"
+            >
+
+            <div
+              v-if="galleryMediaPanelOpen"
+              class="mt-4 rounded border border-mts-border bg-mts-bg/40 p-3"
+            >
+              <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <span class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                  Медиатека · каталог /media на сервере
+                </span>
+                <button
+                  type="button"
+                  class="text-xs font-medium text-mts-accent hover:underline disabled:pointer-events-none disabled:opacity-50"
+                  :disabled="galleryMediaLoading || disabled"
+                  @click="loadGalleryMediaLibrary"
+                >
+                  Обновить
+                </button>
+              </div>
+              <p v-if="galleryMediaLoading" class="py-6 text-center text-xs text-mts-text-secondary">
+                Загрузка списка…
+              </p>
+              <p
+                v-else-if="!galleryMediaItems.length"
+                class="py-4 text-center text-xs text-mts-text-secondary"
+              >
+                Нет изображений в каталоге. Загрузите файлы через «С диска» или положите их в
+                <code class="font-mono">storage/app/public/media</code> и нажмите «Обновить».
+              </p>
+              <div
+                v-else
+                class="max-h-72 overflow-y-auto rounded border border-mts-border bg-white p-2"
+              >
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                  <button
+                    v-for="it in galleryMediaItems"
+                    :key="it.url"
+                    type="button"
+                    class="relative aspect-square overflow-hidden rounded border-2 bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent"
+                    :class="
+                      isGalleryMediaPicked(it.url)
+                        ? 'border-mts-accent ring-2 ring-mts-accent/30'
+                        : 'border-mts-border hover:border-mts-accent/60'
+                    "
+                    :title="it.filename"
+                    :disabled="disabled || galleryUploading"
+                    @click="toggleGalleryMediaPick(it.url)"
+                  >
+                    <img
+                      :src="it.url"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      loading="lazy"
+                    >
+                  </button>
+                </div>
+              </div>
+              <div v-if="galleryMediaItems.length" class="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  class="rounded bg-mts-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
+                  :disabled="!galleryMediaSelectedUrls.length || disabled || galleryUploading"
+                  @click="appendGalleryMediaPicked"
+                >
+                  Добавить выбранные ({{ galleryMediaSelectedUrls.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <footer class="border-t border-mts-border bg-mts-bg/50 px-6 py-4">
+            <div class="flex flex-wrap items-stretch gap-2">
+              <input
+                ref="galleryNewUrlInputRef"
+                v-model="galleryNewUrl"
+                type="text"
+                placeholder="https://… или /storage/…"
+                class="min-w-[14rem] flex-1 border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
+                @keydown.enter.prevent="submitGalleryNewUrl"
+              >
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 border border-mts-border bg-white px-3 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-40"
+                :disabled="!galleryNewUrl.trim()"
+                @click="submitGalleryNewUrl"
+              >
+                <ImagePlus class="h-3.5 w-3.5" />
+                Добавить URL
+              </button>
+              <label
+                class="inline-flex cursor-pointer items-center gap-1.5 border border-transparent bg-mts-accent px-3 font-mono text-[11px] uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark"
+                :class="
+                  disabled || galleryUploading
+                    ? 'pointer-events-none cursor-not-allowed opacity-50'
+                    : ''
+                "
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  class="sr-only"
+                  tabindex="-1"
+                  multiple
+                  :disabled="disabled || galleryUploading"
+                  @change="onGalleryFileChange"
+                >
+                <Loader2 v-if="galleryUploading" class="h-3.5 w-3.5 animate-spin" />
+                <Upload v-else class="h-3.5 w-3.5" />
+                <span>{{ galleryUploading ? 'Загрузка…' : 'С диска' }}</span>
+              </label>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 border border-mts-border bg-white px-3 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-40"
+                :class="galleryMediaPanelOpen ? 'border-mts-accent text-mts-accent' : ''"
+                :disabled="disabled || galleryUploading"
+                @click="toggleGalleryMediaPanel"
+              >
+                <FolderOpen class="h-3.5 w-3.5" />
+                Медиатека
+              </button>
+              <div class="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  class="border border-mts-border bg-white px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:bg-mts-bg"
+                  @click="cancelGalleryDialog"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  class="border border-transparent bg-mts-text px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white transition-colors hover:bg-mts-text-secondary disabled:opacity-50"
+                  :disabled="galleryImages.length === 0"
+                  @click="applyGalleryDialog"
+                >
+                  {{ galleryEditingPos === null ? 'Вставить' : 'Сохранить' }}
+                </button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      </div>
+    </Teleport>
+
     <input
+      v-if="props.allowImages"
       ref="imageFileInputRef"
       type="file"
       accept="image/jpeg,image/png,image/webp"

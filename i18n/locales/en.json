@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
-    "services": "Services",
+    "services": "Ship Repair",
     "projects": "Projects",
     "gallery": "Gallery",
     "news": "News",
@@ -20,7 +20,7 @@
   "footer": {
     "tagline": "Ship & crew management: manning, maintenance and repairs.",
     "sectionCompany": "Company",
-    "sectionServices": "Services",
+    "sectionServices": "Ship Repair",
     "sectionCandidates": "Candidates",
     "sectionDocs": "Legal",
     "sectionContacts": "Contacts",
@@ -76,7 +76,7 @@
       "more": "Learn more about the company"
     },
     "services": {
-      "label": "Services",
+      "label": "Ship Repair",
       "heading": "Full range of ",
       "headingAccent": "marine",
       "headingEnd": " services",
@@ -125,7 +125,7 @@
       "notFoundVacancy": "This vacancy was not found or is no longer listed.",
       "toNewsList": "Back to news",
       "toProjects": "Back to projects",
-      "toServices": "Back to services",
+      "toServices": "Back to ship repair",
       "backToLinePage": "Back to “{name}”",
       "toVacancies": "Back to vacancies",
       "toVacancy": "Back to vacancy",
@@ -452,6 +452,15 @@
       "dobPlaceholder": "DD.MM.YYYY",
       "errPhoneInvalid": "Enter a valid mobile phone number (you can use + and country code for international numbers)",
       "errDobInvalid": "Select a valid date of birth",
+      "errFieldRequired": "This field is required",
+      "errEmailInvalid": "Enter a valid email",
+      "errCheckFields": "Please review the highlighted fields",
+      "maritalOptions": {
+        "placeholder": "— select —",
+        "married": "Married",
+        "single": "Single",
+        "divorced": "Divorced"
+      },
       "fields": {
         "positionApplyingFor": "Position applying for",
         "lastName": "Last name / surname *",

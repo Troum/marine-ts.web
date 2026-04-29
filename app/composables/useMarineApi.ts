@@ -687,11 +687,30 @@ export function useMarineApi() {
       getSummary: () => fetchAuth<PageViewsSummary>('/analytics/manage/summary'),
     },
     applicationForms: {
-      submit: async (slug: string, body: VacancyApplicationForm) => {
+      submit: async (slug: string, body: VacancyApplicationForm, photo?: File | null) => {
         const enc = encodeURIComponent(slug)
+        if (photo) {
+          /**
+           * Multipart: payload идёт JSON-строкой в одном поле,
+           * файл — отдельным полем `photo`. На бэке `prepareForValidation`
+           * раскрывает строку обратно в массив.
+           */
+          const fd = new FormData()
+          fd.append('payload', JSON.stringify(body))
+          fd.append('photo', photo)
+          await fetchPublicFormData<unknown>(`/vacancies/${enc}/application-forms`, fd)
+          return
+        }
         await fetchPublicPost<unknown>(`/vacancies/${enc}/application-forms`, body)
       },
-      submitOpen: async (body: VacancyApplicationForm) => {
+      submitOpen: async (body: VacancyApplicationForm, photo?: File | null) => {
+        if (photo) {
+          const fd = new FormData()
+          fd.append('payload', JSON.stringify(body))
+          fd.append('photo', photo)
+          await fetchPublicFormData<unknown>('/application-forms', fd)
+          return
+        }
         await fetchPublicPost<unknown>('/application-forms', body)
       },
       getManageAll: async (
@@ -809,6 +828,53 @@ export function useMarineApi() {
         const a = document.createElement('a')
         a.href = URL.createObjectURL(blob)
         a.download = fallbackFilename
+        a.rel = 'noopener'
+        a.click()
+        URL.revokeObjectURL(a.href)
+      },
+      /** Скачать фото кандидата (Bearer; имя файла берётся из Content-Disposition). */
+      downloadApplicationFormPhoto: async (applicationFormId: number, fallbackFilename = 'photo') => {
+        const base = config.public.apiBase as string
+        if (!import.meta.client) {
+          return
+        }
+        const t = localStorage.getItem('mts_admin_token')
+        const url = `${base}/application-forms/${applicationFormId}/photo`
+        const res = await fetch(url, {
+          headers: {
+            Accept: '*/*',
+            ...(t ? { Authorization: `Bearer ${t}` } : {}),
+          },
+        })
+        if (!res.ok) {
+          let msg = 'Не удалось скачать фото'
+          try {
+            const j = (await res.json()) as { message?: string }
+            if (j.message) {
+              msg = j.message
+            }
+          } catch {
+            /* ignore */
+          }
+          throw new Error(msg)
+        }
+        const dispo = res.headers.get('Content-Disposition')
+        let filename = fallbackFilename
+        if (dispo) {
+          const m = /filename\*=UTF-8''([^;]+)|filename="([^"]+)"/i.exec(dispo)
+          const raw = m?.[1] ?? m?.[2]
+          if (raw) {
+            try {
+              filename = decodeURIComponent(raw.replace(/\+/g, ' '))
+            } catch {
+              filename = raw
+            }
+          }
+        }
+        const blob = await res.blob()
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = filename
         a.rel = 'noopener'
         a.click()
         URL.revokeObjectURL(a.href)

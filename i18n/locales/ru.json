@@ -2,7 +2,7 @@
   "nav": {
     "home": "Главная",
     "about": "О компании",
-    "services": "Сервисы",
+    "services": "Судоремонт",
     "projects": "Проекты",
     "gallery": "Галерея",
     "news": "Новости",
@@ -20,7 +20,7 @@
   "footer": {
     "tagline": "Судовой и крюинг менеджмент: экипажи, техобслуживание и ремонт судов.",
     "sectionCompany": "Компания",
-    "sectionServices": "Сервисы",
+    "sectionServices": "Судоремонт",
     "sectionCandidates": "Кандидатам",
     "sectionDocs": "Документы",
     "sectionContacts": "Контакты",
@@ -76,7 +76,7 @@
       "more": "Подробнее о компании"
     },
     "services": {
-      "label": "Сервисы",
+      "label": "Судоремонт",
       "heading": "Полный спектр ",
       "headingAccent": "морских",
       "headingEnd": " услуг",
@@ -125,7 +125,7 @@
       "notFoundVacancy": "Вакансия не найдена или снята с публикации.",
       "toNewsList": "К списку новостей",
       "toProjects": "К проектам",
-      "toServices": "К сервисам",
+      "toServices": "К судоремонту",
       "backToLinePage": "К разделу «{name}»",
       "toVacancies": "К списку вакансий",
       "toVacancy": "К вакансии",
@@ -452,6 +452,15 @@
       "dobPlaceholder": "ДД.ММ.ГГГГ",
       "errPhoneInvalid": "Укажите корректный мобильный телефон (для зарубежных номеров используйте + и код страны)",
       "errDobInvalid": "Выберите корректную дату рождения",
+      "errFieldRequired": "Обязательное поле",
+      "errEmailInvalid": "Укажите корректный email",
+      "errCheckFields": "Проверьте выделенные поля",
+      "maritalOptions": {
+        "placeholder": "— выберите —",
+        "married": "Женат / Замужем",
+        "single": "Холост",
+        "divorced": "Разведен(а)"
+      },
       "fields": {
         "positionApplyingFor": "Позиция",
         "lastName": "Фамилия *",

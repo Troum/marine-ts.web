@@ -3,7 +3,8 @@ import { ArrowLeft, Loader2, ClipboardList } from 'lucide-vue-next'
 import type { MarineContentLocale, SeoFields } from '~/types'
 import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
 import { mergeVacancyTranslations } from '~/utils/adminTranslationForms'
-import { htmlToPlainLinesForBullets } from '~/utils/adminHtmlField'
+import { htmlToPlainLinesForBullets, incomingCmsValueToHtml } from '~/utils/adminHtmlField'
+import { normalizeBodyForEditor } from '~/composables/useMarkdownSafeHtml'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 
 definePageMeta({
@@ -29,7 +30,7 @@ const form = ref({
 
 /** Текстовое представление списка требований по языкам. */
 const requirementsText = ref<Record<MarineContentLocale, string>>(
-  Object.fromEntries(MARINE_CONTENT_LOCALES.map((loc) => [loc, ''])) as Record<
+  Object.fromEntries(MARINE_CONTENT_LOCALES.map((loc) => [loc, '<p></p>'])) as Record<
     MarineContentLocale,
     string
   >,
@@ -57,7 +58,13 @@ const seoForTab = computed<SeoFields>({
 
 function syncRequirementsTextFromForm() {
   for (const loc of MARINE_CONTENT_LOCALES) {
-    requirementsText.value[loc] = (form.value.translations[loc].requirements ?? []).join('\n')
+    requirementsText.value[loc] = incomingCmsValueToHtml((form.value.translations[loc].requirements ?? []).join('\n'))
+  }
+}
+
+function normalizeVacancyContentForEditor() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    form.value.translations[loc].content = normalizeBodyForEditor(form.value.translations[loc].content)
   }
 }
 
@@ -74,6 +81,7 @@ onMounted(async () => {
       isPublished: item.isPublished,
       translations: mergeVacancyTranslations(item.translations),
     }
+    normalizeVacancyContentForEditor()
     syncRequirementsTextFromForm()
   } catch {
     await navigateTo('/admin/vacancies')
@@ -217,13 +225,25 @@ async function submit() {
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                   >Полный текст</label
                 >
-                <AdminThemedTextField v-model="form.translations[localeTab].content" />
+                <AdminRichTextEditor
+                  :model-value="form.translations[localeTab].content"
+                  :disabled="saving"
+                  :allow-images="false"
+                  placeholder="Полный текст вакансии…"
+                  @update:model-value="form.translations[localeTab].content = $event"
+                />
               </div>
               <div>
                 <label class="mb-2 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                   >Требования (каждый пункт — новый абзац или новая строка)</label
                 >
-                <AdminThemedTextField v-model="requirementsText[localeTab]" />
+                <AdminRichTextEditor
+                  :model-value="requirementsText[localeTab]"
+                  :disabled="saving"
+                  :allow-images="false"
+                  placeholder="Каждый пункт требования — отдельным абзацем или строкой…"
+                  @update:model-value="requirementsText[localeTab] = $event"
+                />
               </div>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>

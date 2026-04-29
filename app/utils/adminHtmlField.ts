@@ -57,6 +57,9 @@ export function stripHtmlToPlain(raw: string): string {
  */
 export function htmlToPlainLinesForBullets(html: string): string[] {
   const normalized = (html ?? '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '')
     .replace(/<\/p>\s*<p[^>]*>/gi, '\n')
     .replace(/<p[^>]*>/gi, '')
     .replace(/<\/p>/gi, '\n')

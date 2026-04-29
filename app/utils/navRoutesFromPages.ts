@@ -9,7 +9,7 @@ const ROUTE_LABELS_RU: Record<string, string> = {
   '/about': 'О компании',
   '/contacts': 'Контакты',
   '/request': 'Заявка',
-  '/services': 'Сервисы',
+  '/services': 'Судоремонт',
   '/projects': 'Проекты',
   '/gallery': 'Галерея',
   '/news': 'Новости',

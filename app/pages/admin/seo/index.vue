@@ -136,7 +136,7 @@ watch([sort, order], () => {
             >
               <Wrench class="h-8 w-8 text-mts-accent" />
               <div>
-                <p class="font-body font-medium text-mts-text">Сервисы</p>
+                <p class="font-body font-medium text-mts-text">Судоремонт</p>
                 <p class="font-mono text-[10px] text-mts-text-secondary">SEO карточек</p>
               </div>
             </NuxtLink>

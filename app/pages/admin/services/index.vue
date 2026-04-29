@@ -88,7 +88,7 @@ async function handleDelete(id: number) {
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
               <ArrowLeft class="w-5 h-5" />
             </NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Сервисы</h1>
+            <h1 class="font-display text-xl text-mts-text">Судоремонт</h1>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">

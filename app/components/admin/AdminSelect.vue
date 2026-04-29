@@ -18,13 +18,24 @@ const props = withDefaults(
     disabled?: boolean
     placeholder?: string
     /**
+     * Внешний вид триггера.
+     * `default` — карточка как в админке (рамка со всех сторон).
+     * `underline` — только нижняя линия, как у `.form-input` на публичных формах.
+     */
+    variant?: 'default' | 'underline'
+    /**
      * Поле поиска в выпадающем списке.
      * По умолчанию включается, если опций больше 12 (удобно для длинных списков иконок).
      */
     searchable?: boolean
     searchPlaceholder?: string
   }>(),
-  { placeholder: 'Выберите…', disabled: false, searchPlaceholder: 'Поиск по подписи или коду…' },
+  {
+    placeholder: 'Выберите…',
+    disabled: false,
+    searchPlaceholder: 'Поиск по подписи или коду…',
+    variant: 'default',
+  },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -92,6 +103,39 @@ const triggerTitle = computed(() => {
 
 const selectedIcon = computed(() => selectedOption.value?.icon)
 
+/** Классы триггера: админский «карточный» или underline как `.form-input`. */
+const triggerClass = computed(() => {
+  if (props.variant === 'underline') {
+    const border =
+      open.value === true
+        ? 'border-primary'
+        : 'border-[#cccccc] hover:border-primary/60'
+    return [
+      'flex w-full shrink-0 items-center justify-between gap-2 border-0 border-b bg-transparent px-0 py-3 text-left font-body text-sm transition-colors focus:border-primary focus:outline-none disabled:opacity-50',
+      border,
+    ].join(' ')
+  }
+  return 'flex h-12 w-full shrink-0 items-center justify-between gap-2 border border-mts-border bg-mts-bg px-4 py-0 text-left font-body text-sm text-mts-text transition-colors hover:border-mts-accent/50 focus:outline-none focus:ring-2 focus:ring-mts-accent/30 focus:border-mts-accent disabled:opacity-50'
+})
+
+const selectedTextClass = computed(() => {
+  if (props.variant === 'underline') {
+    return props.modelValue ? 'text-body' : 'text-muted'
+  }
+  return props.modelValue ? 'text-mts-text' : 'text-mts-text-muted'
+})
+
+const placeholderMutedClass = computed(() =>
+  props.variant === 'underline' ? 'text-muted' : 'text-mts-text-muted',
+)
+
+const chevronClass = computed(() => {
+  const base = 'h-4 w-4 shrink-0 transition-transform'
+  const color =
+    props.variant === 'underline' ? 'text-muted' : 'text-mts-text-secondary'
+  return [base, color, open.value === true ? 'rotate-180' : ''].filter(Boolean).join(' ')
+})
+
 function toggle() {
   if (props.disabled) {
     return
@@ -142,7 +186,7 @@ function onSearchKeydown(e: KeyboardEvent) {
       type="button"
       :disabled="disabled"
       :title="triggerTitle"
-      class="flex h-12 w-full shrink-0 items-center justify-between gap-2 border border-mts-border bg-mts-bg px-4 py-0 text-left font-body text-sm text-mts-text transition-colors hover:border-mts-accent/50 focus:outline-none focus:ring-2 focus:ring-mts-accent/30 focus:border-mts-accent disabled:opacity-50"
+      :class="triggerClass"
       :aria-expanded="open"
       aria-haspopup="listbox"
       :aria-label="modelValue ? triggerTitle : placeholder"
@@ -155,14 +199,10 @@ function onSearchKeydown(e: KeyboardEvent) {
           class="h-5 w-5 shrink-0 text-mts-accent"
           aria-hidden="true"
         />
-        <span
-          v-if="showSelectedText"
-          :class="modelValue ? 'text-mts-text' : 'text-mts-text-muted'"
-          >{{ selectedLabel }}</span
-        >
-        <span v-else-if="!modelValue" class="text-mts-text-muted">{{ placeholder }}</span>
+        <span v-if="showSelectedText" :class="selectedTextClass">{{ selectedLabel }}</span>
+        <span v-else-if="!modelValue" :class="placeholderMutedClass">{{ placeholder }}</span>
       </span>
-      <ChevronDown class="h-4 w-4 shrink-0 text-mts-text-secondary transition-transform" :class="{ 'rotate-180': open }" />
+      <ChevronDown class="pointer-events-none" :class="chevronClass" aria-hidden="true" />
     </button>
     <Transition
       enter-active-class="transition duration-100 ease-out"

@@ -43,7 +43,7 @@ const sectionPickerOpen = ref(false)
 const sectionOptions = [
   { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA' },
   { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
-  { label: 'Сервисы', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
+  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
   { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
   { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
   { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
@@ -382,7 +382,7 @@ const statCards = computed(() => [
             >
               <div class="flex shrink-0 items-center gap-3">
                 <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Сервисы</h2>
+                <h2 class="font-display text-xl text-mts-text">Судоремонт</h2>
               </div>
               <div class="flex shrink-0 flex-nowrap items-center gap-2">
                 <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
@@ -393,7 +393,7 @@ const statCards = computed(() => [
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Раздел «Сервисы» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
+                Раздел «Судоремонт» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
                 сайта (/…)
               </p>
               <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">

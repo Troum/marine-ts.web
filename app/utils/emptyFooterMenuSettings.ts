@@ -11,9 +11,9 @@ export function emptyFooterMenuSettings(): FooterMenuSettings {
         ],
       },
       {
-        title: { ru: 'Сервисы', en: 'Services' },
+        title: { ru: 'Судоремонт', en: 'Ship Repair' },
         links: [
-          { path: '/services', label: { ru: 'Сервисы', en: 'Services' } },
+          { path: '/services', label: { ru: 'Судоремонт', en: 'Ship Repair' } },
           { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
           { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crew management' } },
         ],

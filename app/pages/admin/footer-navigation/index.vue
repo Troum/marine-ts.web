@@ -19,7 +19,7 @@ const loading = ref(true)
 const saving = ref(false)
 const form = ref<FooterMenuSettings>(emptyFooterMenuSettings())
 
-const columnLabels = ['Компания / первая колонка', 'Сервисы / вторая колонка', 'Кандидатам / третья колонка']
+const columnLabels = ['Компания / первая колонка', 'Судоремонт / вторая колонка', 'Кандидатам / третья колонка']
 
 function emptyLink(): FooterNavLink {
   return { path: '/', label: { ru: '', en: '' } }

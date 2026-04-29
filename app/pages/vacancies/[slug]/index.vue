@@ -2,6 +2,7 @@
 import { MapPin, Briefcase, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import { contentBodyToSafeHtml, isRichTextEmpty } from '~/composables/useMarkdownSafeHtml'
 
 import { plainMetaString } from '~/utils/adminThemedTextCodec'
 
@@ -44,11 +45,15 @@ watchEffect(() => {
   })
 })
 
-function formatContent(text: string | null | undefined) {
+function hasVacancyContent(text: string | null | undefined) {
   if (!text) {
-    return []
+    return false
   }
-  return text.split('\n\n').filter(Boolean)
+  return !isRichTextEmpty(text)
+}
+
+function vacancyContentHtml(text: string | null | undefined) {
+  return text ? contentBodyToSafeHtml(text) : ''
 }
 </script>
 
@@ -88,15 +93,11 @@ function formatContent(text: string | null | undefined) {
           <ThemedContentString :content="vacancy.excerpt" />
         </p>
 
-        <div v-if="vacancy.content" class="mt-10 space-y-6">
-          <p
-            v-for="(block, i) in formatContent(vacancy.content)"
-            :key="i"
-            class="font-body leading-relaxed text-body"
-          >
-            {{ block }}
-          </p>
-        </div>
+        <div
+          v-if="hasVacancyContent(vacancy.content)"
+          class="mt-10 font-body leading-relaxed text-body [&_a]:text-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6"
+          v-html="vacancyContentHtml(vacancy.content)"
+        />
 
         <div v-if="vacancy.requirements?.length" class="card-tech corner-accent mt-12 p-8">
           <h2 class="font-display text-xl text-body mb-4">{{ t('pages.common.requirements') }}</h2>

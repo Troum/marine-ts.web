@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { Edit, Trash2, ArrowLeft, Loader2 } from 'lucide-vue-next'
-import type { ContentPage } from '~/types'
+import { Copy, Edit, Trash2, ArrowLeft, Loader2 } from 'lucide-vue-next'
+import type { ContentPage, ContentPageTranslationPayload, MarineContentLocale } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
-import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
+import {
+  decodeAdminThemedString,
+  encodeAdminThemedString,
+  flattenEncodedOrPlain,
+  plainMetaString,
+} from '~/utils/adminThemedTextCodec'
 import { triState01 } from '~/utils/adminFilters'
+import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
 
 definePageMeta({
   layout: 'admin',
@@ -88,6 +94,146 @@ async function handleDelete(id: number) {
     await showAdminAlert({ message: 'Не удалось удалить страницу', variant: 'error' })
   }
 }
+
+const duplicatingId = ref<number | null>(null)
+
+/**
+ * Подбирает уникальный slug для копии: пробует `${slug}-copy`,
+ * затем `-copy-2`, `-copy-3` и т.д. Сравниваем с тем, что есть в текущем
+ * списке — этого достаточно, чтобы избежать коллизий в большинстве случаев;
+ * если slug всё же занят страницей вне фильтра — API вернёт ошибку
+ * валидации и мы покажем тост.
+ */
+function nextCopySlug(originalSlug: string, existingSlugs: Set<string>): string {
+  const base = `${originalSlug}-copy`
+  if (!existingSlugs.has(base)) {
+    return base
+  }
+  let i = 2
+  while (existingSlugs.has(`${base}-${i}`)) {
+    i += 1
+  }
+  return `${base}-${i}`
+}
+
+const COPY_SUFFIX_BY_LOCALE: Record<MarineContentLocale, string> = {
+  ru: ' (копия)',
+  en: ' (copy)',
+}
+
+/**
+ * Заголовок content-page в БД хранится в одном из трёх форматов (поле редактируется TipTap-ом
+ * `AdminThemedTextField` и сохраняется в виде HTML; legacy данные — plain string или JSON
+ * `ThemeFormattedTitle` после старой палитры тонов). Простая конкатенация ` (копия)` ломает
+ * HTML («(копия)» оказывается ВНЕ последнего `</p>` — TipTap при загрузке либо теряет хвост,
+ * либо запихивает его в новый абзац) и портит JSON палитры. Здесь определяем формат и
+ * аккуратно вставляем суффикс ВНУТРЬ последнего блока, сохраняя обёртку.
+ */
+function appendCopySuffixToTitle(rawTitle: string | null | undefined, suffix: string): string {
+  if (rawTitle == null || rawTitle === '') {
+    return suffix.trimStart()
+  }
+  const trimmed = rawTitle.trimStart()
+  if (trimmed.startsWith('<')) {
+    /*
+     * Регэксп подцепляет последний закрывающий тег (например, `</p>`) и хвостовые пробелы
+     * — суффикс встаёт между текстом и `</p>`, в одном абзаце с заголовком. Если структура
+     * нестандартная и тег не найден — мягко добавляем суффикс в конец без поломки HTML.
+     */
+    const m = rawTitle.match(/^([\s\S]*?)(<\/[a-zA-Z][^>]*>)\s*$/)
+    if (m && m[1] != null && m[2] != null) {
+      return `${m[1]}${suffix}${m[2]}`
+    }
+    return `${rawTitle}${suffix}`
+  }
+  if (trimmed.startsWith('{')) {
+    const decoded = decodeAdminThemedString(rawTitle)
+    const spans = decoded.spans.length > 0 ? decoded.spans : [{ text: '', tone: 'text' as const }]
+    const lastIdx = spans.length - 1
+    const lastSpan = spans[lastIdx]!
+    spans[lastIdx] = { ...lastSpan, text: `${lastSpan.text ?? ''}${suffix}` }
+    return encodeAdminThemedString({ spans })
+  }
+  return `${rawTitle}${suffix}`
+}
+
+async function handleDuplicate(row: ContentPage) {
+  if (duplicatingId.value !== null) {
+    return
+  }
+  const ok = await confirm({
+    title: 'Скопировать страницу',
+    message:
+      'Будет создан черновик копии этой страницы со всем содержимым. Slug и заголовки получат пометку «копия» — это можно поправить в редакторе.',
+    confirmLabel: 'Скопировать',
+  })
+  if (!ok) {
+    return
+  }
+  duplicatingId.value = row.id
+  try {
+    const source = await api.contentPages.getManageById(row.id)
+    const existingSlugs = new Set(pages.value.map((p) => p.slug))
+    const newSlug = nextCopySlug(source.slug, existingSlugs)
+    /*
+     * Перевод для каждой локали:
+     *   - если в исходнике перевод локали ПУСТОЙ (нет осмысленного заголовка) — оставляем
+     *     ВСЕ поля пустыми. Иначе в редакторе валидатор будет считать локаль «частично
+     *     заполненной» (только из-за подставленного «(copy)») и при сохранении упадёт с
+     *     требованием дописать заголовок и тело для en — пользователь не сможет сохранить
+     *     копию даже без правок. Пустую локаль редактор синхронизирует автоматически
+     *     через `syncEmptySecondaryLocalesSectionsFromPrimary`.
+     *   - если заголовок есть — дописываем суффикс «(копия)»/«(copy)» внутри его обёртки
+     *     (HTML, JSON ThemeFormattedTitle или plain), чтобы не ломать структуру.
+     */
+    const translations: Record<MarineContentLocale, ContentPageTranslationPayload> = {} as Record<
+      MarineContentLocale,
+      ContentPageTranslationPayload
+    >
+    for (const loc of MARINE_CONTENT_LOCALES) {
+      const t = source.translations?.[loc]
+      const sourceTitle = t?.title ?? ''
+      const sourceTitleHasText = plainMetaString(sourceTitle).length > 0
+      if (!sourceTitleHasText) {
+        translations[loc] = {
+          title: '',
+          excerpt: '',
+          body: '',
+          seoTitle: '',
+          seoDescription: '',
+          seoKeywords: '',
+        }
+        continue
+      }
+      translations[loc] = {
+        title: appendCopySuffixToTitle(sourceTitle, COPY_SUFFIX_BY_LOCALE[loc]),
+        excerpt: t?.excerpt ?? '',
+        body: t?.body ?? '',
+        seoTitle: t?.seoTitle ?? '',
+        seoDescription: t?.seoDescription ?? '',
+        seoKeywords: t?.seoKeywords ?? '',
+      }
+    }
+    await api.contentPages.create({
+      slug: newSlug,
+      // Копию создаём как черновик — иначе на сайте сразу появится дубль страницы.
+      isPublished: false,
+      sortOrder: source.sortOrder ?? 0,
+      showInquiryForm: source.showInquiryForm,
+      showPublicTitle: source.showPublicTitle,
+      // Привязку к карточке (service/project) специально НЕ копируем: двойная
+      // привязка двух страниц к одной карточке внесёт путаницу. Пользователь
+      // может перепривязать копию вручную при необходимости.
+      translations,
+    })
+    adminToast.success('Создана копия страницы (черновик)')
+    await fetchPages()
+  } catch {
+    await showAdminAlert({ message: 'Не удалось скопировать страницу', variant: 'error' })
+  } finally {
+    duplicatingId.value = null
+  }
+}
 </script>
 
 <template>
@@ -99,7 +245,7 @@ async function handleDelete(id: number) {
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
               <ArrowLeft class="w-5 h-5" />
             </NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Сервисы</h1>
+            <h1 class="font-display text-xl text-mts-text">Судоремонт</h1>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <AdminPlusLink to="/admin/services/new" variant="outline">Карточка</AdminPlusLink>
@@ -167,12 +313,30 @@ async function handleDelete(id: number) {
                 <NuxtLink
                   :to="`/admin/content-pages/${row.id}`"
                   class="p-2 text-mts-text-secondary hover:text-mts-accent transition-colors inline-flex"
+                  title="Редактировать"
+                  aria-label="Редактировать"
                 >
                   <Edit class="w-4 h-4" />
                 </NuxtLink>
                 <button
                   type="button"
+                  class="p-2 text-mts-text-secondary hover:text-mts-accent transition-colors inline-flex disabled:opacity-40"
+                  :disabled="duplicatingId !== null"
+                  title="Скопировать страницу"
+                  aria-label="Скопировать страницу"
+                  @click="handleDuplicate(row)"
+                >
+                  <Loader2
+                    v-if="duplicatingId === row.id"
+                    class="w-4 h-4 animate-spin"
+                  />
+                  <Copy v-else class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
                   class="p-2 text-mts-text-secondary hover:text-red-600 transition-colors inline-flex"
+                  title="Удалить"
+                  aria-label="Удалить"
                   @click="handleDelete(row.id)"
                 >
                   <Trash2 class="w-4 h-4" />

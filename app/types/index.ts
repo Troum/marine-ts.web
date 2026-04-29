@@ -120,7 +120,7 @@ export interface NewsItem {
   translations?: Partial<Record<MarineContentLocale, NewsTranslationPayload>>
 }
 
-/** Связанная текстовая страница раздела «Сервисы» (полиморфная привязка в API). */
+/** Связанная текстовая страница раздела «Судоремонт» (полиморфная привязка в API). */
 export interface LinkedContentPageRef {
   id: number
   slug: string
@@ -212,6 +212,8 @@ export interface ApplicationFormItem {
   phone: string | null
   status: ApplicationFormStatus
   payload: Record<string, unknown>
+  /** На бэке выставляется в true, если в payload есть путь к загруженному фото. */
+  hasPhoto?: boolean
   requestedDocumentKeys?: string[]
   documentUploadExpiresAt?: string | null
   createdAt: string | null
@@ -664,7 +666,7 @@ export interface HomeServicesSection {
   headingFormatted: ThemeFormattedTitle
   all: string
   more: string
-  /** ID карточек сервисов из каталога (порядок = порядок на главной). Пусто — блок «Сервисы» не показывается. */
+  /** ID карточек сервисов из каталога (порядок = порядок на главной). Пусто — блок «Судоремонт» не показывается. */
   featuredServiceIds: number[]
 }
 
@@ -714,9 +716,9 @@ export interface HomePageData {
   sectionVisibility?: Record<string, boolean>
 }
 
-/* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
+/* ── Listing page structured data (Ship Repair, Projects, Gallery, News hero+CTA) ── */
 
-/** CMS v2 листинга «Сервисы / Судоремонт» (маркетинговые секции + каталог карточек). */
+/** CMS v2 листинга «Судоремонт» (маркетинговые секции + каталог карточек). */
 export interface ServicesMarketingPageContent {
   sec1Hero: { title: string; lead: string; body: string }
   sec2Reach: { title: string; paragraph1: string; paragraph2: string }

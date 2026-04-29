@@ -965,6 +965,324 @@ export function insertImageCarouselInEditor(
     .run()
 }
 
+/** Допустимое количество колонок Masonry на md-брейкпойнте; в `<2` смысла нет. */
+export const MTS_RICH_GALLERY_COLUMNS = [2, 3, 4, 5] as const
+export type MtsRichGalleryColumns = (typeof MTS_RICH_GALLERY_COLUMNS)[number]
+
+function normalizeGalleryColumns(raw: unknown): MtsRichGalleryColumns {
+  const n = Number(raw)
+  if (!Number.isFinite(n)) {
+    return 3
+  }
+  const found = (MTS_RICH_GALLERY_COLUMNS as readonly number[]).find((c) => c === Math.round(n))
+  return (found as MtsRichGalleryColumns | undefined) ?? 3
+}
+
+/**
+ * Галерея изображений в Masonry-сетке.
+ *
+ * Хранит элементы как `<img data-gallery-item>` внутри `<div data-mts-rich-gallery>` —
+ * та же модель, что и у карусели: атрибуты блока кладутся в data-* и параллельно в
+ * Tiptap-attrs (последний атрибут уровня узла побеждает, поэтому каждый `parseHTML`
+ * самодостаточно достаёт значение из DOM, иначе при повторном открытии элементы
+ * пропадут из документа).
+ */
+export const MtsRichImageGallery = Node.create({
+  name: 'mtsRichImageGallery',
+  group: 'block',
+  atom: true,
+  draggable: true,
+
+  addAttributes() {
+    return {
+      images: {
+        default: [] as { src: string; alt: string }[],
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return []
+          }
+          const out: { src: string; alt: string }[] = []
+          for (const img of el.querySelectorAll('img')) {
+            const src = img.getAttribute('src')?.trim() ?? ''
+            const alt = img.getAttribute('alt')?.trim() ?? ''
+            if (src && isSafeCarouselImgSrc(src)) {
+              out.push({ src, alt })
+            }
+          }
+          return out
+        },
+        renderHTML: () => ({}),
+      },
+      columns: {
+        default: 3 as MtsRichGalleryColumns,
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return 3
+          }
+          return normalizeGalleryColumns(el.getAttribute('data-gallery-cols'))
+        },
+        renderHTML: () => ({}),
+      },
+      ariaLabel: {
+        default: 'Галерея изображений',
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return 'Галерея изображений'
+          }
+          return el.getAttribute('data-gallery-label')?.trim() || 'Галерея изображений'
+        },
+        renderHTML: () => ({}),
+      },
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'div[data-mts-rich-gallery]',
+        getAttrs: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return false
+          }
+          const images: { src: string; alt: string }[] = []
+          for (const img of el.querySelectorAll('img')) {
+            const src = img.getAttribute('src')?.trim() ?? ''
+            const alt = img.getAttribute('alt')?.trim() ?? ''
+            if (src && isSafeCarouselImgSrc(src)) {
+              images.push({ src, alt })
+            }
+          }
+          return {
+            images,
+            columns: normalizeGalleryColumns(el.getAttribute('data-gallery-cols')),
+            ariaLabel:
+              el.getAttribute('data-gallery-label')?.trim() || 'Галерея изображений',
+          }
+        },
+      },
+    ]
+  },
+
+  renderHTML({ node }) {
+    const images = (node.attrs.images as { src: string; alt: string }[]) ?? []
+    const safe = images.filter((it) => it.src && isSafeCarouselImgSrc(it.src))
+    const columns = normalizeGalleryColumns(node.attrs.columns)
+    const ariaLabel =
+      typeof node.attrs.ariaLabel === 'string' && node.attrs.ariaLabel.trim()
+        ? node.attrs.ariaLabel.trim()
+        : 'Галерея изображений'
+
+    const attrs: Record<string, string> = {
+      'data-mts-rich-gallery': '',
+      'data-gallery-cols': String(columns),
+      'data-gallery-label': ariaLabel,
+      class: 'mts-rich-gallery my-4 w-full max-w-full',
+    }
+
+    if (safe.length === 0) {
+      return ['div', { ...attrs, class: `${attrs.class} mts-rich-gallery--empty` }]
+    }
+
+    const children = safe.map(
+      (it) =>
+        [
+          'img',
+          {
+            src: it.src,
+            alt: it.alt || '',
+            'data-gallery-item': '',
+            loading: 'lazy',
+            decoding: 'async',
+            class: 'block w-full h-auto',
+          },
+        ] as const,
+    )
+    return ['div', attrs, ...children]
+  },
+
+  /**
+   * NodeView: компактная сетка миниатюр + тулбар «✎ управление / × удалить».
+   * Открытие диалога редактирования делегируется через CustomEvent
+   * `mts-rich-gallery-edit` — приёмник в `AdminRichTextEditor.client.vue`.
+   */
+  addNodeView() {
+    return ({ node: initialNode, editor, getPos }) => {
+      let node = initialNode
+
+      const wrap = document.createElement('div')
+      wrap.className = 'mts-rich-carousel-nodeview'
+      wrap.setAttribute('data-mts-rich-gallery-nodeview', '')
+
+      const toolbar = document.createElement('div')
+      toolbar.className = 'mts-rich-carousel-nodeview__toolbar'
+
+      const titleEl = document.createElement('span')
+      titleEl.className = 'mts-rich-carousel-nodeview__title'
+
+      const btnEdit = document.createElement('button')
+      btnEdit.type = 'button'
+      btnEdit.className = 'mts-rich-carousel-nodeview__btn'
+      btnEdit.title = 'Управление галереей изображений'
+      btnEdit.setAttribute('aria-label', 'Управление галереей изображений')
+      btnEdit.textContent = '✎'
+
+      const btnDelete = document.createElement('button')
+      btnDelete.type = 'button'
+      btnDelete.className =
+        'mts-rich-carousel-nodeview__btn mts-rich-carousel-nodeview__btn--danger'
+      btnDelete.title = 'Удалить галерею'
+      btnDelete.setAttribute('aria-label', 'Удалить галерею')
+      btnDelete.textContent = '×'
+
+      toolbar.appendChild(titleEl)
+      toolbar.appendChild(btnEdit)
+      toolbar.appendChild(btnDelete)
+
+      const grid = document.createElement('div')
+      grid.className = 'mts-rich-carousel-nodeview__grid'
+
+      const renderPreview = () => {
+        const images = (node.attrs.images as { src: string; alt: string }[]) ?? []
+        const safe = images.filter((it) => it && it.src && isSafeCarouselImgSrc(it.src))
+        const cols = normalizeGalleryColumns(node.attrs.columns)
+        titleEl.textContent = safe.length
+          ? `Галерея (Masonry, ${cols} кол.) · ${safe.length} шт.`
+          : 'Галерея изображений · пусто'
+
+        grid.textContent = ''
+        if (safe.length === 0) {
+          const empty = document.createElement('div')
+          empty.className = 'mts-rich-carousel-nodeview__empty'
+          empty.textContent = 'Нет изображений. Нажмите «✎», чтобы добавить.'
+          grid.appendChild(empty)
+          return
+        }
+
+        const limit = Math.min(safe.length, 12)
+        for (let i = 0; i < limit; i++) {
+          const it = safe[i]!
+          const cell = document.createElement('figure')
+          cell.className = 'mts-rich-carousel-nodeview__cell'
+          const img = document.createElement('img')
+          img.src = it.src
+          img.alt = it.alt || ''
+          img.loading = 'lazy'
+          img.decoding = 'async'
+          cell.appendChild(img)
+          const idx = document.createElement('span')
+          idx.className = 'mts-rich-carousel-nodeview__idx'
+          idx.textContent = String(i + 1)
+          cell.appendChild(idx)
+          grid.appendChild(cell)
+        }
+        if (safe.length > limit) {
+          const more = document.createElement('div')
+          more.className = 'mts-rich-carousel-nodeview__more'
+          more.textContent = `+${safe.length - limit}`
+          grid.appendChild(more)
+        }
+      }
+      renderPreview()
+
+      const syncEditable = () => {
+        const editable = editor.isEditable
+        btnEdit.hidden = !editable
+        btnDelete.hidden = !editable
+      }
+      syncEditable()
+
+      const onMouseDown = (e: MouseEvent) => {
+        e.preventDefault()
+      }
+
+      btnEdit.addEventListener('mousedown', onMouseDown)
+      btnEdit.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!editor.isEditable) {
+          return
+        }
+        const pos = getPos()
+        if (typeof pos !== 'number') {
+          return
+        }
+        const at = editor.state.doc.nodeAt(pos)
+        if (!at || at.type.name !== 'mtsRichImageGallery') {
+          return
+        }
+        wrap.dispatchEvent(
+          new CustomEvent('mts-rich-gallery-edit', {
+            bubbles: true,
+            detail: { pos, attrs: { ...at.attrs } },
+          }),
+        )
+      })
+
+      btnDelete.addEventListener('mousedown', onMouseDown)
+      btnDelete.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!editor.isEditable) {
+          return
+        }
+        const pos = getPos()
+        if (typeof pos !== 'number') {
+          return
+        }
+        const at = editor.state.doc.nodeAt(pos)
+        if (!at || at.type.name !== 'mtsRichImageGallery') {
+          return
+        }
+        const tr = editor.state.tr.delete(pos, pos + at.nodeSize)
+        editor.view.dispatch(tr)
+      })
+
+      wrap.appendChild(toolbar)
+      wrap.appendChild(grid)
+
+      return {
+        dom: wrap,
+        update: (updated) => {
+          if (updated.type.name !== 'mtsRichImageGallery') {
+            return false
+          }
+          node = updated
+          renderPreview()
+          syncEditable()
+          return true
+        },
+      }
+    }
+  },
+})
+
+/** Вставить галерею (Masonry) из кнопки в админ-редакторе. */
+export function insertImageGalleryInEditor(
+  editor: Editor,
+  opts: {
+    images: { src: string; alt: string }[]
+    columns?: number
+    ariaLabel?: string
+  },
+): boolean {
+  const images = opts.images.filter((it) => it.src.trim() && isSafeCarouselImgSrc(it.src))
+  if (images.length === 0) {
+    return false
+  }
+  return editor
+    .chain()
+    .focus()
+    .insertContent({
+      type: 'mtsRichImageGallery',
+      attrs: {
+        images,
+        columns: normalizeGalleryColumns(opts.columns),
+        ariaLabel: opts.ariaLabel?.trim() || 'Галерея изображений',
+      },
+    })
+    .run()
+}
+
 export function isAllowedRichMapIframeSrc(raw: string): boolean {
   const u = raw.trim()
   if (!/^https:\/\//i.test(u)) {
