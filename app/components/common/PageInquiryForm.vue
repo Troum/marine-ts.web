@@ -47,6 +47,22 @@ const REQUIRED_SERVICES: PageInquiryServiceId[] = [
   'insurance',
   'other',
 ]
+const VESSEL_TYPE_SET = new Set<PageInquiryVesselType>(VESSEL_TYPES)
+const REQUIRED_SERVICE_SET = new Set<PageInquiryServiceId>(REQUIRED_SERVICES)
+
+const FIELD_LIMITS = {
+  name: 255,
+  company: 255,
+  position: 255,
+  phone: 64,
+  email: 255,
+  vesselFlag: 255,
+  mainPorts: 1000,
+  message: 10000,
+  sourcePage: 255,
+}
+
+const SIMPLE_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 interface InquiryFormState {
   name: string
@@ -84,6 +100,7 @@ const form = ref<InquiryFormState>(makeEmptyState())
 
 const sending = ref(false)
 const formError = ref<string | null>(null)
+const validationErrors = ref<string[]>([])
 const formSuccess = ref(false)
 
 /**
@@ -123,38 +140,95 @@ const emailContact = computed(() => {
     : null
 })
 
+function trimmedForm() {
+  return {
+    name: form.value.name.trim(),
+    company: form.value.company.trim(),
+    position: form.value.position.trim(),
+    phone: form.value.phone.trim(),
+    email: form.value.email.trim(),
+    vesselTypes: form.value.vesselTypes.filter((v) => VESSEL_TYPE_SET.has(v)),
+    vesselsCount: form.value.vesselsCount,
+    vesselFlag: form.value.vesselFlag.trim(),
+    mainPorts: form.value.mainPorts.trim(),
+    requiredServices: form.value.requiredServices.filter((v) => REQUIRED_SERVICE_SET.has(v)),
+    message: form.value.message.trim(),
+    sourcePage: props.sourcePage.trim(),
+    consent: form.value.consent,
+  }
+}
+
+function tooLong(value: string, limit: number): boolean {
+  return value.length > limit
+}
+
+function validateForm(): ReturnType<typeof trimmedForm> | null {
+  const payload = trimmedForm()
+  const errors: string[] = []
+
+  if (!payload.name) errors.push(t('pages.pageInquiry.validation.nameRequired'))
+  if (!payload.company) errors.push(t('pages.pageInquiry.validation.companyRequired'))
+  if (!payload.phone) errors.push(t('pages.pageInquiry.validation.phoneRequired'))
+  if (!payload.email) {
+    errors.push(t('pages.pageInquiry.validation.emailRequired'))
+  } else if (!SIMPLE_EMAIL_RE.test(payload.email)) {
+    errors.push(t('pages.pageInquiry.validation.emailInvalid'))
+  }
+  if (payload.vesselTypes.length === 0) {
+    errors.push(t('pages.pageInquiry.validation.vesselTypesRequired'))
+  }
+  if (!Number.isInteger(payload.vesselsCount) || payload.vesselsCount == null || payload.vesselsCount < 1) {
+    errors.push(t('pages.pageInquiry.validation.vesselsCountRequired'))
+  } else if (payload.vesselsCount > 100000) {
+    errors.push(t('pages.pageInquiry.validation.vesselsCountMax'))
+  }
+  if (!payload.vesselFlag) errors.push(t('pages.pageInquiry.validation.vesselFlagRequired'))
+  if (payload.requiredServices.length === 0) {
+    errors.push(t('pages.pageInquiry.validation.requiredServicesRequired'))
+  }
+  if (!payload.sourcePage) errors.push(t('pages.pageInquiry.validation.sourcePageRequired'))
+  if (!payload.consent) errors.push(t('pages.pageInquiry.validation.consentRequired'))
+
+  if (tooLong(payload.name, FIELD_LIMITS.name)) errors.push(t('pages.pageInquiry.validation.nameMax'))
+  if (tooLong(payload.company, FIELD_LIMITS.company)) errors.push(t('pages.pageInquiry.validation.companyMax'))
+  if (tooLong(payload.position, FIELD_LIMITS.position)) errors.push(t('pages.pageInquiry.validation.positionMax'))
+  if (tooLong(payload.phone, FIELD_LIMITS.phone)) errors.push(t('pages.pageInquiry.validation.phoneMax'))
+  if (tooLong(payload.email, FIELD_LIMITS.email)) errors.push(t('pages.pageInquiry.validation.emailMax'))
+  if (tooLong(payload.vesselFlag, FIELD_LIMITS.vesselFlag)) errors.push(t('pages.pageInquiry.validation.vesselFlagMax'))
+  if (tooLong(payload.mainPorts, FIELD_LIMITS.mainPorts)) errors.push(t('pages.pageInquiry.validation.mainPortsMax'))
+  if (tooLong(payload.message, FIELD_LIMITS.message)) errors.push(t('pages.pageInquiry.validation.messageMax'))
+  if (tooLong(payload.sourcePage, FIELD_LIMITS.sourcePage)) errors.push(t('pages.pageInquiry.validation.sourcePageMax'))
+
+  validationErrors.value = errors
+  return errors.length === 0 ? payload : null
+}
+
 async function onSubmit() {
   formError.value = null
+  validationErrors.value = []
   formSuccess.value = false
 
-  if (form.value.vesselTypes.length === 0 || form.value.requiredServices.length === 0) {
-    formError.value = t('pages.pageInquiry.error')
-    return
-  }
-  if (!form.value.vesselsCount || form.value.vesselsCount < 1) {
-    formError.value = t('pages.pageInquiry.error')
-    return
-  }
-  if (!form.value.consent) {
+  const payload = validateForm()
+  if (!payload) {
     return
   }
 
   sending.value = true
   try {
     await api.pageInquiries.submit({
-      name: form.value.name.trim(),
-      company: form.value.company.trim(),
-      position: form.value.position.trim() || null,
-      phone: form.value.phone.trim(),
-      email: form.value.email.trim(),
-      vesselTypes: form.value.vesselTypes,
-      vesselsCount: form.value.vesselsCount,
-      vesselFlag: form.value.vesselFlag.trim(),
-      mainPorts: form.value.mainPorts.trim() || null,
-      requiredServices: form.value.requiredServices,
-      message: form.value.message.trim() || null,
-      sourcePage: props.sourcePage,
-      consent: form.value.consent,
+      name: payload.name,
+      company: payload.company,
+      position: payload.position || null,
+      phone: payload.phone,
+      email: payload.email,
+      vesselTypes: payload.vesselTypes,
+      vesselsCount: payload.vesselsCount!,
+      vesselFlag: payload.vesselFlag,
+      mainPorts: payload.mainPorts || null,
+      requiredServices: payload.requiredServices,
+      message: payload.message || null,
+      sourcePage: payload.sourcePage,
+      consent: payload.consent,
     })
     formSuccess.value = true
     form.value = makeEmptyState()
@@ -222,7 +296,7 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
             </p>
           </div>
 
-          <form class="space-y-6" @submit.prevent="onSubmit">
+          <form class="space-y-6" novalidate @submit.prevent="onSubmit">
             <!-- Контакты -->
             <div class="space-y-5">
               <div>
@@ -387,6 +461,16 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
               </span>
             </CommonMarinCheckbox>
 
+            <div
+              v-if="validationErrors.length"
+              class="rounded-sm border border-red-200 bg-red-50 px-4 py-3 font-body text-sm text-red-700"
+              role="alert"
+            >
+              <p class="font-semibold">{{ t('pages.pageInquiry.validation.title') }}</p>
+              <ul class="mt-2 list-disc space-y-1 pl-5">
+                <li v-for="err in validationErrors" :key="err">{{ err }}</li>
+              </ul>
+            </div>
             <p v-if="formError" class="font-body text-sm text-red-500">{{ formError }}</p>
             <p v-if="formSuccess" class="font-body text-sm text-green-500">
               {{ t('pages.pageInquiry.success') }}

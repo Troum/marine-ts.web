@@ -948,7 +948,7 @@ function directionPreviewPath(detailSlug: string) {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto flex h-16 max-w-7xl items-center px-6 lg:px-12">
+      <div class="mx-auto flex h-16 max-w-[1600px] items-center px-6 lg:px-12">
         <div class="flex flex-1 items-center gap-4">
           <NuxtLink to="/admin" class="text-mts-text-secondary transition-colors hover:text-mts-accent">
             <ArrowLeft class="h-5 w-5" />
@@ -970,7 +970,7 @@ function directionPreviewPath(detailSlug: string) {
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
       <div v-if="loading || !d" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>
@@ -2052,7 +2052,7 @@ function directionPreviewPath(detailSlug: string) {
             <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
               Пользовательские секции
             </h2>
-            <p class="mt-2 max-w-7xl font-body text-xs text-mts-text-secondary">
+            <p class="mt-2 max-w-[1600px] font-body text-xs text-mts-text-secondary">
               Порядок в списке выше задаётся теми же строками с ключами
               <code class="font-mono text-[11px]">custom:…</code>. При добавлении и удалении блоков структура
               совпадает на RU и EN; тексты редактируются отдельно для каждого языка.

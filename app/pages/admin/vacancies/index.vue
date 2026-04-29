@@ -92,7 +92,7 @@ async function handleDelete(id: number) {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="mx-auto max-w-[1600px] px-6 lg:px-12">
         <div class="flex h-16 flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin" class="text-mts-text-secondary transition-colors hover:text-mts-accent">
@@ -114,7 +114,7 @@ async function handleDelete(id: number) {
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
       <AdminListToolbar
         :search="search"
         :sort="sort"

@@ -56,7 +56,7 @@ watch([sort, order], () => {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-12">
+      <div class="mx-auto flex h-16 max-w-[1600px] items-center justify-between px-6 lg:px-12">
         <div class="flex items-center gap-4">
           <NuxtLink to="/admin" class="text-mts-text-secondary transition-colors hover:text-mts-accent">
             <ArrowLeft class="h-5 w-5" />
@@ -69,8 +69,8 @@ watch([sort, order], () => {
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-6 py-10 lg:px-12">
-      <p class="font-body mb-8 max-w-7xl text-mts-text-secondary">
+    <main class="mx-auto max-w-[1600px] px-6 py-10 lg:px-12">
+      <p class="font-body mb-8 max-w-[1600px] text-mts-text-secondary">
         Meta title, description и keywords для разделов сайта и отдельных материалов (новости, проекты, сервисы).
       </p>
 

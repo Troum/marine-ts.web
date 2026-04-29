@@ -99,22 +99,22 @@ watch(
     >
       <div class="flex w-full items-center justify-between px-6 py-4 lg:px-10">
         <NuxtLink :to="localePath('/')" class="group flex items-center gap-3">
-          <AppLogo img-class="h-10 w-auto max-w-[210px] object-contain object-left transition-opacity group-hover:opacity-90" />
+          <AppLogo img-class="h-12 w-auto max-w-[250px] object-contain object-left transition-opacity group-hover:opacity-90" />
         </NuxtLink>
 
         <div class="flex items-center gap-5">
           <LayoutLanguageSwitch dark class="hidden sm:inline-flex" />
           <button
             type="button"
-            class="group flex items-center gap-2 rounded-full border-0 bg-transparent p-2.5 text-primary transition-opacity duration-200 hover:opacity-90"
+            class="group flex items-center gap-2 rounded-full border-0 bg-transparent p-3 text-primary transition-opacity duration-200 hover:opacity-90"
             :aria-expanded="isMenuOpen"
             aria-label="Открыть меню"
             @click="isMenuOpen = true"
           >
-            <span class="flex w-6 flex-col gap-1">
+            <span class="flex w-8 flex-col gap-1.5">
               <span class="block h-0.5 w-full bg-primary transition-all duration-300 group-hover:w-4" />
               <span class="block h-0.5 w-full bg-primary" />
-              <span class="ml-auto block h-0.5 w-4 bg-primary transition-all duration-300 group-hover:w-full" />
+              <span class="ml-auto block h-0.5 w-5 bg-primary transition-all duration-300 group-hover:w-full" />
             </span>
           </button>
         </div>
@@ -132,7 +132,7 @@ watch(
       <div v-if="isMenuOpen" class="fixed inset-0 z-[100] overflow-y-auto bg-white">
         <div class="flex items-center justify-between px-6 py-4 lg:px-10">
           <NuxtLink :to="localePath('/')" class="flex items-center gap-3" @click="closeMenu">
-            <AppLogo img-class="h-10 w-auto max-w-[210px] object-contain object-left" />
+            <AppLogo img-class="h-12 w-auto max-w-[250px] object-contain object-left" />
           </NuxtLink>
 
           <button type="button" class="group flex items-center gap-3 text-body transition-colors hover:text-primary" @click="closeMenu">
@@ -145,30 +145,30 @@ watch(
         </div>
 
         <div class="px-6 pb-16 pt-10 lg:px-10">
-          <nav class="mx-auto max-w-5xl">
+          <nav class="mx-auto max-w-4xl">
             <template v-for="(item, index) in menuItems" :key="`menu-${index}-${item.path}`">
               <a
                 v-if="isExternalPath(item.path)"
                 :href="item.path"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="group flex items-center justify-between border-b border-border py-4 md:py-5"
+                class="group flex items-center justify-between border-b border-border py-3.5 md:py-4"
                 @click="closeMenu"
               >
-                <span class="text-2xl font-bold text-body transition-colors duration-300 group-hover:text-primary md:text-3xl lg:text-5xl">
+                <span class="text-xl font-bold text-body transition-colors duration-300 group-hover:text-primary md:text-2xl lg:text-3xl">
                   {{ labelForLocale(item) }}
                 </span>
-                <ExternalLink class="h-6 w-6 shrink-0 text-muted transition-all duration-300 group-hover:text-primary md:h-8 md:w-8" />
+                <ExternalLink class="h-5 w-5 shrink-0 text-muted transition-all duration-300 group-hover:text-primary md:h-7 md:w-7" />
               </a>
               <NuxtLink
                 v-else
                 :to="localizedPath(item.path)"
-                class="group flex items-center justify-between border-b border-border py-4 md:py-5"
+                class="group flex items-center justify-between border-b border-border py-3.5 md:py-4"
                 @click="closeMenu"
               >
                 <span
                   :class="[
-                    'text-2xl font-bold transition-colors duration-300 md:text-3xl lg:text-5xl',
+                    'text-xl font-bold transition-colors duration-300 md:text-2xl lg:text-3xl',
                     isActivePath(item.path) ? 'text-primary' : 'text-body group-hover:text-primary',
                   ]"
                 >
@@ -176,7 +176,7 @@ watch(
                 </span>
                 <ArrowRight
                   :class="[
-                    'h-6 w-6 shrink-0 transition-all duration-300 md:h-8 md:w-8',
+                    'h-5 w-5 shrink-0 transition-all duration-300 md:h-7 md:w-7',
                     isActivePath(item.path) ? 'translate-x-0 text-primary' : 'text-muted group-hover:translate-x-2 group-hover:text-primary',
                   ]"
                 />
@@ -186,7 +186,7 @@ watch(
         </div>
 
         <div class="px-6 pb-12 lg:px-10">
-          <div class="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-3">
+          <div class="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
             <div>
               <h4 class="mb-4 text-xs uppercase tracking-widest text-muted">Телефоны</h4>
               <div class="space-y-2">

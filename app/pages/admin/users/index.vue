@@ -102,7 +102,7 @@ const currentUserId = computed(() => {
 <template>
   <div>
     <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
@@ -115,7 +115,7 @@ const currentUserId = computed(() => {
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+    <main class="max-w-[1600px] mx-auto px-6 lg:px-12 py-8">
       <div v-if="!canManageUsers" class="bg-amber-50 border border-amber-200 px-4 py-3 font-body text-sm text-amber-900">
         Нет права «manage users». Войдите под учётной записью с соответствующими правами или обновите сессию (повторный вход).
       </div>

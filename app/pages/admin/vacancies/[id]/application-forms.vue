@@ -219,7 +219,7 @@ async function onRequestDocsConfirm(keys: string[]) {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto max-w-7xl px-6 lg:px-12">
+      <div class="mx-auto max-w-[1600px] px-6 lg:px-12">
         <div class="flex h-16 flex-wrap items-center justify-between gap-4">
           <div class="flex min-w-0 items-center gap-4">
             <NuxtLink
@@ -253,7 +253,7 @@ async function onRequestDocsConfirm(keys: string[]) {
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
       <AdminListToolbar
         :search="search"
         :sort="sort"

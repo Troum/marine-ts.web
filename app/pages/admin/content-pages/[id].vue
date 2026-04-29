@@ -433,7 +433,7 @@ async function submit() {
 <template>
   <div>
     <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12">
         <div class="flex flex-wrap items-center justify-between gap-3 h-auto min-h-16 py-2">
           <div class="flex items-center gap-4">
             <NuxtLink to="/admin/content-pages" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
@@ -453,7 +453,7 @@ async function submit() {
 
     <AdminServicesSectionNav active="pages" />
 
-    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+    <main class="max-w-[1600px] mx-auto px-6 lg:px-12 py-8">
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
       </div>

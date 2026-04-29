@@ -41,18 +41,21 @@ const { canManageUsers, canManageContentPages, canManageGallery, canManageContac
 
 const sectionPickerOpen = ref(false)
 const sectionOptions = [
-  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA' },
-  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
-  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
-  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
-  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
-  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
+  {
+    label: 'Анкеты',
+    to: '/admin/vacancies/application-forms',
+    icon: ClipboardList,
+    desc: 'Поданные анкеты кандидатов по вакансиям и открытой форме',
+  },
   {
     label: 'Вакансии',
     to: '/admin/vacancies-page',
-    icon: ClipboardList,
+    icon: Users,
     desc: 'Hero, фон, CTA, форма заявки',
   },
+  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA' },
+  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
+  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
   {
     label: 'Судовой менеджмент',
     to: '/admin/line-pages/ship-management',
@@ -66,6 +69,9 @@ const sectionOptions = [
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
   },
   { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы' },
+  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
+  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
+  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
 ]
 
 const news = ref<NewsItem[]>([])
@@ -143,7 +149,7 @@ const statCards = computed(() => [
 <template>
   <div>
     <header class="bg-white border-b border-mts-border sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-6 lg:px-12">
+      <div class="max-w-[1600px] mx-auto px-6 lg:px-12">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center gap-4 min-w-0">
             <AppLogo img-class="h-9 w-auto max-w-[min(45vw,220px)] shrink-0 object-contain object-left" />
@@ -168,7 +174,7 @@ const statCards = computed(() => [
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+    <main class="max-w-[1600px] mx-auto px-6 lg:px-12 py-8">
       <h1 class="font-display text-3xl text-mts-text mb-8">Панель управления</h1>
       <div v-if="statsPending" class="flex justify-center py-12 mb-12">
         <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
@@ -194,7 +200,7 @@ const statCards = computed(() => [
                 <BarChart3 class="h-5 w-5 text-mts-accent" />
                 <h2 class="font-display text-xl text-mts-text">Просмотры публичного сайта</h2>
               </div>
-              <p class="font-body text-sm text-mts-text-secondary max-w-7xl">
+              <p class="font-body text-sm text-mts-text-secondary max-w-[1600px]">
                 Данные из собственного счётчика (маршруты без <span class="font-mono text-xs">/admin</span>). Внешняя
                 аналитика (GA / Plausible) ведётся отдельно.
               </p>
@@ -269,22 +275,171 @@ const statCards = computed(() => [
           </div>
         </section>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <Newspaper class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Новости</h2>
+                <ClipboardList class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Анкеты</h2>
               </div>
-              <AdminPlusLink to="/admin/news/new">Добавить</AdminPlusLink>
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Управление новостями компании. Добавляйте, редактируйте и удаляйте публикации.
+                Поданные анкеты кандидатов: открытая анкета, анкеты по вакансиям, PDF, фото и запрос документов.
               </p>
-              <NuxtLink to="/admin/news" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline">
+              <NuxtLink
+                to="/admin/vacancies/application-forms"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
                 <Edit class="w-4 h-4" />
-                Управление новостями
+                Открыть анкеты
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Users class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Вакансии</h2>
+              </div>
+              <AdminPlusLink to="/admin/vacancies/new">Добавить</AdminPlusLink>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Открытые позиции на странице «Вакансии»: описание, требования, локация, публикация и анкеты кандидатов.
+              </p>
+              <NuxtLink
+                to="/admin/vacancies"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Управление вакансиями
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Inbox class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Заявки</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Заявки с формы на страницах сайта (судовой менеджмент, разделы с подключённой формой): контакты, судно, текст запроса.
+              </p>
+              <NuxtLink
+                to="/admin/inquiries"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Открыть заявки
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <MessageSquare class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Обратная связь</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Сообщения с формы на странице «Контакты»: имя, email, текст обращения.
+              </p>
+              <NuxtLink
+                to="/admin/feedback"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Открыть сообщения
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <FileText class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Редактирование раздела</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Секционное редактирование страниц сайта: hero-блоки, тексты, CTA, статистика и превью.
+              </p>
+              <button
+                type="button"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                @click="sectionPickerOpen = true"
+              >
+                <Edit class="w-4 h-4" />
+                Выбрать раздел
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white border border-mts-border">
+            <div
+              class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
+            >
+              <div class="flex shrink-0 items-center gap-3">
+                <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Судоремонт</h2>
+              </div>
+              <div class="flex shrink-0 flex-nowrap items-center gap-2">
+                <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
+                  Страница
+                </AdminPlusLink>
+                <AdminPlusLink to="/admin/services/new">Карточка</AdminPlusLink>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Раздел «Судоремонт» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
+                сайта (/…)
+              </p>
+              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
+                <NuxtLink
+                  to="/admin/services"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Карточки на сайте
+                </NuxtLink>
+                <NuxtLink
+                  v-if="canManageContentPages"
+                  to="/admin/content-pages"
+                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                >
+                  <Edit class="w-4 h-4" />
+                  Текстовые страницы
+                </NuxtLink>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="canManageGallery" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Images class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Галерея</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Фотографии на странице «Галерея»: загрузка, подписи, порядок и замена файлов.
+              </p>
+              <NuxtLink
+                to="/admin/gallery"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Управление галереей
               </NuxtLink>
             </div>
           </div>
@@ -295,7 +450,7 @@ const statCards = computed(() => [
             >
               <div class="flex shrink-0 items-center gap-3">
                 <Briefcase class="w-5 h-5 shrink-0 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Проекты</h2>
+                <h2 class="font-display text-base text-mts-text">Проекты</h2>
               </div>
               <div class="flex shrink-0 flex-nowrap items-center gap-2">
                 <AdminPlusLink
@@ -333,149 +488,21 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div v-if="canManageGallery" class="bg-white border border-mts-border">
-            <div class="p-6 border-b border-mts-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <Images class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Галерея</h2>
-              </div>
-            </div>
-            <div class="p-6">
-              <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Фотографии на странице «Галерея»: загрузка, подписи, порядок и замена файлов.
-              </p>
-              <NuxtLink
-                to="/admin/gallery"
-                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-              >
-                <Edit class="w-4 h-4" />
-                Управление галереей
-              </NuxtLink>
-            </div>
-          </div>
-
           <div class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <FileText class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Редактирование раздела</h2>
+                <Newspaper class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Новости</h2>
               </div>
+              <AdminPlusLink to="/admin/news/new">Добавить</AdminPlusLink>
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Секционное редактирование страниц сайта: hero-блоки, тексты, CTA, статистика и превью.
+                Управление новостями компании. Добавляйте, редактируйте и удаляйте публикации.
               </p>
-              <button
-                type="button"
-                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-                @click="sectionPickerOpen = true"
-              >
+              <NuxtLink to="/admin/news" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline">
                 <Edit class="w-4 h-4" />
-                Выбрать раздел
-              </button>
-            </div>
-          </div>
-
-          <div class="bg-white border border-mts-border">
-            <div
-              class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
-            >
-              <div class="flex shrink-0 items-center gap-3">
-                <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Судоремонт</h2>
-              </div>
-              <div class="flex shrink-0 flex-nowrap items-center gap-2">
-                <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
-                  Страница
-                </AdminPlusLink>
-                <AdminPlusLink to="/admin/services/new">Карточка</AdminPlusLink>
-              </div>
-            </div>
-            <div class="p-6">
-              <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Раздел «Судоремонт» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
-                сайта (/…)
-              </p>
-              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
-                <NuxtLink
-                  to="/admin/services"
-                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-                >
-                  <Edit class="w-4 h-4" />
-                  Карточки на сайте
-                </NuxtLink>
-                <NuxtLink
-                  v-if="canManageContentPages"
-                  to="/admin/content-pages"
-                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-                >
-                  <Edit class="w-4 h-4" />
-                  Текстовые страницы
-                </NuxtLink>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white border border-mts-border">
-            <div class="p-6 border-b border-mts-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <Users class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Вакансии</h2>
-              </div>
-              <AdminPlusLink to="/admin/vacancies/new">Добавить</AdminPlusLink>
-            </div>
-            <div class="p-6">
-              <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Открытые позиции на странице «Вакансии»: описание, требования, локация, публикация и анкеты кандидатов.
-              </p>
-              <NuxtLink
-                to="/admin/vacancies"
-                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-              >
-                <Edit class="w-4 h-4" />
-                Управление вакансиями
-              </NuxtLink>
-            </div>
-          </div>
-
-          <div class="bg-white border border-mts-border">
-            <div class="p-6 border-b border-mts-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <MessageSquare class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Обратная связь</h2>
-              </div>
-            </div>
-            <div class="p-6">
-              <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Сообщения с формы на странице «Контакты»: имя, email, текст обращения.
-              </p>
-              <NuxtLink
-                to="/admin/feedback"
-                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-              >
-                <Edit class="w-4 h-4" />
-                Открыть сообщения
-              </NuxtLink>
-            </div>
-          </div>
-
-          <div class="bg-white border border-mts-border">
-            <div class="p-6 border-b border-mts-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <Inbox class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Заявки</h2>
-              </div>
-            </div>
-            <div class="p-6">
-              <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Заявки с формы на страницах сайта (судовой менеджмент, разделы с подключённой формой): контакты, судно, текст запроса.
-              </p>
-              <NuxtLink
-                to="/admin/inquiries"
-                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-              >
-                <Edit class="w-4 h-4" />
-                Открыть заявки
+                Управление новостями
               </NuxtLink>
             </div>
           </div>
@@ -484,7 +511,7 @@ const statCards = computed(() => [
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Phone class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Контакты на сайте</h2>
+                <h2 class="font-display text-base text-mts-text">Контакты на сайте</h2>
               </div>
             </div>
             <div class="p-6">
@@ -505,7 +532,7 @@ const statCards = computed(() => [
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <LayoutList class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Меню в шапке</h2>
+                <h2 class="font-display text-base text-mts-text">Меню в шапке</h2>
               </div>
             </div>
             <div class="p-6">
@@ -526,7 +553,7 @@ const statCards = computed(() => [
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <LayoutList class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Меню в подвале</h2>
+                <h2 class="font-display text-base text-mts-text">Меню в подвале</h2>
               </div>
             </div>
             <div class="p-6">
@@ -547,7 +574,7 @@ const statCards = computed(() => [
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Shield class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">Пользователи</h2>
+                <h2 class="font-display text-base text-mts-text">Пользователи</h2>
               </div>
               <AdminPlusLink to="/admin/users/new">Добавить</AdminPlusLink>
             </div>
@@ -566,7 +593,7 @@ const statCards = computed(() => [
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Search class="w-5 h-5 text-mts-accent" />
-                <h2 class="font-display text-xl text-mts-text">SEO</h2>
+                <h2 class="font-display text-base text-mts-text">SEO</h2>
               </div>
             </div>
             <div class="p-6">

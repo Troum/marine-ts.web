@@ -56,7 +56,7 @@ watch([sort, order], () => {
 <template>
   <div>
     <header class="sticky top-0 z-50 border-b border-mts-border bg-white">
-      <div class="mx-auto flex h-16 max-w-7xl items-center px-6 lg:px-12">
+      <div class="mx-auto flex h-16 max-w-[1600px] items-center px-6 lg:px-12">
         <NuxtLink to="/admin/seo" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
           <ArrowLeft class="h-5 w-5" />
         </NuxtLink>
@@ -64,7 +64,7 @@ watch([sort, order], () => {
       </div>
     </header>
 
-    <main class="mx-auto max-w-7xl px-6 py-8 lg:px-12">
+    <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
       <AdminListToolbar
         :search="search"
         :sort="sort"
