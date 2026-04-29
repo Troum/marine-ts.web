@@ -104,9 +104,24 @@ onMounted(async () => {
 const phoneContact = computed(() =>
   contacts.value.quick.find((q) => q.iconKey === 'phone') ?? null,
 )
-const emailContact = computed(() =>
-  contacts.value.quick.find((q) => q.iconKey === 'mail') ?? null,
-)
+const emailContact = computed(() => {
+  const fromQuick = contacts.value.quick.find((q) => {
+    const value = q.value.trim()
+    const href = q.href?.trim() ?? ''
+    return (
+      q.iconKey === 'mail' ||
+      href.toLowerCase().startsWith('mailto:') ||
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    )
+  })
+  if (fromQuick) {
+    return fromQuick
+  }
+  const officeEmail = contacts.value.offices.find((office) => office.email.trim())?.email.trim()
+  return officeEmail
+    ? { iconKey: 'mail' as const, label: 'Email', value: officeEmail, href: `mailto:${officeEmail}` }
+    : null
+})
 
 async function onSubmit() {
   formError.value = null
