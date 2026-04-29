@@ -24,10 +24,18 @@ const props = withDefaults(
     searchable?: boolean
     searchPlaceholder?: string
   }>(),
-  { placeholder: 'Выберите…', disabled: false, searchPlaceholder: 'Поиск…' },
+  { placeholder: 'Выберите…', disabled: false, searchPlaceholder: 'Поиск по подписи или коду…' },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
+
+/** Строка для поиска: подпись, техническое имя и вариант с пробелами между словами PascalCase. */
+function optionSearchHaystack(o: AdminSelectOption): string {
+  const label = (o.label ?? '').toLowerCase()
+  const value = (o.value ?? '').toLowerCase()
+  const spacedPascal = value.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase()
+  return `${label} ${value} ${spacedPascal}`.trim()
+}
 
 const open = ref(false)
 const root = ref<HTMLElement | null>(null)
@@ -50,14 +58,14 @@ const filteredOptions = computed(() => {
   if (!showSearch.value) {
     return props.options
   }
-  const q = searchQuery.value.trim().toLowerCase()
-  if (!q) {
+  const raw = searchQuery.value.trim().toLowerCase()
+  if (!raw) {
     return props.options
   }
+  const tokens = raw.split(/\s+/).filter(Boolean)
   return props.options.filter((o) => {
-    const label = (o.label ?? '').toLowerCase()
-    const value = o.value.toLowerCase()
-    return label.includes(q) || value.includes(q)
+    const hay = optionSearchHaystack(o)
+    return tokens.every((t) => hay.includes(t))
   })
 })
 

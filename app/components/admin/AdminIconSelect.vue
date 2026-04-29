@@ -48,6 +48,8 @@ function onSelect(value: string) {
     :model-value="selectedValue"
     :options="optionsWithNone"
     :placeholder="placeholder"
+    searchable
+    search-placeholder="Поиск: русская подпись или имя Lucide (напр. Bookmark, user check)…"
     @update:model-value="onSelect"
   />
 </template>
