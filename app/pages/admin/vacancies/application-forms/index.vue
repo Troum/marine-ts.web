@@ -253,6 +253,39 @@ async function onRequestDocsConfirm(keys: string[]) {
     requestDocsSubmitting.value = false
   }
 }
+
+async function deleteRow(row: ApplicationFormItem) {
+  const ok = await confirm({
+    title: 'Удалить анкету',
+    message: `Удалить анкету от «${row.fullName}»? Вместе с ней будут удалены фото, загруженные документы и связанные файлы.`,
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+
+  actionId.value = row.id
+  try {
+    await api.applicationForms.destroy(row.id)
+    if (viewRow.value?.id === row.id) {
+      closeView()
+    }
+    if (requestDocsRow.value?.id === row.id) {
+      closeRequestDocs()
+    }
+    adminToast.success('Анкета удалена')
+    if (rows.value.length <= 1 && page.value > 1) {
+      page.value -= 1
+    } else {
+      await load()
+    }
+  } catch {
+    await showAdminAlert({ message: 'Не удалось удалить анкету', variant: 'error' })
+  } finally {
+    actionId.value = null
+  }
+}
 </script>
 
 <template>
@@ -375,6 +408,14 @@ async function onRequestDocsConfirm(keys: string[]) {
                       @click="openRequestDocs(row)"
                     >
                       {{ requestDocsSubmitting && requestDocsRow?.id === row.id ? '…' : 'Запросить документы' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="border border-mts-border bg-white px-2 py-1 font-mono text-[10px] uppercase text-red-700 hover:border-red-700 hover:bg-red-50 disabled:opacity-50"
+                      :disabled="actionId !== null || requestDocsSubmitting"
+                      @click="deleteRow(row)"
+                    >
+                      {{ actionId === row.id ? '…' : 'Удалить' }}
                     </button>
                   </div>
                 </td>

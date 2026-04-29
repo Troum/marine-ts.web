@@ -765,6 +765,11 @@ export function useMarineApi() {
         })
         return res.data
       },
+      destroy: async (id: number) => {
+        await fetchAuth<void>(`/application-forms/${id}`, {
+          method: 'DELETE',
+        })
+      },
       getDocumentRequestCatalog: async () => {
         const res = await fetchAuth<{ data: DocumentRequestCatalogEntry[] }>(
           '/application-forms/document-request-catalog',
