@@ -1,155 +1,277 @@
-import type { AboutPageData, MarineContentLocale } from '~/types'
+import type {
+  AboutPageData,
+  AboutPrinciple,
+  AboutRichCard,
+  AboutServiceCard,
+  MarineContentLocale,
+} from '~/types'
 import { normalizeCustomPageSections } from '~/utils/customPageSections'
+import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { mergeAboutHero, themeFormattedTitleToHtml, themeTitleTriple } from '~/utils/themeFormattedTitle'
 
-const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
-  ru: {
-    hero: {
-      title: themeFormattedTitleToHtml(themeTitleTriple('Marine Technical Solutions ', '(MTS)', '')),
-      subtitle: 'Интегрированный подход. Глобальный охват. Технологическое лидерство.',
-      lead: 'Основанная в 2010 году, компания Marine Technical Solutions (MTS) прошла путь от амбициозного инженерного стартапа до международного EPC-контрактора и частной судоходной компании с головным офисом в Калининграде и стратегическим представительством в ОАЭ.',
-      lead2: 'Мы не просто управляем судами — мы создаем условия для их безопасной, экологичной и прибыльной эксплуатации в любой точке мирового океана.',
-    },
-    ecosystem: {
-      title: 'Наша экосистема сервисов',
-      lead: 'MTS — это уникальная структура, объединяющая все аспекты жизнеобеспечения флота:',
-      services: [
-        { icon: 'Wrench', title: 'Технический менеджмент (Technical Management)', text: 'Мы берем на себя полную ответственность за техническое состояние вашего актива, внедряя современные стандарты обслуживания и контроля затрат.' },
-        { icon: 'Ship', title: 'Мобильный судоремонт 24/7 (Voyage Repairs)', text: 'Наша гордость — мобильные бригады, выполняющие ремонт и обслуживание непосредственно в ходе рейса. Мы исключаем простои (off-hire), обеспечивая работоспособность систем без захода в док.' },
-        { icon: 'Users', title: 'Собственный крюинг (In-house Crewing)', text: 'Мы предоставляем высококвалифицированные российские экипажи. Наши моряки — это профессионалы, обученные работе со сложным оборудованием и современными материалами.' },
-        { icon: 'Layers', title: 'Инновации в материалах (EPC & Composites)', text: 'Как эксперты в EPC, мы активно внедряем композитные решения GRE/GRV. Замена коррозийной стали на долговечный стеклопластик — наш вклад в снижение ваших операционных расходов (OPEX).' },
-      ],
-    },
-    mission: {
-      title: 'Миссия и Цели: Стратегия «Трех Нулей»',
-      lead: 'Наша главная цель — стать эталоном в управлении судами через постоянное обучение и инвестиции в людей. Мы строим работу на принципах:',
-      principles: [
-        { icon: 'ShieldCheck', text: 'Zero Incidents (Ноль инцидентов) — абсолютная безопасность экипажа и судна.' },
-        { icon: 'Leaf', text: 'Zero Pollution (Ноль загрязнений) — использование технологий, исключающих вред экологии.' },
-        { icon: 'Target', text: 'Sustainable Management — переход к «зелёным» технологиям на борту и на берегу.' },
-      ],
-    },
-    why: {
-      title: 'Почему выбирают MTS?',
-      text: 'Мы говорим на языке судовладельцев, нацеленных на результат. Наш опыт позволяет превращать сложные технические задачи в прозрачные и прибыльные бизнес-процессы. Если вы ищете надёжную управляющую компанию, способную защитить ваш флот и повысить его капитализацию — добро пожаловать на борт MTS.',
-      ctaText: 'Связаться с нами',
-    },
-    geography: {
-      label: 'География',
-      title: 'География технического обслуживания судов',
-      lead: 'База в Калининграде, мобильные бригады и партнёрская сеть — работаем в ключевых портах по всему миру.',
-      /**
-       * Координаты — точное местоположение порта/терминала, а не центр
-       * города. Это критично при глобальном zoom 1–3 в Mapbox: маркер
-       * должен лежать на акватории, а не на «суше за портом». Те же
-       * значения зашиты в `AboutPageLocationsSeeder` (Laravel) — менять
-       * нужно в обоих местах.
-       */
-      locations: [
-        { lng: 20.4945, lat: 54.7066, labelOnRight: false, name: 'Калининград' },
-        { lng: 21.1192, lat: 55.7007, labelOnRight: true, name: 'Клайпеда' },
-        { lng: -0.2589, lat: 53.7290, labelOnRight: true, name: 'Халл' },
-        { lng: 18.1117, lat: 59.3496, labelOnRight: false, name: 'Стокгольм' },
-        { lng: 6.1496, lat: 62.4724, labelOnRight: false, name: 'Олесунн' },
-        { lng: -15.4148, lat: 28.1410, labelOnRight: true, name: 'Лас-Пальмас' },
-        { lng: 29.8669, lat: 31.1925, labelOnRight: false, name: 'Александрия' },
-        { lng: 55.1107, lat: 25.0213, labelOnRight: false, name: 'Дубай (Джебель-Али)' },
-        { lng: -79.5630, lat: 8.9528, labelOnRight: true, name: 'Панама (Бальбоа)' },
-        { lng: -68.9333, lat: 12.1138, labelOnRight: true, name: 'Кюрасао (Виллемстад)' },
-      ],
-    },
-    certificates: {
-      title: 'Сертификаты',
-      items: [
-        { name: 'ISO 9001:2015', desc: 'Система менеджмента качества', fileUrl: '' },
-        { name: 'ISO 14001:2015', desc: 'Система экологического менеджмента', fileUrl: '' },
-        { name: 'ISO 45001:2018', desc: 'Система менеджмента безопасности', fileUrl: '' },
-      ],
-    },
-    showInquiryForm: false,
-  },
-  en: {
-    hero: {
-      title: themeFormattedTitleToHtml(themeTitleTriple('Marine Technical Solutions ', '(MTS)', '')),
-      subtitle: 'Integrated Approach. Global Reach. Technological Leadership.',
-      lead: 'Founded in 2010, Marine Technical Solutions (MTS) has evolved from an ambitious engineering start-up into an international EPC contractor and private shipping company, headquartered in Kaliningrad with a strategic office in the UAE.',
-      lead2: 'We do not simply manage vessels — we create the conditions for their safe, eco-friendly and profitable operation anywhere in the world\'s oceans.',
-    },
-    ecosystem: {
-      title: 'Our Service Ecosystem',
-      lead: 'MTS is a unique structure uniting every aspect of fleet life-support:',
-      services: [
-        { icon: 'Wrench', title: 'Technical Management', text: 'We assume full responsibility for the technical condition of your asset, implementing modern maintenance standards and cost control.' },
-        { icon: 'Ship', title: 'Mobile Ship Repair 24/7 (Voyage Repairs)', text: 'Our pride — mobile teams carrying out repairs and maintenance during the voyage itself. We eliminate off-hire downtime, keeping systems operational without dry-docking.' },
-        { icon: 'Users', title: 'In-house Crewing', text: 'We supply highly qualified Russian crews. Our seafarers are professionals trained to work with complex equipment and modern materials.' },
-        { icon: 'Layers', title: 'Material Innovation (EPC & Composites)', text: 'As EPC experts we actively deploy GRE/GRV composite solutions. Replacing corrosive steel with durable fibreglass is our contribution to reducing your OPEX.' },
-      ],
-    },
-    mission: {
-      title: 'Mission & Goals: The Three-Zero Strategy',
-      lead: 'Our ultimate goal is to become the benchmark in vessel management through continuous learning and investment in people. We operate on the principles of:',
-      principles: [
-        { icon: 'ShieldCheck', text: 'Zero Incidents — absolute safety for crew and vessel.' },
-        { icon: 'Leaf', text: 'Zero Pollution — technologies that eliminate environmental harm.' },
-        { icon: 'Target', text: 'Sustainable Management — a transition to green technologies on board and ashore.' },
-      ],
-    },
-    why: {
-      title: 'Why Choose MTS?',
-      text: 'We speak the language of results-driven shipowners. Our experience allows us to turn complex technical challenges into transparent and profitable business processes. If you are looking for a reliable management company capable of protecting your fleet and increasing its capitalisation — welcome aboard MTS.',
-      ctaText: 'Contact us',
-    },
-    geography: {
-      label: 'Coverage',
-      title: 'Where we support vessels',
-      lead: 'Kaliningrad headquarters, mobile teams and partner network — key ports worldwide.',
-      /** См. комментарий в `ru.geography.locations`. */
-      locations: [
-        { lng: 20.4945, lat: 54.7066, labelOnRight: false, name: 'Kaliningrad' },
-        { lng: 21.1192, lat: 55.7007, labelOnRight: true, name: 'Klaipėda' },
-        { lng: -0.2589, lat: 53.7290, labelOnRight: true, name: 'Hull' },
-        { lng: 18.1117, lat: 59.3496, labelOnRight: false, name: 'Stockholm' },
-        { lng: 6.1496, lat: 62.4724, labelOnRight: false, name: 'Ålesund' },
-        { lng: -15.4148, lat: 28.1410, labelOnRight: true, name: 'Las Palmas' },
-        { lng: 29.8669, lat: 31.1925, labelOnRight: false, name: 'Alexandria' },
-        { lng: 55.1107, lat: 25.0213, labelOnRight: false, name: 'Dubai (Jebel Ali)' },
-        { lng: -79.5630, lat: 8.9528, labelOnRight: true, name: 'Panama (Balboa)' },
-        { lng: -68.9333, lat: 12.1138, labelOnRight: true, name: 'Curaçao (Willemstad)' },
-      ],
-    },
-    certificates: {
-      title: 'Certificates',
-      items: [
-        { name: 'ISO 9001:2015', desc: 'Quality management system', fileUrl: '' },
-        { name: 'ISO 14001:2015', desc: 'Environmental management system', fileUrl: '' },
-        { name: 'ISO 45001:2018', desc: 'Occupational health and safety management system', fileUrl: '' },
-      ],
-    },
-    showInquiryForm: false,
-  },
+const LEGACY_SECTION_IDS = new Set(['ecosystem', 'mission', 'why', 'stats'])
+
+function normalizeRichCards(incoming: unknown, fallback: AboutRichCard[]): AboutRichCard[] {
+  /* Пустой массив из CMS — намеренно «без карточек»; только `undefined`/не-массив дают дефолты. */
+  if (!Array.isArray(incoming)) {
+    return fallback.map((c) => ({ ...c }))
+  }
+  if (incoming.length === 0) {
+    return []
+  }
+  return incoming.map((item, i) => {
+    const fb = fallback[i]
+    return {
+      title: typeof (item as { title?: unknown })?.title === 'string'
+        ? (item as { title: string }).title
+        : (fb?.title ?? ''),
+      text: typeof (item as { text?: unknown })?.text === 'string'
+        ? (item as { text: string }).text
+        : (fb?.text ?? ''),
+    }
+  })
 }
 
-/**
- * Дефолтный порядок секций раздела «О компании», применяемый, когда в данных
- * нет сохранённого `sectionOrder`. Hero фиксирован первым и не входит сюда.
- */
-export const ABOUT_SECTION_DEFAULT_ORDER = [
-  'ecosystem',
-  'mission',
-  'why',
-  'stats',
-  'geography',
-  'certificates',
-] as const
+function principleToRichCard(p: AboutPrinciple): AboutRichCard {
+  const raw = p.text ?? ''
+  const m = raw.match(/^(.*?)\s+[—–-]\s+(.+)$/)
+  if (m) {
+    return { title: (m[1]?.trim() ?? ''), text: (m[2]?.trim() ?? '') }
+  }
+  return { title: '', text: raw }
+}
+
+function migrateSectionOrder(raw: unknown, base: string[]): string[] {
+  if (!Array.isArray(raw)) {
+    return [...base]
+  }
+  const ids = raw.filter((id): id is string => typeof id === 'string')
+  const filtered = ids.filter((id) => !LEGACY_SECTION_IDS.has(id))
+  return filtered.length ? [...filtered] : [...base]
+}
+
+function isLegacyAboutRaw(p: Record<string, unknown>): boolean {
+  if (p.sec1Hero != null && typeof p.sec1Hero === 'object') {
+    return false
+  }
+  return p.hero != null && typeof p.hero === 'object'
+}
+
+function migrateLegacyAbout(
+  locale: MarineContentLocale,
+  p: Record<string, unknown>,
+  base: AboutPageData,
+): AboutPageData {
+  const heroRaw = p.hero
+  const heroBase = {
+    title: base.sec1Hero.title,
+    subtitle: '',
+    lead: '',
+    lead2: '',
+  }
+  const mergedHero = mergeAboutHero(heroRaw, heroBase)
+  const bodyChunks = [mergedHero.subtitle, mergedHero.lead, mergedHero.lead2].filter(
+    (x) => typeof x === 'string' && x.trim().length > 0,
+  )
+  const sec1Body = bodyChunks.length ? bodyChunks.join('<br><br>') : base.sec1Hero.body
+
+  const eco = p.ecosystem as { title?: string; lead?: string; services?: AboutServiceCard[] } | undefined
+  const s2Cards: AboutRichCard[] =
+    Array.isArray(eco?.services) && eco!.services.length > 0
+      ? eco!.services.map((s) => ({
+        title: typeof s.title === 'string' ? s.title : '',
+        text: typeof s.text === 'string' ? s.text : '',
+      }))
+      : base.sec2History.cards.map((c) => ({ ...c }))
+
+  const miss = p.mission as { principles?: AboutPrinciple[] } | undefined
+  const s5Cards: AboutRichCard[] =
+    Array.isArray(miss?.principles) && miss!.principles!.length > 0
+      ? miss!.principles!.map(principleToRichCard)
+      : base.sec5Mission.cards.map((c) => ({ ...c }))
+
+  const historyImage =
+    typeof p.historyImage === 'string' && p.historyImage
+      ? p.historyImage
+      : typeof p.introImage === 'string'
+        ? p.introImage
+        : base.historyImage
+
+  const technicalImage =
+    typeof p.technicalImage === 'string' && p.technicalImage
+      ? p.technicalImage
+      : typeof p.ecosystemImage === 'string'
+        ? p.ecosystemImage
+        : base.technicalImage
+
+  const geoLegacy = p.geography as Partial<AboutPageData['geography']> | undefined
+  const geographyMerged =
+    geoLegacy && typeof geoLegacy === 'object'
+      ? {
+          ...base.geography,
+          ...geoLegacy,
+          locations: geoLegacy.locations ?? base.geography.locations,
+        }
+      : base.geography
+
+  const certLegacy = p.certificates as Partial<AboutPageData['certificates']> | undefined
+  const certificatesMerged =
+    certLegacy && typeof certLegacy === 'object'
+      ? {
+          ...base.certificates,
+          ...certLegacy,
+          items: certLegacy.items ?? base.certificates.items,
+        }
+      : base.certificates
+
+  return {
+    ...base,
+    aboutVersion: 2,
+    sec1Hero: {
+      title: mergedHero.title,
+      body: incomingCmsValueToHtml(sec1Body),
+    },
+    sec2History: {
+      title: typeof eco?.title === 'string' ? eco.title : base.sec2History.title,
+      body: typeof eco?.lead === 'string' ? incomingCmsValueToHtml(eco.lead) : base.sec2History.body,
+      cards: s2Cards,
+    },
+    sec3Technical: { ...base.sec3Technical },
+    sec4Crewing: { ...base.sec4Crewing },
+    sec5Mission: {
+      title:
+        typeof (p.mission as { title?: string } | undefined)?.title === 'string'
+          ? (p.mission as { title: string }).title
+          : base.sec5Mission.title,
+      body:
+        typeof (p.mission as { lead?: string } | undefined)?.lead === 'string'
+          ? incomingCmsValueToHtml((p.mission as { lead: string }).lead)
+          : base.sec5Mission.body,
+      cards: s5Cards,
+    },
+    sec6Closing: {
+      title:
+        typeof (p.why as { title?: string } | undefined)?.title === 'string'
+          ? (p.why as { title: string }).title
+          : base.sec6Closing.title,
+      body:
+        typeof (p.why as { text?: string } | undefined)?.text === 'string'
+          ? incomingCmsValueToHtml((p.why as { text: string }).text)
+          : base.sec6Closing.body,
+    },
+    heroImage: typeof p.heroImage === 'string' ? p.heroImage : base.heroImage,
+    historyImage,
+    technicalImage,
+    crewingImage: typeof p.crewingImage === 'string' ? p.crewingImage : base.crewingImage,
+    missionImage: typeof p.missionImage === 'string' ? p.missionImage : base.missionImage,
+    geography: geographyMerged,
+    certificates: certificatesMerged,
+    showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    customSections: normalizeCustomPageSections(p.customSections),
+    sectionOrder: migrateSectionOrder(p.sectionOrder, base.sectionOrder ?? [...ABOUT_SECTION_DEFAULT_ORDER]),
+    sectionVisibility:
+      p.sectionVisibility && typeof p.sectionVisibility === 'object'
+        ? (p.sectionVisibility as Record<string, boolean>)
+        : { ...base.sectionVisibility },
+  }
+}
+
+function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPageData {
+  const g = p.geography as AboutPageData['geography'] | undefined
+  const c = p.certificates as AboutPageData['certificates'] | undefined
+  const s1 = p.sec1Hero as Partial<AboutPageData['sec1Hero']> | undefined
+  const s2 = p.sec2History as Partial<AboutPageData['sec2History']> | undefined
+  const s3 = p.sec3Technical as Partial<AboutPageData['sec3Technical']> | undefined
+  const s4 = p.sec4Crewing as Partial<AboutPageData['sec4Crewing']> | undefined
+  const s5 = p.sec5Mission as Partial<AboutPageData['sec5Mission']> | undefined
+  const s6 = p.sec6Closing as Partial<AboutPageData['sec6Closing']> | undefined
+
+  return {
+    ...base,
+    aboutVersion: 2,
+    sec1Hero: {
+      title: typeof s1?.title === 'string' ? s1.title : base.sec1Hero.title,
+      body: typeof s1?.body === 'string' ? s1.body : base.sec1Hero.body,
+    },
+    sec2History: {
+      title: typeof s2?.title === 'string' ? s2.title : base.sec2History.title,
+      body: typeof s2?.body === 'string' ? s2.body : base.sec2History.body,
+      cards: normalizeRichCards(s2?.cards, base.sec2History.cards),
+    },
+    sec3Technical: {
+      title: typeof s3?.title === 'string' ? s3.title : base.sec3Technical.title,
+      lead: typeof s3?.lead === 'string' ? s3.lead : base.sec3Technical.lead,
+      lead2: typeof s3?.lead2 === 'string' ? s3.lead2 : base.sec3Technical.lead2,
+      cards: normalizeRichCards(s3?.cards, base.sec3Technical.cards),
+    },
+    sec4Crewing: {
+      title: typeof s4?.title === 'string' ? s4.title : base.sec4Crewing.title,
+      lead: typeof s4?.lead === 'string' ? s4.lead : base.sec4Crewing.lead,
+      lead2: typeof s4?.lead2 === 'string' ? s4.lead2 : base.sec4Crewing.lead2,
+      cards: normalizeRichCards(s4?.cards, base.sec4Crewing.cards),
+    },
+    sec5Mission: {
+      title: typeof s5?.title === 'string' ? s5.title : base.sec5Mission.title,
+      body: typeof s5?.body === 'string' ? s5.body : base.sec5Mission.body,
+      cards: normalizeRichCards(s5?.cards, base.sec5Mission.cards),
+    },
+    sec6Closing: {
+      title: typeof s6?.title === 'string' ? s6.title : base.sec6Closing.title,
+      body: typeof s6?.body === 'string' ? s6.body : base.sec6Closing.body,
+    },
+    heroImage: typeof p.heroImage === 'string' ? p.heroImage : base.heroImage,
+    historyImage: typeof p.historyImage === 'string' ? p.historyImage : base.historyImage,
+    technicalImage: typeof p.technicalImage === 'string' ? p.technicalImage : base.technicalImage,
+    crewingImage: typeof p.crewingImage === 'string' ? p.crewingImage : base.crewingImage,
+    missionImage: typeof p.missionImage === 'string' ? p.missionImage : base.missionImage,
+    geography: g && typeof g === 'object' ? { ...base.geography, ...g, locations: g.locations ?? base.geography.locations } : base.geography,
+    certificates:
+      c && typeof c === 'object'
+        ? { ...base.certificates, ...c, items: c.items ?? base.certificates.items }
+        : base.certificates,
+    showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    customSections: normalizeCustomPageSections(p.customSections ?? base.customSections),
+    sectionOrder: Array.isArray(p.sectionOrder) ? migrateSectionOrder(p.sectionOrder, base.sectionOrder ?? []) : base.sectionOrder,
+    sectionVisibility:
+      p.sectionVisibility && typeof p.sectionVisibility === 'object'
+        ? (p.sectionVisibility as Record<string, boolean>)
+        : base.sectionVisibility,
+  }
+}
+
+function emptyAboutPageData(_locale: MarineContentLocale): AboutPageData {
+  const b = '<p></p>'
+  return {
+    aboutVersion: 2,
+    sec1Hero: { title: '', body: b },
+    sec2History: { title: '', body: b, cards: [] },
+    sec3Technical: { title: '', lead: b, lead2: b, cards: [] },
+    sec4Crewing: { title: '', lead: b, lead2: b, cards: [] },
+    sec5Mission: { title: '', body: b, cards: [] },
+    sec6Closing: { title: '', body: b },
+    geography: { label: '', title: '', lead: '', locations: [] },
+    certificates: { title: '', items: [] },
+    showInquiryForm: false,
+    heroImage: '',
+    historyImage: '',
+    technicalImage: '',
+    crewingImage: '',
+    missionImage: '',
+  }
+}
+
+const DEFAULTS: Record<MarineContentLocale, AboutPageData> = {
+  ru: emptyAboutPageData('ru'),
+  en: emptyAboutPageData('en'),
+}
+
+/** Дефолтный порядок блоков после шести основных секций. */
+export const ABOUT_SECTION_DEFAULT_ORDER = ['geography', 'certificates'] as const
 
 export type AboutSectionId = (typeof ABOUT_SECTION_DEFAULT_ORDER)[number]
 
 /** Подписи разделов в админке для inline-контролов. */
 export const ABOUT_SECTION_ADMIN_LABELS: Record<AboutSectionId, string> = {
-  ecosystem: 'Экосистема сервисов',
-  mission: 'Миссия и Цели',
-  why: 'Почему выбирают MTS?',
-  stats: 'Компания в цифрах',
   geography: 'География обслуживания',
   certificates: 'Сертификаты',
 }
@@ -157,7 +279,7 @@ export const ABOUT_SECTION_ADMIN_LABELS: Record<AboutSectionId, string> = {
 export function defaultAboutData(locale: MarineContentLocale): AboutPageData {
   const base = JSON.parse(JSON.stringify(DEFAULTS[locale])) as AboutPageData
   base.sectionOrder = [...ABOUT_SECTION_DEFAULT_ORDER]
-  base.sectionVisibility = {}
+  base.sectionVisibility = { ...base.sectionVisibility }
   return base
 }
 
@@ -166,21 +288,16 @@ export function mergeAboutPageData(locale: MarineContentLocale, raw: unknown): A
   if (!raw || typeof raw !== 'object') {
     return base
   }
-  const p = raw as Partial<AboutPageData>
-  return {
-    ...base,
-    ...p,
-    hero: mergeAboutHero(p.hero, base.hero),
-    customSections: normalizeCustomPageSections(p.customSections),
-    sectionOrder: p.sectionOrder ?? base.sectionOrder,
-    sectionVisibility: p.sectionVisibility ?? base.sectionVisibility,
+  const p = raw as Record<string, unknown>
+  if (isLegacyAboutRaw(p)) {
+    return migrateLegacyAbout(locale, p, base)
   }
+  return mergeV2Fields(p, base)
 }
 
 /**
- * Sync non-locale fields (icon, lng/lat, labelOnRight, fileUrl, фоновые изображения)
+ * Sync non-locale fields (lng/lat, labelOnRight, fileUrl, фоновые изображения, число карточек)
  * from source locale to all others.
- * Text fields (title, text, name, desc, lead, etc.) stay locale-specific.
  */
 export function syncStructuralFields(
   data: Record<MarineContentLocale, AboutPageData>,
@@ -191,40 +308,32 @@ export function syncStructuralFields(
     if (loc === sourceLocale) continue
     const dst = data[loc]
 
-    // Ecosystem: sync icons, keep text fields
-    src.ecosystem.services.forEach((s, i) => {
-      if (!dst.ecosystem.services[i]) {
-        dst.ecosystem.services[i] = { ...s }
-      } else {
-        dst.ecosystem.services[i].icon = s.icon
+    const syncCards = (a: AboutRichCard[], b: AboutRichCard[]) => {
+      if (b.length < a.length) {
+        while (b.length < a.length) {
+          b.push({ title: '', text: '' })
+        }
+      } else if (b.length > a.length) {
+        b.length = a.length
       }
-    })
-    // Remove extra items if source has fewer
-    dst.ecosystem.services.length = src.ecosystem.services.length
+    }
 
-    // Mission: sync icons
-    src.mission.principles.forEach((p, i) => {
-      if (!dst.mission.principles[i]) {
-        dst.mission.principles[i] = { ...p }
-      } else {
-        dst.mission.principles[i].icon = p.icon
-      }
-    })
-    dst.mission.principles.length = src.mission.principles.length
+    syncCards(src.sec2History.cards, dst.sec2History.cards)
+    syncCards(src.sec3Technical.cards, dst.sec3Technical.cards)
+    syncCards(src.sec4Crewing.cards, dst.sec4Crewing.cards)
+    syncCards(src.sec5Mission.cards, dst.sec5Mission.cards)
 
-    // Geography: sync coordinates and labelOnRight
-    src.geography.locations.forEach((loc_src, i) => {
+    src.geography.locations.forEach((locSrc, i) => {
       if (!dst.geography.locations[i]) {
-        dst.geography.locations[i] = { ...loc_src }
+        dst.geography.locations[i] = { ...locSrc }
       } else {
-        dst.geography.locations[i].lng = loc_src.lng
-        dst.geography.locations[i].lat = loc_src.lat
-        dst.geography.locations[i].labelOnRight = loc_src.labelOnRight
+        dst.geography.locations[i].lng = locSrc.lng
+        dst.geography.locations[i].lat = locSrc.lat
+        dst.geography.locations[i].labelOnRight = locSrc.labelOnRight
       }
     })
     dst.geography.locations.length = src.geography.locations.length
 
-    // Certificates: sync fileUrl
     src.certificates.items.forEach((c, i) => {
       if (!dst.certificates.items[i]) {
         dst.certificates.items[i] = { ...c }
@@ -236,9 +345,16 @@ export function syncStructuralFields(
 
     dst.showInquiryForm = src.showInquiryForm
     dst.heroImage = src.heroImage
-    dst.introImage = src.introImage
-    dst.ecosystemImage = src.ecosystemImage
+    dst.historyImage = src.historyImage
+    dst.technicalImage = src.technicalImage
+    dst.crewingImage = src.crewingImage
     dst.missionImage = src.missionImage
-    dst.statsImage = src.statsImage
+
+    if (Array.isArray(src.sectionOrder)) {
+      dst.sectionOrder = [...src.sectionOrder]
+    }
+    if (src.sectionVisibility && typeof src.sectionVisibility === 'object') {
+      dst.sectionVisibility = { ...src.sectionVisibility }
+    }
   }
 }

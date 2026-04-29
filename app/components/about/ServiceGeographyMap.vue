@@ -43,7 +43,7 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
     :data-map-theme="theme"
     :class="[
       'relative overflow-hidden',
-      theme === 'dark' ? 'bg-transparent text-mts-frost' : 'bg-mts-bg text-mts-text',
+      theme === 'dark' ? 'bg-transparent text-mts-frost' : 'bg-white text-body',
     ]"
     aria-labelledby="service-geography-heading"
   >
@@ -81,8 +81,8 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
         >
           <div class="max-w-7xl pointer-events-auto">
             <div v-if="theme === 'light'" class="flex items-center gap-3 mb-4">
-              <div class="w-6 h-px bg-mts-accent" />
-              <span class="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-mts-text-secondary">
+              <div class="w-6 h-px bg-primary" />
+              <span class="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-muted">
                 <ThemedContentString :content="displayLabel" />
               </span>
             </div>
@@ -94,8 +94,8 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
               :class="[
                 'font-display font-bold leading-tight mb-4 lg:mb-6',
                 theme === 'dark'
-                  ? 'text-2xl lg:text-[34px] text-mts-accent lg:leading-10'
-                  : 'text-2xl lg:text-3xl text-mts-text',
+                  ? 'text-2xl lg:text-[34px] text-primary lg:leading-10'
+                  : 'text-2xl lg:text-3xl text-body',
               ]"
             >
               <ThemedContentString :content="displayTitle" />
@@ -104,7 +104,7 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
               v-if="displayLead"
               :class="[
                 'font-body leading-relaxed',
-                theme === 'dark' ? 'text-base lg:text-lg text-mts-frost/90' : 'text-sm lg:text-base text-mts-text-secondary',
+                theme === 'dark' ? 'text-base lg:text-lg text-mts-frost/90' : 'text-sm lg:text-base text-muted',
               ]"
             >
               <ThemedContentString :content="displayLead" />

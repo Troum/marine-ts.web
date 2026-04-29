@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
+import AdminHeroImageField from '~/components/admin/AdminHeroImageField.vue'
 import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import { useConfirm } from '~/composables/useConfirmAction'
-import type { CustomPageBlock, CustomPageBlockType, CustomPageSection } from '~/types'
+import type { CustomPageBlock, CustomPageBlockType, CustomPageSection, PageBreadcrumbTone } from '~/types'
 import { crewingIconSelectOptions } from '~/utils/crewingIcons'
 import {
   CUSTOM_BLOCK_TYPES,
@@ -15,6 +16,7 @@ import {
   defaultCustomSection,
   moveItem,
 } from '~/utils/customPageSections'
+import { CUSTOM_SECTION_BREADCRUMB_TONE_ADMIN_OPTIONS } from '~/utils/pageBreadcrumbTone'
 
 /**
  * Универсальный редактор пользовательских секций, единый для всех CMS-страниц
@@ -37,11 +39,17 @@ const props = withDefaults(
     helperText?: string
     /** На каких страницах нет понятия "детальной страницы" (карточки без ссылки). */
     enableCardDetailLink?: boolean
+    /**
+     * Детальные content-page: положение секции относительно основного текста (TipTap).
+     * На листингах и прочих страницах выключено.
+     */
+    enableArticlePlacement?: boolean
   }>(),
   {
     detailOptions: () => [],
     helperText: '',
     enableCardDetailLink: false,
+    enableArticlePlacement: false,
   },
 )
 
@@ -73,10 +81,14 @@ const splitRightModeOptions: AdminSelectOption[] = [
   { value: 'slider', label: 'Слайдер (несколько URL)' },
 ]
 
-const heroHeightOptions: AdminSelectOption[] = [
-  { value: 'small', label: 'Невысокий (≈280px)' },
-  { value: 'medium', label: 'Средний (≈420px)' },
-  { value: 'large', label: 'Высокий (≈560px)' },
+const cardsItemsAlignOptions: AdminSelectOption[] = [
+  { value: 'left', label: 'Текст слева' },
+  { value: 'center', label: 'По центру' },
+]
+
+const sectionArticlePlacementOptions: AdminSelectOption[] = [
+  { value: 'beforeArticle', label: 'До основного текста статьи (TipTap)' },
+  { value: 'afterArticle', label: 'После основного текста статьи' },
 ]
 
 const htmlAlignOptions: AdminSelectOption[] = [
@@ -355,6 +367,28 @@ function blockTypeLabel(b: CustomPageBlock): string {
               <input v-model="sec.showTitle" type="checkbox" class="mts-checkbox" />
               Показывать заголовок секции
             </label>
+            <div v-if="enableArticlePlacement" class="md:col-span-2">
+              <label :class="sectionLabel">Положение на сайте</label>
+              <AdminSelect
+                :model-value="sec.contentPlacement ?? 'beforeArticle'"
+                :options="sectionArticlePlacementOptions"
+                @update:model-value="(v) => (sec.contentPlacement = v as 'beforeArticle' | 'afterArticle')"
+              />
+              <p class="mt-2 font-body text-xs text-mts-text-secondary">
+                Секции «После текста» выводятся под содержимым редактора TipTap, перед формой заявки (если включена).
+              </p>
+            </div>
+            <div class="md:col-span-2">
+              <label :class="sectionLabel">Хлебные крошки на баннере секции</label>
+              <AdminSelect
+                :model-value="sec.breadcrumbTone ?? ''"
+                :options="CUSTOM_SECTION_BREADCRUMB_TONE_ADMIN_OPTIONS"
+                @update:model-value="(v) => (sec.breadcrumbTone = v ? (v as PageBreadcrumbTone) : undefined)"
+              />
+              <p class="mt-2 font-body text-xs text-mts-text-secondary">
+                Над первым блоком «Баннер / изображение» (пункты крошек задаются на странице-родителе).
+              </p>
+            </div>
           </div>
 
           <div
@@ -397,6 +431,16 @@ function blockTypeLabel(b: CustomPageBlock): string {
 
             <!-- cards -->
             <template v-if="block.type === 'cards'">
+              <div class="grid gap-4 md:grid-cols-2 md:items-end">
+                <div>
+                  <label :class="sectionLabel">Колонок сетки (широкий экран)</label>
+                  <AdminInputNumberStepper v-model="block.columns" :min="1" :max="6" :step="1" />
+                </div>
+                <div>
+                  <label :class="sectionLabel">Выравнивание в карточке</label>
+                  <AdminSelect v-model="block.itemsAlign" :options="cardsItemsAlignOptions" />
+                </div>
+              </div>
               <div
                 v-for="(card, ci) in block.items"
                 :key="ci"
@@ -512,19 +556,34 @@ function blockTypeLabel(b: CustomPageBlock): string {
 
             <!-- heroImage -->
             <template v-else-if="block.type === 'heroImage'">
+              <label class="mb-4 flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                <input
+                  :checked="block.showHero !== false"
+                  type="checkbox"
+                  class="mts-checkbox"
+                  @change="
+                    (e) => {
+                      block.showHero = (e.target as HTMLInputElement).checked
+                    }
+                  "
+                />
+                Показывать баннер на сайте (на всю ширину окна, высота половины экрана)
+              </label>
+              <p
+                v-if="block.showHero === false"
+                class="mb-4 rounded border border-dashed border-mts-border bg-mts-bg/60 px-3 py-2 font-body text-xs text-mts-text-secondary"
+              >
+                Баннер скрыт для посетителей; картинка и подписи сохраняются в черновике.
+              </p>
+              <AdminHeroImageField
+                v-model="block.imageUrl"
+                label="Изображение баннера"
+                hint="Укажите URL (например /images/…) или нажмите «Загрузить файл» — в поле подставится адрес из медиахранилища. На сайте блок тянется на 100% ширины окна и 50% высоты окна (50vh)."
+                :input-class="`${sectionInput} box-border min-h-[2.75rem]`"
+              />
               <div>
-                <label :class="sectionLabel">URL изображения</label>
-                <input v-model="block.imageUrl" type="text" :class="sectionInput" placeholder="/images/…" />
-              </div>
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label :class="sectionLabel">Высота</label>
-                  <AdminSelect v-model="block.height" :options="heroHeightOptions" />
-                </div>
-                <div>
-                  <label :class="sectionLabel">Прозрачность затемнения, %</label>
-                  <AdminInputNumberStepper v-model="block.overlayOpacity" :min="0" :max="100" :step="5" />
-                </div>
+                <label :class="sectionLabel">Прозрачность затемнения поверх фото, %</label>
+                <AdminInputNumberStepper v-model="block.overlayOpacity" :min="0" :max="100" :step="5" />
               </div>
               <div>
                 <label :class="sectionLabel">Заголовок поверх (опционально)</label>

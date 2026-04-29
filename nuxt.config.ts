@@ -8,6 +8,33 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
+  routeRules: {
+    '/ru': { redirect: { to: '/', statusCode: 301 } },
+    '/ru/': { redirect: { to: '/', statusCode: 301 } },
+    '/ru/o-nas': { redirect: { to: '/about', statusCode: 301 } },
+    '/ru/nashi-raboty': { redirect: { to: '/projects', statusCode: 301 } },
+    '/ru/sudovoj-menedzhment': { redirect: { to: '/ship-management', statusCode: 301 } },
+    '/ru/sudoremont': { redirect: { to: '/services', statusCode: 301 } },
+    '/ru/inzheneriya': { redirect: { to: '/inzheneriya', statusCode: 301 } },
+    '/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam': {
+      redirect: { to: '/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam', statusCode: 301 },
+    },
+    '/ru/karera': { redirect: { to: '/vacancies', statusCode: 301 } },
+    '/ru/kontakty': { redirect: { to: '/contacts', statusCode: 301 } },
+    '/ru/glavnye-i-vspomogatelnye-dvigateli': {
+      redirect: { to: '/glavnye-i-vspomogatelnye-dvigateli', statusCode: 301 },
+    },
+    '/ru/elektrooborudovanie-i-avtomatika': {
+      redirect: { to: '/elektrooborudovanie-i-avtomatika', statusCode: 301 },
+    },
+    '/ru/truboprovodnye-sistemy': {
+      redirect: { to: '/truboprovodnye-sistemy', statusCode: 301 },
+    },
+    '/ru/bwts': { redirect: { to: '/bwts', statusCode: 301 } },
+    '/ru/tehnicheskoe-obsluzhivanie': {
+      redirect: { to: '/tehnicheskoe-obsluzhivanie', statusCode: 301 },
+    },
+  },
   modules: ['@nuxtjs/i18n'],
   i18n: {
     baseUrl: import.meta.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',

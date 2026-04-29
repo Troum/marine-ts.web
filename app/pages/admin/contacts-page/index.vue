@@ -201,7 +201,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemedTextField
                 v-model="heroTitleFormattedWire"
                 :multiline="false"

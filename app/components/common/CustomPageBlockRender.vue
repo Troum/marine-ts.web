@@ -3,21 +3,27 @@ import { computed, ref } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
 import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
-import type { CustomPageBlock } from '~/types'
+import type { CustomPageBlock, PageBreadcrumbTone } from '~/types'
 import type { AboutCarouselSlide } from '~/utils/aboutCarouselSlides'
 import { resolveCrewingIcon } from '~/utils/crewingIcons'
+import { isHeroImageBlockActive } from '~/utils/customPageSections'
+import { resolveHeroImageBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 const props = defineProps<{
   block: CustomPageBlock
   /** Если задан — будет использован для построения ссылки в карточке. */
   resolveDetailHref?: (detailSlug: string) => string | null
+  /** Палитра крошек над первым баннером секции (только при непустом `pageCrumbItems`). */
+  heroImageBreadcrumbTone?: PageBreadcrumbTone | null
+  pageCrumbItems?: BreadcrumbItem[]
 }>()
 
 const { t } = useI18n()
 
 const directionCardClass =
-  'card-tech border border-mts-border p-8 transition-colors hover:border-mts-accent/40'
+  'service-card corner-accent p-8'
 
 function detailHref(detailSlug?: string): string | null {
   const s = detailSlug?.trim()
@@ -44,18 +50,19 @@ function leftHtml(md: string): string {
   return contentBodyToSafeHtml(md.trim() || '')
 }
 
-const heroHeightClass = computed(() => {
-  if (props.block.type !== 'heroImage') {
-    return ''
+const showHeroBannerCrumbs = computed(
+  () =>
+    isHeroImageBlockActive(props.block) &&
+    !!props.heroImageBreadcrumbTone &&
+    (props.pageCrumbItems?.length ?? 0) > 0,
+)
+
+const heroBannerCrumbsOnDark = computed(() => {
+  const b = props.block
+  if (!isHeroImageBlockActive(b) || !props.heroImageBreadcrumbTone) {
+    return false
   }
-  switch (props.block.height) {
-    case 'small':
-      return 'h-[280px]'
-    case 'large':
-      return 'h-[560px]'
-    default:
-      return 'h-[420px]'
-  }
+  return resolveHeroImageBreadcrumbOnDark(props.heroImageBreadcrumbTone, b.overlayOpacity)
 })
 
 const galleryGridClass = computed(() => {
@@ -87,41 +94,77 @@ function toggleAccordionAt(idx: number) {
 function isAccordionOpen(idx: number): boolean {
   return accordionOpen.value.has(idx)
 }
+
+function marketingCardsGridClass(block: CustomPageBlock): string {
+  if (block.type !== 'cards') {
+    return ''
+  }
+  const n = Math.min(6, Math.max(1, Math.round(block.columns ?? 3)))
+  const base = 'grid gap-6'
+  if (n === 1) {
+    return `${base} grid-cols-1`
+  }
+  if (n === 2) {
+    return `${base} md:grid-cols-2`
+  }
+  if (n === 3) {
+    return `${base} md:grid-cols-2 lg:grid-cols-3`
+  }
+  if (n === 4) {
+    return `${base} md:grid-cols-2 lg:grid-cols-4`
+  }
+  if (n === 5) {
+    return `${base} sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5`
+  }
+  return `${base} sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6`
+}
+
+function marketingCardsItemAlignClass(block: CustomPageBlock): string {
+  return block.type === 'cards' && block.itemsAlign === 'center' ? 'text-center' : ''
+}
+
+function marketingCardsIconClass(block: CustomPageBlock): string {
+  const base = 'mb-4 h-8 w-8 text-primary'
+  return block.type === 'cards' && block.itemsAlign === 'center' ? `${base} mx-auto` : base
+}
 </script>
 
 <template>
   <!-- Cards -->
-  <div v-if="block.type === 'cards'" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <div v-if="block.type === 'cards'" :class="marketingCardsGridClass(block)">
     <template v-for="(item, cidx) in block.items" :key="`c-${cidx}`">
       <NuxtLink
         v-if="detailHref(item.detailSlug)"
         :to="detailHref(item.detailSlug)!"
         :class="[
           directionCardClass,
+          marketingCardsItemAlignClass(block),
           'group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mts-accent',
         ]"
+      >
+      >
       >
         <component
           :is="resolveCrewingIcon(item.icon)"
           v-if="!item.hideIcon"
-          class="mb-4 h-8 w-8 text-mts-accent"
+          :class="marketingCardsIconClass(block)"
         />
-        <h3 class="font-display mb-3 text-xl text-mts-text"><ThemedContentString :content="item.title" /></h3>
-        <p class="font-body text-sm leading-relaxed text-mts-text-secondary">
+        <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
+        <p class="font-body text-sm leading-relaxed text-muted">
           <ThemedContentString :content="item.text" />
         </p>
         <span class="mts-cta-link-compact mt-5 inline-flex">
           {{ t('pages.common.readMore') }} →
         </span>
       </NuxtLink>
-      <div v-else :class="directionCardClass">
+      <div v-else :class="[directionCardClass, marketingCardsItemAlignClass(block)]">
         <component
           :is="resolveCrewingIcon(item.icon)"
           v-if="!item.hideIcon"
-          class="mb-4 h-8 w-8 text-mts-accent"
+          :class="marketingCardsIconClass(block)"
         />
-        <h3 class="font-display mb-3 text-xl text-mts-text"><ThemedContentString :content="item.title" /></h3>
-        <p class="font-body text-sm leading-relaxed text-mts-text-secondary">
+        <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
+        <p class="font-body text-sm leading-relaxed text-muted">
           <ThemedContentString :content="item.text" />
         </p>
       </div>
@@ -130,18 +173,18 @@ function isAccordionOpen(idx: number): boolean {
 
   <!-- Text -->
   <div v-else-if="block.type === 'text'" class="mx-auto max-w-7xl text-center">
-    <h3 v-if="block.title.trim()" class="font-display mb-2 text-xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-2 text-xl text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <p
       v-if="block.subtitle.trim()"
-      class="mb-6 font-mono text-xs uppercase tracking-wide text-mts-accent"
+      class="mb-6 font-mono text-xs uppercase tracking-wide text-primary"
     >
       <ThemedContentString :content="block.subtitle" />
     </p>
     <div
       v-if="block.description.trim()"
-      class="mts-markdown text-left font-body leading-relaxed text-mts-text-secondary"
+      class="mts-markdown text-left font-body leading-relaxed text-muted"
       v-html="leftHtml(block.description)"
     />
   </div>
@@ -155,7 +198,7 @@ function isAccordionOpen(idx: number): boolean {
     <div class="min-w-0">
       <div
         v-if="block.leftText.trim()"
-        class="mts-markdown font-body leading-relaxed text-mts-text-secondary"
+        class="mts-markdown font-body leading-relaxed text-muted"
         v-html="leftHtml(block.leftText)"
       />
     </div>
@@ -165,7 +208,7 @@ function isAccordionOpen(idx: number): boolean {
       </div>
       <div
         v-else-if="block.images[0]?.trim()"
-        class="relative aspect-[4/3] w-full overflow-hidden bg-mts-bg"
+        class="service-card relative aspect-[4/3] w-full overflow-hidden"
       >
         <img
           :src="block.images[0].trim()"
@@ -178,44 +221,62 @@ function isAccordionOpen(idx: number): boolean {
     </div>
   </div>
 
-  <!-- Hero image -->
+  <!-- Hero image: высота 50vh, на всю ширину секции; крошки и заголовки в одной колонке `mts-content-wrap`, слева. -->
   <div
-    v-else-if="block.type === 'heroImage' && block.imageUrl.trim()"
-    :class="['relative w-full overflow-hidden bg-mts-bg', heroHeightClass]"
+    v-else-if="isHeroImageBlockActive(block)"
+    class="relative h-[50vh] max-h-[50vh] min-h-[50vh] w-full overflow-hidden"
   >
-    <img
-      :src="block.imageUrl.trim()"
-      alt=""
-      class="absolute inset-0 h-full w-full object-cover"
-      loading="lazy"
-      decoding="async"
-    />
+    <CommonParallaxHeroMedia :image="block.imageUrl.trim()" />
     <div
       v-if="block.overlayOpacity > 0"
-      class="absolute inset-0 bg-black"
+      class="absolute inset-0 z-[1] bg-black"
       :style="{ opacity: Math.min(100, Math.max(0, block.overlayOpacity)) / 100 }"
     />
     <div
-      v-if="block.title.trim() || block.caption.trim()"
-      class="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 text-center text-white"
+      v-if="showHeroBannerCrumbs || block.title.trim() || block.caption.trim()"
+      class="relative z-10 flex h-full min-h-0 w-full flex-col"
     >
-      <h3 v-if="block.title.trim()" class="font-display text-xl md:text-2xl">
-        <ThemedContentString :content="block.title" />
-      </h3>
-      <p v-if="block.caption.trim()" class="mt-3 max-w-7xl font-body text-sm md:text-base">
-        <ThemedContentString :content="block.caption" />
-      </p>
+      <div
+        class="mts-content-wrap flex min-h-0 flex-1 flex-col justify-end pt-20 pb-14 md:pt-24 md:pb-16 lg:pb-[4.5rem]"
+      >
+        <Breadcrumbs
+          v-if="showHeroBannerCrumbs"
+          class="!mb-0 shrink-0"
+          :items="pageCrumbItems!"
+          :on-dark-hero="heroBannerCrumbsOnDark"
+        />
+        <div
+          v-if="block.title.trim() || block.caption.trim()"
+          :class="[
+            'flex max-w-4xl flex-col items-start text-left text-white',
+            showHeroBannerCrumbs ? 'mt-3 md:mt-4' : '',
+          ]"
+        >
+          <h3
+            v-if="block.title.trim()"
+            class="font-display text-2xl font-bold leading-[1.1] [text-wrap:pretty] sm:text-3xl md:text-4xl lg:text-5xl"
+          >
+            <ThemedContentString :content="block.title" />
+          </h3>
+          <p
+            v-if="block.caption.trim()"
+            class="mt-3 max-w-3xl font-body text-base leading-relaxed text-white/90 sm:mt-4 sm:text-lg md:mt-5 md:text-xl lg:text-2xl"
+          >
+            <ThemedContentString :content="block.caption" />
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Gallery -->
   <div v-else-if="block.type === 'gallery'">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <div :class="['grid gap-4', galleryGridClass]">
       <template v-for="(url, gi) in block.images.filter((u) => u && u.trim())" :key="`g-${gi}`">
-        <div class="relative aspect-[4/3] w-full overflow-hidden bg-mts-bg">
+        <div class="service-card relative aspect-[4/3] w-full overflow-hidden">
           <img
             :src="url.trim()"
             alt=""
@@ -230,18 +291,18 @@ function isAccordionOpen(idx: number): boolean {
 
   <!-- Accordion -->
   <div v-else-if="block.type === 'accordion'" class="mx-auto max-w-7xl">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <ul class="space-y-2">
       <li
         v-for="(it, ai) in block.items"
         :key="`a-${ai}`"
-        class="border border-mts-border bg-mts-surface"
+        class="card-tech overflow-hidden"
       >
         <button
           type="button"
-          class="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-body text-base text-mts-text"
+          class="flex w-full items-center justify-between gap-4 px-5 py-4 text-left font-body text-base text-body"
           :aria-expanded="isAccordionOpen(ai)"
           @click="toggleAccordionAt(ai)"
         >
@@ -249,13 +310,13 @@ function isAccordionOpen(idx: number): boolean {
             <ThemedContentString :content="it.question" />
           </span>
           <ChevronDown
-            class="h-5 w-5 shrink-0 text-mts-text-secondary transition-transform"
+            class="h-5 w-5 shrink-0 text-muted transition-transform"
             :class="{ 'rotate-180': isAccordionOpen(ai) }"
           />
         </button>
         <div
           v-show="isAccordionOpen(ai)"
-          class="mts-markdown border-t border-mts-border bg-mts-bg px-5 py-4 font-body text-sm leading-relaxed text-mts-text-secondary"
+          class="mts-markdown border-t border-border bg-white px-5 py-4 font-body text-sm leading-relaxed text-muted"
           v-html="leftHtml(it.answer)"
         />
       </li>
@@ -267,13 +328,13 @@ function isAccordionOpen(idx: number): boolean {
     v-else-if="block.type === 'htmlMarkdown'"
     :class="block.align === 'center' ? 'mx-auto max-w-7xl text-center' : 'max-w-7xl'"
   >
-    <h3 v-if="block.title.trim()" class="font-display mb-4 text-xl text-mts-text">
+    <h3 v-if="block.title.trim()" class="font-display mb-4 text-xl text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <div
       v-if="block.content.trim()"
-      class="mts-markdown font-body leading-relaxed text-mts-text-secondary"
-      :class="block.align === 'center' ? 'text-left' : ''"
+      class="mts-markdown font-body leading-relaxed text-muted"
+      :class="block.align === 'center' ? 'mx-auto max-w-3xl text-center' : 'text-left'"
       v-html="leftHtml(block.content)"
     />
   </div>

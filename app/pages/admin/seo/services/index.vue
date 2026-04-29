@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, Edit, Loader2 } from 'lucide-vue-next'
 import type { ServiceItem } from '~/types'
+import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 
 definePageMeta({
   layout: 'admin',
@@ -87,7 +88,7 @@ watch([sort, order], () => {
           </thead>
           <tbody>
             <tr v-for="s in items" :key="s.id" class="border-b border-mts-border last:border-0">
-              <td class="p-4 font-body text-sm text-mts-text">{{ s.title }}</td>
+              <td class="p-4 font-body text-sm text-mts-text">{{ flattenEncodedOrPlain(s.title) }}</td>
               <td class="p-4">
                 <NuxtLink
                   :to="`/admin/seo/services/${s.id}`"

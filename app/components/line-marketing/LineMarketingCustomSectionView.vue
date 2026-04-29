@@ -1,13 +1,21 @@
 <script setup lang="ts">
+import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import CustomPageBlockRender from '~/components/common/CustomPageBlockRender.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import type { LineMarketingCustomSection } from '~/types'
-import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
+import type { BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
+import type { CustomPageBlock, LineMarketingCustomSection, PageBreadcrumbTone } from '~/types'
+import { customSectionBlockRuns, isHeroImageBlockActive } from '~/utils/customPageSections'
 
-const props = defineProps<{
-  section: LineMarketingCustomSection
-  slug: LineMarketingPageSlug
-}>()
+const props = withDefaults(
+  defineProps<{
+    section: LineMarketingCustomSection
+    /** Префикс пути для `detailSlug` в блоках (`crewing-management`, `services`, …). */
+    slug: string
+    /** Те же пункты, что в hero страницы — для крошек над баннером в секции. */
+    pageCrumbItems?: BreadcrumbItem[]
+  }>(),
+  { pageCrumbItems: undefined },
+)
 
 const localePath = useLocalePath()
 
@@ -18,21 +26,51 @@ function resolveDetailHref(detailSlug: string): string | null {
   }
   return localePath(`/${props.slug}/${s}`)
 }
+
+function heroBreadcrumbToneFor(block: CustomPageBlock): PageBreadcrumbTone | null {
+  const heroIdx = props.section.blocks.findIndex((b) => isHeroImageBlockActive(b))
+  if (heroIdx === -1) {
+    return null
+  }
+  const idx = props.section.blocks.findIndex((b) => b.id === block.id)
+  if (idx !== heroIdx) {
+    return null
+  }
+  return props.section.breadcrumbTone ?? null
+}
 </script>
 
 <template>
-  <section class="relative overflow-hidden border-t border-mts-border bg-mts-bg py-16">
-    <div class="relative z-10 mts-content-wrap">
-      <h2
-        v-if="section.showTitle && section.title.trim()"
-        class="font-display mb-10 text-center text-xl text-mts-text md:text-2xl"
-      >
+  <section class="relative border-t border-border bg-white py-16">
+    <AboutSectionContentParallax
+      v-if="section.showTitle && section.title.trim()"
+      :max-shift="32"
+      :factor="0.085"
+      class="relative z-10 mts-content-wrap"
+    >
+      <h2 class="font-display mb-10 text-center text-xl text-body md:text-2xl">
         <ThemedContentString :content="section.title" />
       </h2>
+    </AboutSectionContentParallax>
 
-      <div v-for="block in section.blocks" :key="block.id" class="mb-16 last:mb-0">
-        <CustomPageBlockRender :block="block" :resolve-detail-href="resolveDetailHref" />
-      </div>
-    </div>
+    <template v-for="(run, ri) in customSectionBlockRuns(section)" :key="`${section.id}-run-${ri}`">
+      <CustomPageBlockRender
+        v-if="run.kind === 'hero'"
+        :block="run.block"
+        :resolve-detail-href="resolveDetailHref"
+        :hero-image-breadcrumb-tone="heroBreadcrumbToneFor(run.block)"
+        :page-crumb-items="pageCrumbItems"
+      />
+      <AboutSectionContentParallax v-else :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
+        <div v-for="block in run.blocks" :key="block.id" class="mb-16 last:mb-0">
+          <CustomPageBlockRender
+            :block="block"
+            :resolve-detail-href="resolveDetailHref"
+            :hero-image-breadcrumb-tone="heroBreadcrumbToneFor(block)"
+            :page-crumb-items="pageCrumbItems"
+          />
+        </div>
+      </AboutSectionContentParallax>
+    </template>
   </section>
 </template>

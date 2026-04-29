@@ -167,7 +167,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>
@@ -184,14 +184,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           :visible="sectionVisible('listing')"
           :can-move-up="canMove('listing', -1)"
           :can-move-down="canMove('listing', 1)"
-          hint="Сами карточки проектов берутся из админки «Проекты». Здесь — управление видимостью и положением блока."
+          hint="Скрывает hero (заголовок и лид, в т.ч. текст про «Реализованные проекты») и блок со списком карточек. Сами карточки редактируются в разделе «Проекты»."
           @update:collapsed="(v) => (collapsed.listing = v)"
           @update:visible="(v) => setSectionVisible('listing', v)"
           @move-up="moveSection('listing', -1)"
           @move-down="moveSection('listing', 1)"
         >
           <p class="font-body text-sm text-mts-text-secondary">
-            Чтобы скрыть блок со списком проектов на публичной странице — снимите чекбокс «Показывать» в шапке.
+            Снимите «Показывать», чтобы убрать с публичной страницы /projects и верхний hero, и каталог карточек.
           </p>
         </AdminCollapsibleSection>
 

@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronDown, Palette } from 'lucide-vue-next'
+import { ChevronDown, Palette, Bold } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { ThemeTitleFontWeight } from '~/types'
 import { useRecentColors } from '~/composables/useRecentColors'
 import { getColorByValue, HIGHLIGHT_COLORS, TEXT_COLORS, type ColorOption } from '~/utils/colorTextPalette'
+import { isThemeTitleFontWeight, THEME_TITLE_FONT_WEIGHT_LABELS } from '~/utils/themeFormattedTitle'
+import { TIPTAP_FONT_WEIGHT_VALUES } from '~/utils/tiptapFontWeightConstants'
+import { normalizeStoredFontWeight } from '~/utils/tiptapTextFontWeightExtension'
 
 /**
  * Color Text Popover — Vue-порт TipTap UI Components Color Text Popover.
  * https://tiptap.dev/docs/ui-components/components/color-text-popover
  *
  * Триггер показывает текущий выбранный цвет текста (полоса под буквой A) и подсветку (фон).
- * При клике открывается поповер с двумя секциями: «Цвет текста» и «Подсветка».
+ * При клике открывается поповер: «Цвет текста», «Начертание», «Подсветка».
  * Каждая секция содержит палитру + блок «Недавние» (хранится в localStorage).
  *
- * Требует, чтобы в `editor` были подключены: `TextStyle`, `Color`, `Highlight (multicolor)`.
+ * Требует, чтобы в `editor` были подключены: `TextStyle`, `Color`, `TiptapTextFontWeight`, `Highlight (multicolor)`.
  */
 const props = defineProps<{
   editor: Editor | null
@@ -37,18 +41,31 @@ const { recentColors: recentHighlightColors, addRecentColor: pushRecentHighlight
 const activeTextColor = ref<string | null>(null)
 /** Активный цвет подсветки в текущем выделении. */
 const activeHighlightColor = ref<string | null>(null)
+/** Явный font-weight из textStyle или null = по умолчанию. */
+const activeFontWeight = ref<ThemeTitleFontWeight | null>(null)
 
 function readActiveColors() {
   const ed = props.editor
   if (!ed) {
     activeTextColor.value = null
     activeHighlightColor.value = null
+    activeFontWeight.value = null
     return
   }
-  const ts = ed.getAttributes('textStyle') as { color?: string | null }
+  const ts = ed.getAttributes('textStyle') as { color?: string | null; fontWeight?: string | number | null }
   const hl = ed.getAttributes('highlight') as { color?: string | null }
   activeTextColor.value = ts?.color ?? null
   activeHighlightColor.value = hl?.color ?? null
+  const fwRaw = ts?.fontWeight
+  if (typeof fwRaw === 'number' && isThemeTitleFontWeight(fwRaw)) {
+    activeFontWeight.value = fwRaw
+  } else if (typeof fwRaw === 'string') {
+    const norm = normalizeStoredFontWeight(fwRaw)
+    const n = norm != null ? Number(norm) : NaN
+    activeFontWeight.value = isThemeTitleFontWeight(n) ? n : null
+  } else {
+    activeFontWeight.value = null
+  }
 }
 
 function onSelectionUpdate() {
@@ -91,7 +108,9 @@ const isVisible = computed(() => {
     typeof cmds.setColor === 'function' &&
     typeof cmds.unsetColor === 'function' &&
     typeof cmds.setHighlight === 'function' &&
-    typeof cmds.unsetHighlight === 'function'
+    typeof cmds.unsetHighlight === 'function' &&
+    typeof cmds.setTextFontWeight === 'function' &&
+    typeof cmds.unsetTextFontWeight === 'function'
   if (!has && props.hideWhenUnavailable) {
     return false
   }
@@ -130,7 +149,16 @@ function applyHighlight(option: ColorOption) {
   readActiveColors()
 }
 
-/* Open / close / outside / esc ===================================== */
+function applyFontWeight(fw: ThemeTitleFontWeight | null) {
+  const ed = props.editor
+  if (!ed) return
+  if (fw == null) {
+    ed.chain().focus().unsetTextFontWeight().run()
+  } else {
+    ed.chain().focus().setTextFontWeight(String(fw)).run()
+  }
+  readActiveColors()
+}
 
 function toggleOpen() {
   if (!canToggle.value) return
@@ -206,8 +234,8 @@ function recentLabel(value: string, palette: ColorOption[]): string {
       :disabled="!canToggle"
       :aria-expanded="open"
       aria-haspopup="dialog"
-      aria-label="Цвет текста и подсветка"
-      title="Цвет текста / подсветка"
+      aria-label="Цвет, начертание и подсветка"
+      title="Цвет / начертание / подсветка"
       @mousedown.prevent
       @click="toggleOpen"
     >
@@ -234,7 +262,7 @@ function recentLabel(value: string, palette: ColorOption[]): string {
         ref="popoverRef"
         role="dialog"
         aria-label="Выбор цвета"
-        class="absolute left-0 top-full z-50 mt-1 w-[268px] origin-top-left rounded border border-mts-border bg-white p-3 shadow-lg"
+        class="absolute left-0 top-full z-50 mt-1 w-[280px] origin-top-left rounded border border-mts-border bg-white p-3 shadow-lg"
         @mousedown.prevent
       >
         <!-- Цвет текста -->
@@ -282,6 +310,47 @@ function recentLabel(value: string, palette: ColorOption[]): string {
                 <span class="block h-full w-full rounded-sm" :style="{ backgroundColor: c }" />
               </button>
             </div>
+          </div>
+        </section>
+
+        <hr class="my-3 border-mts-border" />
+
+        <section>
+          <header class="mb-2 flex items-center gap-1.5">
+            <Bold class="h-3 w-3 text-mts-text-secondary" />
+            <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Начертание</h3>
+          </header>
+          <div class="grid grid-cols-1 gap-1">
+            <button
+              type="button"
+              data-weight-swatch
+              class="mts-weight-row inline-flex items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left font-body text-xs text-mts-text transition-colors hover:border-mts-border hover:bg-mts-bg focus:outline-none focus:ring-2 focus:ring-mts-accent/50"
+              :class="{ 'mts-weight-row--active': activeFontWeight === null }"
+              title="Как у стиля абзаца / заголовка"
+              :aria-pressed="activeFontWeight === null"
+              @click="applyFontWeight(null)"
+            >
+              <span class="h-4 w-4 shrink-0 rounded border border-dashed border-mts-border/80" aria-hidden="true" />
+              <span>По умолчанию</span>
+            </button>
+            <button
+              v-for="fw in TIPTAP_FONT_WEIGHT_VALUES"
+              :key="fw"
+              type="button"
+              data-weight-swatch
+              class="mts-weight-row inline-flex items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left font-body text-xs text-mts-text transition-colors hover:border-mts-border hover:bg-mts-bg focus:outline-none focus:ring-2 focus:ring-mts-accent/50"
+              :class="{ 'mts-weight-row--active': activeFontWeight === fw }"
+              :title="THEME_TITLE_FONT_WEIGHT_LABELS[fw]"
+              :aria-pressed="activeFontWeight === fw"
+              @click="applyFontWeight(fw)"
+            >
+              <span
+                class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-mts-border/60 bg-mts-bg font-mono text-[9px] font-semibold leading-none text-mts-text"
+              >
+                {{ fw === 400 ? 'R' : fw === 700 ? 'B' : String(Math.round(fw / 100)) }}
+              </span>
+              <span>{{ THEME_TITLE_FONT_WEIGHT_LABELS[fw] }}</span>
+            </button>
           </div>
         </section>
 
@@ -359,5 +428,9 @@ function recentLabel(value: string, palette: ColorOption[]): string {
 }
 .mts-swatch--active {
   box-shadow: inset 0 0 0 2px var(--color-mts-accent, #2563eb);
+}
+.mts-weight-row--active {
+  box-shadow: inset 0 0 0 2px var(--color-mts-accent, #2563eb);
+  background-color: var(--color-mts-bg, #f8fafc);
 }
 </style>

@@ -11,7 +11,7 @@ const minRows = 1
 const maxRows = 24
 
 const fieldClass =
-  'w-full border border-mts-border bg-mts-bg px-2.5 py-2 text-xs text-mts-text placeholder:text-mts-text-muted/70 focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
+  'w-full border border-border bg-white px-2.5 py-2 text-xs text-body placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
 
 const columns: { key: keyof SeaServiceRow; label: string }[] = [
   { key: 'rank', label: 'Rank' },
@@ -41,16 +41,16 @@ function removeRow(index: number) {
 </script>
 
 <template>
-  <section class="overflow-hidden rounded-xl border border-mts-border bg-mts-surface shadow-sm">
-    <header class="border-b border-mts-border bg-gradient-to-r from-mts-bg to-white px-5 py-4">
-      <h3 class="font-display text-lg text-mts-text">{{ t('pages.seaTable.title') }}</h3>
-      <p class="mt-1 text-sm text-mts-text-secondary">{{ t('pages.seaTable.lead') }}</p>
+  <section class="card-tech overflow-hidden">
+    <header class="border-b border-border bg-gradient-to-r from-white to-white px-5 py-4">
+      <h3 class="font-display text-lg text-body">{{ t('pages.seaTable.title') }}</h3>
+      <p class="mt-1 text-sm text-muted">{{ t('pages.seaTable.lead') }}</p>
     </header>
 
     <div class="divide-y divide-mts-border">
       <div v-for="(row, i) in rows" :key="'sea-' + i" class="px-5 py-5">
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+          <span class="font-mono text-[10px] uppercase tracking-wide text-muted">{{
             t('pages.seaTable.record', { n: i + 1 })
           }}</span>
           <button
@@ -65,18 +65,18 @@ function removeRow(index: number) {
         </div>
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div v-for="col in columns" :key="col.key">
-            <label class="mb-1 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{ col.label }}</label>
+            <label class="mb-1 block font-mono text-[10px] uppercase tracking-wide text-muted">{{ col.label }}</label>
             <input v-model="row[col.key]" type="text" :class="fieldClass" autocomplete="off" />
           </div>
         </div>
       </div>
     </div>
 
-    <div class="border-t border-mts-border px-5 py-4">
+    <div class="border-t border-border px-5 py-4">
       <button
         type="button"
         :disabled="rows.length >= maxRows"
-        class="inline-flex w-full items-center justify-center gap-2 border border-mts-border border-dashed bg-mts-bg/30 px-4 py-3 font-mono text-xs uppercase tracking-wide text-mts-accent transition-colors hover:border-mts-accent hover:bg-mts-accent/5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+        class="inline-flex w-full items-center justify-center gap-2 border border-border border-dashed bg-white/30 px-4 py-3 font-mono text-xs uppercase tracking-wide text-primary transition-colors hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         @click="addRow"
       >
         <Plus class="h-4 w-4" />

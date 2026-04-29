@@ -27,8 +27,13 @@ export function decodeAdminThemedString(raw: string | null | undefined): ThemeFo
  */
 export function encodeAdminThemedString(t: ThemeFormattedTitle): string {
   const n = normalizeThemeFormattedTitle(t)
-  if (n.spans.length === 1 && n.spans[0]?.tone === 'text') {
-    return n.spans[0].text ?? ''
+  const only = n.spans.length === 1 ? n.spans[0] : null
+  /*
+   * Плоская строка только для «простой» строки основного тона без явного веса.
+   * Иначе начертание терялось при сохранении (раньше схлопывалось в plain).
+   */
+  if (only && only.tone === 'text' && only.fontWeight == null) {
+    return only.text ?? ''
   }
   return JSON.stringify(n)
 }
@@ -44,4 +49,19 @@ export function flattenEncodedOrPlain(raw: string | null | undefined): string {
   }
   const decoded = decodeAdminThemedString(raw)
   return decoded.spans.map((s) => s.text).join('')
+}
+
+/**
+ * Одна плоская строка для document title, meta description, og:title — без HTML,
+ * в том числе если разметка оказалась внутри TFT после `flattenEncodedOrPlain`.
+ */
+export function plainMetaString(raw: string | null | undefined): string {
+  let s = flattenEncodedOrPlain(raw)
+  if (!s) {
+    return ''
+  }
+  if (s.includes('<')) {
+    s = stripHtmlToPlain(s)
+  }
+  return s.replace(/\s+/g, ' ').trim()
 }

@@ -42,10 +42,16 @@ const props = withDefaults(
      * показался из-за фолда, но до того как пользователь начал читать.
      */
     threshold?: number
+    /**
+     * Дополнительные классы на корневом элементе (например `md:col-span-*`
+     * и `h-full` для ячеек CSS grid).
+     */
+    contentClass?: string
   }>(),
   {
     delayMs: 0,
     threshold: 0.15,
+    contentClass: undefined,
   },
 )
 
@@ -57,7 +63,7 @@ onMounted(() => {
   /**
    * SSR-safe: onMounted не выполняется на сервере, window/IntersectionObserver
    * доступны только здесь. Дополнительный guard на отсутствие API
-   * (старые браузеры) — мгновенный показ без анимации.
+   * (браузеры без поддержки API) — мгновенный показ без анимации.
    */
   if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
     visible.value = true
@@ -118,7 +124,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     ref="root"
-    :class="['marin-reveal', { 'marin-reveal--visible': visible }]"
+    :class="['marin-reveal', { 'marin-reveal--visible': visible }, contentClass]"
   >
     <slot />
   </div>

@@ -21,7 +21,7 @@ export function contentPageSlugToPublicPath(
     return special[slug]!
   }
   if (contentableType === 'service') {
-    return `/services/${slug}`
+    return `/${slug}`
   }
   if (contentableType === 'project') {
     return `/projects/${slug}`

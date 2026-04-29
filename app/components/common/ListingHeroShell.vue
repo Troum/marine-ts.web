@@ -1,31 +1,79 @@
 <script setup lang="ts">
 /**
- * Hero листингов: опциональный фон + контент в `.mts-content-wrap`.
- * Без фона — отступ сверху под фикс. шапку (pt-16), как у старых страниц.
+ * Hero листингов: фото-блок при наличии изображения, иначе светлый фон.
  */
-defineProps<{
-  heroImage?: string | null
-}>()
+import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
+
+const props = withDefaults(
+  defineProps<{
+    heroImage?: string | null
+    /** Градиентное затемнение поверх фото (лучше сочетать со светлым текстом в слоте). */
+    heroVeil?: boolean
+    /** Полная высота первого экрана (viewport), как маркетинговый hero на линии. */
+    fullViewport?: boolean
+    /**
+     * Видимость фонового слоя после mount (fade-in), как CommonParallaxHeroMedia на маркетинговых страницах.
+     * Если не указано — активен сразу.
+     */
+    parallaxMediaActive?: boolean
+    /** Лёгкий параллакс для контента поверх hero (линия / услуги v2). */
+    heroContentParallax?: boolean
+    /** Декоративные вертикальные линии по краям блока — как у маркетингового hero с фото. */
+    heroRails?: boolean
+  }>(),
+  {
+    heroVeil: false,
+    fullViewport: false,
+    heroContentParallax: false,
+    heroRails: false,
+  },
+)
+
+const mediaActive = computed(() => props.parallaxMediaActive ?? true)
 </script>
 
 <template>
   <section
     :class="[
       'relative overflow-hidden',
-      heroImage ? 'pb-16 pt-40 lg:pb-20 lg:pt-48' : 'py-24 pt-16 lg:py-32',
+      props.heroImage
+        ? props.fullViewport
+          ? 'min-h-[100svh] pb-16 pt-36 lg:pb-20 lg:pt-44'
+          : 'min-h-[52vh] pb-16 pt-36 lg:pb-20 lg:pt-44'
+        : props.fullViewport
+          ? 'min-h-[100svh] bg-white py-28 pt-32 text-body lg:py-36'
+          : 'bg-white py-28 pt-32 text-body lg:py-36',
     ]"
   >
-    <template v-if="heroImage">
+    <div
+      v-if="props.heroImage && props.heroRails"
+      class="pointer-events-none absolute top-0 left-1/4 z-[2] h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent"
+      aria-hidden="true"
+    />
+    <div
+      v-if="props.heroImage && props.heroRails"
+      class="pointer-events-none absolute top-0 right-1/4 z-[2] h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent"
+      aria-hidden="true"
+    />
+
+    <div v-if="props.heroImage" class="absolute inset-0">
+      <CommonParallaxHeroMedia :image="props.heroImage" :active="mediaActive" />
       <div
-        class="absolute inset-0 bg-cover bg-center opacity-[0.55]"
-        :style="{ backgroundImage: `url(${heroImage})` }"
+        v-if="props.heroVeil"
+        class="pointer-events-none absolute inset-0 z-[1] mts-line-marketing-hero-veil"
         aria-hidden="true"
       />
-      <div class="absolute inset-0 bg-linear-to-r from-mts-bg/95 via-mts-bg/85 to-mts-bg/55" aria-hidden="true" />
-      <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/35" aria-hidden="true" />
-    </template>
+    </div>
     <div class="relative z-10 mts-content-wrap">
-      <slot />
+      <AboutSectionContentParallax
+        v-if="props.heroContentParallax && props.heroImage"
+        :max-shift="32"
+        :factor="0.085"
+        class="w-full max-w-none"
+      >
+        <slot />
+      </AboutSectionContentParallax>
+      <slot v-else />
     </div>
   </section>
 </template>

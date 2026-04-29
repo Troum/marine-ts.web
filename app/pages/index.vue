@@ -8,21 +8,32 @@ import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import { aboutCarouselSlides } from '~/utils/aboutCarouselSlides'
 import { HOME_SECTION_DEFAULT_ORDER, mergeHomePageData } from '~/utils/pageDefaults'
 import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
-import { resolveLucideIcon } from '~/utils/lucideIconRegistry'
+import { resolveServiceIcon } from '~/utils/serviceIcons'
 import { resolveSectionOrder, isSectionVisible } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('home')
 
 const { locale } = useI18n()
 const localePath = useLocalePath()
+const { breadcrumbs } = usePageBreadcrumbs()
 const api = useMarineApi()
+
+const customSectionCrumbItems = computed(() => breadcrumbs())
 
 const cms = ref<HomePageData | null>(null)
 
-const { data: cmsPage } = await useAsyncData('home-cms', async () => {
-  try { return await api.contentPages.getPublicBySlug('home') }
-  catch { return null }
-}, { server: true })
+const { data: cmsPage, pending: homeCmsPending } = await useAsyncData(
+  () => `home-cms-${locale.value}`,
+  async () => {
+    try {
+      return await api.contentPages.getPublicBySlug('home')
+    }
+    catch {
+      return null
+    }
+  },
+  { server: true, watch: [locale] },
+)
 
 watchEffect(() => {
   const body = cmsPage.value?.body
@@ -53,11 +64,17 @@ const { data: catalogServices } = await useAsyncData(
 
 /** Карточки блока «Сервисы» только из каталога по `featuredServiceIds`. */
 const visibleServiceCards = computed(() => {
-  const fallbackImg = '/images/services/hull.jpg'
   const ids = (d.value.services.featuredServiceIds ?? []).filter((id) => id > 0)
   const rows = catalogServices.value ?? []
   const byId = new Map(rows.map((s) => [s.id, s]))
-  const out: { key: string; image: string; title: string; description: string; href: string }[] = []
+  const out: {
+    key: string
+    image: string
+    iconKey: string | null | undefined
+    title: string
+    description: string
+    href: string
+  }[] = []
   for (const id of ids) {
     const s = byId.get(id)
     if (!s) {
@@ -66,10 +83,11 @@ const visibleServiceCards = computed(() => {
     const slug = s.contentPage?.slug
     out.push({
       key: `svc-${s.id}`,
-      image: s.imageUrl || fallbackImg,
+      image: (s.imageUrl ?? '').trim(),
+      iconKey: s.iconKey,
       title: s.title,
       description: s.description,
-      href: slug ? `/services/${slug}` : '/services',
+      href: slug ? `/${slug}` : '/services',
     })
   }
   return out
@@ -78,16 +96,36 @@ const visibleServiceCards = computed(() => {
 const isVisible = ref(false)
 onMounted(() => { isVisible.value = true })
 
+const activeHeroDirectionIndex = ref<number | null>(0)
+const activeHeroDirection = computed(() => {
+  const index = activeHeroDirectionIndex.value
+  return index === null ? null : d.value.directions.rows[index] ?? null
+})
+
+function heroDirectionTitle(row: { title: string; hoverTitle?: string }) {
+  return row.hoverTitle?.trim() || row.title
+}
+
+function heroDirectionDescription(row: { description: string; hoverDescription?: string }) {
+  return row.hoverDescription?.trim() || row.description
+}
+
+const activeHeroImage = computed(() => activeHeroDirection.value?.heroImage?.trim() || d.value.heroImage?.trim() || '')
+
+const directionsGridClass = computed(() => {
+  const count = d.value.directions.rows.length
+  if (count <= 1) {
+    return 'grid-cols-1'
+  }
+  if (count === 2) {
+    return 'grid-cols-1 md:grid-cols-2'
+  }
+  return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+})
+
 function scrollToAbout() {
   document.querySelector('#about-section')?.scrollIntoView({ behavior: 'smooth' })
 }
-
-const statIcons = computed(() =>
-  d.value.statsCard.items.map(item => ({
-    ...item,
-    iconComponent: resolveLucideIcon(item.icon),
-  })),
-)
 
 /**
  * Эффективный порядок секций (после hero) с учётом сохранённого
@@ -103,126 +141,124 @@ function sectionShown(id: string): boolean {
 </script>
 
 <template>
-  <div class="bg-mts-bg">
-    <section class="relative min-h-screen flex items-center overflow-hidden">
+  <div class="bg-white">
+    <div v-if="homeCmsPending" class="flex min-h-[40vh] items-center justify-center py-24">
+      <div
+        class="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent"
+        role="status"
+        aria-live="polite"
+      />
+    </div>
+    <template v-else>
+    <section class="public-hero relative h-screen overflow-hidden">
       <div class="absolute inset-0">
-        <div
-          v-if="d.heroImage?.trim()"
-          :class="[
-            'absolute inset-0 bg-cover bg-center transition-all duration-1000',
-            isVisible ? 'scale-100 opacity-100' : 'scale-105 opacity-0',
-          ]"
-          :style="{ backgroundImage: `url(${d.heroImage})` }"
+        <CommonParallaxHeroMedia
+          v-if="activeHeroImage"
+          :key="activeHeroImage"
+          :image="activeHeroImage"
+          :active="isVisible"
+          bg-class="hero-bg"
         />
-        <div v-else class="absolute inset-0 bg-mts-bg" aria-hidden="true" />
-        <div class="absolute inset-0 bg-linear-to-r from-mts-bg via-mts-bg/82 to-mts-bg/55" />
-        <div class="absolute inset-0 bg-linear-to-t from-mts-bg via-transparent to-mts-bg/40" />
+        <div v-else class="absolute inset-0 bg-navy-900" aria-hidden="true" />
+        <div
+          v-if="activeHeroImage"
+          class="pointer-events-none absolute inset-0 z-[1] mts-line-marketing-hero-veil"
+          aria-hidden="true"
+        />
       </div>
 
-      <div class="relative z-10 mts-content-wrap w-full py-0">
-        <div class="grid lg:grid-cols-5 gap-12 items-start">
-          <div class="lg:col-span-3 max-w-7xl">
+      <div class="relative z-10 flex h-full flex-col justify-between">
+        <div class="pt-32" />
+
+        <div class="flex flex-1 items-center justify-center px-4">
+          <div class="max-w-4xl text-center">
             <div
               :class="[
-                'flex items-center gap-3 mb-6 transform transition-all duration-600',
+                'mb-5 flex items-center justify-center gap-3 transition-all duration-500',
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <div class="w-8 h-px bg-mts-accent" />
-              <span class="section-label"><ThemedContentString :content="d.hero.label" /></span>
+              <div class="h-px w-8 bg-primary" />
+              <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+                <ThemedContentString :content="d.hero.label" />
+              </span>
+              <div class="h-px w-8 bg-primary" />
             </div>
-
-            <h1
-              :class="[
-                'font-display text-3xl sm:text-4xl lg:text-5xl text-mts-text leading-[1.1] mb-6 whitespace-pre-line transform transition-all duration-600',
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
+            <Transition
+              mode="out-in"
+              enter-active-class="transition-all duration-500 ease-out"
+              enter-from-class="translate-y-4 opacity-0"
+              enter-to-class="translate-y-0 opacity-100"
+              leave-active-class="transition-all duration-200 ease-in"
+              leave-from-class="translate-y-0 opacity-100"
+              leave-to-class="-translate-y-4 opacity-0"
             >
-              <ThemeFormattedTitle :title="d.hero.titleFormatted" />
-            </h1>
-
-            <p
-              :class="[
-                'font-body text-lg text-mts-text-secondary max-w-lg mb-8 leading-relaxed transform transition-all duration-600',
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-            >
-              <ThemedContentString :content="d.hero.lead" />
-            </p>
-
+              <div
+                :key="activeHeroDirection ? `direction-${activeHeroDirectionIndex}` : 'default-hero'"
+                :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"
+              >
+                <h1
+                  class="mts-hero-themed-copy mb-4 text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-4xl lg:text-5xl"
+                >
+                  <ThemedContentString
+                    v-if="activeHeroDirection"
+                    :content="heroDirectionTitle(activeHeroDirection)"
+                  />
+                  <ThemeFormattedTitle v-else :title="d.hero.titleFormatted" />
+                </h1>
+                <p
+                  class="mts-hero-themed-copy mx-auto max-w-2xl text-lg leading-relaxed text-white/90 drop-shadow md:text-xl"
+                >
+                  <ThemedContentString
+                    :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
+                  />
+                </p>
+              </div>
+            </Transition>
             <div
               :class="[
-                'flex flex-wrap gap-4 mb-10 transform transition-all duration-600 items-center',
+                'mt-8 flex flex-wrap items-center justify-center gap-4',
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <NuxtLink :to="localePath(d.hero.ctaClientHref)" class="btn-primary inline-flex items-center justify-center">
+              <NuxtLink :to="localePath(d.hero.ctaClientHref)" class="btn-primary">
                 <ThemedContentString :content="d.hero.ctaClient" />
               </NuxtLink>
-              <NuxtLink :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary inline-flex items-center justify-center">
+              <NuxtLink :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass">
                 <ThemedContentString :content="d.hero.ctaSeafarer" />
               </NuxtLink>
             </div>
-
-            <div
-              :class="[
-                'flex items-center gap-8 transform transition-all duration-600',
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-            >
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-mts-accent" />
-                <div>
-                  <span class="font-mono text-sm font-medium text-mts-text">ISO</span>
-                  <span class="font-mono text-xs text-mts-text-secondary ml-1"><ThemedContentString :content="d.hero.badgeIso" /></span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-mts-accent" />
-                <div>
-                  <span class="font-mono text-sm font-medium text-mts-text">IACS</span>
-                  <span class="font-mono text-xs text-mts-text-secondary ml-1"><ThemedContentString :content="d.hero.badgeIacs" /></span>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-1.5 h-1.5 bg-mts-accent" />
-                <div>
-                  <span class="font-mono text-sm font-medium text-mts-text">14+</span>
-                  <span class="font-mono text-xs text-mts-text-secondary ml-1"><ThemedContentString :content="d.hero.badgeYears" /></span>
-                </div>
-              </div>
-            </div>
           </div>
+        </div>
 
-          <div
-            v-if="d.showStatsCard !== false"
-            :class="[
-              'lg:col-span-2 transform transition-all duration-700',
-              isVisible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0',
-            ]"
-          >
-            <div class="card-tech corner-accent p-6">
-              <div class="flex items-center gap-2 mb-6">
-                <div class="w-2 h-2 bg-mts-accent animate-pulse" />
-                <span class="font-mono text-xs uppercase tracking-wide text-mts-text-secondary">
-                  <ThemedContentString :content="d.statsCard.label" />
+        <div class="relative z-20">
+          <div class="flex flex-col md:flex-row">
+            <NuxtLink
+              v-for="(row, index) in d.directions.rows"
+              :key="row.title"
+              :to="localePath(row.href)"
+              class="nav-card group relative min-w-0 flex-1 border-t border-white/20 bg-black/40 transition-all duration-500 hover:bg-primary/90 focus-visible:bg-primary/90 md:border-r md:last:border-r-0"
+              :class="activeHeroDirectionIndex === index ? 'md:bg-primary/90' : ''"
+              @mouseenter="activeHeroDirectionIndex = index"
+              @focus="activeHeroDirectionIndex = index"
+            >
+              <div class="flex items-center justify-between px-4 py-6 md:py-8">
+                <span class="text-sm font-medium text-white md:text-base lg:text-lg">
+                  <ThemedContentString :content="row.title" />
+                </span>
+                <span class="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-white/10 text-white transition-all duration-300 group-hover:translate-x-1 group-hover:bg-white/20">
+                  →
                 </span>
               </div>
-              <div class="grid grid-cols-2 gap-4">
-                <div v-for="stat in statIcons" :key="stat.label" class="p-4 bg-mts-bg border border-mts-border">
-                  <component :is="stat.iconComponent" class="w-5 h-5 text-mts-accent mb-2" />
-                  <p class="font-mono text-2xl font-medium text-mts-accent mb-1">{{ stat.value }}</p>
-                  <p class="font-mono text-[11px] uppercase tracking-wide text-mts-text-secondary">{{ stat.label }}</p>
-                </div>
-              </div>
-            </div>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-transparent transition-colors group-hover:bg-white" />
+            </NuxtLink>
           </div>
         </div>
 
         <button
           type="button"
           :class="[
-            'absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-mts-text-secondary hover:text-mts-accent transition-all duration-300 transform',
+            'absolute bottom-32 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1 text-white/70 transition-all duration-300 hover:text-white lg:flex',
             isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
           ]"
           @click="scrollToAbout"
@@ -238,25 +274,25 @@ function sectionShown(id: string): boolean {
       сразу после hero. Остальные секции отрисовываются динамически ниже
       по `sectionOrder` / `sectionVisibility`.
     -->
-    <section class="relative bg-mts-bg py-20 lg:py-28">
+    <section class="relative bg-white py-20 lg:py-28">
       <div class="mts-content-wrap">
         <div class="mb-12 max-w-7xl">
           <div class="mb-4 flex items-center gap-3">
-            <div class="h-px w-6 bg-mts-accent" />
+            <div class="h-px w-6 bg-primary" />
             <span class="section-label"><ThemedContentString :content="d.directions.label" /></span>
           </div>
-          <h2 class="font-display text-3xl text-mts-text lg:text-4xl break-words [text-wrap:pretty]">
+          <h2 class="font-display text-3xl text-body lg:text-4xl break-words [text-wrap:pretty]">
             <ThemeFormattedTitle :title="d.directions.headingFormatted" />
           </h2>
         </div>
-        <div class="flex flex-col gap-px bg-mts-border md:flex-row md:w-full">
+        <div class="grid gap-6" :class="directionsGridClass">
           <div
             v-for="row in d.directions.rows"
             :key="row.title"
-            class="min-w-0 flex-1 basis-0 bg-mts-bg p-8"
+            class="service-card corner-accent min-w-0 p-8"
           >
-            <h3 class="font-display text-lg text-mts-text"><ThemedContentString :content="row.title" /></h3>
-            <p class="mt-3 font-body text-sm text-mts-text-secondary"><ThemedContentString :content="row.description" /></p>
+            <h3 class="font-display text-lg text-body"><ThemedContentString :content="row.title" /></h3>
+            <p class="mt-3 font-body text-sm text-muted"><ThemedContentString :content="row.description" /></p>
             <NuxtLink :to="localePath(row.href)" class="mts-cta-link-compact mt-6 inline-flex">
               <ThemedContentString :content="row.cta" /> →
             </NuxtLink>
@@ -272,27 +308,23 @@ function sectionShown(id: string): boolean {
     -->
     <template v-for="sid in sectionOrderEffective" :key="sid">
       <!-- ===== FUNNEL (3 cards) ===== -->
-      <section v-if="sid === 'funnel' && sectionShown('funnel')" class="relative bg-mts-surface py-16 lg:py-24">
+      <section v-if="sid === 'funnel' && sectionShown('funnel')" class="relative bg-bg-light py-16 lg:py-24">
       <div
-        class="pointer-events-none absolute inset-x-0 top-0 z-0 h-24 bg-linear-to-b from-mts-bg to-transparent sm:h-28"
+        class="pointer-events-none absolute inset-x-0 top-0 z-0 h-24 bg-linear-to-b from-white to-transparent sm:h-28"
         aria-hidden="true"
       />
       <div class="relative z-10 mts-content-wrap">
         <div class="grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-4 lg:gap-6 lg:items-stretch">
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute right-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh] -left-4 sm:-left-6 lg:-left-10"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+          <div class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6">
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col">
               <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
+                <div class="h-px w-6 bg-primary" />
                 <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelShip.label" /></span>
               </div>
-              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+              <h2 class="font-display text-base leading-snug text-body md:text-lg lg:text-xl break-words [text-wrap:pretty]">
                 <ThemeFormattedTitle :title="d.funnelShip.titleFormatted" />
               </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-muted">
                 <ThemedContentString :content="d.funnelShip.text" />
               </p>
               <NuxtLink :to="localePath(d.funnelShip.href)" class="mts-cta-link-compact mt-5 self-start">
@@ -300,20 +332,16 @@ function sectionShown(id: string): boolean {
               </NuxtLink>
             </div>
           </div>
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute inset-x-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh]"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+          <div class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6">
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col">
               <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
+                <div class="h-px w-6 bg-primary" />
                 <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelCrewing.label" /></span>
               </div>
-              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+              <h2 class="font-display text-base leading-snug text-body md:text-lg lg:text-xl break-words [text-wrap:pretty]">
                 <ThemeFormattedTitle :title="d.funnelCrewing.titleFormatted" />
               </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-muted">
                 <ThemedContentString :content="d.funnelCrewing.text" />
               </p>
               <div class="mt-5 flex flex-wrap items-center gap-2">
@@ -326,20 +354,16 @@ function sectionShown(id: string): boolean {
               </div>
             </div>
           </div>
-          <div class="group relative isolate flex h-full min-h-0 min-w-0 flex-col">
-            <div
-              class="pointer-events-none absolute left-0 z-0 bg-mts-bg opacity-0 transition-opacity duration-200 group-hover:opacity-100 -top-[100svh] -bottom-[100svh] -right-4 sm:-right-6 lg:-right-10"
-              aria-hidden="true"
-            />
-            <div class="relative z-10 flex min-h-0 flex-1 flex-col p-5 sm:p-6">
+          <div class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6">
+            <div class="relative z-10 flex min-h-0 flex-1 flex-col">
               <div class="mb-2 flex items-center gap-2">
-                <div class="h-px w-6 bg-mts-accent" />
+                <div class="h-px w-6 bg-primary" />
                 <span class="section-label text-[10px]"><ThemedContentString :content="d.funnelTechnical.label" /></span>
               </div>
-              <h2 class="font-display text-base leading-snug text-mts-text md:text-lg lg:text-xl break-words [text-wrap:pretty]">
+              <h2 class="font-display text-base leading-snug text-body md:text-lg lg:text-xl break-words [text-wrap:pretty]">
                 <ThemeFormattedTitle :title="d.funnelTechnical.titleFormatted" />
               </h2>
-              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-mts-text-secondary">
+              <p class="mt-3 flex-1 font-body text-sm leading-relaxed text-muted">
                 <ThemedContentString :content="d.funnelTechnical.text" />
               </p>
               <NuxtLink :to="localePath(d.funnelTechnical.href)" class="mts-cta-link-compact mt-5 self-start">
@@ -360,24 +384,33 @@ function sectionShown(id: string): boolean {
         >
           <div>
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-6 h-px bg-mts-accent" />
+              <div class="w-6 h-px bg-primary" />
               <span class="section-label"><ThemedContentString :content="d.about.label" /></span>
             </div>
-            <h2 class="font-display text-3xl lg:text-4xl text-mts-text leading-tight mb-6">
-              <ThemeFormattedTitle :title="d.about.titleFormatted" />
+            <h2 class="font-display text-3xl lg:text-4xl text-body leading-tight mb-6">
+              <ThemedContentString v-if="d.about.title?.trim()" :content="d.about.title" />
+              <ThemeFormattedTitle v-else :title="d.about.titleFormatted" />
             </h2>
-            <div class="w-12 h-0.5 bg-mts-accent mb-6" />
-            <p class="font-body text-mts-text-secondary leading-relaxed mb-6">
-              <ThemedContentString :content="d.about.text" />
+            <p class="font-body text-sm uppercase tracking-wide text-muted/80 mb-3">
+              <ThemedContentString :content="d.about.subtitle" />
             </p>
+            <div class="w-12 h-0.5 bg-primary mb-6" />
+            <div class="space-y-4 mb-6">
+              <p class="font-body text-muted leading-relaxed">
+                <ThemedContentString :content="d.about.lead" />
+              </p>
+              <p class="font-body text-muted leading-relaxed">
+                <ThemedContentString :content="d.about.lead2" />
+              </p>
+            </div>
             <div class="mb-8">
               <span class="section-label"><ThemedContentString :content="d.trust.label" /></span>
-              <h3 class="font-display mt-3 text-xl text-mts-text">
+              <h3 class="font-display mt-3 text-xl text-body">
                 <ThemeFormattedTitle :title="d.trust.titleFormatted" />
               </h3>
-              <ul class="mt-4 space-y-2 font-body text-sm text-mts-text-secondary">
+              <ul class="mt-4 space-y-2 font-body text-sm text-muted">
                 <li v-for="(b, bi) in d.trust.bullets" :key="bi" class="flex gap-2">
-                  <span class="font-mono text-mts-accent">—</span>
+                  <span class="font-mono text-primary">—</span>
                   <span>{{ b }}</span>
                 </li>
               </ul>
@@ -385,7 +418,6 @@ function sectionShown(id: string): boolean {
             <ButtonLink :title="flattenEncodedOrPlain(d.about.more)" link="/about" />
           </div>
           <div v-if="aboutCarouselSlides.length" class="relative">
-            <CommonAccentCorners size="lg" bottom="bottom-5" />
             <ImageFadeCarousel :slides="aboutCarouselSlides" />
           </div>
         </div>
@@ -393,15 +425,15 @@ function sectionShown(id: string): boolean {
     </section>
 
       <!-- ===== SERVICES ===== -->
-      <section v-else-if="sid === 'services' && sectionShown('services') && visibleServiceCards.length" class="relative py-24 lg:py-32 overflow-hidden bg-mts-surface">
+      <section v-else-if="sid === 'services' && sectionShown('services') && visibleServiceCards.length" class="relative py-24 lg:py-32 overflow-hidden bg-bg-light">
       <div class="mts-content-wrap relative z-10">
         <div class="flex items-start justify-between mb-12">
           <div>
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-6 h-px bg-mts-accent" />
+              <div class="w-6 h-px bg-primary" />
               <span class="section-label"><ThemedContentString :content="d.services.label" /></span>
             </div>
-            <h2 class="font-display text-3xl lg:text-4xl text-mts-text break-words [text-wrap:pretty]">
+            <h2 class="font-display text-3xl lg:text-4xl text-body break-words [text-wrap:pretty]">
               <ThemeFormattedTitle :title="d.services.headingFormatted" />
             </h2>
           </div>
@@ -409,28 +441,39 @@ function sectionShown(id: string): boolean {
         </div>
 
         <div
-          class="grid gap-px bg-mts-border"
+          class="grid gap-6"
           :class="visibleServiceCards.length >= 3 ? 'md:grid-cols-3' : visibleServiceCards.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-lg'"
         >
           <div
             v-for="service in visibleServiceCards"
             :key="service.key"
-            class="overflow-hidden bg-mts-bg"
+            class="service-card overflow-hidden"
           >
-            <div class="aspect-[16/9] min-h-[11rem] sm:min-h-[13rem] overflow-hidden border-b border-mts-border">
+            <div class="aspect-[16/9] min-h-[11rem] sm:min-h-[13rem] overflow-hidden border-b border-border bg-bg-light">
               <img
+                v-if="service.image"
                 :src="service.image"
                 :alt="service.title"
                 class="h-full w-full object-cover brightness-[1.04] contrast-[1.03] saturate-[1.06]"
                 loading="lazy"
                 decoding="async"
               />
+              <div
+                v-else
+                class="flex h-full min-h-[11rem] items-center justify-center sm:min-h-[13rem]"
+              >
+                <component
+                  :is="resolveServiceIcon(service.iconKey)"
+                  class="h-14 w-14 text-primary/35"
+                  aria-hidden="true"
+                />
+              </div>
             </div>
             <div class="p-8">
-              <h3 class="font-display text-xl text-mts-text mb-3">
+              <h3 class="font-display text-xl text-body mb-3">
                 {{ service.title }}
               </h3>
-              <p class="font-body text-base text-mts-text-secondary mb-4">
+              <p class="font-body text-base text-muted mb-4">
                 {{ service.description }}
               </p>
               <NuxtLink :to="localePath(service.href)" class="mts-cta-link">
@@ -447,15 +490,15 @@ function sectionShown(id: string): boolean {
     </section>
 
       <!-- ===== PROCESS ===== -->
-      <section v-else-if="sid === 'process' && sectionShown('process')" class="relative border-t border-mts-border bg-mts-surface py-20 lg:py-28">
+      <section v-else-if="sid === 'process' && sectionShown('process')" class="relative border-t border-border bg-bg-light py-20 lg:py-28">
       <div class="relative z-10 mts-content-wrap">
         <div class="mx-auto mb-14 max-w-7xl text-center">
           <div class="mb-4 flex items-center justify-center gap-3">
-            <div class="h-px w-6 bg-mts-accent" />
+            <div class="h-px w-6 bg-primary" />
             <span class="section-label"><ThemedContentString :content="d.process.label" /></span>
-            <div class="h-px w-6 bg-mts-accent" />
+            <div class="h-px w-6 bg-primary" />
           </div>
-          <h2 class="font-display text-3xl text-mts-text lg:text-4xl break-words [text-wrap:pretty]">
+          <h2 class="font-display text-3xl text-body lg:text-4xl break-words [text-wrap:pretty]">
             <ThemeFormattedTitle :title="d.process.headingFormatted" />
           </h2>
         </div>
@@ -463,30 +506,30 @@ function sectionShown(id: string): boolean {
           <div
             v-for="(step, si) in d.process.steps"
             :key="step.title"
-            class="mx-auto flex max-w-sm flex-col items-center text-center md:max-w-none"
+            class="service-card mx-auto flex max-w-sm flex-col items-center p-8 text-center md:max-w-none"
           >
             <div class="mb-4 flex justify-center">
               <img :src="`/images/steps/${si + 1}.svg`" alt="" class="h-20 w-20 shrink-0 opacity-95" width="100" height="100" />
             </div>
-            <h3 class="font-display text-xl text-mts-text mb-2"><ThemedContentString :content="step.title" /></h3>
-            <p class="font-body text-base text-mts-text-secondary leading-relaxed"><ThemedContentString :content="step.text" /></p>
+            <h3 class="font-display text-xl text-body mb-2"><ThemedContentString :content="step.title" /></h3>
+            <p class="font-body text-base text-muted leading-relaxed"><ThemedContentString :content="step.text" /></p>
           </div>
         </div>
       </div>
     </section>
 
       <!-- ===== CTA ===== -->
-      <section v-else-if="sid === 'cta' && sectionShown('cta')" class="relative py-24 overflow-hidden bg-mts-bg">
+      <section v-else-if="sid === 'cta' && sectionShown('cta')" class="relative py-24 overflow-hidden bg-white">
       <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10 text-center">
         <div class="flex items-center justify-center gap-3 mb-4">
-          <div class="w-6 h-px bg-mts-accent" />
+          <div class="w-6 h-px bg-primary" />
             <span class="section-label"><ThemedContentString :content="d.cta.label" /></span>
-          <div class="w-6 h-px bg-mts-accent" />
+          <div class="w-6 h-px bg-primary" />
         </div>
-        <h2 class="font-display text-3xl lg:text-4xl text-mts-text mb-6">
+        <h2 class="font-display text-3xl lg:text-4xl text-body mb-6">
           <ThemeFormattedTitle :title="d.cta.titleFormatted" />
         </h2>
-        <p class="font-body text-mts-text-secondary mb-8 max-w-7xl mx-auto">
+        <p class="font-body text-muted mb-8 max-w-7xl mx-auto">
           <ThemedContentString :content="d.cta.text" />
         </p>
         <div class="flex justify-center items-center">
@@ -499,9 +542,11 @@ function sectionShown(id: string): boolean {
       <CommonCustomPageSectionsRender
         v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
         :sections="(d.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+        :page-crumb-items="customSectionCrumbItems"
       />
     </template>
 
     <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="home" />
+    </template>
   </div>
 </template>

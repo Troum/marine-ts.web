@@ -16,9 +16,18 @@ const api = useMarineApi()
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 
-const { data: cmsPage } = await useAsyncData('gallery-page-cms', async () => {
-  try { return await api.contentPages.getPublicBySlug('gallery-page') } catch { return null }
-}, { server: true })
+const { data: cmsPage } = await useAsyncData(
+  () => `gallery-page-cms-${locale.value}`,
+  async () => {
+    try {
+      return await api.contentPages.getPublicBySlug('gallery-page')
+    }
+    catch {
+      return null
+    }
+  },
+  { server: true, watch: [locale] },
+)
 
 const cms = computed<ListingPageData>(() => {
   const body = cmsPage.value?.body
@@ -43,6 +52,7 @@ const { data: slides, pending, error } = await useAsyncData(
   () => `gallery-items-${locale.value}`,
   () => api.gallery.getAll(),
   {
+    watch: [locale],
     default: () => [] as GalleryItem[],
   },
 )
@@ -125,19 +135,19 @@ function sectionShown(id: string): boolean {
 </script>
 
 <template>
-  <div class="bg-mts-bg">
+  <div class="bg-white">
     <ListingHeroShell :hero-image="cms.heroImage">
       <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-mts-accent" />
+          <div class="h-px w-6 bg-primary" />
           <span class="section-label">{{ t('pages.gallery.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
+        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
-        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
-        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+        <div class="mb-6 h-0.5 w-12 bg-primary" />
+        <p class="font-body text-lg leading-relaxed text-muted">
           <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
@@ -150,22 +160,22 @@ function sectionShown(id: string): boolean {
       >
         <div class="mts-content-wrap">
           <div v-if="pending" class="flex justify-center py-24">
-            <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
+            <Loader2 class="w-8 h-8 text-primary animate-spin" />
           </div>
-          <p v-else-if="error" class="font-body text-mts-text-secondary text-center py-12">
+          <p v-else-if="error" class="font-body text-muted text-center py-12">
             {{ t('pages.gallery.loadError') }}
           </p>
-          <p v-else-if="slidesList.length === 0" class="font-body text-mts-text-secondary text-center py-12">
+          <p v-else-if="slidesList.length === 0" class="font-body text-muted text-center py-12">
             {{ t('pages.gallery.empty') }}
           </p>
           <ul v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <li v-for="(item, index) in slidesList" :key="item.id">
               <button
                 type="button"
-                class="group relative w-full overflow-hidden border border-mts-border bg-mts-surface shadow-tech text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent focus-visible:ring-offset-2"
+                class="service-card group relative w-full overflow-hidden text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 @click="openAt(index)"
               >
-                <div class="aspect-[4/3] overflow-hidden bg-mts-bg">
+                <div class="aspect-[4/3] overflow-hidden bg-white">
                   <img
                     :src="item.src"
                     :alt="item.alt"
@@ -188,10 +198,16 @@ function sectionShown(id: string): boolean {
       <CommonCustomPageSectionsRender
         v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
         :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+        :page-crumb-items="crumbItems"
       />
     </template>
 
-    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="gallery" />
+    <CommonPageInquiryForm
+      v-if="cms.showInquiryForm"
+      source-page="gallery"
+      :hide-intro="cms.hideInquiryFormIntro === true"
+      :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+    />
 
     <Teleport to="body">
       <Transition

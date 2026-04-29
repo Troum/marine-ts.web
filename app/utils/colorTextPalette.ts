@@ -19,9 +19,11 @@ export const TEXT_COLORS: ColorOption[] = [
   { value: '#1c1c1e', label: 'Тема: Основной' },
   { value: '#6c757d', label: 'Тема: Вторичный' },
   { value: '#adb5bd', label: 'Тема: Приглушённый' },
+  { value: '#ffffff', label: 'Белый' },
   { value: '#de7879', label: 'Тема: Акцент' },
   { value: '#e89495', label: 'Тема: Акцент светлый' },
   { value: '#b85e5f', label: 'Тема: Акцент тёмный' },
+  { value: '#c14042', label: 'Тема: Красный #C14042' },
   { value: '#2ea3ff', label: 'Тема: Маркер' },
 ]
 
@@ -39,6 +41,7 @@ export const HIGHLIGHT_COLORS: ColorOption[] = [
   { value: '#ede9fe', label: 'Сиреневая' },
   { value: '#fce7f3', label: 'Малиновая' },
   { value: '#f3f4f6', label: 'Серая' },
+  { value: '#ffffff', label: 'Белая' },
 ]
 
 /** Поиск опции по hex-значению (или пустой строке) — для tooltips и активного состояния. */

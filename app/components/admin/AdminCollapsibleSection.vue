@@ -86,7 +86,7 @@ function onMoveDown(ev: Event) {
           <input
             type="checkbox"
             class="mts-checkbox"
-            :checked="visible === true"
+            :checked="props.visible === true"
             @change="onVisibilityChange"
           />
           Показывать

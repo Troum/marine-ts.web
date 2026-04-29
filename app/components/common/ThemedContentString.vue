@@ -17,7 +17,7 @@ const THEMED_INLINE_CONFIG: Config = {
    * если Tailwind не сгенерировал класс `text-mts-*`.
    * `<mark>` нужен для @tiptap/extension-highlight (фон выделения, multicolor).
    */
-  ALLOWED_ATTR: ['class', 'data-mts-tone', 'style'],
+  ALLOWED_ATTR: ['class', 'data-mts-tone', 'data-mts-font-weight', 'data-color', 'style'],
 }
 
 const parsedTft = computed<ThemeFormattedTitleModel | null>(() => {
@@ -48,7 +48,21 @@ const sanitizedHtml = computed(() => {
   if (!isHtml.value) {
     return ''
   }
-  return DOMPurify.sanitize(props.content, THEMED_INLINE_CONFIG)
+  const clean = DOMPurify.sanitize(props.content, THEMED_INLINE_CONFIG)
+    .replace(/<\/p>\s*<p[^>]*>/gi, '<br>')
+    .replace(/<\/?p[^>]*>/gi, '')
+  // Fallback for older/stripped Highlight markup: if mark has data-color but no style,
+  // restore inline background so highlight remains visible after sanitization.
+  return clean.replace(
+    /<mark\b([^>]*?)data-color=(['"])([^'"]+)\2([^>]*)>/gi,
+    (full, before, quote, color, after) => {
+      const attrs = `${before}${after}`
+      if (/style\s*=/i.test(attrs)) {
+        return full
+      }
+      return `<mark${before}data-color=${quote}${color}${quote}${after} style="background-color: ${color}; color: inherit">`
+    },
+  )
 })
 </script>
 
@@ -70,5 +84,21 @@ const sanitizedHtml = computed(() => {
   background-color: transparent;
   color: inherit;
   padding: 0;
+}
+/* Fallback: если у стороннего санитайзера отвалился только style, вес из data сохраняется. */
+.themed-inline-html :deep(span[data-mts-font-weight='400']) {
+  font-weight: 400;
+}
+.themed-inline-html :deep(span[data-mts-font-weight='500']) {
+  font-weight: 500;
+}
+.themed-inline-html :deep(span[data-mts-font-weight='600']) {
+  font-weight: 600;
+}
+.themed-inline-html :deep(span[data-mts-font-weight='700']) {
+  font-weight: 700;
+}
+.themed-inline-html :deep(span[data-mts-font-weight='800']) {
+  font-weight: 800;
 }
 </style>

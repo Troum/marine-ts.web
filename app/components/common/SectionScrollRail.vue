@@ -172,7 +172,7 @@ function onWheel(ev: WheelEvent) {
   if (wheelLocked.value) return
 
   if (wheelAccum.value !== 0 && Math.sign(wheelAccum.value) !== Math.sign(ev.deltaY)) {
-    // Быстрая смена направления не должна «залипать» на старом аккумуляторе.
+    // Быстрая смена направления не должна «залипать» на предыдущем аккумуляторе.
     wheelAccum.value = 0
   }
   wheelAccum.value += ev.deltaY
@@ -323,7 +323,7 @@ watch(
         v-for="(s, i) in sections"
         :key="s.key"
         type="button"
-        class="pointer-events-auto absolute z-20 inline-flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/60"
+        class="pointer-events-auto absolute z-20 inline-flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         :style="{ left: `${TRACK_X_PX}px`, top: `${markerY[i] ?? 0}px` }"
         :title="s.label"
         :aria-label="s.label"

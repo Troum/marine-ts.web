@@ -76,19 +76,19 @@ function sectionShown(id: string): boolean {
 </script>
 
 <template>
-  <div class="bg-mts-bg">
+  <div class="bg-white">
     <ListingHeroShell :hero-image="cms.heroImage">
       <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-mts-accent" />
+          <div class="h-px w-6 bg-primary" />
           <span class="section-label">{{ t('pages.news.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
+        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
-        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
-        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+        <div class="mb-6 h-0.5 w-12 bg-primary" />
+        <p class="font-body text-lg leading-relaxed text-muted">
           <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
@@ -97,38 +97,38 @@ function sectionShown(id: string): boolean {
     <template v-for="sid in sectionOrderEffective" :key="sid">
       <template v-if="sid === 'listing' && sectionShown('listing')">
         <div v-if="pending" class="flex justify-center py-24">
-          <Loader2 class="w-8 h-8 text-mts-accent animate-spin" />
+          <Loader2 class="w-8 h-8 text-primary animate-spin" />
         </div>
         <div v-else-if="error" class="text-center py-24">
-          <p class="font-body text-mts-text-secondary mb-4">{{ error }}</p>
+          <p class="font-body text-muted mb-4">{{ error }}</p>
           <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
         </div>
         <template v-else>
-          <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-mts-surface">
+          <section v-if="featuredNews" class="relative py-16 overflow-hidden bg-bg-light">
             <div class="mts-content-wrap relative z-10">
-              <div class="bg-mts-bg border border-mts-border p-8 lg:p-12">
+              <div class="service-card corner-accent p-8 lg:p-12">
                 <div class="flex items-center gap-3 mb-6">
-                  <span class="font-mono text-xs uppercase tracking-wide text-mts-accent bg-mts-accent/10 px-3 py-1">
+                  <span class="font-mono text-xs uppercase tracking-wide text-primary bg-primary/10 px-3 py-1">
                     {{ categoryLabel(featuredNews.category) }}
                   </span>
                   <span
                     v-if="featuredNews.featured"
-                    class="font-mono text-xs uppercase tracking-wide text-white bg-mts-accent px-3 py-1"
+                    class="font-mono text-xs uppercase tracking-wide text-white bg-primary px-3 py-1"
                   >
                     {{ t('pages.common.featured') }}
                   </span>
                 </div>
-                <h2 class="font-display text-2xl lg:text-3xl text-mts-text mb-4">
+                <h2 class="font-display text-2xl lg:text-3xl text-body mb-4">
                   <ThemedContentString :content="featuredNews.title" />
                 </h2>
-                <p class="font-body text-mts-text-secondary mb-6 max-w-7xl">
+                <p class="font-body text-muted mb-6 max-w-7xl">
                   <ThemedContentString :content="featuredNews.excerpt" />
                 </p>
                 <NuxtLink :to="localePath(`/news/${featuredNews.slug}`)" class="btn-primary mb-6 inline-flex">
                   {{ t('pages.common.readFull') }}
                   <MoveRight />
                 </NuxtLink>
-                <div class="flex items-center gap-6 text-mts-text-secondary">
+                <div class="flex items-center gap-6 text-muted">
                   <div class="flex items-center gap-2">
                     <Calendar class="w-4 h-4" />
                     <span class="font-body text-sm">{{ featuredNews.date }}</span>
@@ -148,17 +148,17 @@ function sectionShown(id: string): boolean {
                 <article
                   v-for="item in regularNews"
                   :key="item.id"
-                  class="card-tech p-8 border border-mts-border hover:border-mts-accent/30"
+                  class="service-card corner-accent p-8"
                 >
-                  <span class="font-mono text-xs uppercase tracking-wide text-mts-accent mb-3 inline-block">
+                  <span class="font-mono text-xs uppercase tracking-wide text-primary mb-3 inline-block">
                     {{ categoryLabel(item.category) }}
                   </span>
-                  <h3 class="font-display text-xl text-mts-text mb-3">
-                    <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-mts-accent transition-colors">
+                  <h3 class="font-display text-xl text-body mb-3">
+                    <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-primary transition-colors">
                       <ThemedContentString :content="item.title" />
                     </NuxtLink>
                   </h3>
-                  <p class="font-body text-sm text-mts-text-secondary mb-4 line-clamp-3">
+                  <p class="font-body text-sm text-muted mb-4 line-clamp-3">
                     <ThemedContentString :content="item.excerpt" />
                   </p>
                   <div class="flex justify-between items-center">
@@ -169,7 +169,7 @@ function sectionShown(id: string): boolean {
                       {{ t('pages.common.readMore') }}
                       <MoveRight class="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
                     </NuxtLink>
-                    <div class="flex items-center gap-4 text-xs text-mts-text-secondary">
+                    <div class="flex items-center gap-4 text-xs text-muted">
                       <span class="flex items-center gap-1">
                         <Calendar class="w-3.5 h-3.5" />
                         {{ item.date }}
@@ -190,9 +190,15 @@ function sectionShown(id: string): boolean {
       <CommonCustomPageSectionsRender
         v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
         :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+        :page-crumb-items="crumbItems"
       />
     </template>
 
-    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="news" />
+    <CommonPageInquiryForm
+      v-if="cms.showInquiryForm"
+      source-page="news"
+      :hide-intro="cms.hideInquiryFormIntro === true"
+      :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+    />
   </div>
 </template>

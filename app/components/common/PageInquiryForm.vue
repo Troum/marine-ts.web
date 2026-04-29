@@ -20,10 +20,12 @@ const props = withDefaults(
   defineProps<{
     /** Идентификатор страницы для админки (например home, about, crewing-management, services/hull). */
     sourcePage: string
-    /** Скрыть верхний блок (метка + заголовок + лид) — для страницы `/request`, где тот же текст уже в шаблоне страницы. */
+    /** Скрыть верхний блок (метка «Заявка», заголовок, лид) — `/request` или `hideInquiryFormIntro` в CMS листингов и line-страниц. */
     hideIntro?: boolean
+    /** Скрыть заголовок, подзаголовок и лид внутри белой карточки над полями (см. `hideInquiryFormCardHeading` в CMS line-страниц). */
+    hideFormCardHeading?: boolean
   }>(),
-  { hideIntro: false },
+  { hideIntro: false, hideFormCardHeading: false },
 )
 
 const { t } = useI18n()
@@ -163,44 +165,44 @@ function requiredServiceLabel(id: PageInquiryServiceId): string {
  *
  * Меняй эти константы — и стиль обновится сразу для всех инпутов.
  */
-const FIELD_LABEL_CLASS = 'block font-body text-xs text-mts-text-secondary'
+const FIELD_LABEL_CLASS = 'block font-body text-xs text-muted'
 const FIELD_INPUT_CLASS =
-  'mt-1.5 block w-full border-0 border-b border-mts-border bg-transparent px-0 py-2 font-body text-sm text-mts-text placeholder:text-mts-text-muted focus:border-mts-accent focus:outline-none focus:ring-0'
-const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
+  'mt-1.5 block w-full border-0 border-b border-border bg-transparent px-0 py-2 font-body text-sm text-body placeholder:text-muted focus:border-primary focus:outline-none focus:ring-0'
+const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
 </script>
 
 <template>
   <section
     id="page-inquiry"
-    class="relative scroll-mt-24 overflow-hidden border-t border-mts-border bg-mts-surface"
+    class="relative scroll-mt-24 overflow-hidden border-t border-border bg-bg-light"
     :class="hideIntro ? 'py-16 lg:py-20' : 'py-24 lg:py-32'"
   >
     <div class="relative z-10 mts-content-wrap">
       <div class="mx-auto w-full max-w-7xl">
         <div v-if="!hideIntro" class="mb-10">
           <div class="mb-4 flex items-center gap-3">
-            <div class="h-px w-8 bg-mts-accent" />
+            <div class="h-px w-8 bg-primary" />
             <span class="section-label">{{ t('pages.pageInquiry.sectionLabel') }}</span>
           </div>
-          <h2 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
-            {{ t('pages.pageInquiry.title') }}<span class="text-mts-accent">{{ t('pages.pageInquiry.titleAccent') }}</span
+          <h2 class="font-display text-2xl leading-tight text-body lg:text-3xl">
+            {{ t('pages.pageInquiry.title') }}<span class="text-primary">{{ t('pages.pageInquiry.titleAccent') }}</span
             >{{ t('pages.pageInquiry.titleEnd') }}
           </h2>
-          <div class="mb-6 mt-6 h-0.5 w-12 bg-mts-accent" />
-          <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+          <div class="mb-6 mt-6 h-0.5 w-12 bg-primary" />
+          <p class="font-body text-lg leading-relaxed text-muted">
             {{ t('pages.pageInquiry.lead') }}
           </p>
         </div>
 
-        <div class="border border-mts-border bg-mts-bg p-8 lg:p-10">
-          <div class="mb-8 text-center">
-            <h3 class="font-display text-xl text-mts-text lg:text-2xl">
+        <div class="card-tech p-8 lg:p-10">
+          <div v-if="!hideFormCardHeading" class="mb-8 text-center">
+            <h3 class="font-display text-xl text-body lg:text-2xl">
               {{ t('pages.pageInquiry.formTitle') }}
             </h3>
-            <p class="mt-3 font-body text-sm font-semibold text-mts-text lg:text-base">
+            <p class="mt-3 font-body text-sm font-semibold text-body lg:text-base">
               {{ t('pages.pageInquiry.formSubtitle') }}
             </p>
-            <p class="mt-2 font-body text-sm text-mts-text-secondary">
+            <p class="mt-2 font-body text-sm text-muted">
               {{ t('pages.pageInquiry.formLead') }}
             </p>
           </div>
@@ -362,9 +364,9 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
             </div>
 
             <CommonMarinCheckbox v-model="form.consent" required align="start">
-              <span class="font-body text-xs leading-snug text-mts-text-secondary">
+              <span class="font-body text-xs leading-snug text-muted">
                 {{ t('pages.pageInquiry.consent')
-                }}<NuxtLink to="/privacy" class="text-mts-accent hover:underline">{{
+                }}<NuxtLink to="/privacy" class="text-primary hover:underline">{{
                   t('pages.pageInquiry.consentLink')
                 }}</NuxtLink>
               </span>
@@ -391,8 +393,8 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
 
         <!-- Что будет после отправки + Срочно? / Email -->
         <div class="mt-8 grid gap-6 lg:grid-cols-2">
-          <div class="border border-mts-border bg-mts-bg p-8">
-            <h4 class="font-display text-xl text-mts-text">
+          <div class="card-tech p-8">
+            <h4 class="font-display text-xl text-body">
               {{ t('pages.pageInquiry.afterTitle') }}
             </h4>
             <ol class="mt-6 space-y-5">
@@ -406,41 +408,41 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-mts-text'
                 class="flex items-start gap-4"
               >
                 <span
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-mts-accent font-display text-base text-mts-accent"
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-primary font-display text-base text-primary"
                 >
                   {{ idx + 1 }}
                 </span>
-                <span class="font-body text-sm leading-relaxed text-mts-text">{{ step }}</span>
+                <span class="font-body text-sm leading-relaxed text-body">{{ step }}</span>
               </li>
             </ol>
           </div>
 
-          <div class="border border-mts-border bg-mts-bg p-8">
-            <h4 class="font-display text-xl text-mts-text">
+          <div class="card-tech p-8">
+            <h4 class="font-display text-xl text-body">
               {{ t('pages.pageInquiry.urgentTitle') }}
             </h4>
-            <p class="mt-3 font-body text-sm text-mts-text-secondary">
+            <p class="mt-3 font-body text-sm text-muted">
               {{ t('pages.pageInquiry.urgentLead') }}
             </p>
             <a
               v-if="phoneContact"
               :href="phoneContact.href ?? `tel:${phoneContact.value.replace(/[^+\d]/g, '')}`"
-              class="mt-2 inline-flex items-center gap-2 font-display text-lg text-mts-accent hover:underline"
+              class="mt-2 inline-flex items-center gap-2 font-display text-lg text-primary hover:underline"
             >
               <Phone class="h-4 w-4" />
               {{ phoneContact.value }}
             </a>
 
-            <h4 class="mt-8 font-display text-xl text-mts-text">
+            <h4 class="mt-8 font-display text-xl text-body">
               {{ t('pages.pageInquiry.noFormTitle') }}
             </h4>
-            <p class="mt-3 font-body text-sm text-mts-text-secondary">
+            <p class="mt-3 font-body text-sm text-muted">
               {{ t('pages.pageInquiry.noFormLead') }}
             </p>
             <a
               v-if="emailContact"
               :href="emailContact.href ?? `mailto:${emailContact.value}`"
-              class="mt-2 inline-flex items-center gap-2 font-body text-base text-mts-accent hover:underline"
+              class="mt-2 inline-flex items-center gap-2 font-body text-base text-primary hover:underline"
             >
               <Mail class="h-4 w-4" />
               {{ emailContact.value }}

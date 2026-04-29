@@ -3,6 +3,7 @@ import { Edit, Trash2, ArrowLeft, Loader2, ExternalLink, FileText } from 'lucide
 import type { ServiceItem } from '~/types'
 import { resolveServiceIcon } from '~/utils/serviceIcons'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
+import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 
 definePageMeta({
   layout: 'admin',
@@ -10,6 +11,7 @@ definePageMeta({
 })
 
 const api = useMarineApi()
+const localePath = useLocalePath()
 const { canManageContentPages } = useAdminPermissions()
 const { confirm } = useConfirmAction()
 const { show: showAdminAlert } = useAdminAlert()
@@ -137,7 +139,7 @@ async function handleDelete(id: number) {
             </tr>
             <tr v-for="s in services" :key="s.id" class="border-b border-mts-border last:border-0">
               <td class="p-4 font-mono text-sm text-mts-text-muted">#{{ s.id }}</td>
-              <td class="p-4 font-body text-sm text-mts-text">{{ s.title }}</td>
+              <td class="p-4 font-body text-sm text-mts-text">{{ flattenEncodedOrPlain(s.title) }}</td>
               <td class="p-4">
                 <div class="flex items-center gap-2">
                   <div class="flex h-9 w-9 shrink-0 items-center justify-center border border-mts-border bg-mts-bg">
@@ -151,7 +153,7 @@ async function handleDelete(id: number) {
                 <div class="flex flex-wrap items-center gap-2">
                   <NuxtLink
                     v-if="s.contentPage?.slug"
-                    :to="`/services/${s.contentPage.slug}`"
+                    :to="localePath(`/${s.contentPage.slug}`)"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="inline-flex items-center gap-1 font-mono text-[10px] uppercase text-mts-accent hover:underline"

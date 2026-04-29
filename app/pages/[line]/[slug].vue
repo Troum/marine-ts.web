@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { Loader2 } from 'lucide-vue-next'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
-import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
+import { contentPageUsesHeroBreadcrumbs, contentPageSectionsAreRenderable, parseContentPageBody, partitionContentPageSectionsForArticle } from '~/utils/contentPageBody'
+import { flattenEncodedOrPlain, plainMetaString } from '~/utils/adminThemedTextCodec'
 import {
   isLineMarketingPageSlug,
   LINE_MARKETING_PAGE_LAYOUT,
@@ -39,13 +38,18 @@ const { data: page, pending } = await useAsyncData(
   { watch: [childSlug, locale] },
 )
 
-const bodyHtml = computed(() => {
-  const body = page.value?.body
-  if (!body) {
-    return ''
-  }
-  return contentBodyToSafeHtml(body)
-})
+const parsedBody = computed(() => parseContentPageBody(page.value?.body))
+
+const bodyHtml = computed(() => contentBodyToSafeHtml(parsedBody.value.articleHtml))
+
+const sectionPartition = computed(() => partitionContentPageSectionsForArticle(parsedBody.value.customSections))
+const topCustomSections = computed(() => sectionPartition.value.beforeArticle)
+const afterArticleCustomSections = computed(() => sectionPartition.value.afterArticle)
+
+const showTopCustomSections = computed(() => contentPageSectionsAreRenderable(topCustomSections.value))
+const showAfterArticleSections = computed(() => contentPageSectionsAreRenderable(afterArticleCustomSections.value))
+
+const showArticleBreadcrumbs = computed(() => !contentPageUsesHeroBreadcrumbs(topCustomSections.value))
 
 const parentNavLabel = computed(() => {
   const s = parentSlug.value
@@ -65,7 +69,7 @@ const crumbItems = computed(() => {
   if (!p) {
     return breadcrumbs(parentCrumb)
   }
-  return breadcrumbs(parentCrumb, { label: p.title })
+  return breadcrumbs(parentCrumb, { label: flattenEncodedOrPlain(p.title).trim() || childSlug.value })
 })
 
 watchEffect(() => {
@@ -73,54 +77,38 @@ watchEffect(() => {
   if (!item) {
     return
   }
+  const docTitle = plainMetaString(item.seoTitle) || plainMetaString(item.title) || childSlug.value
+  const desc = plainMetaString(item.seoDescription) || plainMetaString(item.excerpt)
   useSeoMeta({
-    title: item.seoTitle || item.title,
-    description: item.seoDescription || item.excerpt || undefined,
-    keywords: item.seoKeywords || undefined,
+    title: docTitle,
+    description: desc || undefined,
+    keywords: plainMetaString(item.seoKeywords) || undefined,
   })
 })
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
-    <div v-if="pending" class="flex justify-center py-24">
-      <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
-    </div>
-    <div v-else-if="!page" class="mts-content-wrap py-24 text-center">
-      <div class="mx-auto max-w-7xl">
-        <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundPage') }}</p>
-        <NuxtLink
-          v-if="isLineMarketingPageSlug(parentSlug)"
-          :to="localePath(`/${parentSlug}`)"
-          class="btn-primary inline-flex"
-          >{{ t('pages.common.backToLinePage', { name: parentNavLabel }) }}</NuxtLink
-        >
-      </div>
-    </div>
-    <article v-else class="relative overflow-hidden pb-24">
-      <div class="relative z-10 mts-content-wrap">
-        <div class="mx-auto max-w-7xl">
-          <Breadcrumbs class="mb-8" :items="crumbItems" />
-
-          <h1 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
-            <ThemedContentString :content="page.title" />
-          </h1>
-
-          <p
-            v-if="page.excerpt"
-            class="mt-8 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary"
-          >
-            <ThemedContentString :content="page.excerpt" />
-          </p>
-
-          <div v-if="bodyHtml" class="mts-markdown mt-10" v-html="bodyHtml" />
-        </div>
-      </div>
-
-      <CommonPageInquiryForm
-        v-if="page.showInquiryForm && isLineMarketingPageSlug(parentSlug)"
-        :source-page="`${parentSlug}/${childSlug}`"
-      />
-    </article>
-  </div>
+  <CommonPublicContentPageDetail
+    :pending="pending"
+    :page="page"
+    :body-html="bodyHtml"
+    :show-top-custom-sections="showTopCustomSections"
+    :top-custom-sections="topCustomSections"
+    :show-after-article-sections="showAfterArticleSections"
+    :after-article-custom-sections="afterArticleCustomSections"
+    :show-article-breadcrumbs="showArticleBreadcrumbs"
+    :crumb-items="crumbItems"
+    :inquiry-source-page="`${parentSlug}/${childSlug}`"
+    :inquiry-enabled="isLineMarketingPageSlug(parentSlug)"
+  >
+    <template #not-found>
+      <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundPage') }}</p>
+      <NuxtLink
+        v-if="isLineMarketingPageSlug(parentSlug)"
+        :to="localePath(`/${parentSlug}`)"
+        class="btn-primary inline-flex"
+        >{{ t('pages.common.backToLinePage', { name: parentNavLabel }) }}</NuxtLink
+      >
+    </template>
+  </CommonPublicContentPageDetail>
 </template>

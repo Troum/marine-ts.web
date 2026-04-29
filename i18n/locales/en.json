@@ -272,6 +272,7 @@
       "heroEnd": " services",
       "heroLead": "We deliver end-to-end maintenance and repair solutions for vessels of any type and size.",
       "loadError": "Could not load services. Please refresh the page later.",
+      "empty": "This section will be filled in soon.",
       "ctaConsult": "Request a consultation",
       "materialsLabel": "Resources",
       "moreAbout": "More about our services"
@@ -298,6 +299,7 @@
       "filterAll": "All projects",
       "loadError": "Could not load projects",
       "emptyCategory": "No projects in this category yet",
+      "emptyList": "No projects yet.",
       "ctaTitle": "Need an estimate for your vessel?",
       "ctaButton": "Send a request",
       "statsSep": ": ",

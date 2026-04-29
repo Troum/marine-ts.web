@@ -10,11 +10,11 @@ import {
   mergeAboutPageData,
   syncStructuralFields,
 } from '~/utils/aboutPageDefaults'
+import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { useConfirm } from '~/composables/useConfirmAction'
-import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
-const ICON_OPTIONS = getAllLucideAdminIconOptions()
+type CardSectionKey = 'sec2History' | 'sec3Technical' | 'sec4Crewing' | 'sec5Mission'
 
 definePageMeta({
   layout: 'admin',
@@ -31,31 +31,66 @@ const existingId = ref<number | null>(null)
 const loading = ref(true)
 const saving = ref(false)
 
-const data = ref<Record<MarineContentLocale, AboutPageData>>({
-  ru: defaultAboutData('ru'),
-  en: defaultAboutData('en'),
-})
+function normalizeRich(s: string) {
+  return incomingCmsValueToHtml(s ?? '')
+}
+
+function normalizeAboutRichEditorsPayload(d: AboutPageData) {
+  d.sec1Hero.title = normalizeRich(d.sec1Hero.title ?? '')
+  d.sec1Hero.body = normalizeRich(d.sec1Hero.body ?? '')
+  d.sec2History.title = normalizeRich(d.sec2History.title ?? '')
+  d.sec2History.body = normalizeRich(d.sec2History.body ?? '')
+  d.sec2History.cards.forEach((c) => {
+    c.title = normalizeRich(c.title ?? '')
+    c.text = normalizeRich(c.text ?? '')
+  })
+  d.sec3Technical.title = normalizeRich(d.sec3Technical.title ?? '')
+  d.sec3Technical.lead = normalizeRich(d.sec3Technical.lead ?? '')
+  d.sec3Technical.lead2 = normalizeRich(d.sec3Technical.lead2 ?? '')
+  d.sec3Technical.cards.forEach((c) => {
+    c.title = normalizeRich(c.title ?? '')
+    c.text = normalizeRich(c.text ?? '')
+  })
+  d.sec4Crewing.title = normalizeRich(d.sec4Crewing.title ?? '')
+  d.sec4Crewing.lead = normalizeRich(d.sec4Crewing.lead ?? '')
+  d.sec4Crewing.lead2 = normalizeRich(d.sec4Crewing.lead2 ?? '')
+  d.sec4Crewing.cards.forEach((c) => {
+    c.title = normalizeRich(c.title ?? '')
+    c.text = normalizeRich(c.text ?? '')
+  })
+  d.sec5Mission.title = normalizeRich(d.sec5Mission.title ?? '')
+  d.sec5Mission.body = normalizeRich(d.sec5Mission.body ?? '')
+  d.sec5Mission.cards.forEach((c) => {
+    c.title = normalizeRich(c.title ?? '')
+    c.text = normalizeRich(c.text ?? '')
+  })
+  d.sec6Closing.title = normalizeRich(d.sec6Closing.title ?? '')
+  d.sec6Closing.body = normalizeRich(d.sec6Closing.body ?? '')
+}
+
+function initialAboutAdminData(): Record<MarineContentLocale, AboutPageData> {
+  const ru = defaultAboutData('ru')
+  const en = defaultAboutData('en')
+  normalizeAboutRichEditorsPayload(ru)
+  normalizeAboutRichEditorsPayload(en)
+  return { ru, en }
+}
+
+const data = ref<Record<MarineContentLocale, AboutPageData>>(initialAboutAdminData())
 
 const d = computed(() => data.value[localeTab.value])
 
 const collapsed = ref<Record<string, boolean>>({
-  hero: false,
-  ecosystem: true,
-  mission: true,
-  why: true,
-  stats: true,
+  sec1: false,
+  sec2: true,
+  sec3: true,
+  sec4: true,
+  sec5: true,
+  sec6: true,
   geography: true,
   certificates: true,
 })
 
-function toggle(section: string) {
-  collapsed.value[section] = !collapsed.value[section]
-}
-
-/**
- * Эффективный порядок секций (без hero) с учётом сохранённого `sectionOrder`,
- * актуальных кастомных секций и дефолтов. Используется для inline-контролов.
- */
 const effectiveSectionOrder = computed<string[]>(() => {
   const cur = data.value[localeTab.value]
   return resolveSectionOrder(cur.sectionOrder, ABOUT_SECTION_DEFAULT_ORDER, cur.customSections)
@@ -66,10 +101,15 @@ function sectionVisible(id: string): boolean {
 }
 
 function setSectionVisible(id: string, v: boolean) {
+  const next: Record<MarineContentLocale, AboutPageData> = { ...data.value }
   for (const loc of MARINE_CONTENT_LOCALES) {
-    const cur = data.value[loc].sectionVisibility ?? {}
-    data.value[loc].sectionVisibility = { ...cur, [id]: v }
+    const cur = next[loc]
+    next[loc] = {
+      ...cur,
+      sectionVisibility: { ...(cur.sectionVisibility ?? {}), [id]: v },
+    }
   }
+  data.value = next
 }
 
 function indexInOrder(id: string): number {
@@ -87,14 +127,19 @@ function moveSection(id: string, delta: number) {
   const order = effectiveSectionOrder.value
   const idx = order.indexOf(id)
   if (idx < 0) return
-  const next = moveOrderItem(order, idx, delta)
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].sectionOrder = [...next]
+  const nextOrder = moveOrderItem(order, idx, delta)
+  const ru = data.value.ru
+  const en = data.value.en
+  data.value = {
+    ru: { ...ru, sectionOrder: [...nextOrder] },
+    en: { ...en, sectionOrder: [...nextOrder] },
   }
 }
 
+/** Нумерация после шести основных секций на сайте (7, 8…). */
 function sectionTitle(id: string): string {
-  const pos = indexInOrder(id) + 2
+  const idx = indexInOrder(id)
+  const pos = 7 + Math.max(0, idx)
   const label = ABOUT_SECTION_ADMIN_LABELS[id as keyof typeof ABOUT_SECTION_ADMIN_LABELS] ?? id
   return `${pos}. ${label}`
 }
@@ -110,10 +155,13 @@ onMounted(async () => {
         if (body) {
           try {
             const parsed = JSON.parse(body)
-            if (parsed?.hero) {
+            if (parsed && typeof parsed === 'object' && ('sec1Hero' in parsed || 'hero' in parsed)) {
               data.value[loc] = mergeAboutPageData(loc, parsed)
+              normalizeAboutRichEditorsPayload(data.value[loc])
             }
-          } catch { /* not JSON, keep defaults */ }
+          } catch {
+            /* not JSON, keep defaults */
+          }
         }
       }
     }
@@ -124,81 +172,60 @@ onMounted(async () => {
   }
 })
 
-// --- list operations ---
-function addService() {
+function addRichCard(section: CardSectionKey) {
   for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].ecosystem.services.push({ icon: 'Wrench', title: '', text: '' })
+    data.value[loc][section].cards.push({ title: '', text: '' })
   }
 }
-async function removeService(i: number) {
+
+async function removeRichCard(section: CardSectionKey, i: number) {
   const ok = await confirm({
-    message: 'Удалить эту карточку сервиса?',
+    message: 'Удалить эту карточку?',
     confirmLabel: 'Удалить',
     variant: 'danger',
   })
-  if (!ok) {
-    return
-  }
+  if (!ok) return
   for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].ecosystem.services.splice(i, 1)
+    data.value[loc][section].cards.splice(i, 1)
   }
 }
-function addPrinciple() {
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].mission.principles.push({ icon: 'ShieldCheck', text: '' })
-  }
-}
-async function removePrinciple(i: number) {
-  const ok = await confirm({
-    message: 'Удалить этот принцип?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].mission.principles.splice(i, 1)
-  }
-}
+
 function addLocation() {
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].geography.locations.push({ lng: 0, lat: 0, labelOnRight: true, name: '' })
   }
 }
+
 async function removeLocation(i: number) {
   const ok = await confirm({
     message: 'Удалить эту точку на карте?',
     confirmLabel: 'Удалить',
     variant: 'danger',
   })
-  if (!ok) {
-    return
-  }
+  if (!ok) return
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].geography.locations.splice(i, 1)
   }
 }
+
 function addCertificate() {
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].certificates.items.push({ name: '', desc: '', fileUrl: '' })
   }
 }
+
 async function removeCertificate(i: number) {
   const ok = await confirm({
     message: 'Удалить этот сертификат из списка?',
     confirmLabel: 'Удалить',
     variant: 'danger',
   })
-  if (!ok) {
-    return
-  }
+  if (!ok) return
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].certificates.items.splice(i, 1)
   }
 }
 
-// --- file upload for certificates ---
 const uploadingIdx = ref<number | null>(null)
 
 async function uploadCertFile(idx: number) {
@@ -226,18 +253,20 @@ async function uploadCertFile(idx: number) {
   input.click()
 }
 
-// --- save ---
 async function submit() {
   syncStructuralFields(data.value, localeTab.value)
 
   saving.value = true
   try {
-    const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }>
+    const translations = {} as Record<
+      MarineContentLocale,
+      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }
+    >
     for (const loc of MARINE_CONTENT_LOCALES) {
       translations[loc] = {
         title: loc === 'ru' ? 'О компании' : 'About us',
         excerpt: '',
-        body: JSON.stringify(data.value[loc]),
+        body: JSON.stringify({ ...data.value[loc], aboutVersion: 2 }),
         seoTitle: '',
         seoDescription: '',
         seoKeywords: '',
@@ -302,200 +331,302 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
       <div v-else class="space-y-6">
         <AdminLocaleTabs v-model="localeTab" label="Язык контента" />
 
-        <!-- 1. HERO — фиксирована, не скрывается, не переносится. -->
+        <!-- 1. Hero -->
         <AdminCollapsibleSection
-          title="1. Начальное описание (Hero)"
-          :collapsed="collapsed.hero"
-          @update:collapsed="(v) => (collapsed.hero = v)"
+          title="1. Hero / Первый экран"
+          :collapsed="collapsed.sec1"
+          @update:collapsed="(v) => (collapsed.sec1 = v)"
         >
           <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
-            <AdminHeroImageField
-              v-model="d.introImage"
-              label="Фон секции «О компании»"
-              hint="Блок с двумя абзацами под тем же заголовком, что и hero. Если пусто — используется изображение по умолчанию из макета."
-            />
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.hero.title" :multiline="false" />
-              <p class="mt-1 font-body text-xs text-mts-text-secondary">
-                Тот же редактор, что у абзацев: палитра текста и подсветки, тона темы через разметку.
-              </p>
+              <AdminThemedTextField v-model="d.sec1Hero.title" />
             </div>
             <div>
-              <label :class="sectionLabel">Подзаголовок</label>
-              <AdminThemedTextField v-model="d.hero.subtitle" :multiline="false" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Абзац 1</label>
-              <AdminThemedTextField v-model="d.hero.lead" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Абзац 2 (выделенный)</label>
-              <AdminThemedTextField v-model="d.hero.lead2" />
+              <label :class="sectionLabel">Абзац</label>
+              <AdminRichTextEditor
+                :model-value="d.sec1Hero.body"
+                :disabled="saving"
+                placeholder="Основной текст первого экрана…"
+                @update:model-value="d.sec1Hero.body = $event"
+              />
             </div>
           </div>
         </AdminCollapsibleSection>
 
-        <!-- ECOSYSTEM -->
+        <!-- 2. История и география -->
         <AdminCollapsibleSection
-          :title="sectionTitle('ecosystem')"
-          :collapsed="collapsed.ecosystem"
-          :visible="sectionVisible('ecosystem')"
-          :can-move-up="canMove('ecosystem', -1)"
-          :can-move-down="canMove('ecosystem', 1)"
-          @update:collapsed="(v) => (collapsed.ecosystem = v)"
-          @update:visible="(v) => setSectionVisible('ecosystem', v)"
-          @move-up="moveSection('ecosystem', -1)"
-          @move-down="moveSection('ecosystem', 1)"
+          title="2. История и география"
+          :collapsed="collapsed.sec2"
+          :visible="sectionVisible('sec2History')"
+          @update:collapsed="(v) => (collapsed.sec2 = v)"
+          @update:visible="(v) => setSectionVisible('sec2History', v)"
         >
           <div class="space-y-4">
             <AdminHeroImageField
-              v-model="d.ecosystemImage"
-              label="Фон секции «Экосистема сервисов»"
-              hint="Если пусто — изображение по умолчанию из макета."
+              v-model="d.historyImage"
+              label="Фон секции"
+              hint="Если пусто — светлый фон без фотографии."
             />
             <div>
-              <label :class="sectionLabel">Заголовок секции</label>
-              <AdminThemedTextField v-model="d.ecosystem.title" :multiline="false" />
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.sec2History.title" :multiline="false" />
             </div>
             <div>
-              <label :class="sectionLabel">Вводный текст</label>
-              <AdminThemedTextField v-model="d.ecosystem.lead" />
+              <label :class="sectionLabel">Абзац</label>
+              <AdminRichTextEditor
+                :model-value="d.sec2History.body"
+                :disabled="saving"
+                placeholder="Вводный текст секции…"
+                @update:model-value="d.sec2History.body = $event"
+              />
             </div>
             <div class="space-y-4">
-              <div v-for="(svc, i) in d.ecosystem.services" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
+              <div
+                v-for="(c, i) in d.sec2History.cards"
+                :key="`h-${i}`"
+                class="border border-mts-border p-4 bg-mts-bg/50 space-y-3"
+              >
                 <div class="flex items-center justify-between">
-                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Сервис {{ i + 1 }}</span>
-                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeService(i)">
+                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Карточка {{ i + 1 }}</span>
+                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeRichCard('sec2History', i)">
                     <Trash2 class="w-4 h-4" />
                   </button>
                 </div>
-                <div class="grid md:grid-cols-[12rem_1fr] gap-3">
-                  <div>
-                    <label :class="sectionLabel">Иконка</label>
-                    <AdminSelect v-model="svc.icon" :options="ICON_OPTIONS" />
-                  </div>
-                  <div>
-                    <label :class="sectionLabel">Название</label>
-                    <AdminThemedTextField v-model="svc.title" :multiline="false" />
-                  </div>
+                <div>
+                  <label :class="sectionLabel">Заголовок карточки</label>
+                  <AdminThemedTextField v-model="c.title" :multiline="false" />
                 </div>
                 <div>
-                  <label :class="sectionLabel">Описание</label>
-                  <AdminThemedTextField v-model="svc.text" />
+                  <label :class="sectionLabel">Текст</label>
+                  <AdminRichTextEditor
+                    :model-value="c.text"
+                    :disabled="saving"
+                    placeholder="Текст карточки…"
+                    @update:model-value="c.text = $event"
+                  />
                 </div>
               </div>
-              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addService">
-                <Plus class="w-4 h-4" /> Добавить сервис
+              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addRichCard('sec2History')">
+                <Plus class="w-4 h-4" /> Добавить карточку
               </button>
             </div>
           </div>
         </AdminCollapsibleSection>
 
-        <!-- MISSION -->
+        <!-- 3. Технический менеджмент -->
         <AdminCollapsibleSection
-          :title="sectionTitle('mission')"
-          :collapsed="collapsed.mission"
-          :visible="sectionVisible('mission')"
-          :can-move-up="canMove('mission', -1)"
-          :can-move-down="canMove('mission', 1)"
-          @update:collapsed="(v) => (collapsed.mission = v)"
-          @update:visible="(v) => setSectionVisible('mission', v)"
-          @move-up="moveSection('mission', -1)"
-          @move-down="moveSection('mission', 1)"
+          title="3. Технический менеджмент"
+          :collapsed="collapsed.sec3"
+          :visible="sectionVisible('sec3Technical')"
+          @update:collapsed="(v) => (collapsed.sec3 = v)"
+          @update:visible="(v) => setSectionVisible('sec3Technical', v)"
+        >
+          <div class="space-y-4">
+            <AdminHeroImageField v-model="d.technicalImage" label="Фон секции" />
+            <div>
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.sec3Technical.title" :multiline="false" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Абзац 1</label>
+              <AdminRichTextEditor
+                :model-value="d.sec3Technical.lead"
+                :disabled="saving"
+                placeholder="Абзац 1…"
+                @update:model-value="d.sec3Technical.lead = $event"
+              />
+            </div>
+            <div>
+              <label :class="sectionLabel">Абзац 2</label>
+              <AdminRichTextEditor
+                :model-value="d.sec3Technical.lead2"
+                :disabled="saving"
+                placeholder="Абзац 2…"
+                @update:model-value="d.sec3Technical.lead2 = $event"
+              />
+            </div>
+            <div class="space-y-4">
+              <div
+                v-for="(c, i) in d.sec3Technical.cards"
+                :key="`t-${i}`"
+                class="border border-mts-border p-4 bg-mts-bg/50 space-y-3"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Преимущество {{ i + 1 }}</span>
+                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeRichCard('sec3Technical', i)">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+                <div>
+                  <label :class="sectionLabel">Заголовок</label>
+                  <AdminThemedTextField v-model="c.title" :multiline="false" />
+                </div>
+                <div>
+                  <label :class="sectionLabel">Текст</label>
+                  <AdminRichTextEditor
+                    :model-value="c.text"
+                    :disabled="saving"
+                    @update:model-value="c.text = $event"
+                  />
+                </div>
+              </div>
+              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addRichCard('sec3Technical')">
+                <Plus class="w-4 h-4" /> Добавить карточку
+              </button>
+            </div>
+          </div>
+        </AdminCollapsibleSection>
+
+        <!-- 4. Крюинг -->
+        <AdminCollapsibleSection
+          title="4. Крюинг"
+          :collapsed="collapsed.sec4"
+          :visible="sectionVisible('sec4Crewing')"
+          @update:collapsed="(v) => (collapsed.sec4 = v)"
+          @update:visible="(v) => setSectionVisible('sec4Crewing', v)"
         >
           <div class="space-y-4">
             <AdminHeroImageField
-              v-model="d.missionImage"
-              label="Фон секции «Миссия»"
-              hint="Отдельный кадр в Figma. Если пусто — изображение по умолчанию из макета."
+              v-model="d.crewingImage"
+              label="Фон секции (необязательно)"
+              hint="Без изображения — светлый фон, как у других секций."
             />
             <div>
-              <label :class="sectionLabel">Заголовок секции</label>
-              <AdminThemedTextField v-model="d.mission.title" :multiline="false" />
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.sec4Crewing.title" :multiline="false" />
             </div>
             <div>
-              <label :class="sectionLabel">Вводный текст</label>
-              <AdminThemedTextField v-model="d.mission.lead" />
+              <label :class="sectionLabel">Абзац 1</label>
+              <AdminRichTextEditor
+                :model-value="d.sec4Crewing.lead"
+                :disabled="saving"
+                @update:model-value="d.sec4Crewing.lead = $event"
+              />
             </div>
-            <div class="space-y-3">
-              <div v-for="(p, i) in d.mission.principles" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 flex items-start gap-4">
-                <div class="w-44 shrink-0">
-                  <label :class="sectionLabel">Иконка</label>
-                  <AdminSelect v-model="p.icon" :options="ICON_OPTIONS" />
+            <div>
+              <label :class="sectionLabel">Абзац 2</label>
+              <AdminRichTextEditor
+                :model-value="d.sec4Crewing.lead2"
+                :disabled="saving"
+                @update:model-value="d.sec4Crewing.lead2 = $event"
+              />
+            </div>
+            <div class="space-y-4">
+              <div
+                v-for="(c, i) in d.sec4Crewing.cards"
+                :key="`cr-${i}`"
+                class="border border-mts-border p-4 bg-mts-bg/50 space-y-3"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Карточка {{ i + 1 }}</span>
+                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeRichCard('sec4Crewing', i)">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
                 </div>
-                <div class="flex-1">
-                  <label :class="sectionLabel">Текст принципа</label>
-                  <AdminThemedTextField v-model="p.text" />
+                <div>
+                  <label :class="sectionLabel">Заголовок</label>
+                  <AdminThemedTextField v-model="c.title" :multiline="false" />
                 </div>
-                <button type="button" class="mt-6 text-mts-text-secondary hover:text-red-500 transition-colors" @click="removePrinciple(i)">
-                  <Trash2 class="w-4 h-4" />
-                </button>
+                <div>
+                  <label :class="sectionLabel">Текст</label>
+                  <AdminRichTextEditor
+                    :model-value="c.text"
+                    :disabled="saving"
+                    @update:model-value="c.text = $event"
+                  />
+                </div>
               </div>
-              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addPrinciple">
+              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addRichCard('sec4Crewing')">
+                <Plus class="w-4 h-4" /> Добавить карточку
+              </button>
+            </div>
+          </div>
+        </AdminCollapsibleSection>
+
+        <!-- 5. Миссия -->
+        <AdminCollapsibleSection
+          title="5. Миссия"
+          :collapsed="collapsed.sec5"
+          :visible="sectionVisible('sec5Mission')"
+          @update:collapsed="(v) => (collapsed.sec5 = v)"
+          @update:visible="(v) => setSectionVisible('sec5Mission', v)"
+        >
+          <div class="space-y-4">
+            <AdminHeroImageField v-model="d.missionImage" label="Фон секции" />
+            <div>
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.sec5Mission.title" :multiline="false" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Абзац</label>
+              <AdminRichTextEditor
+                :model-value="d.sec5Mission.body"
+                :disabled="saving"
+                @update:model-value="d.sec5Mission.body = $event"
+              />
+            </div>
+            <div class="space-y-4">
+              <div
+                v-for="(c, i) in d.sec5Mission.cards"
+                :key="`m-${i}`"
+                class="border border-mts-border p-4 bg-mts-bg/50 space-y-3"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Принцип {{ i + 1 }}</span>
+                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeRichCard('sec5Mission', i)">
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </div>
+                <div>
+                  <label :class="sectionLabel">Заголовок</label>
+                  <AdminThemedTextField v-model="c.title" :multiline="false" />
+                </div>
+                <div>
+                  <label :class="sectionLabel">Текст</label>
+                  <AdminRichTextEditor
+                    :model-value="c.text"
+                    :disabled="saving"
+                    @update:model-value="c.text = $event"
+                  />
+                </div>
+              </div>
+              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addRichCard('sec5Mission')">
                 <Plus class="w-4 h-4" /> Добавить принцип
               </button>
             </div>
           </div>
         </AdminCollapsibleSection>
 
-        <!-- WHY MTS -->
+        <!-- 6. CTA / Закрытие -->
         <AdminCollapsibleSection
-          :title="sectionTitle('why')"
-          :collapsed="collapsed.why"
-          :visible="sectionVisible('why')"
-          :can-move-up="canMove('why', -1)"
-          :can-move-down="canMove('why', 1)"
-          @update:collapsed="(v) => (collapsed.why = v)"
-          @update:visible="(v) => setSectionVisible('why', v)"
-          @move-up="moveSection('why', -1)"
-          @move-down="moveSection('why', 1)"
+          title="6. CTA / Закрытие"
+          :collapsed="collapsed.sec6"
+          :visible="sectionVisible('sec6Closing')"
+          @update:collapsed="(v) => (collapsed.sec6 = v)"
+          @update:visible="(v) => setSectionVisible('sec6Closing', v)"
         >
           <div class="space-y-4">
             <p class="font-body text-xs text-mts-text-secondary">
-              По макету Figma эта секция использует сплошной фон #0B1F2A, без фотографии — поэтому поле фонового изображения отсутствует.
+              Фон секции на сайте — светлый, без отдельного поля изображения.
             </p>
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.why.title" :multiline="false" />
+              <AdminThemedTextField v-model="d.sec6Closing.title" :multiline="false" />
             </div>
             <div>
-              <label :class="sectionLabel">Текст</label>
-              <AdminThemedTextField v-model="d.why.text" />
-            </div>
-            <div>
-              <label :class="sectionLabel">Текст кнопки CTA</label>
-              <AdminThemedTextField v-model="d.why.ctaText" :multiline="false" />
+              <label :class="sectionLabel">Абзац</label>
+              <AdminRichTextEditor
+                :model-value="d.sec6Closing.body"
+                :disabled="saving"
+                @update:model-value="d.sec6Closing.body = $event"
+              />
             </div>
           </div>
         </AdminCollapsibleSection>
 
-        <!-- STATS — отдельная секция «Компания в цифрах» (Figma: Rectangle 51) -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('stats')"
-          :collapsed="collapsed.stats"
-          :visible="sectionVisible('stats')"
-          :can-move-up="canMove('stats', -1)"
-          :can-move-down="canMove('stats', 1)"
-          @update:collapsed="(v) => (collapsed.stats = v)"
-          @update:visible="(v) => setSectionVisible('stats', v)"
-          @move-up="moveSection('stats', -1)"
-          @move-down="moveSection('stats', 1)"
-        >
-          <div class="space-y-4">
-            <AdminHeroImageField
-              v-model="d.statsImage"
-              label="Фон секции «Компания в цифрах»"
-              hint="Поверх этой фотографии в публичной части накладывается диагональный градиент из макета. Если пусто — изображение по умолчанию из Figma."
-            />
-            <p class="font-body text-xs text-mts-text-secondary">
-              Сами значения и подписи (150+, 15+ и т.п.) сейчас задаются в коде/локалях. Если потребуется редактировать их через админку — сообщите.
-            </p>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- GEOGRAPHY -->
+        <!-- География -->
         <AdminCollapsibleSection
           :title="sectionTitle('geography')"
           :collapsed="collapsed.geography"
@@ -526,9 +657,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.geography.lead" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">
-              Долгота (lng, -180…180) и широта (lat, -90…90) — реальные географические координаты порта.
-              Введённое значение передаётся в Mapbox как есть, без округления; кнопки −/+ меняют значение
-              с шагом 0.0001° (≈ 11&nbsp;м на экваторе).
+              Долгота (lng, -180…180) и широта (lat, -90…90) — координаты порта для Mapbox. Шаг 0.0001°.
             </p>
             <div class="overflow-x-auto border border-mts-border">
               <table class="w-full min-w-[640px] text-left text-sm">
@@ -542,21 +671,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   </tr>
                 </thead>
                 <tbody>
-                  <!--
-                    Колонки lng/lat — общий компонент `AdminInputNumberStepper`
-                    в дробном/знаковом режиме (`step=0.0001`, `min=-180/-90`).
-                    Введённое число хранится в `loc.lng` / `loc.lat` без
-                    округления и в таком же виде уходит в Mapbox через
-                    `Marker.setLngLat([lng, lat])`. Кнопками −/+ можно
-                    подровнять координату по шагу 0.0001.
-                  -->
-                  <tr v-for="(loc, i) in d.geography.locations" :key="i" class="border-t border-mts-border align-middle">
+                  <tr v-for="(locRow, i) in d.geography.locations" :key="i" class="border-t border-mts-border align-middle">
                     <td class="px-3 py-2">
-                      <input v-model="loc.name" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-body text-sm focus:outline-none focus:border-mts-accent" />
+                      <input v-model="locRow.name" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-body text-sm focus:outline-none focus:border-mts-accent" />
                     </td>
                     <td class="px-3 py-2 w-44">
                       <AdminInputNumberStepper
-                        v-model="loc.lng"
+                        v-model="locRow.lng"
                         variant="full"
                         :min="-180"
                         :max="180"
@@ -567,7 +688,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                     </td>
                     <td class="px-3 py-2 w-44">
                       <AdminInputNumberStepper
-                        v-model="loc.lat"
+                        v-model="locRow.lat"
                         variant="full"
                         :min="-90"
                         :max="90"
@@ -577,7 +698,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                       />
                     </td>
                     <td class="px-3 py-2 text-center">
-                      <input v-model="loc.labelOnRight" type="checkbox" class="mts-checkbox" />
+                      <input v-model="locRow.labelOnRight" type="checkbox" class="mts-checkbox" />
                     </td>
                     <td class="px-3 py-2 text-center">
                       <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeLocation(i)">
@@ -594,7 +715,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </AdminCollapsibleSection>
 
-        <!-- CERTIFICATES -->
+        <!-- Сертификаты -->
         <AdminCollapsibleSection
           :title="sectionTitle('certificates')"
           :collapsed="collapsed.certificates"
@@ -674,7 +795,6 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </label>
         </section>
 
-        <!-- Save button (bottom) -->
         <div class="flex justify-end">
           <button type="button" :disabled="saving" class="btn-primary px-8 disabled:opacity-50" @click="submit">
             {{ saving ? 'Сохранение…' : 'Сохранить' }}

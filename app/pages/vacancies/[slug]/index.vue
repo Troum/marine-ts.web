@@ -3,6 +3,8 @@ import { MapPin, Briefcase, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 
+import { plainMetaString } from '~/utils/adminThemedTextCodec'
+
 const route = useRoute()
 const slug = computed(() => route.params.slug as string)
 const api = useMarineApi()
@@ -36,9 +38,9 @@ watchEffect(() => {
     return
   }
   useSeoMeta({
-    title: v.seoTitle || v.title,
-    description: v.seoDescription || v.excerpt,
-    keywords: v.seoKeywords || undefined,
+    title: plainMetaString(v.seoTitle) || plainMetaString(v.title) || slug.value,
+    description: plainMetaString(v.seoDescription) || plainMetaString(v.excerpt) || undefined,
+    keywords: plainMetaString(v.seoKeywords) || undefined,
   })
 })
 
@@ -51,13 +53,13 @@ function formatContent(text: string | null | undefined) {
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
+  <div class="bg-white pt-16">
     <div v-if="pending" class="flex justify-center py-24">
-      <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
+      <Loader2 class="h-8 w-8 animate-spin text-primary" />
     </div>
     <div v-else-if="!vacancy" class="mts-content-wrap py-24 text-center">
       <div class="mx-auto max-w-7xl">
-        <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundVacancy') }}</p>
+        <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundVacancy') }}</p>
         <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
       </div>
     </div>
@@ -67,22 +69,22 @@ function formatContent(text: string | null | undefined) {
           <Breadcrumbs class="mb-8" :items="crumbItems" />
 
         <div class="mb-4 flex flex-wrap items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-mts-accent">
+          <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-primary">
             <Briefcase class="h-3.5 w-3.5" />
             {{ vacancy.employmentType || t('pages.common.vacancyDefault') }}
           </span>
         </div>
 
-        <h1 class="font-display text-2xl leading-tight text-mts-text lg:text-3xl">
+        <h1 class="font-display text-2xl leading-tight text-body lg:text-3xl">
           <ThemedContentString :content="vacancy.title" />
         </h1>
 
-        <div v-if="vacancy.location" class="mt-6 flex items-center gap-2 font-body text-sm text-mts-text-secondary">
+        <div v-if="vacancy.location" class="mt-6 flex items-center gap-2 font-body text-sm text-muted">
           <MapPin class="h-4 w-4" />
           <ThemedContentString :content="vacancy.location" />
         </div>
 
-        <p class="mt-10 border-l-2 border-mts-accent pl-6 font-body text-lg leading-relaxed text-mts-text-secondary">
+        <p class="mt-10 border-l-2 border-primary pl-6 font-body text-lg leading-relaxed text-muted">
           <ThemedContentString :content="vacancy.excerpt" />
         </p>
 
@@ -90,29 +92,29 @@ function formatContent(text: string | null | undefined) {
           <p
             v-for="(block, i) in formatContent(vacancy.content)"
             :key="i"
-            class="font-body leading-relaxed text-mts-text"
+            class="font-body leading-relaxed text-body"
           >
             {{ block }}
           </p>
         </div>
 
-        <div v-if="vacancy.requirements?.length" class="mt-12 border border-mts-border bg-mts-surface p-8">
-          <h2 class="font-display text-xl text-mts-text mb-4">{{ t('pages.common.requirements') }}</h2>
-          <ul class="list-inside list-disc space-y-2 font-body text-sm text-mts-text-secondary">
+        <div v-if="vacancy.requirements?.length" class="card-tech corner-accent mt-12 p-8">
+          <h2 class="font-display text-xl text-body mb-4">{{ t('pages.common.requirements') }}</h2>
+          <ul class="list-inside list-disc space-y-2 font-body text-sm text-muted">
             <li v-for="(req, i) in vacancy.requirements" :key="i">{{ req }}</li>
           </ul>
         </div>
 
-        <div class="mt-12 space-y-4 border border-mts-border bg-mts-bg p-8">
-          <p class="font-body text-sm text-mts-text-secondary">
+        <div class="card-tech mt-12 space-y-4 p-8">
+          <p class="font-body text-sm text-muted">
             {{ t('pages.vacancies.applyNote') }}
           </p>
           <NuxtLink :to="localePath(`/vacancies/${vacancy.slug}/application-form`)" class="btn-primary inline-flex">
             {{ t('pages.vacancies.applyButton') }}
           </NuxtLink>
-          <p class="font-body text-xs text-mts-text-muted">
+          <p class="font-body text-xs text-muted">
             {{ t('pages.vacancies.applyAlt') }}
-            <a href="mailto:crewing@marin-ts.com" class="text-mts-accent hover:underline">crewing@marin-ts.com</a>
+            <a href="mailto:crewing@marin-ts.com" class="text-primary hover:underline">crewing@marin-ts.com</a>
           </p>
         </div>
         </div>

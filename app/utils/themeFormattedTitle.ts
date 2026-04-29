@@ -13,10 +13,12 @@ import type {
   HomeTrustStrip,
   ListingHero,
   ThemeFormattedTitle,
+  ThemeTitleFontWeight,
   ThemeTitleSpan,
   ThemeTitleTone,
 } from '~/types'
 import { incomingCmsValueToHtml, stripHtmlToPlain } from '~/utils/adminHtmlField'
+import { TIPTAP_FONT_WEIGHT_VALUES } from '~/utils/tiptapFontWeightConstants'
 import { serializeThemeTitleTiptapDocToHtml, themeTitleToTiptapDoc } from '~/utils/themeToneTiptap'
 
 /** Локальный helper: строка → plain без тегов и whitespace по краям. */
@@ -36,6 +38,19 @@ const TONES: ThemeTitleTone[] = [
 
 export function isThemeTitleTone(x: unknown): x is ThemeTitleTone {
   return typeof x === 'string' && (TONES as string[]).includes(x)
+}
+
+export function isThemeTitleFontWeight(x: unknown): x is ThemeTitleFontWeight {
+  return typeof x === 'number' && (TIPTAP_FONT_WEIGHT_VALUES as number[]).includes(x)
+}
+
+/** Подписи веса в палитре админки. */
+export const THEME_TITLE_FONT_WEIGHT_LABELS: Record<ThemeTitleFontWeight, string> = {
+  400: 'Обычный (400)',
+  500: 'Средний (500)',
+  600: 'Полужирный (600)',
+  700: 'Жирный (700)',
+  800: 'Экстра-жирный (800)',
 }
 
 /** Tailwind-классы для сегмента (только токены темы). */
@@ -136,9 +151,20 @@ export function normalizeThemeFormattedTitle(raw: unknown): ThemeFormattedTitle 
     }
     const t = (s as Partial<ThemeTitleSpan>).tone
     const tone = isThemeTitleTone(t) ? t : 'text'
+    const rawW = (s as Partial<ThemeTitleSpan>).fontWeight
+    let fontWeight: ThemeTitleFontWeight | undefined
+    if (typeof rawW === 'number' && isThemeTitleFontWeight(rawW)) {
+      fontWeight = rawW
+    } else if (typeof rawW === 'string') {
+      const n = Number(rawW)
+      if (isThemeTitleFontWeight(n)) {
+        fontWeight = n
+      }
+    }
     return {
       text: typeof (s as Partial<ThemeTitleSpan>).text === 'string' ? (s as ThemeTitleSpan).text : '',
       tone,
+      ...(fontWeight != null ? { fontWeight } : {}),
     }
   })
   return { spans: spans.length > 0 ? spans : emptyThemeTitle().spans }
@@ -379,7 +405,16 @@ export function mergeHomeDirectionsSection(
   return {
     label: typeof h.label === 'string' ? h.label : base.label,
     headingFormatted,
-    rows: parsed.rows && parsed.rows.length > 0 ? parsed.rows : base.rows,
+    rows:
+      parsed.rows && parsed.rows.length > 0
+        ? parsed.rows.map((row, i) => ({
+            ...base.rows[i],
+            ...row,
+            hoverTitle: typeof row.hoverTitle === 'string' ? row.hoverTitle : '',
+            hoverDescription: typeof row.hoverDescription === 'string' ? row.hoverDescription : '',
+            heroImage: typeof row.heroImage === 'string' ? row.heroImage : '',
+          }))
+        : base.rows,
   }
 }
 
@@ -421,10 +456,18 @@ export function mergeHomeAboutPreview(
           typeof h.titleAccent === 'string' ? h.titleAccent : '',
           typeof h.titleEnd === 'string' ? h.titleEnd : '',
         )
+  const title =
+    typeof h.title === 'string' && h.title.trim() !== ''
+      ? incomingCmsValueToHtml(h.title)
+      : themeFormattedTitleToHtml(titleFormatted)
+
   return {
     label: typeof h.label === 'string' ? h.label : base.label,
+    title,
     titleFormatted,
-    text: typeof h.text === 'string' ? h.text : base.text,
+    subtitle: typeof h.subtitle === 'string' ? h.subtitle : base.subtitle,
+    lead: typeof h.lead === 'string' ? h.lead : (typeof h.text === 'string' ? h.text : base.lead),
+    lead2: typeof h.lead2 === 'string' ? h.lead2 : base.lead2,
     more: typeof h.more === 'string' ? h.more : base.more,
   }
 }

@@ -40,6 +40,7 @@ const d = computed(() => data.value[localeTab.value])
 
 const collapsed = ref<Record<string, boolean>>({
   hero: false,
+  directions: true,
   funnel: true,
   about: true,
   services: true,
@@ -136,6 +137,47 @@ async function removeStat(i: number) {
     return
   }
   for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].statsCard.items.splice(i, 1)
+}
+
+function addDirectionRow() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].directions.rows.push({
+      title: '',
+      description: '',
+      cta: loc === 'en' ? 'Open' : 'Подробнее',
+      href: '/services',
+      hoverTitle: '',
+      hoverDescription: '',
+      heroImage: '',
+    })
+  }
+}
+
+async function removeDirectionRow(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту карточку первого экрана?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].directions.rows.splice(i, 1)
+  }
+}
+
+function moveDirectionRow(index: number, dir: -1 | 1) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const rows = data.value[loc].directions.rows
+    const j = index + dir
+    if (j < 0 || j >= rows.length) {
+      continue
+    }
+    const t = rows[index]!
+    rows[index] = rows[j]!
+    rows[j] = t
+  }
 }
 function setFeaturedServiceIds(ids: number[]) {
   const next = [...ids]
@@ -291,7 +333,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.hero.label" :multiline="false" />
             </div>
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div><label :class="sectionLabel">Описание (lead)</label><AdminThemedTextField v-model="d.hero.lead" /></div>
@@ -341,6 +383,122 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </AdminCollapsibleSection>
 
+        <AdminCollapsibleSection
+          title="Карточки внизу первого экрана"
+          :collapsed="collapsed.directions"
+          @update:collapsed="(v) => (collapsed.directions = v)"
+        >
+          <div class="space-y-5">
+            <p class="font-body text-sm text-mts-text-secondary">
+              Эти карточки находятся поверх hero внизу первого экрана. На сайте они берутся из блока
+              <span class="font-mono text-mts-text">directions.rows</span>.
+            </p>
+
+            <div>
+              <label :class="sectionLabel">Метка секции ниже на странице</label>
+              <AdminThemedTextField v-model="d.directions.label" :multiline="false" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Заголовок секции ниже на странице</label>
+              <AdminThemeTitleEditor v-model="d.directions.headingFormatted" />
+            </div>
+
+            <div class="space-y-4">
+              <div
+                v-for="(row, i) in d.directions.rows"
+                :key="`direction-${i}`"
+                class="border border-mts-border bg-mts-bg/40 p-5"
+              >
+                <div class="mb-4 flex items-center justify-between gap-3">
+                  <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">
+                    Карточка {{ i + 1 }}
+                  </h3>
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                      :disabled="i === 0"
+                      aria-label="Выше"
+                      @click="moveDirectionRow(i, -1)"
+                    >
+                      <ChevronUp class="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                      :disabled="i === d.directions.rows.length - 1"
+                      aria-label="Ниже"
+                      @click="moveDirectionRow(i, 1)"
+                    >
+                      <ChevronDown class="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="p-1.5 text-red-500/80 hover:text-red-600"
+                      aria-label="Удалить"
+                      @click="removeDirectionRow(i)"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label :class="sectionLabel">Название</label>
+                    <AdminThemedTextField v-model="row.title" :multiline="false" />
+                  </div>
+                  <div>
+                    <label :class="sectionLabel">CTA</label>
+                    <AdminThemedTextField v-model="row.cta" :multiline="false" />
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <label :class="sectionLabel">Описание</label>
+                  <AdminThemedTextField v-model="row.description" />
+                </div>
+                <div class="mt-4 grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label :class="sectionLabel">Заголовок в Hero при наведении</label>
+                    <AdminThemedTextField
+                      v-model="row.hoverTitle"
+                      :multiline="false"
+                      placeholder="Если пусто, используется название карточки"
+                    />
+                  </div>
+                  <div>
+                    <label :class="sectionLabel">Описание в Hero при наведении</label>
+                    <AdminThemedTextField
+                      v-model="row.hoverDescription"
+                      placeholder="Если пусто, используется описание карточки"
+                    />
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <AdminHeroImageField
+                    v-model="row.heroImage"
+                    label="Фон Hero при выборе карточки"
+                    hint="Если не задано, останется общий фон первого экрана."
+                  />
+                </div>
+                <div class="mt-4">
+                  <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Ссылка</p>
+                  <AdminNavPathPick v-model="row.href" :path-options="pathOptions" input-placeholder="/services" />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+                @click="addDirectionRow"
+              >
+                <Plus class="w-4 h-4" />
+                Добавить карточку
+              </button>
+            </div>
+          </div>
+        </AdminCollapsibleSection>
+
         <!-- 2. FUNNEL CARDS -->
         <AdminCollapsibleSection
           :title="sectionTitle('funnel')"
@@ -362,7 +520,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Судовой менеджмент (левая)</h3>
               <div><label :class="sectionLabel">Метка (над заголовком)</label><AdminThemedTextField v-model="d.funnelShip.label" :multiline="false" /></div>
               <div>
-                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <label :class="sectionLabel">Заголовок</label>
                 <AdminThemeTitleEditor v-model="d.funnelShip.titleFormatted" />
               </div>
               <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelShip.text" /></div>
@@ -376,7 +534,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Крюинг (центр, две ссылки)</h3>
               <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelCrewing.label" :multiline="false" /></div>
               <div>
-                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <label :class="sectionLabel">Заголовок</label>
                 <AdminThemeTitleEditor v-model="d.funnelCrewing.titleFormatted" />
               </div>
               <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelCrewing.text" /></div>
@@ -398,7 +556,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Сервисы (правая)</h3>
               <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelTechnical.label" :multiline="false" /></div>
               <div>
-                <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+                <label :class="sectionLabel">Заголовок</label>
                 <AdminThemeTitleEditor v-model="d.funnelTechnical.titleFormatted" />
               </div>
               <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelTechnical.text" /></div>
@@ -425,10 +583,12 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.about.label" :multiline="false" /></div>
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
-              <AdminThemeTitleEditor v-model="d.about.titleFormatted" />
+              <label :class="sectionLabel">Заголовок</label>
+              <AdminThemedTextField v-model="d.about.title" />
             </div>
-            <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.about.text" /></div>
+            <div><label :class="sectionLabel">Подзаголовок</label><AdminThemedTextField v-model="d.about.subtitle" :multiline="false" /></div>
+            <div><label :class="sectionLabel">Абзац 1</label><AdminThemedTextField v-model="d.about.lead" /></div>
+            <div><label :class="sectionLabel">Абзац 2</label><AdminThemedTextField v-model="d.about.lead2" /></div>
             <div><label :class="sectionLabel">Текст кнопки «Подробнее»</label><AdminThemedTextField v-model="d.about.more" :multiline="false" /></div>
           </div>
         </AdminCollapsibleSection>
@@ -448,7 +608,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.services.label" :multiline="false" /></div>
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.services.headingFormatted" />
             </div>
             <div class="grid md:grid-cols-2 gap-4">
@@ -544,7 +704,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.process.label" :multiline="false" /></div>
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.process.headingFormatted" />
             </div>
             <div class="space-y-3">
@@ -576,7 +736,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.cta.label" :multiline="false" /></div>
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.cta.titleFormatted" />
             </div>
             <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.cta.text" /></div>

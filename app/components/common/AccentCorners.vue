@@ -16,12 +16,12 @@ const sizeClass = computed(() => (props.size === 'lg' ? 'w-6 h-6' : 'w-4 h-4'))
 const extras = computed(() => (props.size === 'lg' ? 'z-20 pointer-events-none' : ''))
 
 const topLeft = computed(() =>
-  `absolute -top-2 -left-2 ${sizeClass.value} border-t-2 border-l-2 border-mts-accent ${extras.value}`.trim(),
+  `absolute -top-2 -left-2 ${sizeClass.value} border-t-2 border-l-2 border-primary ${extras.value}`.trim(),
 )
 
 const bottomRight = computed(() => {
   const pos = props.bottom ? `${props.bottom} -right-2` : '-bottom-2 -right-2'
-  return `absolute ${pos} ${sizeClass.value} border-b-2 border-r-2 border-mts-accent ${extras.value}`.trim()
+  return `absolute ${pos} ${sizeClass.value} border-b-2 border-r-2 border-primary ${extras.value}`.trim()
 })
 </script>
 

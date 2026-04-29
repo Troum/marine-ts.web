@@ -52,10 +52,27 @@ export const LINE_MARKETING_SECTION_DEFAULT_ORDER: LineMarketingSectionId[] = [
   'audience',
 ]
 
+/** Подписи секций v2 «Судовой менеджмент» (порядок/видимость в админке). */
+export const SHIP_MANAGEMENT_V2_SECTION_ADMIN_LABELS: Record<
+  'approach' | 'checklist' | 'services' | 'advantages' | 'trust',
+  string
+> = {
+  approach: 'Почему доверяют МТС',
+  checklist: 'Чек-лист',
+  services: 'Пакет услуг',
+  advantages: 'Преимущества',
+  trust: 'Финальный акцент',
+}
+
 /** Подписи для админки (порядок и видимость секций). */
 export const LINE_MARKETING_SECTION_ADMIN_LABELS: Record<LineMarketingSectionId, string> = {
   directions: 'Направления работы',
   checklist: 'Чек-лист',
   principles: 'Принципы',
   audience: 'Кому подходит + CTA',
+  approach: 'Наш подход',
+  services: 'Комплекс услуг',
+  advantages: 'Преимущества',
+  trust: 'Доверие и гарантии',
+  cta: 'CTA перед формой',
 }

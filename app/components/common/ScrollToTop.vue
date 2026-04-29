@@ -27,7 +27,7 @@ function scrollToTop() {
     <button
       v-show="visible"
       type="button"
-      class="fixed bottom-6 right-6 z-40 flex items-center justify-center w-10 h-10 bg-mts-accent text-white shadow-tech-lg hover:bg-mts-accent-dark transition-colors"
+      class="fixed bottom-6 right-6 z-40 flex items-center justify-center w-10 h-10 bg-primary text-white shadow-tech-lg hover:bg-primary-dark transition-colors"
       aria-label="Наверх"
       @click="scrollToTop"
     >

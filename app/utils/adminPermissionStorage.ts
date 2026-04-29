@@ -3,7 +3,7 @@ export const ADMIN_PERMISSIONS_KEY = 'mts_admin_permissions'
 export const ADMIN_ROLES_KEY = 'mts_admin_roles'
 export const ADMIN_USER_ID_KEY = 'mts_admin_user_id'
 
-/** Однократно подтягиваем копию в второе хранилище (старые сессии только в session). */
+/** Однократно подтягиваем копию в второе хранилище (прежние сессии только в session). */
 export function mirrorAdminPermissionStorages(): void {
   if (typeof sessionStorage === 'undefined' || typeof localStorage === 'undefined') {
     return

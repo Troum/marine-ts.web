@@ -393,8 +393,8 @@ const statCards = computed(() => [
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Раздел «Сервисы» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по адресу
-                /services/…
+                Раздел «Сервисы» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
+                сайта (/…)
               </p>
               <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
                 <NuxtLink
@@ -489,7 +489,7 @@ const statCards = computed(() => [
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Телефоны, email, адрес, режим работы и карточки офисов на странице «Контакты».
+                Телефоны, email, адрес, ссылки (в т.ч. в футере), режим работы и карточки офисов на странице «Контакты».
               </p>
               <NuxtLink
                 to="/admin/contacts"

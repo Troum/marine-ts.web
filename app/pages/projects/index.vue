@@ -18,9 +18,17 @@ const api = useMarineApi()
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 
-const { data: cmsPage } = await useAsyncData('projects-page-cms', async () => {
-  try { return await api.contentPages.getPublicBySlug('projects-page') } catch { return null }
-}, { server: true })
+const { data: cmsPage } = await useAsyncData(
+  () => `projects-page-cms-${locale.value}`,
+  async () => {
+    try {
+      return await api.contentPages.getPublicBySlug('projects-page')
+    } catch {
+      return null
+    }
+  },
+  { server: true, watch: [locale] },
+)
 
 const cms = computed<ProjectsPageData>(() => {
   const body = cmsPage.value?.body
@@ -53,9 +61,9 @@ const filterButtons = computed(() => {
       byType.set(p.type, projectTypeLabel(p.type, t))
     }
   }
-  const loc = locale.value === 'en' ? 'en' : 'ru'
+  const locSort = locale.value === 'en' ? 'en' : 'ru'
   const categories = [...byType.entries()]
-    .sort((a, b) => a[1].localeCompare(b[1], loc))
+    .sort((a, b) => a[1].localeCompare(b[1], locSort))
     .map(([id, label]) => ({ id, label }))
   return [{ id: 'all', label: t('pages.projects.filterAll') }, ...categories]
 })
@@ -101,22 +109,42 @@ const sectionOrderEffective = computed(() =>
 function sectionShown(id: string): boolean {
   return isSectionVisible(cms.value.sectionVisibility, id)
 }
+
+const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
 </script>
 
 <template>
-  <div class="bg-mts-bg">
-    <ListingHeroShell :hero-image="cms.heroImage">
+  <div class="bg-white">
+    <!-- Hero и каталог — один блок: снимается «Показывать» у секции listing в админке «Проекты». -->
+    <ListingHeroShell
+      v-if="sectionShown('listing')"
+      :hero-image="cms.heroImage"
+      :hero-veil="hasHeroPhoto"
+    >
       <div class="max-w-7xl">
-        <Breadcrumbs :items="crumbItems" />
+        <Breadcrumbs :items="crumbItems" :on-dark-hero="hasHeroPhoto" />
         <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-mts-accent" />
+          <div class="h-px w-6 bg-primary" />
           <span class="section-label">{{ t('pages.projects.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
+
+        <h1
+          :class="[
+            'font-display mb-6 text-3xl leading-tight lg:text-4xl',
+            hasHeroPhoto ? 'text-white drop-shadow-md' : 'text-body',
+          ]"
+        >
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
-        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
-        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+        <div
+          :class="['mb-6 h-0.5 w-12', hasHeroPhoto ? 'bg-white' : 'bg-primary']"
+        />
+        <p
+          :class="[
+            'font-body text-lg leading-relaxed',
+            hasHeroPhoto ? 'text-white/95 drop-shadow' : 'text-muted',
+          ]"
+        >
           <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
@@ -133,7 +161,7 @@ function sectionShown(id: string): boolean {
                 type="button"
                 :class="[
                   'px-4 py-2 font-mono text-[11px] uppercase tracking-wide transition-all',
-                  filter === f.id ? 'bg-mts-accent text-white' : 'bg-mts-bg text-mts-text-secondary hover:text-mts-accent border border-mts-border',
+                  filter === f.id ? 'bg-primary text-white' : 'bg-white text-muted hover:text-primary border border-border',
                 ]"
                 @click="filter = f.id"
               >
@@ -144,28 +172,32 @@ function sectionShown(id: string): boolean {
         </section>
 
         <div v-if="pending" class="flex justify-center py-24">
-          <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
+          <Loader2 class="h-8 w-8 animate-spin text-primary" />
         </div>
         <div v-else-if="error" class="py-24 text-center">
-          <p class="mb-4 font-body text-mts-text-secondary">{{ error }}</p>
+          <p class="mb-4 font-body text-muted">{{ error }}</p>
           <button type="button" class="btn-primary" @click="load">{{ t('pages.common.tryAgain') }}</button>
         </div>
-        <section v-else class="relative bg-mts-bg pb-24 pt-8 lg:pt-12">
+        <section v-else class="relative bg-white pb-24 pt-8 lg:pt-12">
           <div class="relative z-10 mts-content-wrap">
-            <div v-if="filteredProjects.length === 0" class="py-16 text-center font-body text-mts-text-secondary">
-              {{ t('pages.projects.emptyCategory') }}
+            <div v-if="filteredProjects.length === 0" class="py-16 text-center font-body text-muted">
+              {{
+                projects.length === 0
+                  ? t('pages.projects.emptyList')
+                  : t('pages.projects.emptyCategory')
+              }}
             </div>
-            <div v-else class="grid grid-cols-1 gap-px bg-mts-border md:grid-cols-2">
-              <article v-for="p in filteredProjects" :key="p.id" class="min-w-0 bg-mts-bg p-8">
+            <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <article v-for="p in filteredProjects" :key="p.id" class="service-card corner-accent min-w-0 p-8">
                 <div class="mb-3 flex flex-wrap items-center gap-2">
-                  <Ship class="h-4 w-4 shrink-0 text-mts-accent" aria-hidden="true" />
+                  <Ship class="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                   <span class="section-label text-[10px]">{{ typeLabelFor(p) }}</span>
                 </div>
-                <h2 class="font-display text-lg leading-snug text-mts-text">
+                <h2 class="font-display text-lg leading-snug text-body">
                   <NuxtLink
                     v-if="p.contentPage?.slug"
                     :to="localePath(`/projects/${p.contentPage.slug}`)"
-                    class="text-mts-text"
+                    class="text-body"
                   >
                     <ThemedContentString :content="p.title" />
                   </NuxtLink>
@@ -173,19 +205,19 @@ function sectionShown(id: string): boolean {
                     <ThemedContentString :content="p.title" />
                   </template>
                 </h2>
-                <p class="mt-3 line-clamp-3 font-body text-sm leading-relaxed text-mts-text-secondary">
+                <p class="mt-3 line-clamp-3 font-body text-sm leading-relaxed text-muted">
                   <ThemedContentString :content="p.description" />
                 </p>
                 <div
                   v-if="p.location || p.date"
-                  class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-body text-xs text-mts-text-secondary"
+                  class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-body text-xs text-muted"
                 >
                   <span v-if="p.location" class="flex items-center gap-2">
-                    <MapPin class="h-3.5 w-3.5 shrink-0 text-mts-accent/80" aria-hidden="true" />
+                    <MapPin class="h-3.5 w-3.5 shrink-0 text-primary/80" aria-hidden="true" />
                     <ThemedContentString :content="p.location" />
                   </span>
                   <span v-if="p.date" class="flex items-center gap-2">
-                    <Calendar class="h-3.5 w-3.5 shrink-0 text-mts-accent/80" aria-hidden="true" />
+                    <Calendar class="h-3.5 w-3.5 shrink-0 text-primary/80" aria-hidden="true" />
                     {{ p.date }}
                   </span>
                 </div>
@@ -204,10 +236,10 @@ function sectionShown(id: string): boolean {
 
       <section
         v-else-if="sid === 'cta' && sectionShown('cta')"
-        class="relative py-16 bg-mts-surface border-t border-mts-border"
+        class="relative py-16 bg-bg-light border-t border-border"
       >
         <div class="max-w-7xl mx-auto px-6 text-center">
-          <h2 class="font-display text-xl text-mts-text mb-4">
+          <h2 class="font-display text-xl text-body mb-4">
             <ThemedContentString :content="cms.cta?.title || t('pages.projects.ctaTitle')" />
           </h2>
           <NuxtLink :to="localePath('/request')" class="btn-primary group">
@@ -220,9 +252,15 @@ function sectionShown(id: string): boolean {
       <CommonCustomPageSectionsRender
         v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
         :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+        :page-crumb-items="crumbItems"
       />
     </template>
 
-    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="projects" />
+    <CommonPageInquiryForm
+      v-if="cms.showInquiryForm"
+      source-page="projects"
+      :hide-intro="cms.hideInquiryFormIntro === true"
+      :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+    />
   </div>
 </template>

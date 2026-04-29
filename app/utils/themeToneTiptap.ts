@@ -1,6 +1,7 @@
 import { Mark, mergeAttributes, type JSONContent } from '@tiptap/core'
-import type { ThemeFormattedTitle, ThemeTitleSpan, ThemeTitleTone } from '~/types'
+import type { ThemeFormattedTitle, ThemeTitleFontWeight, ThemeTitleSpan, ThemeTitleTone } from '~/types'
 import { THEME_TITLE_TONE_CLASSES, emptyThemeTitle, isThemeTitleTone } from '~/utils/themeFormattedTitle'
+import { TIPTAP_FONT_WEIGHT_VALUES } from '~/utils/tiptapFontWeightConstants'
 
 /** CSS-переменные тона — общие для ThemeToneMark и SSR-сериализации в HTML. */
 export const THEME_TONE_CSS_VARS: Record<ThemeTitleTone, string> = {
@@ -11,6 +12,36 @@ export const THEME_TONE_CSS_VARS: Record<ThemeTitleTone, string> = {
   accentLight: 'var(--color-mts-accent-light)',
   accentDark: 'var(--color-mts-accent-dark)',
   marker: 'var(--color-mts-marker)',
+}
+
+export const THEME_TITLE_FONT_WEIGHTS = TIPTAP_FONT_WEIGHT_VALUES
+
+function parseFontWeightAttr(el: HTMLElement): number | null {
+  const d = el.getAttribute('data-mts-font-weight')
+  if (d != null && d !== '') {
+    const n = Number(d)
+    if (TIPTAP_FONT_WEIGHT_VALUES.includes(n as ThemeTitleFontWeight)) {
+      return n
+    }
+  }
+  const style = el.getAttribute('style') ?? ''
+  const m = style.match(/font-weight\s*:\s*(\d{3})/i)
+  if (m) {
+    const n = Number(m[1])
+    if (TIPTAP_FONT_WEIGHT_VALUES.includes(n as ThemeTitleFontWeight)) {
+      return n
+    }
+  }
+  return null
+}
+
+function themeToneMarkStyle(tone: ThemeTitleTone, fontWeight: number | null): string {
+  const v = THEME_TONE_CSS_VARS[tone]
+  let s = `color: ${v}; -webkit-text-fill-color: ${v};`
+  if (fontWeight != null) {
+    s += ` font-weight: ${fontWeight};`
+  }
+  return s
 }
 
 /** Inline-mark цвета темы Marin (только допустимые тона). */
@@ -27,6 +58,11 @@ export const ThemeToneMark = Mark.create({
           return typeof t === 'string' ? { 'data-mts-tone': t } : {}
         },
       },
+      fontWeight: {
+        default: null,
+        parseHTML: (el: HTMLElement) => parseFontWeightAttr(el),
+        renderHTML: () => ({}),
+      },
     }
   },
   parseHTML() {
@@ -35,6 +71,7 @@ export const ThemeToneMark = Mark.create({
         tag: 'span[data-mts-tone]',
         getAttrs: (el: HTMLElement) => ({
           tone: el.getAttribute('data-mts-tone') || 'text',
+          fontWeight: parseFontWeightAttr(el),
         }),
       },
     ]
@@ -43,6 +80,11 @@ export const ThemeToneMark = Mark.create({
     const raw = HTMLAttributes.tone
     const tone: ThemeTitleTone = isThemeTitleTone(raw) ? raw : 'text'
     const cls = THEME_TITLE_TONE_CLASSES[tone] ?? 'text-mts-text'
+    const fwRaw = HTMLAttributes.fontWeight
+    const fontWeight =
+      fwRaw != null && TIPTAP_FONT_WEIGHT_VALUES.includes(Number(fwRaw) as ThemeTitleFontWeight)
+        ? Number(fwRaw)
+        : null
     /*
      * Inline style с CSS-переменной темы — единственный способ гарантированно
      * перебить наследование цвета от `.admin-shell` и заодно обойти
@@ -50,16 +92,15 @@ export const ThemeToneMark = Mark.create({
      * На публичном сайте --color-mts-* подставляется тёмной/светлой темой —
      * цвет всегда корректный.
      */
-    const v = THEME_TONE_CSS_VARS[tone]
-    return [
-      'span',
-      mergeAttributes(HTMLAttributes, {
-        'data-mts-tone': tone,
-        class: cls,
-        style: `color: ${v}; -webkit-text-fill-color: ${v};`,
-      }),
-      0,
-    ]
+    const attrs: Record<string, string> = {
+      'data-mts-tone': tone,
+      class: cls,
+      style: themeToneMarkStyle(tone, fontWeight),
+    }
+    if (fontWeight != null) {
+      attrs['data-mts-font-weight'] = String(fontWeight)
+    }
+    return ['span', mergeAttributes(HTMLAttributes, attrs), 0]
   },
 })
 
@@ -75,10 +116,14 @@ export function themeTitleToTiptapDoc(title: ThemeFormattedTitle): JSONContent {
       const part = parts[i] ?? ''
       /* ProseMirror: RangeError «Empty text nodes are not allowed» — нельзя text: ''. */
       if (part.length > 0) {
+        const attrs: Record<string, unknown> = { tone }
+        if (s.fontWeight != null && TIPTAP_FONT_WEIGHT_VALUES.includes(s.fontWeight)) {
+          attrs.fontWeight = s.fontWeight
+        }
         content.push({
           type: 'text',
           text: part,
-          marks: [{ type: 'themeTone', attrs: { tone } }],
+          marks: [{ type: 'themeTone', attrs }],
         })
       }
       if (i < parts.length - 1) {
@@ -124,11 +169,16 @@ export function serializeThemeTitleTiptapDocToHtml(doc: JSONContent): string {
       const themeM = marks.find((m) => m.type === 'themeTone')
       const toneRaw = themeM?.attrs?.tone
       const tone: ThemeTitleTone = isThemeTitleTone(toneRaw) ? toneRaw : 'text'
+      const fwRaw = themeM?.attrs?.fontWeight
+      const fontWeight =
+        fwRaw != null && TIPTAP_FONT_WEIGHT_VALUES.includes(Number(fwRaw) as ThemeTitleFontWeight)
+          ? Number(fwRaw)
+          : null
       const cls = THEME_TITLE_TONE_CLASSES[tone]
-      const v = THEME_TONE_CSS_VARS[tone]
-      const style = `color: ${v}; -webkit-text-fill-color: ${v};`
+      const style = themeToneMarkStyle(tone, fontWeight)
+      const fwAttr = fontWeight != null ? ` data-mts-font-weight="${fontWeight}"` : ''
       chunks.push(
-        `<span data-mts-tone="${tone}" class="${cls}" style="${style}">${escapeHtmlText(node.text)}</span>`,
+        `<span data-mts-tone="${tone}"${fwAttr} class="${cls}" style="${style}">${escapeHtmlText(node.text)}</span>`,
       )
     }
   }
@@ -169,11 +219,21 @@ export function themeTitleFromTiptapDoc(doc: JSONContent | null | undefined): Th
     const mark = node.marks?.find((m) => m.type === 'themeTone')
     const raw = mark?.attrs?.tone
     const tone: ThemeTitleTone = isThemeTitleTone(raw) ? raw : 'text'
+    const fwRaw = mark?.attrs?.fontWeight
+    const fontWeight: ThemeTitleFontWeight | undefined =
+      fwRaw != null && TIPTAP_FONT_WEIGHT_VALUES.includes(Number(fwRaw) as ThemeTitleFontWeight)
+        ? (Number(fwRaw) as ThemeTitleFontWeight)
+        : undefined
     const last = spans[spans.length - 1]
-    if (last && last.tone === tone) {
+    const sameWeight = last?.fontWeight === fontWeight || (last?.fontWeight == null && fontWeight == null)
+    if (last && last.tone === tone && sameWeight) {
       last.text += text
     } else {
-      spans.push({ text, tone })
+      const span: ThemeTitleSpan = { text, tone }
+      if (fontWeight != null) {
+        span.fontWeight = fontWeight
+      }
+      spans.push(span)
     }
   }
   if (!spans.length) {

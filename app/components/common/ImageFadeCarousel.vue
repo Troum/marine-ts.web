@@ -48,7 +48,7 @@ onUnmounted(() => {
 <template>
   <div>
     <div
-      class="relative z-10 w-full aspect-[4/3] min-h-[14rem] sm:min-h-[18rem] overflow-hidden bg-mts-bg"
+      class="relative z-10 w-full aspect-[4/3] min-h-[14rem] sm:min-h-[18rem] overflow-hidden bg-white"
       role="region"
       aria-roledescription="carousel"
       :aria-label="
@@ -70,7 +70,7 @@ onUnmounted(() => {
     <div v-if="showDots && slides.length > 1" class="mt-3 flex items-center justify-center gap-3" aria-hidden="true">
       <button
         type="button"
-        class="flex items-center justify-center text-mts-text-secondary hover:text-mts-accent transition-colors"
+        class="flex items-center justify-center text-muted hover:text-primary transition-colors"
         aria-label="Предыдущий слайд"
         @click="prev"
       >
@@ -81,13 +81,13 @@ onUnmounted(() => {
           v-for="(_, i) in slides"
           :key="i"
           class="h-1 rounded-full transition-all duration-300 cursor-pointer"
-          :class="i === index ? 'w-6 bg-mts-accent' : 'w-1.5 bg-mts-border hover:bg-mts-text-muted'"
+          :class="i === index ? 'w-6 bg-primary' : 'w-1.5 bg-border hover:bg-mts-text-muted'"
           @click="() => { index = i; startTimer() }"
         />
       </div>
       <button
         type="button"
-        class="flex items-center justify-center text-mts-text-secondary hover:text-mts-accent transition-colors"
+        class="flex items-center justify-center text-muted hover:text-primary transition-colors"
         aria-label="Следующий слайд"
         @click="next"
       >

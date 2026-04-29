@@ -189,7 +189,7 @@ const incrementDisabled = computed(
       :required="required"
       :placeholder="placeholder"
       :aria-label="ariaLabel"
-      class="marin-number-input block w-full min-w-0 border-0 border-b border-mts-border bg-transparent px-0 py-2 pr-2 font-body text-sm text-mts-text placeholder:text-mts-text-muted focus:border-mts-accent focus:outline-none focus:ring-0"
+      class="marin-number-input block w-full min-w-0 border-0 border-b border-border bg-transparent px-0 py-2 pr-2 font-body text-sm text-body placeholder:text-muted focus:border-primary focus:outline-none focus:ring-0"
       @input="onInput"
       @blur="onBlur"
     />
@@ -198,7 +198,7 @@ const incrementDisabled = computed(
         type="button"
         :disabled="decrementDisabled"
         :aria-label="decrementLabel"
-        class="flex h-8 w-8 items-center justify-center border border-mts-border text-mts-text-secondary transition-colors duration-150 hover:border-mts-accent hover:text-mts-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:border-mts-border/50 disabled:text-mts-text-muted disabled:hover:border-mts-border/50 disabled:hover:text-mts-text-muted"
+        class="flex h-8 w-8 items-center justify-center border border-border text-muted transition-colors duration-150 hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:border-border/50 disabled:text-muted disabled:hover:border-border/50 disabled:hover:text-muted"
         @click="decrement"
       >
         <Minus class="h-3.5 w-3.5" />
@@ -207,7 +207,7 @@ const incrementDisabled = computed(
         type="button"
         :disabled="incrementDisabled"
         :aria-label="incrementLabel"
-        class="flex h-8 w-8 items-center justify-center border border-mts-border text-mts-text-secondary transition-colors duration-150 hover:border-mts-accent hover:text-mts-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:border-mts-border/50 disabled:text-mts-text-muted disabled:hover:border-mts-border/50 disabled:hover:text-mts-text-muted"
+        class="flex h-8 w-8 items-center justify-center border border-border text-muted transition-colors duration-150 hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:border-border/50 disabled:text-muted disabled:hover:border-border/50 disabled:hover:text-muted"
         @click="increment"
       >
         <Plus class="h-3.5 w-3.5" />

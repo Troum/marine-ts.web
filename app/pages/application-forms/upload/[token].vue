@@ -103,19 +103,19 @@ async function submitUpload() {
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-20 pb-24">
+  <div class="bg-white pt-20 pb-24">
     <div class="mx-auto max-w-7xl px-6">
       <div v-if="pending" class="flex justify-center py-24">
-        <Loader2 class="h-10 w-10 animate-spin text-mts-accent" />
+        <Loader2 class="h-10 w-10 animate-spin text-primary" />
       </div>
 
       <div v-else-if="loadError" class="border border-red-200 bg-red-50 p-6 text-center font-body text-red-800">
         {{ loadError }}
       </div>
 
-      <div v-else-if="session" class="border border-mts-border bg-mts-surface p-8 shadow-tech">
-        <h1 class="font-display text-2xl text-mts-text">{{ t('pages.upload.title') }}</h1>
-        <p class="mt-2 font-body text-sm text-mts-text-secondary">
+      <div v-else-if="session" class="card-tech p-8">
+        <h1 class="font-display text-2xl text-body">{{ t('pages.upload.title') }}</h1>
+        <p class="mt-2 font-body text-sm text-muted">
           {{ t('pages.upload.intro', { name: session.fullName }) }}
           <strong>{{ formatExp(session.expiresAt) }}</strong>
         </p>
@@ -126,8 +126,8 @@ async function submitUpload() {
         </div>
 
         <ul class="mt-8 space-y-6">
-          <li v-for="doc in session.requestedDocuments" :key="doc.key" class="border-b border-mts-border pb-6 last:border-0">
-            <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+          <li v-for="doc in session.requestedDocuments" :key="doc.key" class="border-b border-border pb-6 last:border-0">
+            <p class="font-mono text-[10px] uppercase tracking-wide text-muted">
               {{ doc.label }}
             </p>
             <div v-if="session.uploaded[doc.key]" class="mt-1 text-sm text-green-800">
@@ -137,7 +137,7 @@ async function submitUpload() {
             <input
               type="file"
               accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*"
-              class="mt-3 block w-full font-body text-sm file:mr-4 file:rounded file:border file:border-mts-border file:bg-mts-bg file:px-3 file:py-1 file:font-mono file:text-[10px] file:uppercase"
+              class="mt-3 block w-full font-body text-sm file:mr-4 file:rounded file:border file:border-border file:bg-white file:px-3 file:py-1 file:font-mono file:text-[10px] file:uppercase"
               @change="onFileChange(doc.key, $event)"
             />
           </li>
@@ -157,7 +157,7 @@ async function submitUpload() {
           {{ uploading ? t('pages.common.uploading') : t('pages.upload.submitFiles') }}
         </button>
 
-        <p class="mt-8 font-body text-xs text-mts-text-muted">
+        <p class="mt-8 font-body text-xs text-muted">
           {{ t('pages.upload.formatsNote') }}
         </p>
       </div>

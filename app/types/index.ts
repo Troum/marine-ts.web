@@ -17,14 +17,19 @@ export type ThemeTitleTone =
   | 'accentDark'
   | 'marker'
 
+/** Допустимые значения `font-weight` для сегмента заголовка (наследование = поле не задано). */
+export type ThemeTitleFontWeight = 400 | 500 | 600 | 700 | 800
+
 export interface ThemeTitleSpan {
   text: string
   tone: ThemeTitleTone
+  /** Если не задано — наследуется от стиля заголовка (обычно bold у `font-display`). */
+  fontWeight?: ThemeTitleFontWeight
 }
 
 /**
  * Заголовок из сегментов с цветом из палитры темы (вместо трёх полей «начало / акцент / окончание»).
- * В JSON хранится как объект; старые поля title/titleAccent/titleEnd при чтении мигрируют в spans.
+ * В JSON хранится как объект; прежние поля title/titleAccent/titleEnd при чтении мигрируют в spans.
  */
 export interface ThemeFormattedTitle {
   spans: ThemeTitleSpan[]
@@ -128,6 +133,14 @@ export interface GalleryItem {
   alt: string
   sortOrder: number
   translations?: Partial<Record<MarineContentLocale, { alt: string }>>
+}
+
+/** Файл в `storage/app/public/media` (список для админки). */
+export interface MediaLibraryItem {
+  url: string
+  filename: string
+  size: number
+  modified_at: string
 }
 
 export interface Project {
@@ -262,6 +275,11 @@ export interface ContentPage extends ContentPageSummary {
   isPublished: boolean
   /** Показать форму заявки внизу страницы (контентные страницы сервисов/проектов). */
   showInquiryForm?: boolean
+  /**
+   * Показывать заголовок страницы (h1) в блоке статьи под hero/блоками.
+   * Заголовок по-прежнему нужен для SEO, крошек и вкладки; при false видимый h1 скрыт.
+   */
+  showPublicTitle?: boolean
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
@@ -370,7 +388,7 @@ export interface AdminRoleOption {
   label: string
 }
 
-export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock'
+export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock' | 'link'
 
 /** Публичные контакты (страница «Контакты»), из API `/contact-settings`. */
 export interface SiteContactSettings {
@@ -421,6 +439,9 @@ export interface FooterMenuSettings {
 
 /* ── About page structured data (CMS JSON in body) ── */
 
+/**
+ * @deprecated Структура v1 (hero/ecosystem/mission/why). Оставлена для миграции JSON.
+ */
 export interface AboutHero {
   /** HTML из TipTap (цвета, подсветка, тона темы через marks). */
   title: string
@@ -429,33 +450,44 @@ export interface AboutHero {
   lead2: string
 }
 
+/** @deprecated v1 */
 export interface AboutServiceCard {
   icon: string
   title: string
   text: string
 }
 
+/** @deprecated v1 */
 export interface AboutEcosystem {
   title: string
   lead: string
   services: AboutServiceCard[]
 }
 
+/** @deprecated v1 */
 export interface AboutPrinciple {
   icon: string
   text: string
 }
 
+/** @deprecated v1 */
 export interface AboutMission {
   title: string
   lead: string
   principles: AboutPrinciple[]
 }
 
+/** @deprecated v1 */
 export interface AboutWhy {
   title: string
   text: string
   ctaText: string
+}
+
+/** Карточка с заголовком и текстом (HTML из TipTap). */
+export interface AboutRichCard {
+  title: string
+  text: string
 }
 
 export interface AboutGeoLocation {
@@ -487,33 +519,39 @@ export interface AboutCertificates {
 }
 
 export interface AboutPageData {
-  hero: AboutHero
-  ecosystem: AboutEcosystem
-  mission: AboutMission
-  why: AboutWhy
+  /** 2 = шесть основных секций (Hero → закрытие). */
+  aboutVersion?: 2
+  /** Секция 1. Hero / первый экран. */
+  sec1Hero: { title: string; body: string }
+  /** Секция 2. История и география. */
+  sec2History: { title: string; body: string; cards: AboutRichCard[] }
+  /** Секция 3. Технический менеджмент. */
+  sec3Technical: { title: string; lead: string; lead2: string; cards: AboutRichCard[] }
+  /** Секция 4. Крюинг. */
+  sec4Crewing: { title: string; lead: string; lead2: string; cards: AboutRichCard[] }
+  /** Секция 5. Миссия. */
+  sec5Mission: { title: string; body: string; cards: AboutRichCard[] }
+  /** Секция 6. CTA / закрытие. */
+  sec6Closing: { title: string; body: string }
   geography: AboutGeography
   certificates: AboutCertificates
   showInquiryForm?: boolean
-  /** Опциональный фон первого экрана (URL или путь после загрузки). */
+  /** Фон первого экрана (Hero). */
   heroImage?: string
-  /** Фон секции «О компании» (два абзаца под тем же заголовком, что и hero). */
-  introImage?: string
-  /** Фон секции «Экосистема сервисов». */
-  ecosystemImage?: string
-  /** Фон секции «Миссия» (Figma — отдельный кадр). */
+  /** Фон секции «История и география». */
+  historyImage?: string
+  /** Фон секции «Технический менеджмент». */
+  technicalImage?: string
+  /** Фон секции «Крюинг». */
+  crewingImage?: string
+  /** Фон секции «Миссия». */
   missionImage?: string
-  /**
-   * Фон секции «Компания в цифрах» (Figma: Rectangle 51).
-   * Поверх изображения накладывается диагональный градиент из макета.
-   * Секция «Почему выбирают MTS?» собственного изображения не имеет —
-   * у неё сплошной фон #0B1F2A.
-   */
-  statsImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
-  /** Порядок секций (включая `custom:<uuid>`). Если не задан — берётся дефолт. */
+  /**
+   * Порядок доп. блоков после шести основных секций: `geography`, `certificates`, `custom:*`.
+   */
   sectionOrder?: string[]
-  /** Карта видимости секций по id; отсутствие ключа считается «показывать». */
   sectionVisibility?: Record<string, boolean>
 }
 
@@ -559,6 +597,9 @@ export interface HomeDirectionRow {
   description: string
   cta: string
   href: string
+  hoverTitle?: string
+  hoverDescription?: string
+  heroImage?: string
 }
 
 export interface HomeDirectionsSection {
@@ -587,9 +628,18 @@ export interface HomeStatsCard {
 
 export interface HomeAboutPreview {
   label: string
+  /** Основной заголовок блока «О нас» (rich HTML/TFT-HTML). */
+  title?: string
   titleFormatted: ThemeFormattedTitle
-  text: string
+  /** Короткий подзаголовок под H2 (аналог структуры «О компании»). */
+  subtitle: string
+  /** Первый абзац блока «О нас». */
+  lead: string
+  /** Второй абзац блока «О нас». */
+  lead2: string
   more: string
+  /** @deprecated legacy поле старого блока «О нас». */
+  text?: string
 }
 
 export interface HomeServicesSection {
@@ -649,6 +699,17 @@ export interface HomePageData {
 
 /* ── Listing page structured data (Services, Projects, Gallery, News hero+CTA) ── */
 
+/** CMS v2 листинга «Сервисы / Судоремонт» (маркетинговые секции + каталог карточек). */
+export interface ServicesMarketingPageContent {
+  sec1Hero: { title: string; lead: string; body: string }
+  sec2Reach: { title: string; paragraph1: string; paragraph2: string }
+  sec3Solutions: { title: string; body: string; cards: AboutRichCard[] }
+  sec4Advantages: { title: string; cards: AboutRichCard[] }
+  sec5Guarantees: { title: string; paragraph1: string; paragraph2: string }
+  /** Микрокопия перед формой заявки. */
+  sec6PreForm: { title: string; body: string }
+}
+
 export interface ListingHero {
   titleFormatted: ThemeFormattedTitle
   lead: string
@@ -663,6 +724,15 @@ export interface ListingPageData {
   hero: ListingHero
   cta?: ListingCTA
   showInquiryForm?: boolean
+  /** Скрыть блок над карточкой («Заявка», заголовок, лид из i18n) — см. `hideIntro` в PageInquiryForm. */
+  hideInquiryFormIntro?: boolean
+  /** Скрыть заголовок внутри карточки формы заявки (листинги с формой). */
+  hideInquiryFormCardHeading?: boolean
+  /** Кнопки под лидом в hero (листинг судоремонта v2). */
+  heroButtons?: LineMarketingHeroButton[]
+  /** `v2` — контент из `servicesV2`; `legacy` — классический hero + сетка + кнопка CTA. */
+  servicesPageLayout?: 'legacy' | 'v2'
+  servicesV2?: ServicesMarketingPageContent
   /** Опциональный фон hero (листинги сервисов, проектов, галереи, новостей, вакансий). */
   heroImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
@@ -671,6 +741,11 @@ export interface ListingPageData {
   sectionOrder?: string[]
   /** Карта видимости секций по id; отсутствие ключа = показывать. */
   sectionVisibility?: Record<string, boolean>
+  /**
+   * Стиль хлебных крошек в hero.
+   * `auto` — светлый текст для маркетингового hero v2 с затемнением.
+   */
+  heroBreadcrumbTone?: PageBreadcrumbTone
 }
 
 export interface ProjectsPageData extends ListingPageData {}
@@ -704,7 +779,28 @@ export interface LineMarketingHeroButton {
   href: string
 }
 
-/** Структурированный JSON страницы «Крюинг-менеджмент» (CMS, body в content_pages). */
+/** Контент страницы «Судовой менеджмент / технический менеджмент» (структура v2). */
+export interface ShipManagementPageContent {
+  sec1Hero: { title: string; lead: string; body: string }
+  sec2Approach: { title: string; body: string; cardsHeading: string; cards: AboutRichCard[] }
+  sec3Services: { title: string; body: string; cards: AboutRichCard[] }
+  sec4Advantages: { title: string; cards: AboutRichCard[] }
+  /** Финальный акцент — два абзаца (TipTap). */
+  sec5Closing: { title: string; paragraph1: string; paragraph2: string }
+}
+
+/** Контент страницы «Крюинг-менеджмент» (структура v2, по секциям как «О компании»). */
+export interface CrewingManagementPageContent {
+  sec1Hero: { title: string; lead: string; body: string }
+  sec2Approach: { title: string; body: string; cardsHeading: string; cards: AboutRichCard[] }
+  sec3Services: { title: string; body: string; cards: AboutRichCard[] }
+  sec4Advantages: { title: string; cards: AboutRichCard[] }
+  /** Секция «Доверие» — два абзаца (как финальный блок судового менеджмента). */
+  sec5Trust: { title: string; paragraph1: string; paragraph2: string }
+  sec6Cta: { title: string; body: string }
+}
+
+/** Карточка направления в классической вёрстке страницы «Крюинг-менеджмент». */
 export interface CrewingDirectionItem {
   icon: string
   /** Если true — иконка не показывается (поле иконки в админке остаётся для быстрого снятия галочки). */
@@ -730,6 +826,10 @@ export interface LineMarketingCardItem {
 export interface LineMarketingCardsBlock {
   id: string
   type: 'cards'
+  /** Колонок сетки на широких экранах (1–6). По умолчанию 3. */
+  columns?: number
+  /** Выравнивание текста и иконки в карточке. По умолчанию left. */
+  itemsAlign?: 'left' | 'center'
   items: LineMarketingCardItem[]
 }
 
@@ -757,9 +857,17 @@ export interface LineMarketingSplitBlock {
 export interface LineMarketingHeroImageBlock {
   id: string
   type: 'heroImage'
+  /**
+   * Показывать баннер на публичном сайте.
+   * Если false — блок скрыт (настройки и URL сохраняются в CMS).
+   */
+  showHero?: boolean
   /** URL картинки (обязательное поле — иначе блок не показывается). */
   imageUrl: string
-  /** Высота баннера: small ~ 280px / medium ~ 420px / large ~ 560px. */
+  /**
+   * Устаревшие пресеты высоты; на сайте баннер фиксирован **50vh** на всю ширину окна.
+   * Поле остаётся в типе для обратной совместимости с уже сохранёнными страницами.
+   */
   height: 'small' | 'medium' | 'large'
   /** Опциональный заголовок над картинкой (визуально — поверх затемнения). */
   title: string
@@ -819,12 +927,25 @@ export type LineMarketingContentBlock =
 /** Тип блока в пользовательской секции (для UI выбора и normalizers). */
 export type LineMarketingContentBlockType = LineMarketingContentBlock['type']
 
+/** Палитра хлебных крошек на тёмном или светлом фоне (hero, баннер в секции). */
+export type PageBreadcrumbTone = 'auto' | 'on-dark' | 'on-light'
+
 /** Пользовательская секция после hero (набор блоков контента). */
 export interface LineMarketingCustomSection {
   id: string
   title: string
   /** Показывать заголовок секции над блоками. */
   showTitle: boolean
+  /**
+   * Только для детальных content-page (TipTap): где показывать секцию относительно основного текста статьи.
+   * По умолчанию `beforeArticle` — как раньше (hero и блоки над статьёй).
+   */
+  contentPlacement?: 'beforeArticle' | 'afterArticle'
+  /**
+   * Если задано — над первым блоком «Баннер / изображение» в секции показываются крошки
+   * с выбранной палитрой (остальные типы блоков не затрагиваются).
+   */
+  breadcrumbTone?: PageBreadcrumbTone
   blocks: LineMarketingContentBlock[]
 }
 
@@ -855,7 +976,16 @@ export interface CrewingChecklistBlock {
 }
 
 /** Встроенные секции маркетинговой страницы линии (после hero). */
-export type LineMarketingSectionId = 'directions' | 'checklist' | 'principles' | 'audience'
+export type LineMarketingSectionId =
+  | 'directions'
+  | 'checklist'
+  | 'principles'
+  | 'audience'
+  | 'approach'
+  | 'services'
+  | 'advantages'
+  | 'trust'
+  | 'cta'
 
 export interface CrewingPageData {
   hero: {
@@ -863,6 +993,14 @@ export interface CrewingPageData {
     titleFormatted: ThemeFormattedTitle
     lead: string
   }
+  /** `v2` — контент из `shipV2`; иначе — классическая вёрстка. */
+  shipPageLayout?: 'legacy' | 'v2'
+  /** Секции v2 для ship-management при `shipPageLayout === 'v2'`. */
+  shipV2?: ShipManagementPageContent
+  /** `v2` — контент из `crewingV2`; `legacy` или отсутствие ключа — классическая вёрстка. */
+  crewingPageLayout?: 'legacy' | 'v2'
+  /** Секции v2 (только для crewing-management при `crewingPageLayout === 'v2'`). */
+  crewingV2?: CrewingManagementPageContent
   /** До двух кнопок под лидом в hero. */
   heroButtons: LineMarketingHeroButton[]
   /** Порядок секций после hero (hero не входит); могут быть пользовательские `custom:<uuid>`. */
@@ -890,6 +1028,18 @@ export interface CrewingPageData {
   }
   checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
+  /** Скрыть блок над карточкой («Заявка», заголовок, лид из i18n). */
+  hideInquiryFormIntro?: boolean
+  /**
+   * Скрыть заголовок/лид внутри карточки формы заявки (дублирует блок секции над формой).
+   * Внешний блок «Оставьте заявку» — `hideInquiryFormIntro`.
+   */
+  hideInquiryFormCardHeading?: boolean
   /** Фон hero (URL); если пусто — только градиенты/фон страницы без фото. */
   heroBackgroundImage?: string
+  /**
+   * Стиль хлебных крошек в hero.
+   * `auto` — светлый текст при v2 и непустом фоне hero.
+   */
+  heroBreadcrumbTone?: PageBreadcrumbTone
 }

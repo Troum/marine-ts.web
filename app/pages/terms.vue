@@ -12,12 +12,12 @@ const items = computed(() =>
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-24 pb-16">
+  <div class="bg-white pt-24 pb-16">
     <div class="mts-content-wrap">
       <div class="max-w-7xl mx-auto">
       <Breadcrumbs :items="items" />
-      <h1 class="font-display text-2xl text-mts-text mb-6">{{ t('pages.legal.termsTitle') }}</h1>
-      <p class="font-body text-mts-text-secondary leading-relaxed">
+      <h1 class="font-display text-2xl text-body mb-6">{{ t('pages.legal.termsTitle') }}</h1>
+      <p class="font-body text-muted leading-relaxed">
         {{ t('pages.legal.termsLead') }}
       </p>
       </div>

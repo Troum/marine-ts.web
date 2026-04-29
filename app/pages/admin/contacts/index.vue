@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus, Trash2, Phone, Mail, MapPin, Clock } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Plus, Trash2, Phone, Mail, MapPin, Clock, ExternalLink } from 'lucide-vue-next'
 import type { SiteContactSettings } from '~/types'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
@@ -25,6 +25,7 @@ const iconOptions = [
   { value: 'mail' as const, label: 'Почта', icon: Mail },
   { value: 'map-pin' as const, label: 'Адрес', icon: MapPin },
   { value: 'clock' as const, label: 'Время', icon: Clock },
+  { value: 'link' as const, label: 'Ссылка', icon: ExternalLink },
 ]
 
 onMounted(async () => {

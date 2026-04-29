@@ -20,7 +20,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string | undefined]
+  'update:modelValue': [value: string]
 }>()
 
 const api = useMarineApi()
@@ -33,7 +33,7 @@ const urlProxy = computed({
   get: () => props.modelValue ?? '',
   set: (v: string) => {
     const t = v.trim()
-    emit('update:modelValue', t === '' ? undefined : t)
+    emit('update:modelValue', t)
   },
 })
 
@@ -57,7 +57,7 @@ async function onFileChange(e: Event) {
 }
 
 function clear() {
-  emit('update:modelValue', undefined)
+  emit('update:modelValue', '')
 }
 
 function pickFile() {

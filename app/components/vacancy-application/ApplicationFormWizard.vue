@@ -23,7 +23,7 @@ const props = withDefaults(
 )
 
 const fieldInputClass =
-  'w-full border border-mts-border bg-mts-bg px-3 py-2.5 font-body text-sm text-mts-text focus:border-mts-accent focus:outline-none'
+  'form-input text-sm'
 
 const api = useMarineApi()
 const { t, locale } = useI18n()
@@ -198,12 +198,12 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 </script>
 
 <template>
-  <div class="bg-mts-bg pt-16">
+  <div class="bg-white pt-16">
     <div v-if="showPending" class="flex justify-center py-24">
-      <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
+      <Loader2 class="h-8 w-8 animate-spin text-primary" />
     </div>
     <div v-else-if="showNotFound" class="mx-auto max-w-7xl px-6 py-24 text-center">
-      <p class="mb-6 font-body text-mts-text-secondary">{{ t('pages.common.notFoundVacancy') }}</p>
+      <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundVacancy') }}</p>
       <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
     </div>
     <div v-else-if="form" class="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-12">
@@ -211,7 +211,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
         <NuxtLink
           v-if="variant === 'vacancy' && vacancySlug"
           :to="localePath(`/vacancies/${vacancySlug}`)"
-          class="inline-flex items-center gap-2 font-mono text-xs uppercase text-mts-text-secondary transition-colors hover:text-mts-accent"
+          class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
           {{ t('pages.common.toVacancy') }}
@@ -219,12 +219,12 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
         <NuxtLink
           v-else
           :to="localePath('/vacancies')"
-          class="inline-flex items-center gap-2 font-mono text-xs uppercase text-mts-text-secondary transition-colors hover:text-mts-accent"
+          class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
           {{ t('pages.vacancyForm.backToVacanciesList') }}
         </NuxtLink>
-        <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+        <span class="font-mono text-[10px] uppercase tracking-wide text-muted">
           {{ t('pages.vacancyForm.stepProgress', { n: step, total: totalSteps }) }}
         </span>
       </div>
@@ -237,10 +237,10 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           class="rounded-sm border px-2 py-1 font-mono text-[9px] uppercase transition-colors"
           :class="
             step === s.n
-              ? 'border-mts-accent bg-mts-accent text-white'
+              ? 'border-primary bg-primary text-white'
               : s.n < step
-                ? 'border-mts-border bg-mts-surface text-mts-text-secondary'
-                : 'border-mts-border bg-mts-bg text-mts-text-muted'
+                ? 'border-border bg-bg-light text-muted'
+                : 'border-border bg-white text-muted'
           "
           @click="step = s.n"
         >
@@ -248,13 +248,13 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
         </button>
       </div>
 
-      <div class="border border-mts-border bg-mts-surface p-6 shadow-tech md:p-10">
+      <div class="card-tech p-6 md:p-10">
         <div v-if="submitted" class="text-center">
           <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-600/10">
             <Check class="h-7 w-7 text-green-700" />
           </div>
-          <h1 class="font-display text-2xl text-mts-text">{{ t('pages.vacancyForm.successTitle') }}</h1>
-          <p class="mt-4 font-body text-sm leading-relaxed text-mts-text-secondary">
+          <h1 class="font-display text-2xl text-body">{{ t('pages.vacancyForm.successTitle') }}</h1>
+          <p class="mt-4 font-body text-sm leading-relaxed text-muted">
             {{ variant === 'open' ? t('pages.vacancyForm.successLeadOpen') : t('pages.vacancyForm.successLead') }}
           </p>
           <NuxtLink
@@ -270,12 +270,12 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
         </div>
 
         <template v-else>
-          <h1 class="font-display text-2xl text-mts-text md:text-3xl">
-            <span class="text-mts-accent">{{ t('pages.vacancyForm.formHeading') }}</span>
+          <h1 class="font-display text-2xl text-body md:text-3xl">
+            <span class="text-primary">{{ t('pages.vacancyForm.formHeading') }}</span>
             <template v-if="variant === 'vacancy' && vacancyTitle"> — {{ vacancyTitle }}</template>
-            <template v-else><span class="text-mts-text"> — {{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
+            <template v-else><span class="text-body"> — {{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
           </h1>
-          <p class="mt-2 font-body text-sm text-mts-text-secondary">
+          <p class="mt-2 font-body text-sm text-muted">
             {{ variant === 'open' ? t('pages.vacancyForm.openFormIntro') : t('pages.vacancyForm.formIntro') }}
           </p>
 
@@ -288,12 +288,12 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 
           <!-- Step 1 -->
           <section v-show="step === 1" class="mt-8 space-y-4">
-            <p class="font-body text-mts-text-secondary">
+            <p class="font-body text-muted">
               {{ t('pages.vacancyForm.step1p1') }}
-              <strong class="text-mts-text">{{ form.positionApplyingFor || '—' }}</strong
+              <strong class="text-body">{{ form.positionApplyingFor || '—' }}</strong
               >{{ t('pages.vacancyForm.step1p2') }}
             </p>
-            <ul class="list-inside list-disc space-y-2 font-body text-sm text-mts-text-secondary">
+            <ul class="list-inside list-disc space-y-2 font-body text-sm text-muted">
               <li>{{ t('pages.vacancyForm.step1li1') }}</li>
               <li>{{ t('pages.vacancyForm.step1li2') }}</li>
               <li>{{ t('pages.vacancyForm.step1li3') }}</li>
@@ -302,10 +302,10 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 
           <!-- Step 2 -->
           <section v-show="step === 2" class="mt-8 space-y-4">
-            <h2 class="font-display text-lg text-mts-text">{{ t('pages.vacancyForm.step2title') }}</h2>
+            <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.step2title') }}</h2>
             <div class="grid gap-4 md:grid-cols-2">
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.positionApplyingFor')
                 }}</label>
                 <input
@@ -320,53 +320,53 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.lastName')
                 }}</label>
                 <input v-model="form.lastName" type="text" :class="fieldInputClass" @blur="syncSurnameName" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.firstName')
                 }}</label>
                 <input v-model="form.firstName" type="text" :class="fieldInputClass" @blur="syncSurnameName" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.fathersName')
                 }}</label>
                 <input v-model="form.fathersName" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.dateOfBirth')
                 }}</label>
                 <MtsDateInput v-model="dateOfBirthIso" :placeholder="t('pages.vacancyForm.dobPlaceholder')" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.maritalStatus')
                 }}</label>
                 <input v-model="form.maritalStatus" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.placeOfBirth')
                 }}</label>
                 <input v-model="form.placeOfBirth" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.photo')
                 }}</label>
                 <input
                   type="file"
                   accept="image/*"
                   :lang="locale"
-                  class="w-full border-0 bg-mts-bg p-2 font-body text-sm file:mr-3 file:border file:border-mts-border file:bg-mts-surface file:px-3 file:py-1.5 file:font-mono file:text-xs"
+                  class="w-full border-0 bg-white p-2 font-body text-sm file:mr-3 file:border file:border-border file:bg-bg-light file:px-3 file:py-1.5 file:font-mono file:text-xs"
                   @change="onPhotoChange"
                 />
-                <p v-if="form.photoFileName" class="mt-1 font-mono text-[10px] text-mts-text-secondary">
+                <p v-if="form.photoFileName" class="mt-1 font-mono text-[10px] text-muted">
                   {{ form.photoFileName }}
                 </p>
               </div>
@@ -375,58 +375,58 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 
           <!-- Step 3 -->
           <section v-show="step === 3" class="mt-8 space-y-4">
-            <h2 class="font-display text-lg text-mts-text">{{ t('pages.vacancyForm.step3title') }}</h2>
+            <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.step3title') }}</h2>
             <div class="grid gap-4 md:grid-cols-2">
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.citizenship')
                 }}</label>
                 <input v-model="form.citizenship" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.availableFrom')
                 }}</label>
                 <input v-model="form.availableFrom" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.englishLevel')
                 }}</label>
                 <input v-model="form.englishLevel" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.mobilePhone')
                 }}</label>
                 <MarinePhoneField v-model="form.mobilePhone" :input-class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.homePhone')
                 }}</label>
                 <MarinePhoneField v-model="form.homePhone" :input-class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.email')
                 }}</label>
                 <input v-model="form.email" type="email" :class="fieldInputClass" />
               </div>
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.messenger')
                 }}</label>
                 <input v-model="form.messenger" type="text" :class="fieldInputClass" />
               </div>
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.homeAddress')
                 }}</label>
                 <textarea v-model="form.homeAddress" rows="3" :class="fieldInputClass" />
               </div>
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nearestAirport')
                 }}</label>
                 <input v-model="form.nearestAirport" type="text" :class="fieldInputClass" />
@@ -436,40 +436,40 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 
           <!-- Step 4 NOK -->
           <section v-show="step === 4" class="mt-8 space-y-4">
-            <h2 class="font-display text-lg text-mts-text">{{ t('pages.vacancyForm.step4title') }}</h2>
+            <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.step4title') }}</h2>
             <div class="grid gap-4 md:grid-cols-2">
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokLastName')
                 }}</label>
                 <input v-model="form.nokLastName" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokContactNumber')
                 }}</label>
                 <MarinePhoneField v-model="form.nokContactNumber" :input-class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokFirstName')
                 }}</label>
                 <input v-model="form.nokFirstName" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokEmail')
                 }}</label>
                 <input v-model="form.nokEmail" type="email" :class="fieldInputClass" />
               </div>
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokRelationship')
                 }}</label>
                 <input v-model="form.nokRelationship" type="text" :class="fieldInputClass" />
               </div>
               <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.nokAddress')
                 }}</label>
                 <textarea v-model="form.nokAddress" rows="3" :class="fieldInputClass" />
@@ -515,29 +515,29 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           <!-- Step 9 Education + safety -->
           <section v-show="step === 9" class="mt-8 space-y-8">
             <VacancyEducationTable v-model:rows="form.educationRows" />
-            <div class="rounded-xl border border-mts-border bg-mts-surface p-5 shadow-sm">
-              <h2 class="font-display mb-4 text-lg text-mts-text">{{ t('pages.vacancies.safetySizes') }}</h2>
+            <div class="card-tech p-5">
+              <h2 class="font-display mb-4 text-lg text-body">{{ t('pages.vacancies.safetySizes') }}</h2>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                     t('pages.vacancyForm.fields.safetyOverallSize')
                   }}</label>
                   <input v-model="form.safetyOverallSize" type="text" :class="fieldInputClass" />
                 </div>
                 <div>
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                     t('pages.vacancyForm.fields.safetyHeight')
                   }}</label>
                   <input v-model="form.safetyHeight" type="text" :class="fieldInputClass" />
                 </div>
                 <div>
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                     t('pages.vacancyForm.fields.safetyShoeSize')
                   }}</label>
                   <input v-model="form.safetyShoeSize" type="text" :class="fieldInputClass" />
                 </div>
                 <div>
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                     t('pages.vacancyForm.fields.safetyWeight')
                   }}</label>
                   <input v-model="form.safetyWeight" type="text" :class="fieldInputClass" />
@@ -548,34 +548,34 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
 
           <!-- Step 10 Consents -->
           <section v-show="step === 10" class="mt-8 space-y-6">
-            <h2 class="font-display text-lg text-mts-text">{{ t('pages.vacancyForm.consentsTitle') }}</h2>
+            <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.consentsTitle') }}</h2>
             <label class="flex cursor-pointer gap-3">
               <input v-model="form.consentRuAccuracy" type="checkbox" class="mts-checkbox mt-1" />
-              <span class="font-body text-[11px] leading-snug text-mts-text-secondary">
+              <span class="font-body text-[11px] leading-snug text-muted">
                 {{ t('pages.vacancyForm.consentRu1') }}
               </span>
             </label>
             <label class="flex cursor-pointer gap-3">
               <input v-model="form.consentRuPd" type="checkbox" class="mt-1 size-4 accent-mts-accent" />
-              <span class="font-body text-[11px] leading-snug text-mts-text-secondary">
+              <span class="font-body text-[11px] leading-snug text-muted">
                 {{ t('pages.vacancyForm.consentRu2') }}
               </span>
             </label>
             <label class="flex cursor-pointer gap-3">
               <input v-model="form.consentEnAccuracy" type="checkbox" class="mts-checkbox mt-1" />
-              <span class="font-body text-[11px] leading-snug text-mts-text-secondary">
+              <span class="font-body text-[11px] leading-snug text-muted">
                 {{ t('pages.vacancyForm.consentEn1') }}
               </span>
             </label>
             <label class="flex cursor-pointer gap-3">
               <input v-model="form.consentEnPd" type="checkbox" class="mts-checkbox mt-1" />
-              <span class="font-body text-[11px] leading-snug text-mts-text-secondary">
+              <span class="font-body text-[11px] leading-snug text-muted">
                 {{ t('pages.vacancyForm.consentEn2') }}
               </span>
             </label>
           </section>
 
-          <div v-if="!submitted" class="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-mts-border pt-8">
+          <div v-if="!submitted" class="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8">
             <button
               v-if="step > 1"
               type="button"

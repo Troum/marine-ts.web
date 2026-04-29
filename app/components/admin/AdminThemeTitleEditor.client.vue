@@ -13,7 +13,7 @@ defineProps<{
   <AdminThemeToneTiptapCore
     v-model="model"
     :placeholder="placeholder ?? 'Заголовок…'"
-    :multiline="false"
+    :multiline="true"
     :compact="false"
   />
 </template>

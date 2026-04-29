@@ -2,6 +2,7 @@
 import {type Editor, EditorContent, useEditor} from '@tiptap/vue-3'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { createThemedHtmlTiptapExtensions } from '~/utils/themedHtmlTiptapExtensions'
+import { applyTiptapDarkEditingCanvas } from '~/utils/tiptapAdminDarkCanvas'
 import AdminColorTextPopover from './AdminColorTextPopover.client.vue'
 import AdminThemeTonePopover from './AdminThemeTonePopover.client.vue'
 
@@ -31,12 +32,15 @@ const suppressEmitToParent = ref(false)
 const initialHtml = incomingCmsValueToHtml(model.value)
 
 const editor = useEditor({
-  extensions: createThemedHtmlTiptapExtensions({ placeholder: props.placeholder }),
+  extensions: createThemedHtmlTiptapExtensions({
+    placeholder: props.placeholder,
+    withThemeToneMark: props.useThemeTonePopover === true,
+  }),
   content: initialHtml,
   editorProps: {
     attributes: {
       class: [
-        'tiptap ProseMirror w-full max-w-none px-4 py-3 font-body text-sm leading-snug text-mts-text focus:outline-none',
+        'tiptap ProseMirror admin-tiptap-editing-surface w-full max-w-none px-4 py-3 font-body text-sm leading-snug focus:outline-none',
         props.multiline ? 'min-h-[6rem]' : 'min-h-[3rem]',
         props.editorClass,
       ]
@@ -69,7 +73,11 @@ const editor = useEditor({
       return true
     },
   },
+  onCreate: ({ editor: ed }) => {
+    applyTiptapDarkEditingCanvas(ed)
+  },
   onUpdate: ({ editor: ed }) => {
+    applyTiptapDarkEditingCanvas(ed)
     if (syncingFromOutside.value) {
       return
     }
@@ -102,6 +110,7 @@ watch(
     syncingFromOutside.value = true
     ed.commands.setContent(incoming)
     syncingFromOutside.value = false
+    nextTick(() => applyTiptapDarkEditingCanvas(ed))
   },
 )
 
@@ -114,7 +123,7 @@ onBeforeUnmount(() => {
   <div class="space-y-3">
     <p v-if="!compact" class="font-body text-xs text-mts-text-secondary">
       <template v-if="useThemeTonePopover">
-        Выделите слова, откройте палитру и выберите тон темы.
+        Выделите слова, откройте палитру и выберите цвет текста.
       </template>
       <template v-else>
         Выделите слова, откройте палитру и выберите цвет текста или подсветку.
@@ -131,8 +140,8 @@ onBeforeUnmount(() => {
       class="flex items-stretch rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex shrink-0 items-center border-r border-mts-border/60 bg-white/60 px-2">
-        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="editor as Editor | null" />
-        <AdminColorTextPopover v-else :editor="editor as Editor | null" />
+        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="(editor as Editor | null | undefined) ?? null" />
+        <AdminColorTextPopover v-else :editor="(editor as Editor | null | undefined) ?? null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-html-tiptap-field min-w-0 flex-1" />
     </div>
@@ -142,8 +151,8 @@ onBeforeUnmount(() => {
       class="rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex flex-wrap items-center gap-2 border-b border-mts-border/60 bg-white/60 px-2 py-1.5">
-        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="editor as Editor | null" />
-        <AdminColorTextPopover v-else :editor="editor as Editor | null" />
+        <AdminThemeTonePopover v-if="useThemeTonePopover" :editor="(editor as Editor | null | undefined) ?? null" />
+        <AdminColorTextPopover v-else :editor="(editor as Editor | null | undefined) ?? null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-html-tiptap-field" />
     </div>

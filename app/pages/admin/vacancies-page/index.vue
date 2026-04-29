@@ -199,7 +199,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               hint="Необязательно. Нажмите «Загрузить файл» (jpeg, png, webp) или вставьте URL — фон отображается над списком вакансий на /vacancies. Один файл для обоих языков."
             />
             <div>
-              <label :class="sectionLabel">Заголовок (сегменты и акценты темы)</label>
+              <label :class="sectionLabel">Заголовок</label>
               <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div>

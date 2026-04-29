@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import type { Editor } from '@tiptap/vue-3'
 import { onClickOutside } from '@vueuse/core'
-import { ChevronDown, Palette } from 'lucide-vue-next'
+import { Bold, ChevronDown, Palette } from 'lucide-vue-next'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import type { ThemeTitleTone } from '~/types'
+import type { ThemeTitleFontWeight, ThemeTitleTone } from '~/types'
 import {
+  THEME_TITLE_FONT_WEIGHT_LABELS,
   THEME_TITLE_TONE_ADMIN_PREVIEW_HEX,
   THEME_TITLE_TONE_LABELS,
+  isThemeTitleFontWeight,
 } from '~/utils/themeFormattedTitle'
+import { THEME_TITLE_FONT_WEIGHTS } from '~/utils/themeToneTiptap'
 
 /**
  * Аналог AdminColorTextPopover, но для редактора заголовков (`ThemeFormattedTitle`).
@@ -26,16 +29,21 @@ const popoverRef = ref<HTMLElement | null>(null)
 
 /** Активный тон в текущем выделении (если все символы окрашены одним тоном). */
 const activeTone = ref<ThemeTitleTone | null>(null)
+/** Явный вес шрифта сегмента или null = по умолчанию у заголовка. */
+const activeFontWeight = ref<ThemeTitleFontWeight | null>(null)
 
 function readActiveTone() {
   const ed = props.editor
   if (!ed) {
     activeTone.value = null
+    activeFontWeight.value = null
     return
   }
-  const attrs = ed.getAttributes('themeTone') as { tone?: string }
+  const attrs = ed.getAttributes('themeTone') as { tone?: string; fontWeight?: number | null }
   const tone = attrs?.tone
   activeTone.value = TONE_KEYS.includes(tone as ThemeTitleTone) ? (tone as ThemeTitleTone) : null
+  const fw = attrs?.fontWeight
+  activeFontWeight.value = typeof fw === 'number' && isThemeTitleFontWeight(fw) ? fw : null
 }
 
 function onSelectionUpdate() {
@@ -75,7 +83,25 @@ const triggerColor = computed(() =>
 function applyTone(tone: ThemeTitleTone) {
   const ed = props.editor
   if (!ed) return
-  ed.chain().focus().setMark('themeTone', { tone }).run()
+  const cur = ed.getAttributes('themeTone') as { fontWeight?: number | null }
+  ed.chain()
+    .focus()
+    .setMark('themeTone', { tone, fontWeight: cur.fontWeight ?? null })
+    .run()
+  readActiveTone()
+}
+
+const FONT_WEIGHT_KEYS = THEME_TITLE_FONT_WEIGHTS
+
+function applyFontWeight(fw: ThemeTitleFontWeight | null) {
+  const ed = props.editor
+  if (!ed) return
+  const cur = ed.getAttributes('themeTone') as { tone?: string }
+  const tone = TONE_KEYS.includes(cur.tone as ThemeTitleTone) ? (cur.tone as ThemeTitleTone) : 'text'
+  ed.chain()
+    .focus()
+    .setMark('themeTone', { tone, fontWeight: fw })
+    .run()
   readActiveTone()
 }
 
@@ -132,8 +158,8 @@ onBeforeUnmount(() => {
       :disabled="!canToggle"
       :aria-expanded="open"
       aria-haspopup="dialog"
-      aria-label="Тон темы"
-      title="Тоны темы"
+      aria-label="Цвет и начертание текста"
+      title="Цвет и начертание"
       @mousedown.prevent
       @click="toggleOpen"
     >
@@ -156,13 +182,13 @@ onBeforeUnmount(() => {
         v-if="open"
         ref="popoverRef"
         role="dialog"
-        aria-label="Выбор тона темы"
-        class="absolute left-0 top-full z-50 mt-1 w-[260px] origin-top-left rounded border border-mts-border bg-white p-3 shadow-lg"
+        aria-label="Оформление текста заголовка"
+        class="absolute left-0 top-full z-50 mt-1 w-[280px] origin-top-left rounded border border-mts-border bg-white p-3 shadow-lg"
         @mousedown.prevent
       >
         <header class="mb-2 flex items-center gap-1.5">
           <Palette class="h-3 w-3 text-mts-text-secondary" />
-          <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Тоны темы</h3>
+          <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Цвет текста</h3>
         </header>
         <div class="grid grid-cols-1 gap-1">
           <button
@@ -181,6 +207,40 @@ onBeforeUnmount(() => {
               :style="{ backgroundColor: THEME_TITLE_TONE_ADMIN_PREVIEW_HEX[tone] }"
             />
             <span>{{ THEME_TITLE_TONE_LABELS[tone] }}</span>
+          </button>
+        </div>
+        <header class="mb-2 mt-4 flex items-center gap-1.5 border-t border-mts-border-light pt-3">
+          <Bold class="h-3 w-3 text-mts-text-secondary" />
+          <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Начертание</h3>
+        </header>
+        <div class="grid grid-cols-1 gap-1">
+          <button
+            type="button"
+            data-weight-swatch
+            class="mts-weight-row inline-flex items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left font-body text-xs text-mts-text transition-colors hover:border-mts-border hover:bg-mts-bg focus:outline-none focus:ring-2 focus:ring-mts-accent/50"
+            :class="{ 'mts-weight-row--active': activeFontWeight === null }"
+            title="Наследуется от стиля заголовка на сайте"
+            :aria-pressed="activeFontWeight === null"
+            @click="applyFontWeight(null)"
+          >
+            <span class="h-4 w-4 shrink-0 rounded border border-dashed border-mts-border/80" aria-hidden="true" />
+            <span>По умолчанию (как у заголовка)</span>
+          </button>
+          <button
+            v-for="fw in FONT_WEIGHT_KEYS"
+            :key="fw"
+            type="button"
+            data-weight-swatch
+            class="mts-weight-row inline-flex items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left font-body text-xs text-mts-text transition-colors hover:border-mts-border hover:bg-mts-bg focus:outline-none focus:ring-2 focus:ring-mts-accent/50"
+            :class="{ 'mts-weight-row--active': activeFontWeight === fw }"
+            :title="THEME_TITLE_FONT_WEIGHT_LABELS[fw]"
+            :aria-pressed="activeFontWeight === fw"
+            @click="applyFontWeight(fw)"
+          >
+            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-mts-border/60 bg-mts-bg font-mono text-[9px] font-semibold leading-none text-mts-text">
+              {{ fw === 400 ? 'R' : fw === 700 ? 'B' : String(Math.round(fw / 100)) }}
+            </span>
+            <span>{{ THEME_TITLE_FONT_WEIGHT_LABELS[fw] }}</span>
           </button>
         </div>
       </div>
@@ -207,6 +267,10 @@ onBeforeUnmount(() => {
   border-radius: 1px;
 }
 .mts-tone-row--active {
+  border-color: var(--color-mts-accent, #2563eb);
+  background-color: var(--color-mts-bg, #f8fafc);
+}
+.mts-weight-row--active {
   border-color: var(--color-mts-accent, #2563eb);
   background-color: var(--color-mts-bg, #f8fafc);
 }

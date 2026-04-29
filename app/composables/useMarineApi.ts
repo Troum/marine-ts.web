@@ -13,6 +13,7 @@ import type {
   GalleryItem,
   ContentPageTranslationPayload,
   MarineContentLocale,
+  MediaLibraryItem,
   NewsItem,
   NewsTranslationPayload,
   ContentPageSummary,
@@ -567,6 +568,8 @@ export function useMarineApi() {
         slug: string
         isPublished?: boolean
         sortOrder?: number
+        showInquiryForm?: boolean
+        showPublicTitle?: boolean
         contentableType?: ContentPageContentableType
         contentableId?: number
         translations: Record<MarineContentLocale, ContentPageTranslationPayload>
@@ -588,10 +591,24 @@ export function useMarineApi() {
       delete: (id: number) => fetchAuth<unknown>(`/content-pages/${id}`, { method: 'DELETE' }),
     },
     media: {
+      listManage: async () => {
+        const res = await fetchAuth<{ data: MediaLibraryItem[] }>('/media/manage')
+        return res.data
+      },
       upload: async (file: File) => {
         const fd = new FormData()
         fd.append('file', file)
-        return fetchAuthFormData<{ url: string }>('/media', fd)
+        const raw = await fetchAuthFormData<
+          { url: string } | { data: { url: string } }
+        >('/media', fd)
+        const payload =
+          raw && typeof raw === 'object' && 'data' in raw && (raw as { data?: unknown }).data
+            ? (raw as { data: { url: string } }).data
+            : (raw as { url: string })
+        if (!payload?.url) {
+          throw new Error('Media upload response missing url')
+        }
+        return { url: payload.url }
       },
     },
     gallery: {

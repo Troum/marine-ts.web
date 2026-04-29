@@ -9,9 +9,30 @@ import Text from '@tiptap/extension-text'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { UndoRedo } from '@tiptap/extensions'
 import { ThemeToneMark } from '~/utils/themeToneTiptap'
+import { TiptapTextFontWeight } from '~/utils/tiptapTextFontWeightExtension'
 
 /** Набор расширений для редактора; TFT → HTML на SSR — `serializeThemeTitleTiptapDocToHtml`. */
-export function createThemedHtmlTiptapExtensions(options: { placeholder: string }): Extensions {
+export function createThemedHtmlTiptapExtensions(options: {
+  placeholder: string
+  /** Нужен только для редакторов TFT (AdminThemeTitleEditor). */
+  withThemeToneMark?: boolean
+}): Extensions {
+  const withThemeToneMark = options.withThemeToneMark === true
+  /*
+   * Редактор заголовка TFT: только `themeTone` для цвета и веса.
+   * TextStyle + Color + font-weight на textStyle конфликтуют с ThemeToneMark в ProseMirror
+   * (дублирующиеся span’ы / приоритет стилей) — палитра «Акцент тёмный» и начертание
+   * визуально не применялись, хотя атрибуты марки менялись.
+   */
+  const richHtmlMarks: Extensions = withThemeToneMark
+    ? []
+    : [
+        TextStyle,
+        Color,
+        TiptapTextFontWeight,
+        Highlight.configure({ multicolor: true }),
+      ]
+
   return [
     Document,
     Paragraph,
@@ -19,18 +40,8 @@ export function createThemedHtmlTiptapExtensions(options: { placeholder: string 
     HardBreak.extend({
       HTMLAttributes: { class: 'mts-hard-break' },
     }),
-    ThemeToneMark,
-    /*
-     * Цвет текста: TextStyle создаёт <span style="color: …">, Color навешивает атрибут.
-     * Без TextStyle Color не работает (это требование пакета).
-     */
-    TextStyle,
-    Color,
-    /*
-     * Подсветка фона (multicolor: каждый кусок может иметь свой background-color).
-     * Рендерится в <mark style="background-color: …">.
-     */
-    Highlight.configure({ multicolor: true }),
+    ...(withThemeToneMark ? [ThemeToneMark] : []),
+    ...richHtmlMarks,
     Placeholder.configure({
       placeholder: options.placeholder,
     }),

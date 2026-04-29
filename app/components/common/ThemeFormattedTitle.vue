@@ -9,14 +9,17 @@ const props = defineProps<{
 }>()
 
 function cls(tone: string) {
-  return THEME_TITLE_TONE_CLASSES[tone as keyof typeof THEME_TITLE_TONE_CLASSES] ?? 'text-mts-text'
+  return THEME_TITLE_TONE_CLASSES[tone as keyof typeof THEME_TITLE_TONE_CLASSES] ?? 'text-body'
 }
 </script>
 
 <template>
   <span :class="['inline', rootClass]">
     <template v-for="(s, i) in title.spans" :key="i">
-      <span :class="cls(s.tone)">{{ s.text }}</span>
+      <span
+        :class="cls(s.tone)"
+        :style="s.fontWeight != null ? { fontWeight: s.fontWeight } : undefined"
+      >{{ s.text }}</span>
     </template>
   </span>
 </template>

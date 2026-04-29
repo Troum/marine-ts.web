@@ -2,6 +2,7 @@
 import { Edit, Trash2, ArrowLeft, Loader2 } from 'lucide-vue-next'
 import type { ContentPage } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
+import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import { triState01 } from '~/utils/adminFilters'
 
 definePageMeta({
@@ -143,7 +144,7 @@ async function handleDelete(id: number) {
           <tbody>
             <tr v-for="row in pages" :key="row.id" class="border-b border-mts-border last:border-0">
               <td class="p-4">
-                <p class="font-body text-sm text-mts-text">{{ row.title }}</p>
+                <p class="font-body text-sm text-mts-text">{{ flattenEncodedOrPlain(row.title) }}</p>
               </td>
               <td class="p-4">
                 <span class="font-mono text-xs text-mts-text-secondary">{{ row.slug }}</span>

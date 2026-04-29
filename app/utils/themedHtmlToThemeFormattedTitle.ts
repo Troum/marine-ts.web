@@ -19,7 +19,7 @@ export function themedHtmlToThemeFormattedTitle(html: string): ThemeFormattedTit
   const ed = new Editor({
     editable: false,
     injectCSS: false,
-    extensions: createThemedHtmlTiptapExtensions({ placeholder: '' }),
+    extensions: createThemedHtmlTiptapExtensions({ placeholder: '', withThemeToneMark: true }),
     content: html || '<p></p>',
   })
   try {

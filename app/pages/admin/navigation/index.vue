@@ -21,26 +21,45 @@ const loading = ref(true)
 const saving = ref(false)
 const form = ref<NavigationMenuSettings>(emptyNavigationSettings())
 
+function defaultMenuItems(): NavigationMenuItem[] {
+  return [
+    { path: '/', label: { ru: 'Главная', en: 'Home' } },
+    { path: '/about', label: { ru: 'О компании', en: 'About' } },
+    { path: '/services', label: { ru: 'Услуги', en: 'Services' } },
+    { path: '/projects', label: { ru: 'Проекты', en: 'Projects' } },
+    { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
+    { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crewing management' } },
+    { path: '/vacancies', label: { ru: 'Вакансии', en: 'Vacancies' } },
+    { path: '/contacts', label: { ru: 'Контакты', en: 'Contacts' } },
+  ]
+}
+
 function emptyItem(): NavigationMenuItem {
   return { path: '/', label: { ru: '', en: '' } }
 }
 
-/** Сохраняем одну вложенность; глубже не отдаём на API. */
 function serializeNavItem(row: NavigationMenuItem): NavigationMenuItem {
-  const path = row.path.trim() || '/'
-  const label = { ru: row.label.ru.trim(), en: row.label.en.trim() }
-  if (row.children?.length) {
+  return {
+    path: row.path.trim() || '/',
+    label: {
+      ru: row.label.ru.trim(),
+      en: row.label.en.trim(),
+    },
+  }
+}
+
+function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSettings {
+  if (settings.more.length) {
     return {
-      path,
-      label,
-      children: row.children.map((c) => {
-        const p = c.path.trim() || '/'
-        const lab = { ru: c.label.ru.trim(), en: c.label.en.trim() }
-        return { path: p, label: lab }
-      }),
+      main: defaultMenuItems(),
+      more: [],
     }
   }
-  return { path, label }
+  const items = [...settings.main, ...settings.more].map(serializeNavItem)
+  return {
+    main: items.length ? items : defaultMenuItems(),
+    more: [],
+  }
 }
 
 onMounted(async () => {
@@ -50,22 +69,22 @@ onMounted(async () => {
   }
   try {
     await loadPathOptions()
-    form.value = await api.navigationSettings.get()
+    form.value = normalizeForEditor(await api.navigationSettings.get())
   } catch {
     await showAdminAlert({ message: 'Не удалось загрузить меню', variant: 'error' })
-    form.value = emptyNavigationSettings()
+    form.value = { main: defaultMenuItems(), more: [] }
   } finally {
     loading.value = false
   }
 })
 
-function addMain() {
+function addItem() {
   form.value.main.push(emptyItem())
 }
 
-async function removeMain(i: number) {
+async function removeItem(i: number) {
   const ok = await confirm({
-    message: 'Удалить этот пункт главного меню?',
+    message: 'Удалить этот пункт fullscreen-меню?',
     confirmLabel: 'Удалить',
     variant: 'danger',
   })
@@ -75,7 +94,7 @@ async function removeMain(i: number) {
   form.value.main.splice(i, 1)
 }
 
-function moveMain(i: number, dir: -1 | 1) {
+function moveItem(i: number, dir: -1 | 1) {
   const arr = form.value.main
   const j = i + dir
   if (j < 0 || j >= arr.length) {
@@ -87,77 +106,17 @@ function moveMain(i: number, dir: -1 | 1) {
   arr[j] = a
 }
 
-function addMore() {
-  form.value.more.push(emptyItem())
-}
-
-async function removeMore(i: number) {
+async function restoreDefaultMenu() {
   const ok = await confirm({
-    message: 'Удалить этот пункт блока «Ещё»?',
-    confirmLabel: 'Удалить',
+    message: 'Заменить текущий список пунктами из нового дизайна?',
+    confirmLabel: 'Заменить',
     variant: 'danger',
   })
   if (!ok) {
     return
   }
-  form.value.more.splice(i, 1)
-}
-
-function moveMore(i: number, dir: -1 | 1) {
-  const arr = form.value.more
-  const j = i + dir
-  if (j < 0 || j >= arr.length) {
-    return
-  }
-  const a = arr[i]!
-  const b = arr[j]!
-  arr[i] = b
-  arr[j] = a
-}
-
-function addMainChild(i: number) {
-  const row = form.value.main[i]
-  if (!row) {
-    return
-  }
-  if (!row.children) {
-    row.children = []
-  }
-  row.children.push(emptyItem())
-}
-
-async function removeMainChild(i: number, ci: number) {
-  const ok = await confirm({
-    message: 'Удалить этот подпункт?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  const row = form.value.main[i]
-  if (!row?.children) {
-    return
-  }
-  row.children.splice(ci, 1)
-  if (row.children.length === 0) {
-    delete row.children
-  }
-}
-
-async function clearMainChildren(i: number) {
-  const ok = await confirm({
-    message: 'Удалить все подпункты у этого пункта?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  const row = form.value.main[i]
-  if (row) {
-    delete row.children
-  }
+  form.value.main = defaultMenuItems()
+  form.value.more = []
 }
 
 async function submit() {
@@ -165,11 +124,11 @@ async function submit() {
   try {
     const payload: NavigationMenuSettings = {
       main: form.value.main.map(serializeNavItem),
-      more: form.value.more.map(serializeNavItem),
+      more: [],
     }
     await api.navigationSettings.update(payload)
-    form.value = await api.navigationSettings.get()
-    adminToast.success('Меню сохранено')
+    form.value = normalizeForEditor(await api.navigationSettings.get())
+    adminToast.success('Fullscreen-меню сохранено')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
   } finally {
@@ -185,7 +144,7 @@ async function submit() {
         <NuxtLink to="/admin" class="mr-4 text-mts-text-secondary hover:text-mts-accent">
           <ArrowLeft class="h-5 w-5" />
         </NuxtLink>
-        <h1 class="font-display text-xl text-mts-text">Меню в шапке</h1>
+        <h1 class="font-display text-xl text-mts-text">Fullscreen-меню</h1>
       </div>
     </header>
 
@@ -193,217 +152,113 @@ async function submit() {
       <div v-if="loading" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
       </div>
+
       <form v-else class="relative border border-mts-border bg-white p-8 shadow-tech" @submit.prevent="submit">
         <CommonAccentCorners />
 
-        <p class="font-body text-sm text-mts-text-secondary mb-8">
-          Первый ряд ссылок в шапке и пункты в выпадающем списке «Ещё». Список «Раздел сайта» строится из файлов
-          <span class="font-mono">app/pages</span> (статические маршруты) и из опубликованных контентных страниц в API
-          (в т.ч. карточки сервисов и проектов). Можно ввести путь вручную: внутренний (например
-          <span class="font-mono">/news</span>) или полный URL (<span class="font-mono">https://…</span>).
-        </p>
+        <div class="mb-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+          <div>
+            <p class="font-body text-sm leading-relaxed text-mts-text-secondary">
+              Новый клиентский дизайн использует один список пунктов в полноэкранном меню. Прежние блоки
+              «Основное меню», «Ещё» и вложенные подменю больше не выводятся на сайте.
+            </p>
+            <p class="mt-3 font-body text-sm leading-relaxed text-mts-text-secondary">
+              Список «Раздел сайта» строится из файлов <span class="font-mono">app/pages</span> и опубликованных
+              контентных страниц API. Можно ввести путь вручную: внутренний
+              (<span class="font-mono">/services</span>) или полный URL (<span class="font-mono">https://…</span>).
+            </p>
+          </div>
 
-        <h2 class="font-display text-lg text-mts-text mb-4">Основное меню</h2>
-        <div class="space-y-4 mb-10">
+          <div class="border border-mts-border bg-mts-bg p-4">
+            <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Как будет выглядеть</p>
+            <div class="mt-3 rounded bg-mts-navy p-4">
+              <div
+                v-for="(row, i) in form.main.slice(0, 5)"
+                :key="`preview-${i}`"
+                class="flex items-center justify-between border-b border-white/10 py-2 last:border-b-0"
+              >
+                <span class="text-sm font-bold text-white/75">{{ row.label.ru || 'Без подписи' }}</span>
+                <span class="text-white/20">→</span>
+              </div>
+              <p v-if="form.main.length > 5" class="mt-3 text-xs text-white/40">+ ещё {{ form.main.length - 5 }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-10 space-y-4">
           <div
             v-for="(row, i) in form.main"
-            :key="`main-${i}`"
-            class="grid gap-4 border border-mts-border p-4 bg-mts-bg/50 sm:grid-cols-2"
+            :key="`menu-item-${i}`"
+            class="grid gap-4 border border-mts-border bg-mts-bg/50 p-4 sm:grid-cols-2"
           >
-            <div class="sm:col-span-2 flex flex-wrap items-center gap-2 justify-end">
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
-                :disabled="i === 0"
-                aria-label="Выше"
-                @click="moveMain(i, -1)"
-              >
-                <ChevronUp class="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
-                :disabled="i === form.main.length - 1"
-                aria-label="Ниже"
-                @click="moveMain(i, 1)"
-              >
-                <ChevronDown class="h-4 w-4" />
-              </button>
+            <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
+              <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Пункт {{ i + 1 }}
+              </p>
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                  :disabled="i === 0"
+                  aria-label="Выше"
+                  @click="moveItem(i, -1)"
+                >
+                  <ChevronUp class="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
+                  :disabled="i === form.main.length - 1"
+                  aria-label="Ниже"
+                  @click="moveItem(i, 1)"
+                >
+                  <ChevronDown class="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  class="btn-secondary inline-flex items-center gap-2 border-red-200 text-red-700 hover:border-red-400"
+                  @click="removeItem(i)"
+                >
+                  <Trash2 class="h-4 w-4" />
+                  Удалить
+                </button>
+              </div>
             </div>
+
             <div class="sm:col-span-2">
               <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/services или https://…" />
             </div>
+
             <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Подпись (RU)</label
-              >
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Подпись (RU)
+              </label>
               <AdminThemedTextField v-model="row.label.ru" :multiline="false" />
             </div>
+
             <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Подпись (EN)</label
-              >
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Подпись (EN)
+              </label>
               <AdminThemedTextField v-model="row.label.en" :multiline="false" />
             </div>
-
-            <div class="sm:col-span-2 border-t border-mts-border pt-4 mt-1">
-              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                  Подпункты (выпадающее меню)
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-if="row.children?.length"
-                    type="button"
-                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs"
-                    @click="addMainChild(i)"
-                  >
-                    <Plus class="h-3.5 w-3.5" />
-                    Подпункт
-                  </button>
-                  <button
-                    v-if="row.children?.length"
-                    type="button"
-                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs border-red-200 text-red-800"
-                    @click="clearMainChildren(i)"
-                  >
-                    Убрать подменю
-                  </button>
-                  <button
-                    v-else
-                    type="button"
-                    class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5 text-xs"
-                    @click="addMainChild(i)"
-                  >
-                    <Plus class="h-3.5 w-3.5" />
-                    Добавить подменю
-                  </button>
-                </div>
-              </div>
-              <p v-if="!row.children?.length" class="font-body text-xs text-mts-text-secondary">
-                Если нужен только заголовок группы без своей страницы, задайте путь родителя
-                <span class="font-mono">#</span>
-                и добавьте подпункты.
-              </p>
-              <div v-else class="space-y-3">
-                <div
-                  v-for="(child, ci) in row.children"
-                  :key="`main-${i}-sub-${ci}`"
-                  class="grid gap-3 border border-mts-border bg-white p-3 sm:grid-cols-2"
-                >
-                  <div class="sm:col-span-2">
-                    <AdminNavPathPick
-                      v-model="child.path"
-                      compact
-                      label="Путь подпункта"
-                      :path-options="pathOptions"
-                      input-placeholder="/ship-management или https://…"
-                    />
-                  </div>
-                  <div>
-                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                      >Подпись (RU)</label
-                    >
-                    <AdminThemedTextField v-model="child.label.ru" :multiline="false" />
-                  </div>
-                  <div>
-                    <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                      >Подпись (EN)</label
-                    >
-                    <AdminThemedTextField v-model="child.label.en" :multiline="false" />
-                  </div>
-                  <div class="sm:col-span-2 flex justify-end">
-                    <button
-                      type="button"
-                      class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 text-xs py-1.5"
-                      @click="removeMainChild(i, ci)"
-                    >
-                      <Trash2 class="h-3.5 w-3.5" />
-                      Удалить подпункт
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="sm:col-span-2 flex justify-end">
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
-                @click="removeMain(i)"
-              >
-                <Trash2 class="h-4 w-4" />
-                Удалить
-              </button>
-            </div>
           </div>
-          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addMain">
-            <Plus class="h-4 w-4" />
-            Добавить пункт
-          </button>
-        </div>
 
-        <h2 class="font-display text-lg text-mts-text mb-4">Меню «Ещё»</h2>
-        <div class="space-y-4 mb-10">
-          <div
-            v-for="(row, i) in form.more"
-            :key="`more-${i}`"
-            class="grid gap-4 border border-mts-border p-4 bg-mts-bg/30 sm:grid-cols-2"
-          >
-            <div class="sm:col-span-2 flex flex-wrap items-center gap-2 justify-end">
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
-                :disabled="i === 0"
-                aria-label="Выше"
-                @click="moveMore(i, -1)"
-              >
-                <ChevronUp class="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-1 px-2 py-1.5"
-                :disabled="i === form.more.length - 1"
-                aria-label="Ниже"
-                @click="moveMore(i, 1)"
-              >
-                <ChevronDown class="h-4 w-4" />
-              </button>
-            </div>
-            <div class="sm:col-span-2">
-              <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/gallery или https://…" />
-            </div>
-            <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Подпись (RU)</label
-              >
-              <AdminThemedTextField v-model="row.label.ru" :multiline="false" />
-            </div>
-            <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Подпись (EN)</label
-              >
-              <AdminThemedTextField v-model="row.label.en" :multiline="false" />
-            </div>
-            <div class="sm:col-span-2 flex justify-end">
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
-                @click="removeMore(i)"
-              >
-                <Trash2 class="h-4 w-4" />
-                Удалить
-              </button>
-            </div>
+          <div class="flex flex-wrap gap-3">
+            <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addItem">
+              <Plus class="h-4 w-4" />
+              Добавить пункт
+            </button>
+            <button type="button" class="btn-secondary" @click="restoreDefaultMenu">
+              Восстановить пункты нового дизайна
+            </button>
           </div>
-          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addMore">
-            <Plus class="h-4 w-4" />
-            Добавить пункт
-          </button>
         </div>
 
         <div class="flex gap-4">
-          <button type="submit" :disabled="saving" class="btn-primary">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>
+          <button type="submit" :disabled="saving" class="btn-primary">
+            {{ saving ? 'Сохранение…' : 'Сохранить' }}
+          </button>
           <NuxtLink to="/admin" class="btn-secondary">Отмена</NuxtLink>
         </div>
       </form>

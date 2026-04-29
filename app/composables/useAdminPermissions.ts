@@ -28,7 +28,6 @@ export function useAdminPermissions() {
   }
 
   if (import.meta.client) {
-    sync()
     onMounted(() => {
       sync()
       const onStorage = (e: StorageEvent) => {

@@ -2,8 +2,8 @@
 /**
  * Переключатель локали (RU/EN).
  *
- * Бренд-вариант (`dark`) — для шапки/футера на `bg-mts-navy` (токены
- * `mts-frost` / `mts-slate-muted`).
+ * Бренд-вариант (`dark`) — для шапки на тёмном фоне: общая рамка primary,
+ * активная вкладка залита primary, неактивная — прозрачная с текстом primary.
  */
 withDefaults(
   defineProps<{
@@ -29,7 +29,9 @@ const available = computed(() =>
   <div
     :class="[
       'inline-flex h-7 items-stretch gap-0 font-mono text-[10px] font-medium uppercase tracking-wide border',
-      dark ? 'border-mts-frost/25' : 'border-mts-border',
+      dark
+        ? 'overflow-hidden rounded-sm border-primary bg-transparent'
+        : 'border-border',
     ]"
     role="navigation"
     :aria-label="$t('lang.switch')"
@@ -42,12 +44,12 @@ const available = computed(() =>
         'inline-flex items-center px-2 transition-colors',
         dark
           ? locale === item.code
-            ? 'bg-mts-accent text-white'
-            : 'text-mts-slate-muted hover:text-mts-frost'
+            ? 'bg-primary text-white'
+            : 'bg-transparent text-primary hover:bg-primary/10'
           : locale === item.code
-            ? 'bg-mts-accent text-white'
-            : 'text-mts-text-secondary hover:text-mts-accent',
-        index > 0 ? (dark ? 'border-l border-mts-frost/25' : 'border-l border-mts-border') : '',
+            ? 'bg-primary text-white'
+            : 'text-muted hover:text-primary',
+        index > 0 ? (dark ? 'border-l border-primary' : 'border-l border-border') : '',
       ]"
     >
       {{ item.label }}

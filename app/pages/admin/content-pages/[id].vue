@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
 import { isRichTextEmpty, normalizeBodyForEditor } from '~/composables/useMarkdownSafeHtml'
-import type { ContentPageContentableType, MarineContentLocale, SeoFields } from '~/types'
+import type {
+  ContentPageContentableType,
+  CustomPageSection,
+  MarineContentLocale,
+  SeoFields,
+} from '~/types'
+import {
+  buildContentPageBodyForSave,
+  contentPageSectionsAreRenderable,
+  parseContentPageBody,
+} from '~/utils/contentPageBody'
 import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
 import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
 import { mergeContentPageTranslations } from '~/utils/adminTranslationForms'
@@ -26,6 +36,7 @@ const form = ref({
   isPublished: true,
   sortOrder: 0,
   showInquiryForm: false,
+  showPublicTitle: true,
   translations: mergeContentPageTranslations(),
 })
 
@@ -61,6 +72,12 @@ const linkIdStepper = computed({
   },
 })
 
+/** Hero и прочие блоки (как на листингах / «О компании») — сериализуются в `body` вместе с HTML статьи. */
+const customSectionsByLocale = ref<Record<MarineContentLocale, CustomPageSection[]>>({
+  ru: [],
+  en: [],
+})
+
 const publicSlugPreview = computed(() => form.value.slug?.trim() || '…')
 
 const publicPathHint = computed(() => {
@@ -68,9 +85,9 @@ const publicPathHint = computed(() => {
     return `/projects/${publicSlugPreview.value}`
   }
   if (linkKind.value === 'service') {
-    return `/services/${publicSlugPreview.value}`
+    return `/${publicSlugPreview.value}`
   }
-  return `/services/${publicSlugPreview.value} или /projects/${publicSlugPreview.value} (после привязки к карточке)`
+  return `/${publicSlugPreview.value}` + ' (или /projects/… для страницы проекта после привязки)'
 })
 
 const loading = ref(!isNew.value)
@@ -93,9 +110,11 @@ const seoForTab = computed<SeoFields>({
   },
 })
 
-function normalizeAllBodies() {
+function applyParsedBodiesToForm() {
   for (const loc of MARINE_CONTENT_LOCALES) {
-    form.value.translations[loc].body = normalizeBodyForEditor(form.value.translations[loc].body)
+    const parsed = parseContentPageBody(form.value.translations[loc].body)
+    customSectionsByLocale.value[loc] = parsed.customSections ?? []
+    form.value.translations[loc].body = normalizeBodyForEditor(parsed.articleHtml)
   }
 }
 
@@ -120,9 +139,10 @@ onMounted(async () => {
       isPublished: item.isPublished,
       sortOrder: item.sortOrder ?? 0,
       showInquiryForm: item.showInquiryForm ?? false,
+      showPublicTitle: item.showPublicTitle !== false,
       translations: mergeContentPageTranslations(item.translations),
     }
-    normalizeAllBodies()
+    applyParsedBodiesToForm()
     if (item.contentableType && item.contentableId != null) {
       linkKind.value = item.contentableType
       linkId.value = item.contentableId
@@ -137,13 +157,54 @@ onMounted(async () => {
   }
 })
 
+/** Локаль не заполнялась — можно сохранять только ru (или только primary). */
+function localeIsEffectivelyEmpty(loc: MarineContentLocale): boolean {
+  const t = form.value.translations[loc]
+  if (t.title?.trim()) {
+    return false
+  }
+  if (t.excerpt?.trim()) {
+    return false
+  }
+  if (!isRichTextEmpty(t.body ?? '')) {
+    return false
+  }
+  if (t.seoTitle?.trim() || t.seoDescription?.trim() || t.seoKeywords?.trim()) {
+    return false
+  }
+  if (contentPageSectionsAreRenderable(customSectionsByLocale.value[loc])) {
+    return false
+  }
+  return true
+}
+
+/** Заголовок + хотя бы статья или публично видимые блоки. */
+function localeContentComplete(loc: MarineContentLocale): boolean {
+  const t = form.value.translations[loc]
+  if (!t.title?.trim()) {
+    return false
+  }
+  const hasBlocks = contentPageSectionsAreRenderable(customSectionsByLocale.value[loc])
+  const hasArticle = !isRichTextEmpty(t.body ?? '')
+  if (!hasBlocks && !hasArticle) {
+    return false
+  }
+  return true
+}
+
 function validate(): boolean {
+  const primary = defaultMarineLocale()
+  if (!localeContentComplete(primary)) {
+    return false
+  }
   for (const loc of MARINE_CONTENT_LOCALES) {
-    const t = form.value.translations[loc]
-    if (!t.title?.trim()) {
-      return false
+    if (loc === primary) {
+      continue
     }
-    if (isRichTextEmpty(t.body ?? '')) {
+    if (localeIsEffectivelyEmpty(loc)) {
+      continue
+    }
+    if (!localeContentComplete(loc)) {
       return false
     }
   }
@@ -153,19 +214,29 @@ function validate(): boolean {
 async function submit() {
   if (!validate()) {
     await showAdminAlert({
-      message: 'Укажите заголовок и текст страницы на русском и английском.',
+      message:
+        'Укажите для русской версии заголовок и хотя бы одно из: текст страницы или блоки (hero, секции). Английскую версию можно не заполнять; если вы её начали (заголовок, текст, SEO или видимые блоки) — допишите так же, как ru.',
       variant: 'error',
     })
     return
   }
   saving.value = true
   try {
+    const translations = {} as typeof form.value.translations
+    for (const loc of MARINE_CONTENT_LOCALES) {
+      const t = form.value.translations[loc]
+      translations[loc] = {
+        ...t,
+        body: buildContentPageBodyForSave(customSectionsByLocale.value[loc], t.body),
+      }
+    }
     const base = {
       slug: form.value.slug?.trim() ?? '',
       isPublished: form.value.isPublished ?? true,
       sortOrder: Number(form.value.sortOrder ?? 0),
       showInquiryForm: form.value.showInquiryForm ?? false,
-      translations: form.value.translations,
+      showPublicTitle: form.value.showPublicTitle !== false,
+      translations,
     }
 
     if (isNew.value) {
@@ -268,7 +339,10 @@ async function submit() {
             <div class="rounded border border-mts-border bg-mts-bg/50 p-4">
               <p class="mb-3 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Связь с карточкой каталога</p>
               <p class="mb-4 font-body text-xs text-mts-text-secondary">
-                Одна текстовая страница может быть привязана к одной карточке сервиса или одному проекту: на сайте карточка получит ссылку на эту страницу. Id смотрите в списке
+                Одна текстовая страница может быть привязана к одной карточке сервиса или одному проекту: на сайте карточка получит ссылку на эту страницу. Привязка не обязательна — выберите
+                <span class="font-medium text-mts-text">«Без привязки»</span>
+                , если страницу нужно создать отдельно; связать с карточкой можно позже при редактировании. Чтобы форма открывалась сразу без предзаполнения, нажимайте
+                «Страница» в шапке списка, а не «+ страница» в строке карточки. Id смотрите в списке
                 <NuxtLink to="/admin/services" class="text-mts-accent hover:underline">сервисов</NuxtLink>
                 или
                 <NuxtLink to="/admin/projects" class="text-mts-accent hover:underline">проектов</NuxtLink>.
@@ -322,6 +396,13 @@ async function submit() {
               <input v-model="form.showInquiryForm" type="checkbox" class="mts-checkbox" />
               <span>Показать форму заявки внизу этой страницы на сайте</span>
             </label>
+            <label class="flex cursor-pointer select-none items-center gap-2.5 font-body text-sm text-mts-text">
+              <input v-model="form.showPublicTitle" type="checkbox" class="mts-checkbox" />
+              <span
+                >Показывать заголовок (h1) в тексте страницы под баннером. Выключите, если заголовок уже в hero —
+                поле «Заголовок» остаётся для крошек, вкладки и SEO.</span
+              >
+            </label>
           </section>
 
           <section class="space-y-6 border-t border-mts-border pt-8">
@@ -335,13 +416,28 @@ async function submit() {
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Краткое описание</label>
                 <AdminThemedTextField v-model="form.translations[localeTab].excerpt" />
               </div>
+              <div class="rounded border border-mts-border-light bg-mts-bg/50 p-4">
+                <p class="mb-2 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Hero и блоки</p>
+                <p class="mb-4 font-body text-xs text-mts-text-secondary">
+                  Добавьте секцию и блок «Баннер / изображение» для hero как на детальных страницах услуг: фон, подпись,
+                  затемнение. В секции можно задать тон крошек над баннером. Если нужен только баннер без подписи над ним —
+                  отключите «Показывать заголовок секции» в этой секции. Если блоков нет, страница ведёт себя как раньше
+                  (только заголовок и текст ниже).
+                </p>
+                <AdminCustomSectionsEditor
+                  :model-value="customSectionsByLocale[localeTab]"
+                  enable-article-placement
+                  @update:model-value="(v) => (customSectionsByLocale[localeTab] = v)"
+                />
+              </div>
               <div>
                 <label class="block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2"
-                  >Текст страницы *</label
+                  >Текст страницы</label
                 >
                 <p class="mb-2 font-body text-xs text-mts-text-secondary">
-                  Визуальный редактор; на сайте сохраняется HTML. Старые страницы в Markdown при открытии преобразуются для
-                  редактирования.
+                  Визуальный редактор; на сайте сохраняется HTML. Достаточно заполнить либо этот блок, либо «Hero и
+                  блоки» выше. Markdown-страницы при открытии преобразуются для редактирования. В панели редактора —
+                  секция «Сетка»: колонки Tailwind (на md+), произвольный текст, картинки и карты в ячейках.
                 </p>
                 <AdminRichTextEditor
                   :model-value="form.translations[localeTab].body"

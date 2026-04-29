@@ -14,6 +14,7 @@ import type {
   LineMarketingSplitBlock,
   LineMarketingTextBlock,
 } from '~/types'
+import { parseStoredPageBreadcrumbTone } from '~/utils/pageBreadcrumbTone'
 
 /**
  * Общие утилиты для пользовательских секций ("custom sections") — единый
@@ -37,7 +38,7 @@ export const CUSTOM_BLOCK_TYPE_LABELS: Record<CustomPageBlockType, string> = {
   cards: 'Карточки',
   text: 'Текст',
   split: 'Текст + изображение / слайдер',
-  heroImage: 'Баннер / изображение',
+  heroImage: 'Hero / баннер (на сайте: на всю ширину окна, высота 50%)',
   gallery: 'Галерея',
   accordion: 'Аккордеон',
   htmlMarkdown: 'Произвольный текст (Markdown)',
@@ -60,7 +61,7 @@ export function defaultBlock(type: CustomPageBlockType): CustomPageBlock {
   const id = newCustomPageBlockId()
   switch (type) {
     case 'cards':
-      return { id, type: 'cards', items: [defaultCardItem()] }
+      return { id, type: 'cards', columns: 3, itemsAlign: 'left', items: [defaultCardItem()] }
     case 'text':
       return { id, type: 'text', title: '', subtitle: '', description: '' }
     case 'split':
@@ -76,6 +77,7 @@ export function defaultBlock(type: CustomPageBlockType): CustomPageBlock {
       return {
         id,
         type: 'heroImage',
+        showHero: true,
         imageUrl: '',
         height: 'medium',
         title: '',
@@ -96,6 +98,7 @@ export function defaultCustomSection(): CustomPageSection {
     id: newCustomPageBlockId(),
     title: '',
     showTitle: true,
+    contentPlacement: 'beforeArticle',
     blocks: [],
   }
 }
@@ -144,9 +147,13 @@ function normalizeCardsBlock(raw: Record<string, unknown>): LineMarketingCardsBl
   const items = Array.isArray(raw.items)
     ? raw.items.map((it) => normalizeCardItem(it))
     : []
+  const alignRaw = raw.itemsAlign
+  const itemsAlign = alignRaw === 'center' ? 'center' : 'left'
   return {
     id: pickString(raw.id, '').trim() || newCustomPageBlockId(),
     type: 'cards',
+    columns: clampInt(pickNumber(raw.columns, 3), 1, 6),
+    itemsAlign,
     items: items.length > 0 ? items : [defaultCardItem()],
   }
 }
@@ -180,6 +187,7 @@ function normalizeHeroImageBlock(raw: Record<string, unknown>): LineMarketingHer
   return {
     id: pickString(raw.id, '').trim() || newCustomPageBlockId(),
     type: 'heroImage',
+    showHero: pickBoolean(raw.showHero, true),
     imageUrl: pickString(raw.imageUrl, '').trim(),
     height: h,
     title: pickString(raw.title, ''),
@@ -258,10 +266,14 @@ export function normalizeCustomPageSection(raw: unknown): CustomPageSection {
   }
   const r = raw as Partial<LineMarketingCustomSection>
   const blocksRaw = Array.isArray(r.blocks) ? r.blocks : []
+  const placement =
+    r.contentPlacement === 'afterArticle' ? 'afterArticle' : 'beforeArticle'
   return {
     id: pickString(r.id, '').trim() || newCustomPageBlockId(),
     title: pickString(r.title, ''),
     showTitle: pickBoolean(r.showTitle, true),
+    contentPlacement: placement,
+    breadcrumbTone: parseStoredPageBreadcrumbTone(r.breadcrumbTone),
     blocks: blocksRaw.map((b) => normalizeCustomPageBlock(b)),
   }
 }
@@ -283,7 +295,63 @@ export function isCustomPageBlockType(value: unknown): value is CustomPageBlockT
   return typeof value === 'string' && (CUSTOM_BLOCK_TYPES as readonly string[]).includes(value)
 }
 
-/* Экспортируем под старыми именами для обратной совместимости с line-pages. */
+/** Цепочка блоков секции: full-bleed hero отдельно от контента в `mts-content-wrap`. */
+export type CustomSectionBlockRun =
+  | { kind: 'hero'; block: CustomPageBlock }
+  | { kind: 'stack'; blocks: CustomPageBlock[] }
+
+export function customSectionBlockRuns(section: { blocks: CustomPageBlock[] }): CustomSectionBlockRun[] {
+  const out: CustomSectionBlockRun[] = []
+  let stack: CustomPageBlock[] = []
+  for (const block of section.blocks) {
+    if (isHeroImageBlockActive(block)) {
+      if (stack.length > 0) {
+        out.push({ kind: 'stack', blocks: stack })
+        stack = []
+      }
+      out.push({ kind: 'hero', block })
+    } else {
+      stack.push(block)
+    }
+  }
+  if (stack.length > 0) {
+    out.push({ kind: 'stack', blocks: stack })
+  }
+  return out
+}
+
+/** Публичный показ hero-блока: включено и задано изображение. */
+export function isHeroImageBlockActive(block: CustomPageBlock): boolean {
+  return block.type === 'heroImage' && block.showHero !== false && block.imageUrl.trim() !== ''
+}
+
+/** Секция имеет хоть что-то для показа на сайте (с учётом выключенного баннера). */
+export function customPageSectionIsVisibleOnSite(s: CustomPageSection): boolean {
+  const hasTitle = s.showTitle && s.title.trim() !== ''
+  const hasVisibleBlock = s.blocks.some((b) => {
+    if (b.type === 'heroImage') {
+      return isHeroImageBlockActive(b)
+    }
+    return true
+  })
+  return hasTitle || hasVisibleBlock
+}
+
+/** Есть ли в массиве секций что-то, что реально рендерится на сайте. */
+export function customPageSectionsHaveVisibleBlocks(sections: CustomPageSection[]): boolean {
+  return sections.some(customPageSectionIsVisibleOnSite)
+}
+
+/** Для сохранения в API: секция «занята» в редакторе (в т.ч. выключенный hero с настройками). */
+export function customPageSectionHasEditorContent(s: CustomPageSection): boolean {
+  return s.blocks.length > 0 || (s.showTitle && s.title.trim() !== '')
+}
+
+export function customPageSectionsHaveEditorContent(sections: CustomPageSection[]): boolean {
+  return sections.some(customPageSectionHasEditorContent)
+}
+
+/* Экспортируем под прежними именами для обратной совместимости с line-pages. */
 export {
   normalizeCustomPageBlock as normalizeLineMarketingContentBlock,
   normalizeCustomPageSection as normalizeLineMarketingCustomSection,

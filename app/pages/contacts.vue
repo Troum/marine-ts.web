@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Phone, Mail, MapPin, Clock, Send, Loader2 } from 'lucide-vue-next'
+import { Phone, Mail, MapPin, Clock, ExternalLink, Send, Loader2 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { ContactQuickIconKey, ContactsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
@@ -63,6 +63,7 @@ const quickIcons: Record<ContactQuickIconKey, Component> = {
   mail: Mail,
   'map-pin': MapPin,
   clock: Clock,
+  link: ExternalLink,
 }
 
 const form = ref({
@@ -110,19 +111,19 @@ async function submitFeedback() {
 </script>
 
 <template>
-  <div class="bg-mts-bg">
+  <div class="bg-white">
     <ListingHeroShell :hero-image="cms.heroImage">
       <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-mts-accent" />
+          <div class="h-px w-6 bg-primary" />
           <span class="section-label">{{ t('pages.contacts.heroEyebrow') }}</span>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-mts-text lg:text-4xl">
+        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
           <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
         </h1>
-        <div class="mb-6 h-0.5 w-12 bg-mts-accent" />
-        <p class="font-body text-lg leading-relaxed text-mts-text-secondary">
+        <div class="mb-6 h-0.5 w-12 bg-primary" />
+        <p class="font-body text-lg leading-relaxed text-muted">
           <ThemedContentString :content="cms.hero.lead" />
         </p>
       </div>
@@ -133,8 +134,8 @@ async function submitFeedback() {
       <div class="mts-content-wrap relative z-10">
         <div class="grid lg:grid-cols-2 gap-12">
           <div>
-            <h2 class="font-display text-xl text-mts-text mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
-            <div v-if="contactsPending" class="flex items-center gap-2 text-mts-text-secondary font-body text-sm mb-12">
+            <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
+            <div v-if="contactsPending" class="flex items-center gap-2 text-muted font-body text-sm mb-12">
               <Loader2 class="h-4 w-4 animate-spin" />
               {{ t('pages.common.loading') }}
             </div>
@@ -144,30 +145,30 @@ async function submitFeedback() {
                 v-for="(item, idx) in resolvedContacts.quick"
                 :key="`${item.label}-${idx}`"
                 :href="item.href || undefined"
-                class="flex items-center gap-4 p-4 bg-mts-surface border border-mts-border hover:border-mts-accent/30 transition-all"
+                class="public-card-interactive flex items-center gap-4 p-4"
                 :class="item.href ? '' : 'cursor-default'"
               >
-                <div class="w-10 h-10 bg-mts-bg border border-mts-border flex items-center justify-center">
-                  <component :is="quickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-mts-accent" />
+                <div class="w-10 h-10 bg-white border border-border flex items-center justify-center">
+                  <component :is="quickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{ item.label }}</p>
-                  <p class="font-body text-sm text-mts-text">{{ item.value }}</p>
+                  <p class="font-mono text-[10px] uppercase tracking-wide text-muted">{{ item.label }}</p>
+                  <p class="font-body text-sm text-body">{{ item.value }}</p>
                 </div>
               </component>
             </div>
           </div>
-          <div class="card-tech border border-mts-border p-8">
-            <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-mts-text">
-              <Send class="h-5 w-5 text-mts-accent" />
+          <div class="card-tech p-8">
+            <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-body">
+              <Send class="h-5 w-5 text-primary" />
               <ThemedContentString :content="cms.formTitle" />
             </h3>
-            <p class="mb-6 font-body text-sm text-mts-text-secondary">
+            <p class="mb-6 font-body text-sm text-muted">
               <ThemedContentString :content="cms.formLead" />
             </p>
             <form class="space-y-4" @submit.prevent="submitFeedback">
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.contacts.labelName')
                 }}</label>
                 <input
@@ -175,11 +176,11 @@ async function submitFeedback() {
                   required
                   type="text"
                   autocomplete="name"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  class="form-input"
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.contacts.labelEmail')
                 }}</label>
                 <input
@@ -187,29 +188,29 @@ async function submitFeedback() {
                   required
                   type="email"
                   autocomplete="email"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  class="form-input"
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.contacts.labelPhone')
                 }}</label>
                 <input
                   v-model="form.phone"
                   type="tel"
                   autocomplete="tel"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  class="form-input"
                 />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.contacts.labelMessage')
                 }}</label>
                 <textarea
                   v-model="form.message"
                   required
                   rows="5"
-                  class="w-full border border-mts-border bg-mts-bg px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  class="form-input"
                   :placeholder="t('pages.contacts.placeholderMessage')"
                 />
               </div>
@@ -231,18 +232,18 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-xl text-mts-text mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
+          <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"
               :key="`${o.city}-${o.country}-${oi}`"
-              class="card-tech p-6 border border-mts-border"
+              class="card-tech p-6"
             >
-              <p class="font-mono text-xs text-mts-accent mb-1">{{ o.country }}</p>
-              <h3 class="font-display text-lg text-mts-text mb-2">{{ o.city }}</h3>
-              <p class="font-body text-sm text-mts-text-secondary mb-4">{{ o.address }}</p>
+              <p class="font-mono text-xs text-primary mb-1">{{ o.country }}</p>
+              <h3 class="font-display text-lg text-body mb-2">{{ o.city }}</h3>
+              <p class="font-body text-sm text-muted mb-4">{{ o.address }}</p>
               <p class="font-body text-sm">{{ o.phone }}</p>
-              <p class="font-mono text-xs text-mts-accent mt-2">{{ o.email }}</p>
+              <p class="font-mono text-xs text-primary mt-2">{{ o.email }}</p>
             </div>
           </div>
         </div>
@@ -252,6 +253,7 @@ async function submitFeedback() {
       <CommonCustomPageSectionsRender
         v-else-if="sid.startsWith('custom:') && sectionShown(sid)"
         :sections="(cms.customSections ?? []).filter((s) => `custom:${s.id}` === sid)"
+        :page-crumb-items="crumbItems"
       />
     </template>
 

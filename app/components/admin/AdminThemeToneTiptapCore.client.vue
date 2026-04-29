@@ -4,6 +4,7 @@ import type { ThemeFormattedTitle } from '~/types'
 import { encodeAdminThemedString } from '~/utils/adminThemedTextCodec'
 import { createThemedHtmlTiptapExtensions } from '~/utils/themedHtmlTiptapExtensions'
 import { themeTitleFromTiptapDoc, themeTitleToTiptapDoc } from '~/utils/themeToneTiptap'
+import { applyTiptapDarkEditingCanvas } from '~/utils/tiptapAdminDarkCanvas'
 import AdminThemeTonePopover from './AdminThemeTonePopover.client.vue'
 
 const model = defineModel<ThemeFormattedTitle>({ required: true })
@@ -29,12 +30,15 @@ const props = withDefaults(
 const syncingFromOutside = ref(false)
 
 const editor = useEditor({
-  extensions: createThemedHtmlTiptapExtensions({ placeholder: props.placeholder }),
+  extensions: createThemedHtmlTiptapExtensions({
+    placeholder: props.placeholder,
+    withThemeToneMark: true,
+  }),
   content: themeTitleToTiptapDoc(model.value),
   editorProps: {
     attributes: {
       class: [
-        'tiptap ProseMirror w-full max-w-none px-4 py-3 font-body text-sm leading-snug text-mts-text focus:outline-none',
+        'tiptap ProseMirror admin-tiptap-editing-surface w-full max-w-none px-4 py-3 font-body text-sm leading-snug focus:outline-none',
         props.multiline ? 'min-h-[6rem]' : 'min-h-[3rem]',
         props.editorClass,
       ]
@@ -67,7 +71,11 @@ const editor = useEditor({
       return true
     },
   },
+  onCreate: ({ editor: ed }) => {
+    applyTiptapDarkEditingCanvas(ed)
+  },
   onUpdate: ({ editor: ed }) => {
+    applyTiptapDarkEditingCanvas(ed)
     if (syncingFromOutside.value) {
       return
     }
@@ -96,6 +104,7 @@ watch(
     syncingFromOutside.value = true
     ed.commands.setContent(themeTitleToTiptapDoc(model.value), false)
     syncingFromOutside.value = false
+    nextTick(() => applyTiptapDarkEditingCanvas(ed))
   },
   { flush: 'post' },
 )
@@ -108,7 +117,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-3">
     <p v-if="!compact" class="font-body text-xs text-mts-text-secondary">
-      Выделите слова, откройте палитру и выберите тон темы.
+      Выделите слова, откройте палитру и выберите цвет текста.
     </p>
 
     <!--
@@ -120,7 +129,7 @@ onBeforeUnmount(() => {
       class="flex items-stretch rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex shrink-0 items-center border-r border-mts-border/60 bg-white/60 px-2">
-        <AdminThemeTonePopover :editor="editor" />
+        <AdminThemeTonePopover :editor="editor ?? null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-theme-tone-tiptap min-w-0 flex-1" />
     </div>
@@ -130,7 +139,7 @@ onBeforeUnmount(() => {
       class="rounded border border-mts-border bg-mts-bg shadow-inner transition-colors focus-within:border-mts-accent focus-within:ring-1 focus-within:ring-mts-accent/30"
     >
       <div class="flex flex-wrap items-center gap-2 border-b border-mts-border/60 bg-white/60 px-2 py-1.5">
-        <AdminThemeTonePopover :editor="editor" />
+        <AdminThemeTonePopover :editor="editor ?? null" />
       </div>
       <EditorContent v-if="editor" :editor="editor" class="admin-theme-tone-tiptap" />
     </div>
@@ -147,6 +156,5 @@ onBeforeUnmount(() => {
   float: left;
   height: 0;
   pointer-events: none;
-  color: rgb(100 116 139);
 }
 </style>

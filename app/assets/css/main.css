@@ -14,45 +14,44 @@
 
 @theme {
   /*
-   * Единственная тема публичного сайта — тёмная (фирменный Marin).
-   * Токены mts-* задают палитру целиком; `data-theme` на <html> = dark.
-   *
-   * Семантика:
-   *  • mts-bg / mts-surface — фон страницы и карточек.
-   *  • mts-text / mts-text-secondary / mts-text-muted — типографика.
-   *  • mts-border / mts-border-light / mts-grid — линии и решётки.
-   *  • mts-navy / mts-navy-deep / mts-dark — «brand surface»: шапка,
-   *    футер, hero и плотные блоки.
-   *  • mts-frost — типографика на brand-surface (контрастна к navy).
-   *  • mts-slate-muted — приглушённый текст / служебные надписи.
-   *  • mts-accent / mts-accent-light / mts-accent-dark / mts-marker —
-   *    кросс-тёмные акценты, общие для обеих тем (с точечной коррекцией).
+   * Публичная тема теперь следует новому светлому дизайн-референсу.
+   * Прежние mts-* алиасы сохранены, чтобы CMS-страницы и компоненты
+   * продолжали работать без переписывания контракта данных.
    */
-  --color-mts-bg: #0b1f2a;
-  --color-mts-surface: #11293a;
-  /* Акцент Marin — красно-розовый из макета. */
-  --color-mts-accent: #de7879;
-  --color-mts-accent-light: #e89495;
-  --color-mts-accent-dark: #c96667;
-  --color-mts-text: #e6edf2;
-  --color-mts-text-secondary: #a8b8c2;
-  --color-mts-text-muted: #6e7f88;
-  --color-mts-border: #1a3c50;
-  --color-mts-border-light: #15334a;
-  --color-mts-grid: #1a3c50;
-  /* Дополнительные оттенки тёмной палитры — НЕ меняются между темами. */
-  --color-mts-dark: #0b1f2a;
-  --color-mts-navy: #0b1f2a;
-  --color-mts-navy-deep: #061520;
-  --color-mts-frost: #e6edf2;
-  --color-mts-slate-muted: #6e7f88;
-  /* Технический «маркерный» акцент (точки карты, индикаторы) */
-  --color-mts-marker: #2ea3ff;
+  --color-primary: #c84b4b;
+  --color-primary-dark: #b04040;
+  --color-navy-900: #0a1628;
+  --color-navy-800: #1a2a3a;
+  --color-navy-700: #2d4a6a;
+  --color-dark: #2d2d2d;
+  --color-body: #333333;
+  --color-muted: #888888;
+  --color-border: #eeeeee;
+  --color-bg-light: #f5f5f5;
 
-  --font-display: 'Inter', sans-serif;
-  --font-body: 'Manrope', sans-serif;
-  --font-ui: 'Space Grotesk', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --color-mts-bg: #ffffff;
+  --color-mts-surface: #ffffff;
+  --color-mts-accent: #c84b4b;
+  --color-mts-accent-light: #d76565;
+  --color-mts-accent-dark: #b04040;
+  --color-mts-text: #333333;
+  --color-mts-text-secondary: #5f6670;
+  --color-mts-text-muted: #888888;
+  --color-mts-border: #eeeeee;
+  --color-mts-border-light: #f5f5f5;
+  --color-mts-grid: #eeeeee;
+  --color-mts-dark: #2d2d2d;
+  --color-mts-navy: #0a1628;
+  --color-mts-navy-deep: #07101d;
+  --color-mts-frost: #ffffff;
+  --color-mts-slate-muted: rgba(255, 255, 255, 0.68);
+  --color-mts-marker: #c84b4b;
+
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Inter', system-ui, -apple-system, sans-serif;
 
   --shadow-tech: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-tech-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
@@ -66,7 +65,7 @@
     font-size: 16px;
   }
   body {
-    @apply bg-mts-bg text-mts-text antialiased font-body;
+    @apply bg-white text-body antialiased font-body;
     transition:
       background-color 200ms ease,
       color 200ms ease;
@@ -120,77 +119,261 @@
   .mts-about-overlay-intro {
     background: linear-gradient(
       144.35deg,
-      color-mix(in srgb, var(--color-mts-navy) 92%, transparent) 19.24%,
-      color-mix(in srgb, var(--color-mts-navy) 82%, transparent) 35.4%,
-      transparent 95.91%
+      color-mix(in srgb, var(--color-mts-navy) 68%, transparent) 18%,
+      color-mix(in srgb, var(--color-mts-navy) 48%, transparent) 42%,
+      transparent 100%
     );
   }
   .mts-about-overlay-mission {
     background: linear-gradient(
       123.38deg,
-      color-mix(in srgb, var(--color-mts-navy-deep) 86%, transparent) 5.42%,
-      color-mix(in srgb, var(--color-mts-navy) 84%, transparent) 38.63%,
-      color-mix(in srgb, var(--color-mts-navy) 72%, transparent) 52.47%,
-      color-mix(in srgb, var(--color-mts-navy) 35%, transparent) 93.97%
+      color-mix(in srgb, var(--color-mts-navy-deep) 62%, transparent) 8%,
+      color-mix(in srgb, var(--color-mts-navy) 48%, transparent) 48%,
+      color-mix(in srgb, var(--color-mts-navy) 20%, transparent) 100%
     );
   }
   .mts-about-overlay-stats {
     background: linear-gradient(
       111.6deg,
-      color-mix(in srgb, var(--color-mts-navy-deep) 80%, transparent) 5.42%,
-      color-mix(in srgb, var(--color-mts-navy) 80%, transparent) 38.63%,
-      color-mix(in srgb, var(--color-mts-navy) 71%, transparent) 52.47%,
-      color-mix(in srgb, var(--color-mts-navy) 32%, transparent) 93.97%
+      color-mix(in srgb, var(--color-mts-navy-deep) 58%, transparent) 8%,
+      color-mix(in srgb, var(--color-mts-navy) 45%, transparent) 50%,
+      color-mix(in srgb, var(--color-mts-navy) 18%, transparent) 100%
     );
   }
 
   .mts-about-hero-veil-r {
     background: linear-gradient(
       to right,
-      color-mix(in srgb, var(--color-mts-navy) 92%, transparent),
-      color-mix(in srgb, var(--color-mts-navy) 60%, transparent),
+      color-mix(in srgb, var(--color-mts-navy) 58%, transparent),
+      color-mix(in srgb, var(--color-mts-navy) 32%, transparent),
       color-mix(in srgb, var(--color-mts-navy) 20%, transparent)
     );
   }
   .mts-about-hero-veil-t {
     background: linear-gradient(
       to top,
-      color-mix(in srgb, var(--color-mts-navy) 80%, transparent),
+      color-mix(in srgb, var(--color-mts-navy) 42%, transparent),
       transparent,
-      color-mix(in srgb, var(--color-mts-navy) 60%, transparent)
+      color-mix(in srgb, var(--color-mts-navy) 22%, transparent)
     );
   }
+
+  /** Затемнение hero на line-marketing (крюинг / судовой, CMS v2). */
+  .mts-line-marketing-hero-veil {
+    background-color: transparent;
+    background-image: linear-gradient(
+      180deg,
+      rgba(0, 17, 46, 0.63) 25%,
+      rgba(2, 19, 71, 0.4) 75%
+    );
+    background-attachment: scroll;
+  }
+
   .mts-about-ecosystem-veil {
     background: color-mix(in srgb, var(--color-mts-navy) 82%, transparent);
+  }
+  .mts-about-light {
+    background: #ffffff;
+  }
+  .mts-about-light [class*='text-mts-frost'] {
+    color: var(--color-body) !important;
+  }
+  .mts-about-light [class*='text-mts-frost/'],
+  .mts-about-light [class*='text-mts-slate-muted'] {
+    color: color-mix(in srgb, var(--color-body) 72%, transparent) !important;
+  }
+  .mts-about-light .btn-secondary {
+    border-color: var(--color-border) !important;
+    background: #ffffff !important;
+    color: var(--color-body) !important;
   }
 
   /** Плоские кнопки с прямыми углами (как в шапке: заявка / анкета). */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-transparent bg-primary px-8 py-3 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:bg-primary-dark disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-none border border-mts-border bg-mts-surface px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-8 py-3 text-sm font-semibold text-body transition-all duration-200 hover:border-primary hover:text-primary disabled:opacity-50;
+  }
+
+  /**
+   * Вторичная CTA на тёмных hero / прозрачной шапке: стекло + blur (как «Заполнить анкету» на крюинге).
+   * Не подменяет .btn-secondary на светлых экранах и в админке.
+   */
+  .btn-secondary-glass {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-mts-frost/30 bg-white/10 px-8 py-3 text-sm font-semibold text-mts-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md transition-all duration-200;
+  }
+  .btn-secondary-glass:hover {
+    @apply border-primary text-primary bg-white/15;
   }
 
   /**
    * Карточки главной: те же пропорции, что у btn-primary / btn-secondary.
    */
   .mts-cta-link {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-transparent bg-mts-accent px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-transparent bg-primary px-8 py-3 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:bg-primary-dark;
   }
   .mts-cta-link-muted {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-none border border-mts-border bg-mts-surface px-10 py-[0.9375rem] font-mono text-xs font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-white px-8 py-3 text-sm font-semibold text-body transition-all duration-200 hover:border-primary hover:text-primary;
   }
   /** То же, что mts-cta-link / muted, но меньше — три колонки на главной. */
   .mts-cta-link-compact {
-    @apply inline-flex items-center justify-center gap-1 rounded-none border border-transparent bg-mts-accent px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark;
+    @apply inline-flex items-center justify-center gap-1 rounded-full border border-transparent bg-primary px-5 py-2.5 text-xs font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:bg-primary-dark;
   }
   .mts-cta-link-muted-compact {
-    @apply inline-flex items-center justify-center gap-1 rounded-none border border-mts-border bg-mts-surface px-4 py-2 font-mono text-[10px] font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-text-secondary;
+    @apply inline-flex items-center justify-center gap-1 rounded-full border border-border bg-white px-5 py-2.5 text-xs font-semibold text-body transition-all duration-200 hover:border-primary hover:text-primary;
   }
 
   .section-label {
-    @apply font-mono text-xs font-medium uppercase tracking-widest text-mts-text-secondary;
+    @apply font-body text-xs font-semibold uppercase tracking-[0.2em] text-primary;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition:
+      opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+      transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .reveal.revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+  .reveal-delay-5 { transition-delay: 0.5s; }
+
+  .service-card {
+    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-tech-lg;
+  }
+  .card-tech {
+    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300;
+  }
+  .public-card {
+    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300;
+  }
+  .public-card-interactive {
+    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-tech-lg;
+  }
+  .corner-accent {
+    @apply relative overflow-hidden;
+  }
+  .corner-accent::before,
+  .corner-accent::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    border-color: var(--color-primary);
+    opacity: 1;
+    transition:
+      width 0.25s ease,
+      height 0.25s ease,
+      border-color 0.25s ease,
+      opacity 0.25s ease;
+  }
+  .corner-accent::before {
+    left: 0;
+    top: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-left: 2px solid var(--color-primary);
+    border-top: 2px solid var(--color-primary);
+    border-top-left-radius: 0.75rem;
+  }
+  .corner-accent::after {
+    right: 0;
+    bottom: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-right: 2px solid var(--color-primary);
+    border-bottom: 2px solid var(--color-primary);
+    border-bottom-right-radius: 0.75rem;
+  }
+  .corner-accent:hover::before,
+  .corner-accent:hover::after {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-color: var(--color-primary);
+    opacity: 1;
+  }
+  .nav-card {
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:bg-black/70;
+  }
+  .form-input {
+    @apply w-full border-0 border-b border-[#cccccc] bg-transparent px-0 py-3 text-body transition-colors placeholder:text-muted focus:border-primary focus:outline-none;
+  }
+
+  .cookie-enter-active,
+  .cookie-leave-active {
+    transition:
+      transform 0.4s ease,
+      opacity 0.4s ease;
+  }
+  .cookie-enter-from,
+  .cookie-leave-to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  body:not(.admin-shell) section.text-white .text-mts-text,
+  body:not(.admin-shell) section.text-white .text-body {
+    color: #fff !important;
+  }
+  body:not(.admin-shell) section.text-white .text-mts-text-secondary,
+  body:not(.admin-shell) section.text-white .text-muted {
+    color: rgba(255, 255, 255, 0.82) !important;
+  }
+  body:not(.admin-shell) .public-hero .text-body,
+  body:not(.admin-shell) .public-hero .text-mts-text,
+  body:not(.admin-shell) .public-hero [class*='text-body'] {
+    color: #fff !important;
+  }
+  body:not(.admin-shell) .public-hero .text-muted,
+  body:not(.admin-shell) .public-hero .text-mts-text-secondary {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /**
+   * Тёмный hero: сегменты TFT/TipTap (`data-mts-tone`, `text-mts-*`).
+   * Обёртка `.mts-hero-themed-copy` на h1/лиде/markdown у линий, главной, вакансий.
+   * Иначе наследование `text-white` и/или `-webkit-text-fill-color` дают «всё белым».
+   */
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='text'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-text {
+    color: inherit !important;
+    -webkit-text-fill-color: inherit !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='textSecondary'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-text-secondary {
+    color: rgb(255 255 255 / 0.88) !important;
+    -webkit-text-fill-color: rgb(255 255 255 / 0.88) !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='textMuted'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-text-muted {
+    color: rgb(255 255 255 / 0.72) !important;
+    -webkit-text-fill-color: rgb(255 255 255 / 0.72) !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='accent'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-accent {
+    color: var(--color-mts-accent) !important;
+    -webkit-text-fill-color: var(--color-mts-accent) !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='accentLight'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-accent-light {
+    color: var(--color-mts-accent-light) !important;
+    -webkit-text-fill-color: var(--color-mts-accent-light) !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='accentDark'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-accent-dark {
+    color: var(--color-mts-accent-dark) !important;
+    -webkit-text-fill-color: var(--color-mts-accent-dark) !important;
+  }
+  body:not(.admin-shell) .mts-hero-themed-copy span[data-mts-tone='marker'],
+  body:not(.admin-shell) .mts-hero-themed-copy .text-mts-marker {
+    color: var(--color-mts-marker) !important;
+    -webkit-text-fill-color: var(--color-mts-marker) !important;
   }
 
   .mts-checkbox {
@@ -226,6 +409,15 @@
   .mts-markdown ul {
     @apply list-disc;
   }
+  .mts-markdown ul[data-list-style='circle'] {
+    list-style-type: circle;
+  }
+  .mts-markdown ul[data-list-style='square'] {
+    list-style-type: square;
+  }
+  .mts-markdown ul[data-list-style='none'] {
+    list-style-type: none;
+  }
   .mts-markdown ol {
     @apply list-decimal;
   }
@@ -246,6 +438,23 @@
   }
   .mts-markdown :where(hr) {
     @apply my-10 border-0 border-t border-mts-border;
+  }
+  /* Сетка и карта из визуального редактора content-page (TipTap). */
+  .mts-markdown .mts-rich-grid {
+    @apply my-8 max-w-none items-start;
+  }
+  .mts-markdown .mts-rich-grid-cell > * {
+    @apply mt-4 first:mt-0;
+  }
+  .mts-markdown .mts-rich-map {
+    @apply max-w-none;
+  }
+  /* Карусель (TipTap): до клиентской гидратации — один кадр, без «стопки» картинок. */
+  .mts-markdown .mts-rich-carousel:not([data-mts-carousel-mounted]) > img ~ img {
+    display: none;
+  }
+  .mts-markdown .mts-rich-carousel:not([data-mts-carousel-mounted]) > img {
+    @apply my-0 max-h-[min(480px,70vh)] w-full object-cover;
   }
   .mts-markdown :where(mark) {
     @apply rounded px-0.5 py-px text-inherit;
@@ -269,8 +478,18 @@
   .mts-markdown :where(tbody tr:nth-child(odd)) {
     @apply bg-mts-bg/80;
   }
-  .mts-markdown :where(img) {
-    @apply my-6 h-auto max-h-[min(480px,70vh)] w-full max-w-full rounded-md border border-mts-border object-contain shadow-tech;
+  /**
+   * Картинки из TipTap: без width — на всю ширину контейнера.
+   * С width/height после ресайза в админке — на клиент добавляется безопасный inline-style
+   * в sanitize (пропорции + width:min(100%, Npx)); не центрируем mx-auto.
+   */
+  .mts-markdown img {
+    @apply my-6 block max-w-full rounded-md object-contain border-0 shadow-none ring-0;
+  }
+  .mts-markdown img:not([width]) {
+    @apply w-full;
+    height: auto;
+    max-height: min(480px, 70vh);
   }
   .mts-markdown :where([data-youtube-video]) {
     @apply relative my-8 w-full overflow-hidden rounded-md border border-mts-border bg-mts-dark shadow-tech;
@@ -312,5 +531,30 @@
   .admin-shell .tiptap.ProseMirror span[data-mts-tone='marker'] {
     color: var(--color-mts-marker) !important;
     -webkit-text-fill-color: var(--color-mts-marker) !important;
+  }
+
+  /**
+   * TipTap в админке: по умолчанию светлый холст. Тёмный включается классом
+   * `.admin-tiptap-editing-surface--dark-canvas` (только при очень светлом color в тексте).
+   */
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface {
+    background-color: var(--color-mts-surface);
+    color: var(--color-mts-text);
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface p.is-editor-empty:first-child::before,
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface p.is-empty::before {
+    color: var(--color-mts-text-muted);
+  }
+
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface--dark-canvas {
+    background-color: #3a4150;
+    color: #eceff4;
+  }
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface--dark-canvas p.is-editor-empty:first-child::before,
+  .admin-shell .ProseMirror.admin-tiptap-editing-surface--dark-canvas p.is-empty::before {
+    color: rgb(139 147 163);
   }
 }

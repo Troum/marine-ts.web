@@ -73,12 +73,12 @@ const wrapperClass = computed(() => [
       aria-hidden="true"
       :class="[
         'relative flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px]',
-        'border bg-mts-surface',
-        'border-mts-border',
+        'border bg-bg-light',
+        'border-border',
         'transition-colors duration-150 ease-out',
-        'group-hover:border-mts-accent/70',
-        'peer-checked:border-mts-accent peer-checked:bg-mts-accent',
-        'peer-focus-visible:ring-2 peer-focus-visible:ring-mts-accent/40 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-mts-bg',
+        'group-hover:border-primary/70',
+        'peer-checked:border-primary peer-checked:bg-primary',
+        'peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white',
         align === 'start' ? 'mt-0.5' : '',
       ]"
     >
@@ -95,9 +95,9 @@ const wrapperClass = computed(() => [
         class="h-3.5 w-3.5 stroke-[3] text-white opacity-0 transition-opacity duration-150 group-has-[:checked]:opacity-100"
       />
     </span>
-    <span class="min-w-0 font-body text-sm leading-snug text-mts-text">
+    <span class="min-w-0 font-body text-sm leading-snug text-body">
       <slot>{{ label }}</slot>
-      <span v-if="hint" class="mt-0.5 block font-body text-xs text-mts-text-secondary">{{ hint }}</span>
+      <span v-if="hint" class="mt-0.5 block font-body text-xs text-muted">{{ hint }}</span>
     </span>
   </label>
 </template>

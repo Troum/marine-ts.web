@@ -194,13 +194,13 @@ watch(
 )
 
 const defaultInputClass =
-  'block w-full cursor-pointer border border-mts-border bg-mts-bg py-2.5 ps-10 pe-3 font-body text-sm text-mts-text shadow-tech placeholder:text-mts-text-muted focus:border-mts-accent focus:outline-none focus:ring-1 focus:ring-mts-accent/30 disabled:cursor-not-allowed disabled:opacity-60'
+  'block w-full cursor-pointer border border-border bg-white py-2.5 ps-10 pe-3 font-body text-sm text-body shadow-tech placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-mts-accent/30 disabled:cursor-not-allowed disabled:opacity-60'
 </script>
 
 <template>
   <div ref="rootRef" class="relative max-w-full">
     <div class="pointer-events-none absolute inset-y-0 start-0 z-10 flex items-center ps-3" aria-hidden="true">
-      <svg class="h-4 w-4 text-mts-text-secondary" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+      <svg class="h-4 w-4 text-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
         <path
           stroke="currentColor"
           stroke-linecap="round"
@@ -235,7 +235,7 @@ const defaultInputClass =
     >
       <div
         v-if="open"
-        class="absolute left-0 top-full z-50 mt-1 min-w-[280px] rounded-lg border border-mts-border bg-mts-surface p-3 shadow-tech-lg"
+        class="absolute left-0 top-full z-50 mt-1 min-w-[280px] rounded-lg border border-border bg-bg-light p-3 shadow-tech-lg"
         role="dialog"
         aria-label="Calendar"
         @click.stop
@@ -243,7 +243,7 @@ const defaultInputClass =
         <div class="mb-3 flex items-center justify-between gap-2">
           <button
             type="button"
-            class="rounded border border-transparent p-1.5 text-mts-text-secondary hover:border-mts-border hover:bg-mts-bg hover:text-mts-text"
+            class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
             :aria-label="t('pages.common.datePickerPrevMonth')"
             @click="prevMonth"
           >
@@ -251,10 +251,10 @@ const defaultInputClass =
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span class="min-w-0 flex-1 text-center font-body text-sm font-medium text-mts-text">{{ monthTitle }}</span>
+          <span class="min-w-0 flex-1 text-center font-body text-sm font-medium text-body">{{ monthTitle }}</span>
           <button
             type="button"
-            class="rounded border border-transparent p-1.5 text-mts-text-secondary hover:border-mts-border hover:bg-mts-bg hover:text-mts-text"
+            class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
             :aria-label="t('pages.common.datePickerNextMonth')"
             @click="nextMonth"
           >
@@ -264,7 +264,7 @@ const defaultInputClass =
           </button>
         </div>
 
-        <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+        <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-muted">
           <span v-for="(w, i) in weekdayLabels" :key="i" class="py-1">{{ w }}</span>
         </div>
 
@@ -275,10 +275,10 @@ const defaultInputClass =
             type="button"
             class="flex h-9 items-center justify-center rounded-md font-body text-sm transition-colors"
             :class="[
-              !cell.inMonth ? 'text-mts-text-muted' : 'text-mts-text',
-              cell.isSelected ? 'bg-mts-accent font-medium text-white hover:bg-mts-accent-dark' : '',
+              !cell.inMonth ? 'text-muted' : 'text-body',
+              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : '',
               !cell.isSelected && cell.isToday ? 'ring-1 ring-mts-accent/50' : '',
-              !cell.isSelected && !cell.isToday ? 'hover:bg-mts-bg' : '',
+              !cell.isSelected && !cell.isToday ? 'hover:bg-white' : '',
             ]"
             @click="pickDay(cell)"
           >
@@ -286,11 +286,11 @@ const defaultInputClass =
           </button>
         </div>
 
-        <div class="mt-3 flex items-center justify-between border-t border-mts-border pt-2">
-          <button type="button" class="font-mono text-[11px] uppercase tracking-wide text-mts-accent hover:text-mts-accent-dark" @click="clearDate">
+        <div class="mt-3 flex items-center justify-between border-t border-border pt-2">
+          <button type="button" class="font-mono text-[11px] uppercase tracking-wide text-primary hover:text-primary-dark" @click="clearDate">
             {{ t('pages.common.datePickerClear') }}
           </button>
-          <button type="button" class="font-mono text-[11px] uppercase tracking-wide text-mts-accent hover:text-mts-accent-dark" @click="pickToday">
+          <button type="button" class="font-mono text-[11px] uppercase tracking-wide text-primary hover:text-primary-dark" @click="pickToday">
             {{ t('pages.common.datePickerToday') }}
           </button>
         </div>
