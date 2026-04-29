@@ -600,12 +600,29 @@ export interface HomeDirectionRow {
   hoverTitle?: string
   hoverDescription?: string
   heroImage?: string
+  /**
+   * Скрыть карточку из hero-полосы внизу первого экрана (навигационные ссылки).
+   * По умолчанию false — показывается. Карточка при этом всё ещё может
+   * отображаться в нижней секции «Чем мы занимаемся», если не выключена там.
+   */
+  hideInHero?: boolean
+  /**
+   * Скрыть карточку из секции «Чем мы занимаемся» (грид с описанием и CTA).
+   * По умолчанию false — показывается.
+   */
+  hideInCardsBlock?: boolean
 }
 
 export interface HomeDirectionsSection {
   label: string
   headingFormatted: ThemeFormattedTitle
   rows: HomeDirectionRow[]
+  /**
+   * Показывать ли всю нижнюю секцию «Чем мы занимаемся» (с описаниями и CTA).
+   * По умолчанию true — секция отображается. Hero-полоса под первым экраном
+   * управляется отдельно через `hideInHero` на каждой строке.
+   */
+  showCardsBlock?: boolean
 }
 
 /** Коротко «доверие»: маркеры под «О компании». */

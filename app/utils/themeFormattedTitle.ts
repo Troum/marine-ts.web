@@ -413,8 +413,11 @@ export function mergeHomeDirectionsSection(
             hoverTitle: typeof row.hoverTitle === 'string' ? row.hoverTitle : '',
             hoverDescription: typeof row.hoverDescription === 'string' ? row.hoverDescription : '',
             heroImage: typeof row.heroImage === 'string' ? row.heroImage : '',
+            hideInHero: row.hideInHero === true,
+            hideInCardsBlock: row.hideInCardsBlock === true,
           }))
         : base.rows,
+    showCardsBlock: typeof h.showCardsBlock === 'boolean' ? (h.showCardsBlock as boolean) : base.showCardsBlock !== false,
   }
 }
 

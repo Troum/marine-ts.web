@@ -2,19 +2,16 @@
 import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
-import type { HomePageData, ContentPage, MarineContentLocale, ServiceItem } from '~/types'
+import type { HomePageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
 import {
-  HOME_SECTION_ADMIN_LABELS,
-  HOME_SECTION_DEFAULT_ORDER,
   defaultHomeData,
   mergeHomePageData,
   syncHomeStructuralFields,
 } from '~/utils/pageDefaults'
 import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 import { useConfirm } from '~/composables/useConfirmAction'
-import { isSectionVisible, moveOrderItem, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
 
@@ -41,61 +38,7 @@ const d = computed(() => data.value[localeTab.value])
 const collapsed = ref<Record<string, boolean>>({
   hero: false,
   directions: true,
-  funnel: true,
-  about: true,
-  services: true,
-  process: true,
-  cta: true,
 })
-
-function toggle(s: string) { collapsed.value[s] = !collapsed.value[s] }
-
-/**
- * Эффективный порядок секций (без hero) с учётом сохранённого `sectionOrder`,
- * актуальных кастомных секций и дефолтов. Используется для inline-контролов.
- */
-const effectiveSectionOrder = computed<string[]>(() => {
-  const cur = data.value[localeTab.value]
-  return resolveSectionOrder(cur.sectionOrder, HOME_SECTION_DEFAULT_ORDER, cur.customSections)
-})
-
-function sectionVisible(id: string): boolean {
-  return isSectionVisible(data.value[localeTab.value].sectionVisibility, id)
-}
-
-function setSectionVisible(id: string, v: boolean) {
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    const cur = data.value[loc].sectionVisibility ?? {}
-    data.value[loc].sectionVisibility = { ...cur, [id]: v }
-  }
-}
-
-function indexInOrder(id: string): number {
-  return effectiveSectionOrder.value.indexOf(id)
-}
-
-function canMove(id: string, delta: number): boolean {
-  const idx = indexInOrder(id)
-  if (idx < 0) return false
-  const j = idx + delta
-  return j >= 0 && j < effectiveSectionOrder.value.length
-}
-
-function moveSection(id: string, delta: number) {
-  const order = effectiveSectionOrder.value
-  const idx = order.indexOf(id)
-  if (idx < 0) return
-  const next = moveOrderItem(order, idx, delta)
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].sectionOrder = [...next]
-  }
-}
-
-function sectionTitle(id: string): string {
-  const pos = indexInOrder(id) + 2
-  const label = HOME_SECTION_ADMIN_LABELS[id as keyof typeof HOME_SECTION_ADMIN_LABELS] ?? id
-  return `${pos}. ${label}`
-}
 
 onMounted(async () => {
   await loadPathOptions()
@@ -115,12 +58,7 @@ onMounted(async () => {
       }
     }
   } catch { /* no existing page */ }
-  try {
-    catalogServices.value = await api.services.getAll()
-  } catch {
-    catalogServices.value = []
-  }
-  finally { loading.value = false }
+  loading.value = false
 })
 
 function addStat() {
@@ -149,7 +87,28 @@ function addDirectionRow() {
       hoverTitle: '',
       hoverDescription: '',
       heroImage: '',
+      hideInHero: false,
+      hideInCardsBlock: false,
     })
+  }
+}
+
+/**
+ * Структурные флаги видимости карточек одинаковы для всех локалей —
+ * прокидываем изменение разом во все, чтобы не было перекоса между ru/en.
+ */
+function setDirectionsShowCardsBlock(v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].directions.showCardsBlock = v
+  }
+}
+
+function setDirectionRowFlag(index: number, flag: 'hideInHero' | 'hideInCardsBlock', v: boolean) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const row = data.value[loc].directions.rows[index]
+    if (row) {
+      row[flag] = v
+    }
   }
 }
 
@@ -178,91 +137,6 @@ function moveDirectionRow(index: number, dir: -1 | 1) {
     rows[index] = rows[j]!
     rows[j] = t
   }
-}
-function setFeaturedServiceIds(ids: number[]) {
-  const next = [...ids]
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    data.value[loc].services.featuredServiceIds = next
-  }
-}
-
-const catalogServices = ref<ServiceItem[]>([])
-const pickServiceId = ref<string>('')
-
-function serviceTitleById(id: number): string {
-  return catalogServices.value.find((s) => s.id === id)?.title ?? `#${id}`
-}
-
-function addFeaturedService() {
-  const id = Number(pickServiceId.value)
-  if (!id || Number.isNaN(id)) {
-    return
-  }
-  const cur = data.value.ru.services.featuredServiceIds ?? []
-  if (cur.includes(id)) {
-    return
-  }
-  setFeaturedServiceIds([...cur, id])
-  pickServiceId.value = ''
-}
-
-async function removeFeaturedService(index: number) {
-  const ok = await confirm({
-    message: 'Убрать этот сервис из списка на главной?',
-    confirmLabel: 'Убрать',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  const cur = [...(data.value.ru.services.featuredServiceIds ?? [])]
-  cur.splice(index, 1)
-  setFeaturedServiceIds(cur)
-}
-
-async function clearFeaturedServices() {
-  const ok = await confirm({
-    message: 'Очистить весь список избранных сервисов на главной?',
-    confirmLabel: 'Очистить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  setFeaturedServiceIds([])
-}
-
-function moveFeaturedService(index: number, dir: -1 | 1) {
-  const cur = [...(data.value.ru.services.featuredServiceIds ?? [])]
-  const j = index + dir
-  if (j < 0 || j >= cur.length) {
-    return
-  }
-  const t = cur[index]!
-  cur[index] = cur[j]!
-  cur[j] = t
-  setFeaturedServiceIds(cur)
-}
-
-const pickServiceOptions = computed(() => {
-  const taken = new Set(data.value.ru.services.featuredServiceIds ?? [])
-  return catalogServices.value.filter((s) => !taken.has(s.id))
-})
-
-function addStep() {
-  for (const loc of MARINE_CONTENT_LOCALES)
-    data.value[loc].process.steps.push({ title: '', text: '' })
-}
-async function removeStep(i: number) {
-  const ok = await confirm({
-    message: 'Удалить этот шаг процесса?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  for (const loc of MARINE_CONTENT_LOCALES) data.value[loc].process.steps.splice(i, 1)
 }
 
 async function submit() {
@@ -394,6 +268,16 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <span class="font-mono text-mts-text">directions.rows</span>.
             </p>
 
+            <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+              <input
+                type="checkbox"
+                class="mts-checkbox"
+                :checked="(d.directions.showCardsBlock ?? true) === true"
+                @change="(e) => setDirectionsShowCardsBlock(((e.target as HTMLInputElement).checked))"
+              />
+              Показывать секцию «Чем мы занимаемся» под первым экраном
+            </label>
+
             <div>
               <label :class="sectionLabel">Метка секции ниже на странице</label>
               <AdminThemedTextField v-model="d.directions.label" :multiline="false" />
@@ -485,6 +369,30 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Ссылка</p>
                   <AdminNavPathPick v-model="row.href" :path-options="pathOptions" input-placeholder="/services" />
                 </div>
+
+                <div class="mt-4 space-y-2 border-t border-mts-border pt-4">
+                  <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                    Где показывать эту карточку
+                  </p>
+                  <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                    <input
+                      type="checkbox"
+                      class="mts-checkbox"
+                      :checked="row.hideInHero !== true"
+                      @change="(e) => setDirectionRowFlag(i, 'hideInHero', !((e.target as HTMLInputElement).checked))"
+                    />
+                    Показывать в hero-полосе под первым экраном
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                    <input
+                      type="checkbox"
+                      class="mts-checkbox"
+                      :checked="row.hideInCardsBlock !== true"
+                      @change="(e) => setDirectionRowFlag(i, 'hideInCardsBlock', !((e.target as HTMLInputElement).checked))"
+                    />
+                    Показывать в секции «Чем мы занимаемся» (с описанием и CTA)
+                  </label>
+                </div>
               </div>
 
               <button
@@ -496,251 +404,6 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 Добавить карточку
               </button>
             </div>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- 2. FUNNEL CARDS -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('funnel')"
-          :collapsed="collapsed.funnel"
-          :visible="sectionVisible('funnel')"
-          :can-move-up="canMove('funnel', -1)"
-          :can-move-down="canMove('funnel', 1)"
-          @update:collapsed="(v) => (collapsed.funnel = v)"
-          @update:visible="(v) => setSectionVisible('funnel', v)"
-          @move-up="moveSection('funnel', -1)"
-          @move-down="moveSection('funnel', 1)"
-        >
-          <div class="space-y-8">
-            <p class="font-body text-sm text-mts-text-secondary">
-              Три колонки с меткой, заголовком (акцентное слово красным), текстом и ссылками — как на главной сразу под hero.
-            </p>
-
-            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
-              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Судовой менеджмент (левая)</h3>
-              <div><label :class="sectionLabel">Метка (над заголовком)</label><AdminThemedTextField v-model="d.funnelShip.label" :multiline="false" /></div>
-              <div>
-                <label :class="sectionLabel">Заголовок</label>
-                <AdminThemeTitleEditor v-model="d.funnelShip.titleFormatted" />
-              </div>
-              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelShip.text" /></div>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Подпись кнопки</label><AdminThemedTextField v-model="d.funnelShip.cta" :multiline="false" /></div>
-              </div>
-              <AdminNavPathPick v-model="d.funnelShip.href" :path-options="pathOptions" input-placeholder="/ship-management" />
-            </div>
-
-            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
-              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Крюинг (центр, две ссылки)</h3>
-              <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelCrewing.label" :multiline="false" /></div>
-              <div>
-                <label :class="sectionLabel">Заголовок</label>
-                <AdminThemeTitleEditor v-model="d.funnelCrewing.titleFormatted" />
-              </div>
-              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelCrewing.text" /></div>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Первая ссылка — подпись</label><AdminThemedTextField v-model="d.funnelCrewing.cta" :multiline="false" /></div>
-                <div><label :class="sectionLabel">Вторая ссылка — подпись</label><AdminThemedTextField v-model="d.funnelCrewing.secondaryCta" :multiline="false" /></div>
-              </div>
-              <div>
-                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Первая ссылка</p>
-                <AdminNavPathPick v-model="d.funnelCrewing.href" :path-options="pathOptions" input-placeholder="/vacancies" />
-              </div>
-              <div>
-                <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Вторая ссылка</p>
-                <AdminNavPathPick v-model="d.funnelCrewing.secondaryHref" :path-options="pathOptions" input-placeholder="/application-form" />
-              </div>
-            </div>
-
-            <div class="border border-mts-border bg-mts-bg/40 p-5 space-y-4">
-              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Сервисы (правая)</h3>
-              <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.funnelTechnical.label" :multiline="false" /></div>
-              <div>
-                <label :class="sectionLabel">Заголовок</label>
-                <AdminThemeTitleEditor v-model="d.funnelTechnical.titleFormatted" />
-              </div>
-              <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.funnelTechnical.text" /></div>
-              <div class="grid md:grid-cols-2 gap-4">
-                <div><label :class="sectionLabel">Подпись кнопки</label><AdminThemedTextField v-model="d.funnelTechnical.cta" :multiline="false" /></div>
-              </div>
-              <AdminNavPathPick v-model="d.funnelTechnical.href" :path-options="pathOptions" input-placeholder="/services" />
-            </div>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- 4. ABOUT PREVIEW -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('about')"
-          :collapsed="collapsed.about"
-          :visible="sectionVisible('about')"
-          :can-move-up="canMove('about', -1)"
-          :can-move-down="canMove('about', 1)"
-          @update:collapsed="(v) => (collapsed.about = v)"
-          @update:visible="(v) => setSectionVisible('about', v)"
-          @move-up="moveSection('about', -1)"
-          @move-down="moveSection('about', 1)"
-        >
-          <div class="space-y-4">
-            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.about.label" :multiline="false" /></div>
-            <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.about.title" />
-            </div>
-            <div><label :class="sectionLabel">Подзаголовок</label><AdminThemedTextField v-model="d.about.subtitle" :multiline="false" /></div>
-            <div><label :class="sectionLabel">Абзац 1</label><AdminThemedTextField v-model="d.about.lead" /></div>
-            <div><label :class="sectionLabel">Абзац 2</label><AdminThemedTextField v-model="d.about.lead2" /></div>
-            <div><label :class="sectionLabel">Текст кнопки «Подробнее»</label><AdminThemedTextField v-model="d.about.more" :multiline="false" /></div>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- 5. SERVICES PREVIEW -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('services')"
-          :collapsed="collapsed.services"
-          :visible="sectionVisible('services')"
-          :can-move-up="canMove('services', -1)"
-          :can-move-down="canMove('services', 1)"
-          @update:collapsed="(v) => (collapsed.services = v)"
-          @update:visible="(v) => setSectionVisible('services', v)"
-          @move-up="moveSection('services', -1)"
-          @move-down="moveSection('services', 1)"
-        >
-          <div class="space-y-4">
-            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.services.label" :multiline="false" /></div>
-            <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemeTitleEditor v-model="d.services.headingFormatted" />
-            </div>
-            <div class="grid md:grid-cols-2 gap-4">
-              <div><label :class="sectionLabel">Текст «Все сервисы»</label><AdminThemedTextField v-model="d.services.all" :multiline="false" /></div>
-              <div><label :class="sectionLabel">Текст «Подробнее →»</label><AdminThemedTextField v-model="d.services.more" :multiline="false" /></div>
-            </div>
-
-            <div class="rounded-md border border-mts-accent/30 bg-mts-bg/60 p-4 space-y-3">
-              <p class="font-body text-sm text-mts-text leading-relaxed">
-                <strong class="text-mts-text">Какие сервисы показать на главной.</strong>
-                Тексты и фото берутся из карточек каталога (текущая локаль API). Если список пуст, блок «Сервисы» на главной не отображается.
-              </p>
-              <div v-if="(d.services.featuredServiceIds?.length ?? 0) > 0" class="space-y-2">
-                <div
-                  v-for="(sid, idx) in d.services.featuredServiceIds"
-                  :key="sid"
-                  class="flex flex-wrap items-center gap-2 border border-mts-border bg-white px-3 py-2"
-                >
-                  <span class="font-mono text-xs text-mts-text-secondary w-6">{{ idx + 1 }}.</span>
-                  <span class="font-body text-sm text-mts-text flex-1 min-w-[12rem]">{{ serviceTitleById(sid) }}</span>
-                  <div class="flex items-center gap-1">
-                    <button
-                      type="button"
-                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
-                      :disabled="idx === 0"
-                      aria-label="Выше"
-                      @click="moveFeaturedService(idx, -1)"
-                    >
-                      <ChevronUp class="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
-                      :disabled="idx === (d.services.featuredServiceIds?.length ?? 0) - 1"
-                      aria-label="Ниже"
-                      @click="moveFeaturedService(idx, 1)"
-                    >
-                      <ChevronDown class="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      class="p-1.5 text-red-500/80 hover:text-red-600"
-                      aria-label="Удалить"
-                      @click="removeFeaturedService(idx)"
-                    >
-                      <Trash2 class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div v-else class="font-body text-xs text-mts-text-secondary">Список пуст — блок «Сервисы» на сайте скрыт.</div>
-              <div class="flex flex-wrap items-end gap-3">
-                <div class="min-w-[14rem] flex-1">
-                  <label :class="sectionLabel">Добавить из каталога</label>
-                  <select v-model="pickServiceId" :class="sectionInput">
-                    <option value="">— выберите карточку —</option>
-                    <option v-for="s in pickServiceOptions" :key="s.id" :value="String(s.id)">{{ s.title }}</option>
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  class="border border-mts-border bg-white px-4 py-3 font-mono text-xs uppercase text-mts-text hover:border-mts-accent mb-0"
-                  :disabled="!pickServiceId"
-                  @click="addFeaturedService"
-                >
-                  Добавить
-                </button>
-                <button
-                  v-if="(d.services.featuredServiceIds?.length ?? 0) > 0"
-                  type="button"
-                  class="font-mono text-xs uppercase text-mts-text-secondary hover:text-mts-accent py-3"
-                  @click="clearFeaturedServices"
-                >
-                  Очистить список
-                </button>
-              </div>
-            </div>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- 6. PROCESS -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('process')"
-          :collapsed="collapsed.process"
-          :visible="sectionVisible('process')"
-          :can-move-up="canMove('process', -1)"
-          :can-move-down="canMove('process', 1)"
-          @update:collapsed="(v) => (collapsed.process = v)"
-          @update:visible="(v) => setSectionVisible('process', v)"
-          @move-up="moveSection('process', -1)"
-          @move-down="moveSection('process', 1)"
-        >
-          <div class="space-y-4">
-            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.process.label" :multiline="false" /></div>
-            <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemeTitleEditor v-model="d.process.headingFormatted" />
-            </div>
-            <div class="space-y-3">
-              <div v-for="(step, i) in d.process.steps" :key="i" class="border border-mts-border p-4 bg-mts-bg/50 space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Шаг {{ i + 1 }}</span>
-                  <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeStep(i)"><Trash2 class="w-4 h-4" /></button>
-                </div>
-                <div><label :class="sectionLabel">Название</label><AdminThemedTextField v-model="step.title" :multiline="false" /></div>
-                <div><label :class="sectionLabel">Описание</label><AdminThemedTextField v-model="step.text" /></div>
-              </div>
-              <button type="button" class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline" @click="addStep"><Plus class="w-4 h-4" /> Добавить шаг</button>
-            </div>
-          </div>
-        </AdminCollapsibleSection>
-
-        <!-- 7. CTA -->
-        <AdminCollapsibleSection
-          :title="sectionTitle('cta')"
-          :collapsed="collapsed.cta"
-          :visible="sectionVisible('cta')"
-          :can-move-up="canMove('cta', -1)"
-          :can-move-down="canMove('cta', 1)"
-          @update:collapsed="(v) => (collapsed.cta = v)"
-          @update:visible="(v) => setSectionVisible('cta', v)"
-          @move-up="moveSection('cta', -1)"
-          @move-down="moveSection('cta', 1)"
-        >
-          <div class="space-y-4">
-            <div><label :class="sectionLabel">Метка</label><AdminThemedTextField v-model="d.cta.label" :multiline="false" /></div>
-            <div>
-              <label :class="sectionLabel">Заголовок</label>
-              <AdminThemeTitleEditor v-model="d.cta.titleFormatted" />
-            </div>
-            <div><label :class="sectionLabel">Текст</label><AdminThemedTextField v-model="d.cta.text" /></div>
-            <div><label :class="sectionLabel">Текст кнопки</label><AdminThemedTextField v-model="d.cta.button" :multiline="false" /></div>
           </div>
         </AdminCollapsibleSection>
 

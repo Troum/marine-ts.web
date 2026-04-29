@@ -16,6 +16,8 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  ArrowDown,
+  ArrowUp,
   Bold,
   Braces,
   ChevronDown,
@@ -28,6 +30,7 @@ import {
   Heading3,
   Heading4,
   Image as ImageIcon,
+  ImagePlus,
   Images,
   Italic,
   LayoutGrid,
@@ -35,6 +38,7 @@ import {
   List,
   ListOrdered,
   ListTree,
+  Loader2,
   MapPin,
   Minus,
   PlusSquare,
@@ -43,18 +47,21 @@ import {
   FolderOpen,
   Strikethrough,
   Table2,
+  Trash2,
   Underline as UnderlineIcon,
   Undo2,
   Upload,
+  X,
   Youtube as YoutubeIcon,
 } from 'lucide-vue-next'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onClickOutside } from '@vueuse/core'
 import { sanitizeRichContentHtml } from '~/composables/useMarkdownSafeHtml'
 import { applyTiptapDarkEditingCanvas } from '~/utils/tiptapAdminDarkCanvas'
 import {
   isAllowedRichMapIframeSrc,
   insertImageCarouselInEditor,
+  isSafeCarouselImgSrc,
   MtsRichGrid,
   MtsRichGridCell,
   MtsRichImageCarousel,
@@ -96,6 +103,14 @@ const imageUrl = ref('https://')
 const imageInputRef = ref<HTMLInputElement | null>(null)
 const imageUploading = ref(false)
 const imageFileInputRef = ref<HTMLInputElement | null>(null)
+/*
+ * Состояние «выбрать из медиатеки» для диалога одиночной картинки.
+ * Список загружаем лениво при первом раскрытии панели; клик по плитке
+ * сразу подставляет URL в поле и применяет диалог.
+ */
+const imageMediaPanelOpen = ref(false)
+const imageMediaItems = ref<MediaLibraryItem[]>([])
+const imageMediaLoading = ref(false)
 
 const api = useMarineApi()
 const adminToast = useAdminToast()
@@ -110,17 +125,20 @@ const mapTitle = ref('Карта')
 const mapInputRef = ref<HTMLInputElement | null>(null)
 
 const carouselDialogOpen = ref(false)
-const carouselUrlsText = ref('https://')
-const carouselAltsText = ref('')
+/** Позиция узла, который сейчас редактируем; `null` => вставляем новый. */
+const carouselEditingPos = ref<number | null>(null)
+const carouselSlides = ref<{ src: string; alt: string }[]>([])
 const carouselIntervalMs = ref(6000)
 const carouselShowDots = ref(true)
 const carouselAriaLabel = ref('Галерея изображений')
-const carouselUrlsInputRef = ref<HTMLTextAreaElement | null>(null)
+const carouselNewUrl = ref('')
+const carouselNewUrlInputRef = ref<HTMLInputElement | null>(null)
 const carouselUploading = ref(false)
 const carouselMediaPanelOpen = ref(false)
 const carouselMediaItems = ref<MediaLibraryItem[]>([])
 const carouselMediaLoading = ref(false)
 const carouselMediaSelectedUrls = ref<string[]>([])
+const editorRootRef = ref<HTMLDivElement | null>(null)
 
 const listStyleOpen = ref(false)
 const listStyleAnchorRef = ref<HTMLElement | null>(null)
@@ -285,10 +303,15 @@ watch(mapDialogOpen, async (open) => {
 })
 
 watch(carouselDialogOpen, async (open) => {
+  if (typeof window === 'undefined') {
+    return
+  }
   if (open) {
+    document.body.style.overflow = 'hidden'
     await nextTick()
-    carouselUrlsInputRef.value?.focus()
-    carouselUrlsInputRef.value?.select()
+    carouselNewUrlInputRef.value?.focus()
+  } else {
+    document.body.style.overflow = ''
   }
 })
 
@@ -418,6 +441,7 @@ function openImageDialog() {
     return
   }
   imageUrl.value = 'https://'
+  imageMediaPanelOpen.value = false
   imageDialogOpen.value = true
 }
 
@@ -432,10 +456,50 @@ function applyImageDialog() {
     ed.chain().focus().setImage({ src: u }).run()
   }
   imageDialogOpen.value = false
+  imageMediaPanelOpen.value = false
 }
 
 function cancelImageDialog() {
   imageDialogOpen.value = false
+  imageMediaPanelOpen.value = false
+}
+
+function toggleImageMediaPanel() {
+  imageMediaPanelOpen.value = !imageMediaPanelOpen.value
+  if (
+    imageMediaPanelOpen.value
+    && imageMediaItems.value.length === 0
+    && !imageMediaLoading.value
+  ) {
+    void loadImageMediaLibrary()
+  }
+}
+
+async function loadImageMediaLibrary() {
+  imageMediaLoading.value = true
+  try {
+    imageMediaItems.value = await api.media.listManage()
+  } catch {
+    adminToast.show({
+      title: 'Ошибка',
+      message: 'Не удалось получить список изображений из медиатеки',
+    })
+  } finally {
+    imageMediaLoading.value = false
+  }
+}
+
+/**
+ * Один клик по плитке в медиатеке = выбор картинки. Сразу подставляем URL
+ * в поле и применяем диалог, чтобы не заставлять пользователя нажимать
+ * «Вставить» повторно — это ожидаемое поведение для одиночной картинки.
+ */
+function pickImageFromMedia(url: string) {
+  if (props.disabled || !editor.value) {
+    return
+  }
+  imageUrl.value = url
+  applyImageDialog()
 }
 
 function pickImageFile() {
@@ -578,18 +642,61 @@ function cancelMapDialog() {
   mapDialogOpen.value = false
 }
 
+function resetCarouselDialogState() {
+  carouselSlides.value = []
+  carouselIntervalMs.value = 6000
+  carouselShowDots.value = true
+  carouselAriaLabel.value = 'Галерея изображений'
+  carouselNewUrl.value = ''
+  carouselMediaPanelOpen.value = false
+  carouselMediaItems.value = []
+  carouselMediaSelectedUrls.value = []
+  carouselEditingPos.value = null
+}
+
 function openCarouselDialog() {
   if (!editor.value) {
     return
   }
-  carouselUrlsText.value = ''
-  carouselAltsText.value = ''
-  carouselIntervalMs.value = 6000
-  carouselShowDots.value = true
-  carouselAriaLabel.value = 'Галерея изображений'
-  carouselMediaPanelOpen.value = false
-  carouselMediaItems.value = []
-  carouselMediaSelectedUrls.value = []
+  resetCarouselDialogState()
+  carouselDialogOpen.value = true
+}
+
+/**
+ * Открыть модалку для редактирования уже вставленной карусели —
+ * вызывается из CustomEvent('mts-rich-carousel-edit') нашего node-view.
+ */
+function openCarouselDialogForEdit(
+  pos: number,
+  attrs: { slides?: unknown; intervalMs?: unknown; showDots?: unknown; ariaLabel?: unknown },
+) {
+  if (!editor.value) {
+    return
+  }
+  resetCarouselDialogState()
+  carouselEditingPos.value = pos
+  const rawSlides = Array.isArray(attrs.slides) ? attrs.slides : []
+  carouselSlides.value = rawSlides
+    .map((s) => {
+      if (!s || typeof s !== 'object') {
+        return null
+      }
+      const src = typeof (s as { src?: unknown }).src === 'string' ? ((s as { src: string }).src) : ''
+      const alt = typeof (s as { alt?: unknown }).alt === 'string' ? ((s as { alt: string }).alt) : ''
+      if (!src || !isSafeCarouselImgSrc(src)) {
+        return null
+      }
+      return { src, alt }
+    })
+    .filter((x): x is { src: string; alt: string } => x !== null)
+  const ivl = Number(attrs.intervalMs)
+  carouselIntervalMs.value =
+    Number.isFinite(ivl) && ivl >= 2000 && ivl <= 120000 ? ivl : 6000
+  carouselShowDots.value = attrs.showDots !== false
+  carouselAriaLabel.value =
+    typeof attrs.ariaLabel === 'string' && attrs.ariaLabel.trim()
+      ? attrs.ariaLabel.trim()
+      : 'Галерея изображений'
   carouselDialogOpen.value = true
 }
 
@@ -599,31 +706,149 @@ function applyCarouselDialog() {
     carouselDialogOpen.value = false
     return
   }
-  const urls = carouselUrlsText.value
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean)
-  const alts = carouselAltsText.value.split('\n').map((s) => s.trim())
-  const slides = urls.map((src, i) => ({ src, alt: alts[i] ?? '' }))
-  const ok = insertImageCarouselInEditor(ed, {
-    slides,
-    intervalMs: Number(carouselIntervalMs.value) || 6000,
-    showDots: carouselShowDots.value,
-    ariaLabel: carouselAriaLabel.value.trim() || 'Галерея изображений',
-  })
-  if (!ok) {
+  const slides = carouselSlides.value
+    .map((s) => ({ src: (s.src ?? '').trim(), alt: (s.alt ?? '').trim() }))
+    .filter((s) => s.src && isSafeCarouselImgSrc(s.src))
+  if (slides.length === 0) {
     adminToast.show({
       title: 'Ошибка',
-      message: 'Нужен хотя бы один корректный URL картинки (https:// или относительный путь /…).',
+      message: 'Добавьте хотя бы одно корректное изображение (https:// или /storage/…).',
     })
     return
   }
-  adminToast.success('Карусель вставлена')
+  const ivlRaw = Number(carouselIntervalMs.value)
+  const intervalMs =
+    Number.isFinite(ivlRaw) && ivlRaw >= 2000 && ivlRaw <= 120000 ? ivlRaw : 6000
+  const ariaLabel = carouselAriaLabel.value.trim() || 'Галерея изображений'
+  const showDots = carouselShowDots.value !== false
+
+  const editingPos = carouselEditingPos.value
+  if (editingPos !== null) {
+    /*
+     * Если узел сместился из-за параллельных правок, посчитаем это «вставкой нового»,
+     * чтобы пользователь не потерял изменения.
+     */
+    const node = ed.state.doc.nodeAt(editingPos)
+    if (!node || node.type.name !== 'mtsRichImageCarousel') {
+      const ok = insertImageCarouselInEditor(ed, { slides, intervalMs, showDots, ariaLabel })
+      if (!ok) {
+        adminToast.show({ title: 'Ошибка', message: 'Не удалось сохранить карусель' })
+        return
+      }
+      adminToast.success('Карусель сохранена (как новая, исходный блок не найден)')
+    } else {
+      const tr = ed.state.tr.setNodeMarkup(editingPos, undefined, {
+        slides,
+        intervalMs,
+        showDots,
+        ariaLabel,
+      })
+      ed.view.dispatch(tr)
+      adminToast.success('Карусель обновлена')
+    }
+  } else {
+    const ok = insertImageCarouselInEditor(ed, { slides, intervalMs, showDots, ariaLabel })
+    if (!ok) {
+      adminToast.show({
+        title: 'Ошибка',
+        message: 'Нужно хотя бы одно корректное изображение (https:// или /storage/…).',
+      })
+      return
+    }
+    adminToast.success('Карусель вставлена')
+  }
   carouselDialogOpen.value = false
 }
 
 function cancelCarouselDialog() {
   carouselDialogOpen.value = false
+}
+
+function carouselSlideExists(src: string) {
+  return carouselSlides.value.some((s) => s.src === src)
+}
+
+function tryAppendCarouselSlide(rawSrc: string, rawAlt = '', notify = true): boolean {
+  const src = rawSrc.trim()
+  if (!src) {
+    return false
+  }
+  if (!isSafeCarouselImgSrc(src)) {
+    if (notify) {
+      adminToast.show({
+        title: 'Некорректный URL',
+        message: 'Поддерживаются только https:// и относительные пути /storage/…',
+      })
+    }
+    return false
+  }
+  if (carouselSlideExists(src)) {
+    if (notify) {
+      adminToast.show({ title: 'Уже добавлено', message: 'Этот URL уже есть в карусели' })
+    }
+    return false
+  }
+  carouselSlides.value = [...carouselSlides.value, { src, alt: rawAlt.trim() }]
+  return true
+}
+
+function setCarouselSlideSrc(idx: number, value: string) {
+  if (idx < 0 || idx >= carouselSlides.value.length) {
+    return
+  }
+  const next = [...carouselSlides.value]
+  const cur = next[idx]
+  if (!cur) {
+    return
+  }
+  next[idx] = { ...cur, src: value }
+  carouselSlides.value = next
+}
+
+function setCarouselSlideAlt(idx: number, value: string) {
+  if (idx < 0 || idx >= carouselSlides.value.length) {
+    return
+  }
+  const next = [...carouselSlides.value]
+  const cur = next[idx]
+  if (!cur) {
+    return
+  }
+  next[idx] = { ...cur, alt: value }
+  carouselSlides.value = next
+}
+
+function moveCarouselSlide(from: number, delta: -1 | 1) {
+  const to = from + delta
+  if (
+    from < 0 ||
+    from >= carouselSlides.value.length ||
+    to < 0 ||
+    to >= carouselSlides.value.length ||
+    from === to
+  ) {
+    return
+  }
+  const next = [...carouselSlides.value]
+  const [moved] = next.splice(from, 1)
+  if (moved === undefined) {
+    return
+  }
+  next.splice(to, 0, moved)
+  carouselSlides.value = next
+}
+
+function removeCarouselSlide(idx: number) {
+  if (idx < 0 || idx >= carouselSlides.value.length) {
+    return
+  }
+  carouselSlides.value = carouselSlides.value.filter((_, i) => i !== idx)
+}
+
+function submitCarouselNewUrl() {
+  if (tryAppendCarouselSlide(carouselNewUrl.value)) {
+    carouselNewUrl.value = ''
+  }
 }
 
 function toggleCarouselMediaPanel() {
@@ -665,22 +890,31 @@ function isCarouselMediaPicked(url: string) {
   return carouselMediaSelectedUrls.value.includes(url)
 }
 
+function altFromFilename(filename: string | undefined | null): string {
+  return (filename ?? '').replace(/\.[^.]+$/i, '').replace(/[-_]+/g, ' ').trim() || ''
+}
+
 function appendCarouselMediaPicked() {
   const urls = [...carouselMediaSelectedUrls.value]
   if (!urls.length) {
     return
   }
-  const appendedAlts = urls.map((u) => {
-    const it = carouselMediaItems.value.find((x) => x.url === u)
-    const fn = it?.filename ?? ''
-    return fn.replace(/\.[^.]+$/i, '').replace(/[-_]+/g, ' ').trim() || ''
-  })
-  const cur = carouselUrlsText.value.replace(/\s+$/, '')
-  carouselUrlsText.value = cur ? `${cur}\n${urls.join('\n')}` : urls.join('\n')
-  const curAlts = carouselAltsText.value.replace(/\s+$/, '')
-  carouselAltsText.value = curAlts ? `${curAlts}\n${appendedAlts.join('\n')}` : appendedAlts.join('\n')
+  let added = 0
+  for (const url of urls) {
+    const it = carouselMediaItems.value.find((x) => x.url === url)
+    if (tryAppendCarouselSlide(url, altFromFilename(it?.filename), false)) {
+      added++
+    }
+  }
   carouselMediaSelectedUrls.value = []
-  adminToast.success(`Добавлено из медиатеки: ${urls.length}`)
+  if (added > 0) {
+    adminToast.success(`Добавлено из медиатеки: ${added}`)
+  } else {
+    adminToast.show({
+      title: 'Уже добавлено',
+      message: 'Все выбранные ссылки уже есть в карусели или не прошли проверку URL.',
+    })
+  }
 }
 
 function formatMediaUploadError(e: unknown): string {
@@ -714,8 +948,7 @@ async function onCarouselFileChange(e: Event) {
     return
   }
   carouselUploading.value = true
-  const appendedUrls: string[] = []
-  const appendedAlts: string[] = []
+  let added = 0
   const failures: string[] = []
   try {
     for (const file of files) {
@@ -726,15 +959,23 @@ async function onCarouselFileChange(e: Event) {
           failures.push(`${file.name}: сервер не вернул URL`)
           continue
         }
-        appendedUrls.push(u)
-        const base = file.name.replace(/\.[^.]+$/i, '').replace(/[-_]+/g, ' ').trim()
-        appendedAlts.push(base || '')
+        const altBase = file.name.replace(/\.[^.]+$/i, '').replace(/[-_]+/g, ' ').trim()
+        if (tryAppendCarouselSlide(u, altBase, false)) {
+          added++
+        }
       }
       catch (err: unknown) {
         failures.push(`${file.name}: ${formatMediaUploadError(err)}`)
       }
     }
-    if (appendedUrls.length === 0) {
+    if (added === 0 && failures.length === 0) {
+      adminToast.show({
+        title: 'Уже добавлено',
+        message: 'Загруженные файлы уже есть в карусели — дубликаты не добавляются.',
+      })
+      return
+    }
+    if (added === 0) {
       const msg =
         failures.length === 1
           ? (failures[0] ?? 'Сервер не вернул URL для загруженных файлов')
@@ -742,11 +983,7 @@ async function onCarouselFileChange(e: Event) {
       adminToast.show({ title: 'Ошибка', message: msg })
       return
     }
-    const cur = carouselUrlsText.value.replace(/\s+$/, '')
-    carouselUrlsText.value = cur ? `${cur}\n${appendedUrls.join('\n')}` : appendedUrls.join('\n')
-    const curAlts = carouselAltsText.value.replace(/\s+$/, '')
-    carouselAltsText.value = curAlts ? `${curAlts}\n${appendedAlts.join('\n')}` : appendedAlts.join('\n')
-    adminToast.success(`Добавлено изображений: ${appendedUrls.length}`)
+    adminToast.success(`Добавлено изображений: ${added}`)
     if (failures.length) {
       adminToast.show({
         title: 'Часть файлов не загружена',
@@ -769,10 +1006,75 @@ function insertTable() {
 function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
   return editor.value?.isActive({ textAlign: align }) ?? false
 }
+
+function onCarouselNodeViewEdit(e: Event) {
+  const detail = (e as CustomEvent<{ pos?: number; attrs?: Record<string, unknown> }>).detail
+  if (!detail || typeof detail.pos !== 'number' || !detail.attrs) {
+    return
+  }
+  openCarouselDialogForEdit(detail.pos, detail.attrs)
+}
+
+onMounted(() => {
+  editorRootRef.value?.addEventListener(
+    'mts-rich-carousel-edit',
+    onCarouselNodeViewEdit as EventListener,
+  )
+})
+
+onBeforeUnmount(() => {
+  editorRootRef.value?.removeEventListener(
+    'mts-rich-carousel-edit',
+    onCarouselNodeViewEdit as EventListener,
+  )
+  if (typeof document !== 'undefined') {
+    document.body.style.overflow = ''
+  }
+})
+
+const canEditCarouselFromToolbar = computed(() => {
+  void tiptapUiTick.value
+  const ed = editor.value
+  if (!ed) {
+    return false
+  }
+  return ed.isActive('mtsRichImageCarousel')
+})
+
+function openCarouselFromToolbar() {
+  const ed = editor.value
+  if (!ed) {
+    return
+  }
+  if (!ed.isActive('mtsRichImageCarousel')) {
+    openCarouselDialog()
+    return
+  }
+  const { from } = ed.state.selection
+  let pos: number | null = null
+  let nodeAttrs: Record<string, unknown> | null = null
+  ed.state.doc.nodesBetween(Math.max(0, from - 1), Math.min(ed.state.doc.content.size, from + 1), (n, p) => {
+    if (nodeAttrs) {
+      return false
+    }
+    if (n.type.name === 'mtsRichImageCarousel') {
+      pos = p
+      nodeAttrs = { ...n.attrs }
+      return false
+    }
+    return true
+  })
+  if (pos !== null && nodeAttrs) {
+    openCarouselDialogForEdit(pos, nodeAttrs)
+    return
+  }
+  openCarouselDialog()
+}
 </script>
 
 <template>
   <div
+    ref="editorRootRef"
     class="admin-rich-text overflow-hidden border border-mts-border bg-mts-bg"
     :class="disabled ? 'opacity-70' : ''"
   >
@@ -1086,10 +1388,12 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
       </button>
       <button
         type="button"
-        :class="btnClass(false)"
+        :class="btnClass(canEditCarouselFromToolbar)"
         :disabled="disabled"
-        title="Карусель изображений (как на «О компании») — курсор в колонке сетки или в тексте"
-        @click="openCarouselDialog"
+        :title="canEditCarouselFromToolbar
+          ? 'Управление выбранной каруселью изображений'
+          : 'Карусель изображений (как на «О компании») — миниатюрный блок с подборкой картинок'"
+        @click="openCarouselFromToolbar"
       >
         <Images class="h-4 w-4" />
       </button>
@@ -1187,7 +1491,7 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
         aria-labelledby="admin-rich-image-title"
         @click.self="cancelImageDialog"
       >
-        <div class="w-full max-w-md rounded-lg border border-mts-border bg-mts-bg p-4 shadow-lg" @click.stop>
+        <div class="w-full max-w-xl rounded-lg border border-mts-border bg-mts-bg p-4 shadow-lg" @click.stop>
           <h2 id="admin-rich-image-title" class="mb-3 font-display text-base font-semibold text-mts-text">
             Изображение
           </h2>
@@ -1203,14 +1507,87 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
           <p class="mt-2 text-[11px] text-mts-text-muted">
             Или загрузите файл (JPEG, PNG, WebP) — в документ подставится адрес из хранилища.
           </p>
-          <button
-            type="button"
-            class="mt-2 w-full rounded border border-mts-border bg-white px-3 py-2 text-sm text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-50"
-            :disabled="imageUploading"
-            @click="pickImageFile"
+          <div class="mt-2 grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              class="rounded border border-mts-border bg-white px-3 py-2 text-sm text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-50"
+              :disabled="imageUploading"
+              @click="pickImageFile"
+            >
+              {{ imageUploading ? 'Загрузка…' : 'Загрузить файл' }}
+            </button>
+            <button
+              type="button"
+              class="rounded border px-3 py-2 text-sm transition-colors disabled:opacity-50"
+              :class="
+                imageMediaPanelOpen
+                  ? 'border-mts-accent bg-mts-accent/5 text-mts-accent'
+                  : 'border-mts-border bg-white text-mts-text hover:border-mts-accent hover:text-mts-accent'
+              "
+              :disabled="imageUploading"
+              @click="toggleImageMediaPanel"
+            >
+              Выбрать из медиатеки
+            </button>
+          </div>
+
+          <div
+            v-if="imageMediaPanelOpen"
+            class="mt-3 rounded border border-mts-border bg-mts-bg/40 p-3"
           >
-            {{ imageUploading ? 'Загрузка…' : 'Загрузить файл' }}
-          </button>
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                Медиатека · каталог /media на сервере
+              </span>
+              <button
+                type="button"
+                class="text-xs font-medium text-mts-accent hover:underline disabled:pointer-events-none disabled:opacity-50"
+                :disabled="imageMediaLoading || disabled"
+                @click="loadImageMediaLibrary"
+              >
+                Обновить
+              </button>
+            </div>
+            <p v-if="imageMediaLoading" class="py-6 text-center text-xs text-mts-text-secondary">
+              Загрузка списка…
+            </p>
+            <p
+              v-else-if="!imageMediaItems.length"
+              class="py-4 text-center text-xs text-mts-text-secondary"
+            >
+              Нет изображений в каталоге. Загрузите файлы через «Загрузить файл» или положите их в
+              <code class="font-mono">storage/app/public/media</code> и нажмите «Обновить».
+            </p>
+            <div
+              v-else
+              class="max-h-64 overflow-y-auto rounded border border-mts-border bg-white p-2"
+            >
+              <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                <button
+                  v-for="it in imageMediaItems"
+                  :key="it.url"
+                  type="button"
+                  class="relative aspect-square overflow-hidden rounded border-2 bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent"
+                  :class="
+                    imageUrl === it.url
+                      ? 'border-mts-accent ring-2 ring-mts-accent/30'
+                      : 'border-mts-border hover:border-mts-accent/60'
+                  "
+                  :title="it.filename"
+                  :disabled="disabled || imageUploading"
+                  @click="pickImageFromMedia(it.url)"
+                >
+                  <img
+                    :src="it.url"
+                    alt=""
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="mt-4 flex justify-end gap-2">
             <button
               type="button"
@@ -1329,27 +1706,253 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
     <Teleport to="body">
       <div
         v-if="carouselDialogOpen"
-        class="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="admin-rich-carousel-title"
+        class="fixed inset-0 z-[245] flex items-stretch justify-center p-4 sm:items-center sm:p-6"
+        role="presentation"
         @click.self="cancelCarouselDialog"
       >
-        <div class="w-full max-w-2xl rounded-lg border border-mts-border bg-mts-bg p-4 shadow-lg" @click.stop>
-          <h2 id="admin-rich-carousel-title" class="mb-3 font-display text-base font-semibold text-mts-text">
-            Карусель изображений
-          </h2>
-          <p class="mb-3 font-body text-xs text-mts-text-secondary">
-            Вставьте <strong>по одному URL на строку</strong> (https или путь вида <code class="font-mono">/storage/…</code>),
-            <strong>загрузите с диска</strong> или выберите из <strong>медиатеки</strong> (файлы в
-            <code class="font-mono">storage/app/public/media</code>) — ссылки появятся в списке ниже. На сайте блок заменится на
-            <code class="font-mono">ImageFadeCarousel</code> с плавной сменой кадров. Удобно в ячейке сетки TipTap.
-          </p>
-          <div class="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <span class="text-xs font-medium text-mts-text-secondary" id="admin-rich-carousel-urls-label">URL изображений</span>
-            <div class="flex flex-wrap items-center gap-2">
+        <div class="absolute inset-0 bg-black/55" aria-hidden="true" />
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-rich-carousel-title"
+          class="relative z-10 flex max-h-[min(94vh,1100px)] w-full max-w-5xl flex-col overflow-hidden rounded-md border border-mts-border bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)]"
+          @click.stop
+        >
+          <header class="flex items-start justify-between gap-3 border-b border-mts-border bg-mts-bg/40 px-6 py-4">
+            <div class="min-w-0">
+              <h2 id="admin-rich-carousel-title" class="font-display text-lg text-mts-text">
+                {{ carouselEditingPos === null ? 'Новая карусель изображений' : 'Карусель изображений' }}
+              </h2>
+              <p class="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                {{ carouselSlides.length }} слайд<span v-if="carouselSlides.length % 10 === 1 && carouselSlides.length % 100 !== 11"></span><span v-else-if="[2,3,4].includes(carouselSlides.length % 10) && ![12,13,14].includes(carouselSlides.length % 100)">а</span><span v-else>ов</span>
+                · на сайте превратится в плавную галерею
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Закрыть"
+              class="inline-flex h-9 w-9 items-center justify-center text-mts-text-secondary transition-colors hover:text-mts-accent"
+              @click="cancelCarouselDialog"
+            >
+              <X class="h-5 w-5" />
+            </button>
+          </header>
+
+          <div class="flex-1 overflow-y-auto px-6 py-5">
+            <p class="mb-3 font-body text-xs text-mts-text-secondary">
+              Добавьте слайды через <strong>URL</strong> (https или путь вида <code class="font-mono">/storage/…</code>),
+              <strong>загрузите файлы с диска</strong> или выберите из <strong>медиатеки</strong>. Меняйте порядок стрелками и удаляйте лишние.
+              На сайте блок отрисуется как <code class="font-mono">ImageFadeCarousel</code>.
+            </p>
+
+            <div
+              v-if="carouselSlides.length === 0"
+              class="mb-5 flex items-center justify-center rounded border border-dashed border-mts-border bg-mts-bg/50 px-3 py-10 font-body text-sm text-mts-text-secondary"
+            >
+              Список пуст. Добавьте слайды ниже — через URL, диск или медиатеку.
+            </div>
+            <div
+              v-else
+              class="mb-5 grid gap-3"
+              style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"
+            >
+              <div
+                v-for="(slide, idx) in carouselSlides"
+                :key="`carousel-slide-${idx}`"
+                class="flex flex-col border border-mts-border bg-white"
+              >
+                <div class="relative aspect-[4/3] overflow-hidden bg-mts-bg">
+                  <img
+                    v-if="slide.src && isSafeCarouselImgSrc(slide.src)"
+                    :src="slide.src"
+                    :alt="slide.alt || ''"
+                    class="h-full w-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                  <div
+                    v-else
+                    class="flex h-full w-full items-center justify-center font-mono text-[10px] uppercase tracking-widest text-red-500"
+                  >
+                    Неверный URL
+                  </div>
+                  <span
+                    class="absolute left-2 top-2 inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-sm bg-black/60 px-1.5 font-mono text-[11px] font-semibold text-white"
+                  >
+                    {{ idx + 1 }}
+                  </span>
+                </div>
+                <div class="space-y-2 border-t border-mts-border p-3">
+                  <input
+                    :value="slide.src"
+                    type="text"
+                    placeholder="https://… или /storage/…"
+                    class="w-full border border-mts-border bg-mts-bg px-2 py-1.5 font-mono text-[11px] text-mts-text focus:border-mts-accent focus:outline-none"
+                    @input="(e) => setCarouselSlideSrc(idx, (e.target as HTMLInputElement).value)"
+                  >
+                  <input
+                    :value="slide.alt"
+                    type="text"
+                    placeholder="alt (для доступности)"
+                    class="w-full border border-mts-border bg-mts-bg px-2 py-1.5 font-body text-xs text-mts-text focus:border-mts-accent focus:outline-none"
+                    @input="(e) => setCarouselSlideAlt(idx, (e.target as HTMLInputElement).value)"
+                  >
+                  <div class="flex items-center justify-between gap-1">
+                    <div class="flex items-center gap-1">
+                      <button
+                        type="button"
+                        title="Сдвинуть выше"
+                        aria-label="Сдвинуть выше"
+                        class="inline-flex h-7 w-7 items-center justify-center border border-mts-border bg-white text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="idx === 0"
+                        @click="moveCarouselSlide(idx, -1)"
+                      >
+                        <ArrowUp class="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        title="Сдвинуть ниже"
+                        aria-label="Сдвинуть ниже"
+                        class="inline-flex h-7 w-7 items-center justify-center border border-mts-border bg-white text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:cursor-not-allowed disabled:opacity-40"
+                        :disabled="idx === carouselSlides.length - 1"
+                        @click="moveCarouselSlide(idx, 1)"
+                      >
+                        <ArrowDown class="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      class="inline-flex h-7 items-center gap-1 border border-mts-border bg-white px-2 font-mono text-[10px] uppercase tracking-wide text-red-700 transition-colors hover:border-red-500 hover:text-red-700"
+                      @click="removeCarouselSlide(idx)"
+                    >
+                      <Trash2 class="h-3 w-3" />
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-2 flex flex-wrap items-center gap-3">
+              <h3 class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                Параметры карусели
+              </h3>
+              <span class="text-mts-text-muted">·</span>
+              <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="carouselShowDots" type="checkbox" class="mts-checkbox">
+                <span>Точки и стрелки</span>
+              </label>
+              <label class="flex items-center gap-2 font-body text-sm text-mts-text">
+                <span class="text-mts-text-secondary">Интервал, мс</span>
+                <input
+                  v-model.number="carouselIntervalMs"
+                  type="number"
+                  min="2000"
+                  max="120000"
+                  step="500"
+                  class="w-24 border border-mts-border bg-white px-2 py-1 text-sm outline-none focus:border-mts-accent"
+                >
+              </label>
+            </div>
+            <label class="mb-1 block font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+              Подпись для screen reader (aria-label)
+            </label>
+            <input
+              v-model="carouselAriaLabel"
+              type="text"
+              class="w-full border border-mts-border bg-white px-3 py-2 text-sm text-mts-text outline-none focus:border-mts-accent"
+              placeholder="Галерея изображений"
+            >
+
+            <div
+              v-if="carouselMediaPanelOpen"
+              class="mt-4 rounded border border-mts-border bg-mts-bg/40 p-3"
+            >
+              <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <span class="font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                  Медиатека · каталог /media на сервере
+                </span>
+                <button
+                  type="button"
+                  class="text-xs font-medium text-mts-accent hover:underline disabled:pointer-events-none disabled:opacity-50"
+                  :disabled="carouselMediaLoading || disabled"
+                  @click="loadCarouselMediaLibrary"
+                >
+                  Обновить
+                </button>
+              </div>
+              <p v-if="carouselMediaLoading" class="py-6 text-center text-xs text-mts-text-secondary">
+                Загрузка списка…
+              </p>
+              <p
+                v-else-if="!carouselMediaItems.length"
+                class="py-4 text-center text-xs text-mts-text-secondary"
+              >
+                Нет изображений в каталоге. Загрузите файлы через «С диска» или положите их в
+                <code class="font-mono">storage/app/public/media</code> и нажмите «Обновить».
+              </p>
+              <div
+                v-else
+                class="max-h-72 overflow-y-auto rounded border border-mts-border bg-white p-2"
+              >
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                  <button
+                    v-for="it in carouselMediaItems"
+                    :key="it.url"
+                    type="button"
+                    class="relative aspect-square overflow-hidden rounded border-2 bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent"
+                    :class="
+                      isCarouselMediaPicked(it.url)
+                        ? 'border-mts-accent ring-2 ring-mts-accent/30'
+                        : 'border-mts-border hover:border-mts-accent/60'
+                    "
+                    :title="it.filename"
+                    :disabled="disabled || carouselUploading"
+                    @click="toggleCarouselMediaPick(it.url)"
+                  >
+                    <img
+                      :src="it.url"
+                      alt=""
+                      class="h-full w-full object-cover"
+                      loading="lazy"
+                    >
+                  </button>
+                </div>
+              </div>
+              <div v-if="carouselMediaItems.length" class="mt-2 flex justify-end">
+                <button
+                  type="button"
+                  class="rounded bg-mts-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
+                  :disabled="!carouselMediaSelectedUrls.length || disabled || carouselUploading"
+                  @click="appendCarouselMediaPicked"
+                >
+                  Добавить выбранные ({{ carouselMediaSelectedUrls.length }})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <footer class="border-t border-mts-border bg-mts-bg/50 px-6 py-4">
+            <div class="flex flex-wrap items-stretch gap-2">
+              <input
+                ref="carouselNewUrlInputRef"
+                v-model="carouselNewUrl"
+                type="text"
+                placeholder="https://… или /storage/…"
+                class="min-w-[14rem] flex-1 border border-mts-border bg-white px-3 py-2 font-body text-sm focus:border-mts-accent focus:outline-none"
+                @keydown.enter.prevent="submitCarouselNewUrl"
+              >
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 border border-mts-border bg-white px-3 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-40"
+                :disabled="!carouselNewUrl.trim()"
+                @click="submitCarouselNewUrl"
+              >
+                <ImagePlus class="h-3.5 w-3.5" />
+                Добавить URL
+              </button>
               <label
-                class="inline-flex cursor-pointer items-center gap-1.5 rounded border border-mts-border bg-white px-2.5 py-1 text-xs font-medium text-mts-text hover:border-mts-accent hover:text-mts-accent"
+                class="inline-flex cursor-pointer items-center gap-1.5 border border-transparent bg-mts-accent px-3 font-mono text-[11px] uppercase tracking-wide text-white transition-colors hover:bg-mts-accent-dark"
                 :class="
                   disabled || carouselUploading
                     ? 'pointer-events-none cursor-not-allowed opacity-50'
@@ -1365,142 +1968,39 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
                   :disabled="disabled || carouselUploading"
                   @change="onCarouselFileChange"
                 >
-                <Upload class="h-3.5 w-3.5 shrink-0" />
+                <Loader2 v-if="carouselUploading" class="h-3.5 w-3.5 animate-spin" />
+                <Upload v-else class="h-3.5 w-3.5" />
                 <span>{{ carouselUploading ? 'Загрузка…' : 'С диска' }}</span>
               </label>
               <button
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded border border-mts-border bg-white px-2.5 py-1 text-xs font-medium text-mts-text hover:border-mts-accent hover:text-mts-accent disabled:pointer-events-none disabled:opacity-50"
+                class="inline-flex items-center gap-1.5 border border-mts-border bg-white px-3 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-40"
                 :class="carouselMediaPanelOpen ? 'border-mts-accent text-mts-accent' : ''"
                 :disabled="disabled || carouselUploading"
                 @click="toggleCarouselMediaPanel"
               >
-                <FolderOpen class="h-3.5 w-3.5 shrink-0" />
+                <FolderOpen class="h-3.5 w-3.5" />
                 Медиатека
               </button>
-            </div>
-          </div>
-          <div
-            v-if="carouselMediaPanelOpen"
-            class="mb-3 rounded border border-mts-border bg-white/60 p-3 dark:bg-white/5"
-          >
-            <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <span class="text-xs font-medium text-mts-text-secondary">Каталог media на сервере</span>
-              <button
-                type="button"
-                class="text-xs font-medium text-mts-accent hover:underline disabled:pointer-events-none disabled:opacity-50"
-                :disabled="carouselMediaLoading || disabled"
-                @click="loadCarouselMediaLibrary"
-              >
-                Обновить
-              </button>
-            </div>
-            <p v-if="carouselMediaLoading" class="py-6 text-center text-xs text-mts-text-secondary">
-              Загрузка списка…
-            </p>
-            <p
-              v-else-if="!carouselMediaItems.length"
-              class="py-4 text-center text-xs text-mts-text-secondary"
-            >
-              Нет изображений в каталоге (или каталог пуст). Загрузите файлы через «С диска» или положите их в
-              <code class="font-mono">media</code> и нажмите «Обновить».
-            </p>
-            <div
-              v-else
-              class="max-h-52 overflow-y-auto rounded border border-mts-border bg-mts-bg p-2"
-            >
-              <div class="grid grid-cols-4 gap-2 sm:grid-cols-5">
+              <div class="ml-auto flex items-center gap-2">
                 <button
-                  v-for="it in carouselMediaItems"
-                  :key="it.url"
                   type="button"
-                  class="relative aspect-square overflow-hidden rounded border-2 bg-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent"
-                  :class="
-                    isCarouselMediaPicked(it.url)
-                      ? 'border-mts-accent ring-2 ring-mts-accent/30'
-                      : 'border-mts-border hover:border-mts-accent/60'
-                  "
-                  :title="it.filename"
-                  :disabled="disabled || carouselUploading"
-                  @click="toggleCarouselMediaPick(it.url)"
+                  class="border border-mts-border bg-white px-3 py-2 font-mono text-[11px] uppercase tracking-wide text-mts-text transition-colors hover:bg-mts-bg"
+                  @click="cancelCarouselDialog"
                 >
-                  <img
-                    :src="it.url"
-                    alt=""
-                    class="h-full w-full object-cover"
-                    loading="lazy"
-                  >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  class="border border-transparent bg-mts-text px-4 py-2 font-mono text-[11px] uppercase tracking-wide text-white transition-colors hover:bg-mts-text-secondary disabled:opacity-50"
+                  :disabled="carouselSlides.length === 0"
+                  @click="applyCarouselDialog"
+                >
+                  {{ carouselEditingPos === null ? 'Вставить' : 'Сохранить' }}
                 </button>
               </div>
             </div>
-            <div v-if="carouselMediaItems.length" class="mt-2 flex justify-end">
-              <button
-                type="button"
-                class="rounded bg-mts-accent px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
-                :disabled="!carouselMediaSelectedUrls.length || disabled || carouselUploading"
-                @click="appendCarouselMediaPicked"
-              >
-                Добавить выбранные ({{ carouselMediaSelectedUrls.length }})
-              </button>
-            </div>
-          </div>
-          <textarea
-            id="admin-rich-carousel-urls"
-            aria-labelledby="admin-rich-carousel-urls-label"
-            ref="carouselUrlsInputRef"
-            v-model="carouselUrlsText"
-            rows="5"
-            class="mt-1 w-full rounded border border-mts-border bg-white px-3 py-2 font-mono text-xs text-mts-text outline-none focus:border-mts-accent"
-            placeholder="https://example.com/a.jpg&#10;https://example.com/b.jpg"
-          ></textarea>
-          <label class="mt-3 block text-xs font-medium text-mts-text-secondary"
-            >Подписи Alt (необязательно, по строке на картинку)</label
-          >
-          <textarea
-            v-model="carouselAltsText"
-            rows="3"
-            class="mt-1 w-full rounded border border-mts-border bg-white px-3 py-2 text-sm text-mts-text outline-none focus:border-mts-accent"
-            placeholder="Фото 1&#10;Фото 2"
-          ></textarea>
-          <label class="mt-3 block text-xs font-medium text-mts-text-secondary">Подпись для screen reader (aria-label)</label>
-          <input
-            v-model="carouselAriaLabel"
-            type="text"
-            class="mt-1 w-full rounded border border-mts-border bg-white px-3 py-2 text-sm text-mts-text outline-none focus:border-mts-accent"
-          >
-          <div class="mt-3 flex flex-wrap items-center gap-4">
-            <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
-              <input v-model="carouselShowDots" type="checkbox" class="mts-checkbox" />
-              <span>Точки и стрелки</span>
-            </label>
-            <label class="flex items-center gap-2 font-body text-sm text-mts-text">
-              <span class="text-mts-text-secondary">Интервал, мс</span>
-              <input
-                v-model.number="carouselIntervalMs"
-                type="number"
-                min="2000"
-                max="120000"
-                step="500"
-                class="w-24 rounded border border-mts-border bg-white px-2 py-1 text-sm outline-none focus:border-mts-accent"
-              >
-            </label>
-          </div>
-          <div class="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              class="rounded border border-mts-border bg-white px-3 py-1.5 text-sm text-mts-text hover:bg-mts-bg"
-              @click="cancelCarouselDialog"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              class="rounded bg-mts-accent px-3 py-1.5 text-sm text-white hover:opacity-90"
-              @click="applyCarouselDialog"
-            >
-              Вставить
-            </button>
-          </div>
+          </footer>
         </div>
       </div>
     </Teleport>
@@ -1843,6 +2343,128 @@ function isTextAlignActive(align: 'left' | 'center' | 'right' | 'justify') {
   max-height: 11rem;
   width: 100%;
   object-fit: cover;
+}
+
+/* Превью карусели в редакторе TipTap (NodeView). */
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview) {
+  position: relative;
+  margin: 0.65rem 0;
+  border-radius: 8px;
+  border: 1px solid rgb(210 216 226);
+  background: linear-gradient(180deg, rgb(248 250 252) 0%, rgb(241 245 249) 100%);
+  padding: 0.5rem 0.6rem 0.65rem;
+}
+.admin-rich-text__editor :deep(.ProseMirror.admin-tiptap-editing-surface--dark-canvas .mts-rich-carousel-nodeview) {
+  background: linear-gradient(180deg, rgb(31 36 46) 0%, rgb(22 27 36) 100%);
+  border-color: rgb(255 255 255 / 0.12);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__toolbar) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__title) {
+  flex: 1 1 auto;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.01em;
+  color: rgb(60 67 80);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-rich-text__editor :deep(.ProseMirror.admin-tiptap-editing-surface--dark-canvas .mts-rich-carousel-nodeview__title) {
+  color: rgb(214 220 232);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgb(200 206 216);
+  background: rgb(255 255 255);
+  color: rgb(80 86 98);
+  font-size: 0.95rem;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__btn:hover) {
+  background: rgb(239 246 255);
+  border-color: rgb(147 197 253);
+  color: rgb(29 78 216);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__btn--danger:hover) {
+  background: rgb(254 226 226);
+  border-color: rgb(252 165 165);
+  color: rgb(185 28 28);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 0.35rem;
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__cell) {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 4px;
+  border: 1px solid rgb(214 220 232);
+  background: rgb(248 250 252);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__cell img) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__idx) {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  background: rgb(0 0 0 / 0.55);
+  color: rgb(255 255 255);
+  font-family: ui-monospace, monospace;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1;
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__more) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 4 / 3;
+  border-radius: 4px;
+  border: 1px dashed rgb(200 206 216);
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgb(80 86 98);
+  background: rgb(255 255 255);
+}
+.admin-rich-text__editor :deep(.ProseMirror .mts-rich-carousel-nodeview__empty) {
+  grid-column: 1 / -1;
+  padding: 0.85rem;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgb(110 119 132);
+  border: 1px dashed rgb(200 206 216);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.6);
 }
 
 .admin-rich-text__editor :deep(.ProseMirror [data-youtube-video] iframe) {

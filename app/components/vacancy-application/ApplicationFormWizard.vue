@@ -341,7 +341,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
                   t('pages.vacancyForm.fields.dateOfBirth')
                 }}</label>
-                <MtsDateInput v-model="dateOfBirthIso" :placeholder="t('pages.vacancyForm.dobPlaceholder')" />
+                <MtsDateInput v-model="dateOfBirthIso" variant="underline" :placeholder="t('pages.vacancyForm.dobPlaceholder')" />
               </div>
               <div>
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{

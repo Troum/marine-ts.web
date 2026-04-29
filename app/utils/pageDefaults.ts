@@ -62,8 +62,35 @@ import {
 
 /* ── Home page: без демо на публичном сайте (контент из CMS) ── */
 
+/**
+ * Встроенные секции главной полностью убраны: на сайте остаются только
+ * hero, секция «Чем мы занимаемся» (`directions`) и пользовательские
+ * секции (`customSections`). Поэтому дефолтный порядок встроенных секций
+ * пуст — массив используется только как «список известных id» при слиянии.
+ *
+ * Оставляем экспорт пустым массивом (а не удаляем символ), чтобы любые
+ * внешние ссылки на него не сломались, а `mergeSectionVisibility` для
+ * главной возвращал чистую карту видимости только по кастомным секциям.
+ */
+export const HOME_SECTION_DEFAULT_ORDER = [] as const
+
+export type HomeSectionId = never
+
+export const HOME_SECTION_ADMIN_LABELS: Record<string, string> = {}
+
 function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
   const blank = themeTitleTriple('', '', '')
+  /*
+   * Дефолтная видимость встроенных секций — все «показываются».
+   * Это критично, чтобы чекбокс «Показывать» в админке стартовал в состоянии
+   * «✓» (а не выглядел как «выключено», хотя на сайте секция отрисовывается):
+   * checkbox-биндинг строится на `props.visible === true`, поэтому пустая
+   * `sectionVisibility` ранее давала визуальную рассинхронизацию.
+   */
+  const sectionVisibility: Record<string, boolean> = {}
+  for (const k of HOME_SECTION_DEFAULT_ORDER) {
+    sectionVisibility[k] = true
+  }
   return {
     hero: {
       label: '',
@@ -108,40 +135,14 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
     showProcess: false,
     showInquiryForm: false,
     heroImage: '',
+    sectionOrder: [...HOME_SECTION_DEFAULT_ORDER],
+    sectionVisibility,
   }
 }
 
 const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
   ru: createEmptyHomePageData('ru'),
   en: createEmptyHomePageData('en'),
-}
-
-/**
- * Дефолтный порядок секций на главной (без hero, который всегда первый).
- * Используется и в админке для inline-контролов порядка/видимости,
- * и в публичной `pages/index.vue` для рендера секций.
- *
- * `stats` — карточка цифр внутри hero, поэтому в порядок не входит
- * (в админке у неё нет тогглов скрытия/порядка).
- * `directions` (Чем мы занимаемся) пока без админ-панели и всегда
- * видима — её тоже не контролируем тут.
- */
-export const HOME_SECTION_DEFAULT_ORDER = [
-  'funnel',
-  'about',
-  'services',
-  'process',
-  'cta',
-] as const
-
-export type HomeSectionId = (typeof HOME_SECTION_DEFAULT_ORDER)[number]
-
-export const HOME_SECTION_ADMIN_LABELS: Record<HomeSectionId, string> = {
-  funnel: 'Три карточки под первым экраном',
-  about: 'Превью «О компании»',
-  services: 'Превью сервисов',
-  process: 'Процесс работы',
-  cta: 'Нижний CTA-блок',
 }
 
 export function defaultHomeData(locale: MarineContentLocale): HomePageData {
@@ -159,6 +160,13 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     ? (Object.fromEntries(Object.entries(ps).filter(([k]) => k !== 'cards')) as Partial<HomePageData['services']>)
     : {}
   const servicesMerged = mergeHomeServicesSection(parsed.services, def.services)
+  const customSections = normalizeCustomPageSections(parsed.customSections)
+  const sectionOrder = mergeSectionOrder(
+    parsed.sectionOrder,
+    customSections.map((s) => s.id),
+    HOME_SECTION_DEFAULT_ORDER,
+  )
+  const sectionVisibility = mergeSectionVisibility(mergeHomeSavedVisibility(parsed), sectionOrder)
   return {
     ...def,
     ...parsed,
@@ -193,18 +201,19 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     showProcess: parsed.showProcess ?? def.showProcess,
     showInquiryForm: parsed.showInquiryForm ?? def.showInquiryForm,
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
-    customSections: normalizeCustomPageSections(parsed.customSections),
-    sectionOrder: parsed.sectionOrder,
-    sectionVisibility: migrateLegacyVisibility(parsed),
+    customSections,
+    sectionOrder,
+    sectionVisibility,
   }
 }
 
 /**
- * Миграция: если в данных нет `sectionVisibility.process`, синхронизируем его
- * с устаревшим флагом `showProcess`, чтобы видимость секции «Процесс работы»
- * не менялась после введения общего механизма видимости.
+ * Сводит сохранённую видимость + устаревший флаг `showProcess` к единой карте.
+ * Старые данные могли хранить `showProcess: false` БЕЗ `sectionVisibility.process` —
+ * мигрируем такое значение, чтобы видимость секции «Процесс работы» не менялась
+ * молча после введения общей `sectionVisibility`.
  */
-function migrateLegacyVisibility(parsed: Partial<HomePageData>): Record<string, boolean> | undefined {
+function mergeHomeSavedVisibility(parsed: Partial<HomePageData>): Record<string, boolean> | undefined {
   const sv = parsed.sectionVisibility ? { ...parsed.sectionVisibility } : undefined
   if (parsed.showProcess !== undefined && (!sv || sv.process === undefined)) {
     const next = sv ?? {}
@@ -252,6 +261,18 @@ export function syncHomeStructuralFields(
       d.trust.bullets.push('')
     }
     d.trust.bullets.length = src.trust.bullets.length
+    /*
+     * Видимость и порядок секций — структурные, общие для всех локалей.
+     * `setSectionVisible` в админке уже пишет в обе локали, но синхронизация
+     * перед сохранением страхует от рассинхронизации, если данные приехали из
+     * разных версий или часть локалей пришла без `sectionVisibility`.
+     */
+    if (src.sectionVisibility) {
+      d.sectionVisibility = { ...src.sectionVisibility }
+    }
+    if (src.sectionOrder) {
+      d.sectionOrder = [...src.sectionOrder]
+    }
   }
 }
 

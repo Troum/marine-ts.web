@@ -10,8 +10,15 @@ const props = withDefaults(
     disabled?: boolean
     required?: boolean
     inputClass?: string
+    /**
+     * Стиль поля.
+     * - `default` — карточка с обводкой, белым фоном и иконкой календаря (как раньше).
+     * - `underline` — только нижний бордер, прозрачный фон, без иконки и без тени;
+     *   для форм, где остальные поля стилизованы через `.form-input`.
+     */
+    variant?: 'default' | 'underline'
   }>(),
-  { inputClass: '' },
+  { inputClass: '', variant: 'default' },
 )
 
 const emit = defineEmits<{
@@ -25,8 +32,17 @@ const inputId = computed(() => props.id ?? `mts-date-${uid}`)
 
 const rootRef = ref<HTMLElement | null>(null)
 const open = ref(false)
+/**
+ * Режим всплывающего календаря.
+ * `days`   — стандартная сетка 7×6.
+ * `months` — выбор месяца внутри `viewDate.getFullYear()`.
+ * `years`  — выбор года из «декады» вокруг `viewDate.getFullYear()`.
+ */
+const viewMode = ref<'days' | 'months' | 'years'>('days')
 /** Первое число просматриваемого месяца (локальное время) */
 const viewDate = ref(new Date())
+/** Сколько лет показываем в режиме `years` (4×3). */
+const YEARS_PER_PAGE = 12
 
 function toYmd(d: Date): string {
   const y = d.getFullYear()
@@ -49,9 +65,65 @@ const displayValue = computed(() => {
   return new Intl.DateTimeFormat(loc, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
 })
 
+const intlLocaleLong = computed(() => (locale.value === 'ru' ? 'ru-RU' : 'en-US'))
+
 const monthTitle = computed(() => {
-  const loc = locale.value === 'ru' ? 'ru-RU' : 'en-US'
-  return new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' }).format(viewDate.value)
+  return new Intl.DateTimeFormat(intlLocaleLong.value, { month: 'long', year: 'numeric' }).format(
+    viewDate.value,
+  )
+})
+
+const yearTitle = computed(() => String(viewDate.value.getFullYear()))
+
+/** Стартовый год блока «декады»: округляем вниз до кратного `YEARS_PER_PAGE`. */
+const yearsRangeStart = computed(() => {
+  const y = viewDate.value.getFullYear()
+  return y - (y % YEARS_PER_PAGE)
+})
+
+const yearsTitle = computed(() => {
+  const start = yearsRangeStart.value
+  return `${start} – ${start + YEARS_PER_PAGE - 1}`
+})
+
+const headerTitle = computed(() => {
+  if (viewMode.value === 'days') {
+    return monthTitle.value
+  }
+  if (viewMode.value === 'months') {
+    return yearTitle.value
+  }
+  return yearsTitle.value
+})
+
+const headerTitleLabel = computed(() => {
+  if (viewMode.value === 'days') {
+    return t('pages.common.datePickerSelectMonth')
+  }
+  if (viewMode.value === 'months') {
+    return t('pages.common.datePickerSelectYear')
+  }
+  return t('pages.common.datePickerBackToDays')
+})
+
+const prevButtonLabel = computed(() => {
+  if (viewMode.value === 'days') {
+    return t('pages.common.datePickerPrevMonth')
+  }
+  if (viewMode.value === 'months') {
+    return t('pages.common.datePickerPrevYear')
+  }
+  return t('pages.common.datePickerPrevDecade')
+})
+
+const nextButtonLabel = computed(() => {
+  if (viewMode.value === 'days') {
+    return t('pages.common.datePickerNextMonth')
+  }
+  if (viewMode.value === 'months') {
+    return t('pages.common.datePickerNextYear')
+  }
+  return t('pages.common.datePickerNextDecade')
 })
 
 /** Пн–Вс: короткие подписи колонок */
@@ -99,6 +171,54 @@ const calendarCells = computed((): DayCell[] => {
   return cells
 })
 
+type MonthCell = { idx: number; label: string; isCurrent: boolean; isSelected: boolean }
+
+const monthCells = computed((): MonthCell[] => {
+  const fmt = new Intl.DateTimeFormat(intlLocaleLong.value, { month: 'short' })
+  const today = new Date()
+  const viewYear = viewDate.value.getFullYear()
+  const v = props.modelValue?.trim() ?? ''
+  let selectedYear: number | null = null
+  let selectedMonth: number | null = null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const [yStr, mStr] = v.split('-')
+    selectedYear = Number(yStr)
+    selectedMonth = Number(mStr) - 1
+  }
+  return Array.from({ length: 12 }, (_, idx) => {
+    const d = new Date(viewYear, idx, 1)
+    return {
+      idx,
+      label: fmt.format(d),
+      isCurrent: viewYear === today.getFullYear() && idx === today.getMonth(),
+      isSelected: selectedYear === viewYear && selectedMonth === idx,
+    }
+  })
+})
+
+type YearCell = { year: number; isCurrent: boolean; isSelected: boolean; outOfRange: boolean }
+
+const yearCells = computed((): YearCell[] => {
+  const start = yearsRangeStart.value
+  const today = new Date()
+  const v = props.modelValue?.trim() ?? ''
+  let selectedYear: number | null = null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    selectedYear = Number(v.slice(0, 4))
+  }
+  const cells: YearCell[] = []
+  for (let i = 0; i < YEARS_PER_PAGE; i++) {
+    const year = start + i
+    cells.push({
+      year,
+      isCurrent: year === today.getFullYear(),
+      isSelected: selectedYear === year,
+      outOfRange: false,
+    })
+  }
+  return cells
+})
+
 function syncViewFromModel() {
   const v = props.modelValue?.trim()
   if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
@@ -118,20 +238,52 @@ function toggle() {
   }
   open.value = !open.value
   if (open.value) {
+    viewMode.value = 'days'
     syncViewFromModel()
   }
 }
 
-function prevMonth() {
+function shiftView(delta: -1 | 1) {
   const d = new Date(viewDate.value)
-  d.setMonth(d.getMonth() - 1)
+  if (viewMode.value === 'days') {
+    d.setMonth(d.getMonth() + delta)
+  } else if (viewMode.value === 'months') {
+    d.setFullYear(d.getFullYear() + delta)
+  } else {
+    d.setFullYear(d.getFullYear() + delta * YEARS_PER_PAGE)
+  }
   viewDate.value = d
 }
 
-function nextMonth() {
-  const d = new Date(viewDate.value)
-  d.setMonth(d.getMonth() + 1)
+function prevPage() {
+  shiftView(-1)
+}
+
+function nextPage() {
+  shiftView(1)
+}
+
+/** Заголовок над сеткой: переключает уровень увеличения. */
+function cycleViewMode() {
+  if (viewMode.value === 'days') {
+    viewMode.value = 'months'
+  } else if (viewMode.value === 'months') {
+    viewMode.value = 'years'
+  } else {
+    viewMode.value = 'days'
+  }
+}
+
+function pickMonthCell(cell: MonthCell) {
+  const d = new Date(viewDate.value.getFullYear(), cell.idx, 1)
   viewDate.value = d
+  viewMode.value = 'days'
+}
+
+function pickYearCell(cell: YearCell) {
+  const d = new Date(cell.year, viewDate.value.getMonth(), 1)
+  viewDate.value = d
+  viewMode.value = 'months'
 }
 
 function pickDay(cell: DayCell) {
@@ -195,11 +347,24 @@ watch(
 
 const defaultInputClass =
   'block w-full cursor-pointer border border-border bg-white py-2.5 ps-10 pe-3 font-body text-sm text-body shadow-tech placeholder:text-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-mts-accent/30 disabled:cursor-not-allowed disabled:opacity-60'
+
+const underlineInputClass =
+  'block w-full cursor-pointer border-0 border-b border-[#cccccc] bg-transparent px-0 py-3 font-body text-sm text-body transition-colors placeholder:text-muted focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60'
+
+const baseInputClass = computed(() =>
+  props.variant === 'underline' ? underlineInputClass : defaultInputClass,
+)
+
+const showCalendarIcon = computed(() => props.variant !== 'underline')
 </script>
 
 <template>
   <div ref="rootRef" class="relative max-w-full">
-    <div class="pointer-events-none absolute inset-y-0 start-0 z-10 flex items-center ps-3" aria-hidden="true">
+    <div
+      v-if="showCalendarIcon"
+      class="pointer-events-none absolute inset-y-0 start-0 z-10 flex items-center ps-3"
+      aria-hidden="true"
+    >
       <svg class="h-4 w-4 text-muted" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
         <path
           stroke="currentColor"
@@ -214,7 +379,7 @@ const defaultInputClass =
       :id="inputId"
       type="text"
       readonly
-      :class="[defaultInputClass, inputClass]"
+      :class="[baseInputClass, inputClass]"
       :value="displayValue"
       :placeholder="placeholder"
       :disabled="disabled"
@@ -244,19 +409,27 @@ const defaultInputClass =
           <button
             type="button"
             class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
-            :aria-label="t('pages.common.datePickerPrevMonth')"
-            @click="prevMonth"
+            :aria-label="prevButtonLabel"
+            @click="prevPage"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <span class="min-w-0 flex-1 text-center font-body text-sm font-medium text-body">{{ monthTitle }}</span>
+          <button
+            type="button"
+            class="min-w-0 flex-1 rounded px-2 py-1 text-center font-body text-sm font-medium text-body hover:bg-white"
+            :aria-label="headerTitleLabel"
+            :title="headerTitleLabel"
+            @click="cycleViewMode"
+          >
+            {{ headerTitle }}
+          </button>
           <button
             type="button"
             class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
-            :aria-label="t('pages.common.datePickerNextMonth')"
-            @click="nextMonth"
+            :aria-label="nextButtonLabel"
+            @click="nextPage"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -264,25 +437,61 @@ const defaultInputClass =
           </button>
         </div>
 
-        <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-muted">
-          <span v-for="(w, i) in weekdayLabels" :key="i" class="py-1">{{ w }}</span>
-        </div>
+        <template v-if="viewMode === 'days'">
+          <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-muted">
+            <span v-for="(w, i) in weekdayLabels" :key="i" class="py-1">{{ w }}</span>
+          </div>
 
-        <div class="grid grid-cols-7 gap-0.5">
+          <div class="grid grid-cols-7 gap-0.5">
+            <button
+              v-for="(cell, idx) in calendarCells"
+              :key="idx"
+              type="button"
+              class="flex h-9 items-center justify-center rounded-md font-body text-sm transition-colors"
+              :class="[
+                !cell.inMonth ? 'text-muted' : 'text-body',
+                cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : '',
+                !cell.isSelected && cell.isToday ? 'ring-1 ring-mts-accent/50' : '',
+                !cell.isSelected && !cell.isToday ? 'hover:bg-white' : '',
+              ]"
+              @click="pickDay(cell)"
+            >
+              {{ cell.label }}
+            </button>
+          </div>
+        </template>
+
+        <div v-else-if="viewMode === 'months'" class="grid grid-cols-3 gap-1">
           <button
-            v-for="(cell, idx) in calendarCells"
-            :key="idx"
+            v-for="cell in monthCells"
+            :key="cell.idx"
             type="button"
-            class="flex h-9 items-center justify-center rounded-md font-body text-sm transition-colors"
+            class="flex h-12 items-center justify-center rounded-md font-body text-sm capitalize transition-colors"
             :class="[
-              !cell.inMonth ? 'text-muted' : 'text-body',
-              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : '',
-              !cell.isSelected && cell.isToday ? 'ring-1 ring-mts-accent/50' : '',
-              !cell.isSelected && !cell.isToday ? 'hover:bg-white' : '',
+              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-body',
+              !cell.isSelected && cell.isCurrent ? 'ring-1 ring-mts-accent/50' : '',
+              !cell.isSelected ? 'hover:bg-white' : '',
             ]"
-            @click="pickDay(cell)"
+            @click="pickMonthCell(cell)"
           >
             {{ cell.label }}
+          </button>
+        </div>
+
+        <div v-else class="grid grid-cols-3 gap-1">
+          <button
+            v-for="cell in yearCells"
+            :key="cell.year"
+            type="button"
+            class="flex h-12 items-center justify-center rounded-md font-body text-sm transition-colors"
+            :class="[
+              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-body',
+              !cell.isSelected && cell.isCurrent ? 'ring-1 ring-mts-accent/50' : '',
+              !cell.isSelected ? 'hover:bg-white' : '',
+            ]"
+            @click="pickYearCell(cell)"
+          >
+            {{ cell.year }}
           </button>
         </div>
 

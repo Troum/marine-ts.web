@@ -20,6 +20,7 @@ import {
   mergeCrewingManagementContent,
 } from '~/utils/crewingManagementPageDefaults'
 import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
+import AdminImageListField from '~/components/admin/AdminImageListField.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
@@ -730,51 +731,6 @@ async function removeCardItem(sectionId: string, blockIndex: number, itemIndex: 
       continue
     }
     b.items.splice(itemIndex, 1)
-  }
-}
-
-function addSplitImageRow(sectionId: string, blockIndex: number) {
-  if (!data.value) {
-    return
-  }
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    const sec = data.value[loc].customSections.find((s) => s.id === sectionId)
-    if (!sec) {
-      continue
-    }
-    const b = sec.blocks[blockIndex]
-    if (!b || b.type !== 'split') {
-      continue
-    }
-    b.images.push('')
-  }
-}
-
-async function removeSplitImageRow(sectionId: string, blockIndex: number, imageIndex: number) {
-  if (!data.value) {
-    return
-  }
-  const ok = await confirm({
-    message: 'Удалить эту строку изображений?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) {
-    return
-  }
-  for (const loc of MARINE_CONTENT_LOCALES) {
-    const sec = data.value[loc].customSections.find((s) => s.id === sectionId)
-    if (!sec) {
-      continue
-    }
-    const b = sec.blocks[blockIndex]
-    if (!b || b.type !== 'split') {
-      continue
-    }
-    if (b.images.length <= 1) {
-      continue
-    }
-    b.images.splice(imageIndex, 1)
   }
 }
 
@@ -2300,28 +2256,13 @@ function directionPreviewPath(detailSlug: string) {
                       <AdminSelect v-model="block.rightMode" :options="splitRightModeOptions" />
                     </div>
                   </div>
-                  <div v-for="(img, ii) in block.images" :key="ii" class="flex flex-wrap items-end gap-2">
-                    <div class="min-w-0 flex-1">
-                      <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
-                      <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
-                    </div>
-                    <button
-                      v-if="block.images.length > 1"
-                      type="button"
-                      class="btn-secondary px-2 py-2 text-xs text-red-700"
-                      @click="removeSplitImageRow(sid.slice(7), bi, ii)"
-                    >
-                      Удалить
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn-secondary inline-flex items-center gap-2 text-sm"
-                    @click="addSplitImageRow(sid.slice(7), bi)"
-                  >
-                    <Plus class="h-4 w-4" />
-                    Добавить изображение в галерею
-                  </button>
+                  <AdminImageListField
+                    :model-value="block.images"
+                    label="Изображения"
+                    hint="Один URL — статичная картинка. Несколько URL и режим «Слайдер» — будут листаться на сайте."
+                    dialog-title="Изображения для split-блока"
+                    @update:model-value="(v) => (block.images = v)"
+                  />
                 </template>
               </div>
 

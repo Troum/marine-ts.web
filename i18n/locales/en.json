@@ -136,7 +136,14 @@
       "datePickerToday": "Today",
       "datePickerClear": "Clear",
       "datePickerPrevMonth": "Previous month",
-      "datePickerNextMonth": "Next month"
+      "datePickerNextMonth": "Next month",
+      "datePickerPrevYear": "Previous year",
+      "datePickerNextYear": "Next year",
+      "datePickerPrevDecade": "Previous years",
+      "datePickerNextDecade": "Next years",
+      "datePickerSelectMonth": "Select month",
+      "datePickerSelectYear": "Select year",
+      "datePickerBackToDays": "Back to days"
     },
     "about": {
       "heroEyebrow": "Company profile",

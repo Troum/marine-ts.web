@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowDown, ArrowUp, ChevronDown, Plus } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 import AdminHeroImageField from '~/components/admin/AdminHeroImageField.vue'
 import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
+import AdminImageListField from '~/components/admin/AdminImageListField.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import { useConfirm } from '~/composables/useConfirmAction'
@@ -189,7 +190,14 @@ async function removeCardItem(sIdx: number, bIdx: number, ciIdx: number) {
   sections.value = next
 }
 
-function addImageRow(sIdx: number, bIdx: number) {
+/**
+ * Заменяет массив `images` у конкретного блока (`split`/`gallery`).
+ * Используется как обработчик `update:modelValue` от `AdminImageListField` —
+ * сам компонент уже умеет добавлять/удалять/переупорядочивать элементы и держит
+ * инвариант «минимум один пустой слот», так что отдельные `addImageRow`/`removeImageRow`
+ * с подтверждениями больше не нужны.
+ */
+function setBlockImages(sIdx: number, bIdx: number, images: string[]) {
   const next = sections.value.map((s, i) =>
     i === sIdx
       ? {
@@ -197,32 +205,7 @@ function addImageRow(sIdx: number, bIdx: number) {
           blocks: s.blocks.map((b, j) => {
             if (j !== bIdx) return b
             if (b.type === 'split' || b.type === 'gallery') {
-              return { ...b, images: [...b.images, ''] }
-            }
-            return b
-          }),
-        }
-      : s,
-  )
-  sections.value = next
-}
-
-async function removeImageRow(sIdx: number, bIdx: number, imgIdx: number) {
-  const ok = await confirm({
-    message: 'Удалить это изображение?',
-    confirmLabel: 'Удалить',
-    variant: 'danger',
-  })
-  if (!ok) return
-  const next = sections.value.map((s, i) =>
-    i === sIdx
-      ? {
-          ...s,
-          blocks: s.blocks.map((b, j) => {
-            if (j !== bIdx) return b
-            if (b.type === 'split' || b.type === 'gallery') {
-              if (b.images.length <= 1) return b
-              return { ...b, images: b.images.filter((_, k) => k !== imgIdx) }
+              return { ...b, images: [...images] }
             }
             return b
           }),
@@ -530,46 +513,13 @@ function blockTypeLabel(b: CustomPageBlock): string {
                   <AdminSelect v-model="block.rightMode" :options="splitRightModeOptions" />
                 </div>
               </div>
-              <div
-                v-for="(_img, ii) in block.images"
-                :key="ii"
-                class="space-y-2 border border-dashed border-mts-border-light bg-mts-bg/30 p-3"
-              >
-                <div class="flex flex-wrap items-end gap-2">
-                  <div class="min-w-0 flex-1">
-                    <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
-                    <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
-                  </div>
-                  <button
-                    v-if="block.images.length > 1"
-                    type="button"
-                    class="btn-secondary px-2 py-2 text-xs text-red-700"
-                    @click="removeImageRow(si, bi, ii)"
-                  >
-                    Удалить
-                  </button>
-                </div>
-                <div
-                  v-if="block.images[ii]?.trim()"
-                  class="flex justify-center rounded border border-mts-border bg-mts-bg p-2"
-                >
-                  <img
-                    :src="block.images[ii].trim()"
-                    alt=""
-                    class="max-h-40 max-w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-2 text-sm"
-                @click="addImageRow(si, bi)"
-              >
-                <Plus class="h-4 w-4" />
-                Добавить изображение
-              </button>
+              <AdminImageListField
+                :model-value="block.images"
+                label="Изображения"
+                hint="Один URL — статичная картинка справа. Несколько URL и режим «Слайдер» — будут листаться на сайте."
+                dialog-title="Изображения для split-блока"
+                @update:model-value="(v) => setBlockImages(si, bi, v)"
+              />
             </template>
 
             <!-- heroImage -->
@@ -623,46 +573,13 @@ function blockTypeLabel(b: CustomPageBlock): string {
                 <label :class="sectionLabel">Колонок (1–4)</label>
                 <AdminInputNumberStepper v-model="block.columns" :min="1" :max="4" :step="1" />
               </div>
-              <div
-                v-for="(_img, ii) in block.images"
-                :key="ii"
-                class="space-y-2 border border-dashed border-mts-border-light bg-mts-bg/30 p-3"
-              >
-                <div class="flex flex-wrap items-end gap-2">
-                  <div class="min-w-0 flex-1">
-                    <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
-                    <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
-                  </div>
-                  <button
-                    v-if="block.images.length > 1"
-                    type="button"
-                    class="btn-secondary px-2 py-2 text-xs text-red-700"
-                    @click="removeImageRow(si, bi, ii)"
-                  >
-                    <Trash2 class="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div
-                  v-if="block.images[ii]?.trim()"
-                  class="flex justify-center rounded border border-mts-border bg-mts-bg p-2"
-                >
-                  <img
-                    :src="block.images[ii].trim()"
-                    alt=""
-                    class="max-h-40 max-w-full object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              </div>
-              <button
-                type="button"
-                class="btn-secondary inline-flex items-center gap-2 text-sm"
-                @click="addImageRow(si, bi)"
-              >
-                <Plus class="h-4 w-4" />
-                Добавить изображение
-              </button>
+              <AdminImageListField
+                :model-value="block.images"
+                label="Изображения галереи"
+                hint="Порядок и количество соответствуют тому, как карточки лягут в сетке на сайте."
+                dialog-title="Изображения галереи"
+                @update:model-value="(v) => setBlockImages(si, bi, v)"
+              />
             </template>
 
             <!-- accordion -->

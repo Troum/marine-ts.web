@@ -136,7 +136,14 @@
       "datePickerToday": "Сегодня",
       "datePickerClear": "Очистить",
       "datePickerPrevMonth": "Предыдущий месяц",
-      "datePickerNextMonth": "Следующий месяц"
+      "datePickerNextMonth": "Следующий месяц",
+      "datePickerPrevYear": "Предыдущий год",
+      "datePickerNextYear": "Следующий год",
+      "datePickerPrevDecade": "Предыдущие годы",
+      "datePickerNextDecade": "Следующие годы",
+      "datePickerSelectMonth": "Выбрать месяц",
+      "datePickerSelectYear": "Выбрать год",
+      "datePickerBackToDays": "К дням месяца"
     },
     "about": {
       "heroEyebrow": "Профиль компании",
