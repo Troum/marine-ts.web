@@ -101,11 +101,15 @@ onMounted(async () => {
 async function submit() {
   const src = data.value[localeTab.value]
   const inq = src.showInquiryForm
+  const hideIntro = src.hideInquiryFormIntro
+  const hideCard = src.hideInquiryFormCardHeading
   const heroImg = src.heroImage
   const order = src.sectionOrder
   const visibility = src.sectionVisibility
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].hideInquiryFormIntro = hideIntro
+    data.value[loc].hideInquiryFormCardHeading = hideCard
     data.value[loc].heroImage = heroImg
     data.value[loc].sectionOrder = order ? [...order] : undefined
     data.value[loc].sectionVisibility = visibility ? { ...visibility } : undefined
@@ -200,10 +204,24 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           @update:model-value="(v) => (d.customSections = v)"
         />
 
-        <section class="bg-white border border-mts-border shadow-tech relative p-6">
+        <section class="bg-white border border-mts-border shadow-tech relative p-6 space-y-4">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
             Показать форму заявки внизу страницы «Галерея»
+          </label>
+          <label
+            v-if="d.showInquiryForm"
+            class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text"
+          >
+            <input v-model="d.hideInquiryFormIntro" type="checkbox" class="mts-checkbox" />
+            Скрыть блок над карточкой («Заявка», заголовок и лид)
+          </label>
+          <label
+            v-if="d.showInquiryForm"
+            class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text"
+          >
+            <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
+            Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
         </section>
 

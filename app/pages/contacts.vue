@@ -257,6 +257,11 @@ async function submitFeedback() {
       />
     </template>
 
-    <CommonPageInquiryForm v-if="cms.showInquiryForm" source-page="contacts" />
+    <CommonPageInquiryForm
+      v-if="cms.showInquiryForm"
+      source-page="contacts"
+      :hide-intro="cms.hideInquiryFormIntro === true"
+      :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+    />
   </div>
 </template>

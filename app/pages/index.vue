@@ -293,7 +293,12 @@ const visibleCustomSections = computed(() =>
       :page-crumb-items="customSectionCrumbItems"
     />
 
-    <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="home" />
+    <CommonPageInquiryForm
+      v-if="d.showInquiryForm"
+      source-page="home"
+      :hide-intro="d.hideInquiryFormIntro === true"
+      :hide-form-card-heading="d.hideInquiryFormCardHeading === true"
+    />
     </template>
   </div>
 </template>

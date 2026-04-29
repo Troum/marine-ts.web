@@ -412,10 +412,24 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           @update:model-value="(v) => (d.customSections = v)"
         />
 
-        <section class="bg-white border border-mts-border shadow-tech relative p-6">
+        <section class="bg-white border border-mts-border shadow-tech relative p-6 space-y-4">
           <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.showInquiryForm" type="checkbox" class="mts-checkbox" />
             Показать форму заявки внизу главной страницы
+          </label>
+          <label
+            v-if="d.showInquiryForm"
+            class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text"
+          >
+            <input v-model="d.hideInquiryFormIntro" type="checkbox" class="mts-checkbox" />
+            Скрыть блок над карточкой («Заявка», заголовок и лид)
+          </label>
+          <label
+            v-if="d.showInquiryForm"
+            class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text"
+          >
+            <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
+            Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
         </section>
 

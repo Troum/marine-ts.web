@@ -246,7 +246,10 @@
   .reveal-delay-5 { transition-delay: 0.5s; }
 
   .service-card {
-    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-tech-lg;
+    @apply rounded-xl border border-white/45 bg-white/75 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-white/70 hover:bg-white/85 hover:shadow-tech-lg;
+    box-shadow:
+      0 18px 48px -30px rgb(15 23 42 / 0.38),
+      inset 0 1px 0 rgb(255 255 255 / 0.65);
   }
   .card-tech {
     @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-300;

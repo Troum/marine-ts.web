@@ -538,6 +538,8 @@ export interface AboutPageData {
   geography: AboutGeography
   certificates: AboutCertificates
   showInquiryForm?: boolean
+  hideInquiryFormIntro?: boolean
+  hideInquiryFormCardHeading?: boolean
   /** Фон первого экрана (Hero). */
   heroImage?: string
   /** Фон секции «История и география». */
@@ -708,6 +710,8 @@ export interface HomePageData {
   cta: HomeCTA
   /** Показать блок формы заявки внизу главной. */
   showInquiryForm?: boolean
+  hideInquiryFormIntro?: boolean
+  hideInquiryFormCardHeading?: boolean
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
   /** Порядок секций (включая `custom:<uuid>`); hero фиксирован первым и не входит. */
@@ -781,6 +785,8 @@ export interface ContactsPageData {
   formLead: string
   officesTitle: string
   showInquiryForm?: boolean
+  hideInquiryFormIntro?: boolean
+  hideInquiryFormCardHeading?: boolean
   /** Опциональный фон hero. */
   heroImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */

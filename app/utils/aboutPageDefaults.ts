@@ -167,6 +167,12 @@ function migrateLegacyAbout(
     geography: geographyMerged,
     certificates: certificatesMerged,
     showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    hideInquiryFormIntro:
+      typeof p.hideInquiryFormIntro === 'boolean' ? p.hideInquiryFormIntro : base.hideInquiryFormIntro,
+    hideInquiryFormCardHeading:
+      typeof p.hideInquiryFormCardHeading === 'boolean'
+        ? p.hideInquiryFormCardHeading
+        : base.hideInquiryFormCardHeading,
     customSections: normalizeCustomPageSections(p.customSections),
     sectionOrder: migrateSectionOrder(p.sectionOrder, base.sectionOrder ?? [...ABOUT_SECTION_DEFAULT_ORDER]),
     sectionVisibility:
@@ -230,6 +236,12 @@ function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPa
         ? { ...base.certificates, ...c, items: c.items ?? base.certificates.items }
         : base.certificates,
     showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    hideInquiryFormIntro:
+      typeof p.hideInquiryFormIntro === 'boolean' ? p.hideInquiryFormIntro : base.hideInquiryFormIntro,
+    hideInquiryFormCardHeading:
+      typeof p.hideInquiryFormCardHeading === 'boolean'
+        ? p.hideInquiryFormCardHeading
+        : base.hideInquiryFormCardHeading,
     customSections: normalizeCustomPageSections(p.customSections ?? base.customSections),
     sectionOrder: Array.isArray(p.sectionOrder) ? migrateSectionOrder(p.sectionOrder, base.sectionOrder ?? []) : base.sectionOrder,
     sectionVisibility:
@@ -252,6 +264,8 @@ function emptyAboutPageData(_locale: MarineContentLocale): AboutPageData {
     geography: { label: '', title: '', lead: '', locations: [] },
     certificates: { title: '', items: [] },
     showInquiryForm: false,
+    hideInquiryFormIntro: false,
+    hideInquiryFormCardHeading: false,
     heroImage: '',
     historyImage: '',
     technicalImage: '',
@@ -344,6 +358,8 @@ export function syncStructuralFields(
     dst.certificates.items.length = src.certificates.items.length
 
     dst.showInquiryForm = src.showInquiryForm
+    dst.hideInquiryFormIntro = src.hideInquiryFormIntro
+    dst.hideInquiryFormCardHeading = src.hideInquiryFormCardHeading
     dst.heroImage = src.heroImage
     dst.historyImage = src.historyImage
     dst.technicalImage = src.technicalImage

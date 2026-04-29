@@ -514,7 +514,12 @@ function hasImage(src?: string | null): boolean {
       </AboutSectionContentParallax>
     </template>
 
-    <CommonPageInquiryForm v-if="d.showInquiryForm" source-page="about" />
+    <CommonPageInquiryForm
+      v-if="d.showInquiryForm"
+      source-page="about"
+      :hide-intro="d.hideInquiryFormIntro === true"
+      :hide-form-card-heading="d.hideInquiryFormCardHeading === true"
+    />
     </template>
   </div>
 </template>

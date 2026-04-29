@@ -655,13 +655,13 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             Показать форму заявки внизу страницы «Судоремонт»
           </label>
           <label
-            v-if="d.showInquiryForm && isServicesV2"
+            v-if="d.showInquiryForm"
             class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text"
           >
             <input v-model="d.hideInquiryFormIntro" type="checkbox" class="mts-checkbox">
             Скрыть блок над карточкой («Заявка», заголовок и лид)
           </label>
-          <label v-if="d.showInquiryForm && isServicesV2" class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+          <label v-if="d.showInquiryForm" class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox">
             Скрыть шапку внутри белой карточки формы
           </label>

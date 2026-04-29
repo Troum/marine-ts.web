@@ -134,6 +134,8 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
     cta: { label: '', titleFormatted: themeTitlePair('', ''), text: '', button: '' },
     showProcess: false,
     showInquiryForm: false,
+    hideInquiryFormIntro: false,
+    hideInquiryFormCardHeading: false,
     heroImage: '',
     sectionOrder: [...HOME_SECTION_DEFAULT_ORDER],
     sectionVisibility,
@@ -200,6 +202,14 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     showStatsCard: parsed.showStatsCard ?? def.showStatsCard,
     showProcess: parsed.showProcess ?? def.showProcess,
     showInquiryForm: parsed.showInquiryForm ?? def.showInquiryForm,
+    hideInquiryFormIntro:
+      typeof parsed.hideInquiryFormIntro === 'boolean'
+        ? parsed.hideInquiryFormIntro
+        : def.hideInquiryFormIntro,
+    hideInquiryFormCardHeading:
+      typeof parsed.hideInquiryFormCardHeading === 'boolean'
+        ? parsed.hideInquiryFormCardHeading
+        : def.hideInquiryFormCardHeading,
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
     customSections,
     sectionOrder,
@@ -246,6 +256,8 @@ export function syncHomeStructuralFields(
     }
     d.process.steps.length = src.process.steps.length
     d.showInquiryForm = src.showInquiryForm
+    d.hideInquiryFormIntro = src.hideInquiryFormIntro
+    d.hideInquiryFormCardHeading = src.hideInquiryFormCardHeading
     d.showStatsCard = src.showStatsCard
     d.showProcess = src.showProcess
     d.heroImage = src.heroImage
@@ -413,12 +425,17 @@ function mergeServicesListingHeroButtons(
 
 export function defaultListingData(slug: string, locale: MarineContentLocale): ListingPageData {
   if (slug === 'services-page') {
-    return JSON.parse(JSON.stringify(defaultServicesPageListingData(locale))) as ListingPageData
+    const servicesBase = JSON.parse(JSON.stringify(defaultServicesPageListingData(locale))) as ListingPageData
+    servicesBase.hideInquiryFormIntro = servicesBase.hideInquiryFormIntro ?? false
+    servicesBase.hideInquiryFormCardHeading = servicesBase.hideInquiryFormCardHeading ?? false
+    return servicesBase
   }
   const key = slug as ListingSlug
   const base = LISTING_DEFAULTS[key]
     ? (JSON.parse(JSON.stringify(LISTING_DEFAULTS[key][locale])) as ListingPageData)
     : ({ hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' } } as ListingPageData)
+  base.hideInquiryFormIntro = base.hideInquiryFormIntro ?? false
+  base.hideInquiryFormCardHeading = base.hideInquiryFormCardHeading ?? false
   base.sectionOrder = [...listingDefaultOrder(slug)]
   base.sectionVisibility = {}
   return base
@@ -508,6 +525,8 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     formLead: '',
     officesTitle: '',
     showInquiryForm: false,
+    hideInquiryFormIntro: false,
+    hideInquiryFormCardHeading: false,
     heroImage: '',
   },
   en: {
@@ -520,6 +539,8 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     formLead: '',
     officesTitle: '',
     showInquiryForm: false,
+    hideInquiryFormIntro: false,
+    hideInquiryFormCardHeading: false,
     heroImage: '',
   },
 }
@@ -558,6 +579,14 @@ export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown)
     formLead: typeof p.formLead === 'string' ? p.formLead : base.formLead,
     officesTitle: typeof p.officesTitle === 'string' ? p.officesTitle : base.officesTitle,
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    hideInquiryFormIntro:
+      typeof p.hideInquiryFormIntro === 'boolean'
+        ? p.hideInquiryFormIntro
+        : base.hideInquiryFormIntro,
+    hideInquiryFormCardHeading:
+      typeof p.hideInquiryFormCardHeading === 'boolean'
+        ? p.hideInquiryFormCardHeading
+        : base.hideInquiryFormCardHeading,
     heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
     customSections: normalizeCustomPageSections(p.customSections),
     sectionOrder: p.sectionOrder ?? base.sectionOrder,
