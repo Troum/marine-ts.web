@@ -2,6 +2,7 @@
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
 import { isRichTextEmpty, normalizeBodyForEditor } from '~/composables/useMarkdownSafeHtml'
 import type {
+  ContentPage,
   ContentPageContentableType,
   CustomPageSection,
   MarineContentLocale,
@@ -12,10 +13,17 @@ import {
   contentPageSectionsAreRenderable,
   parseContentPageBody,
 } from '~/utils/contentPageBody'
+import {
+  customPageSectionsHaveEditorContent,
+  normalizeCustomPageSections,
+} from '~/utils/customPageSections'
 import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
 import SeoAdminFields from '~/components/admin/SeoAdminFields.vue'
 import { mergeContentPageTranslations } from '~/utils/adminTranslationForms'
+import { plainMetaString } from '~/utils/adminThemedTextCodec'
+import { contentPageSlugToPublicPath } from '~/utils/contentPageNavPath'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
+import type { AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 
 definePageMeta({
   layout: 'admin',
@@ -78,6 +86,68 @@ const customSectionsByLocale = ref<Record<MarineContentLocale, CustomPageSection
   en: [],
 })
 
+const contentPagesCatalog = ref<ContentPage[]>([])
+
+function collectCardDetailTargetsFromSections(sections: CustomPageSection[]): string[] {
+  const out: string[] = []
+  for (const sec of sections) {
+    for (const b of sec.blocks) {
+      if (b.type === 'cards') {
+        for (const it of b.items) {
+          const v = it.detailSlug?.trim()
+          if (v) {
+            out.push(v)
+          }
+        }
+      }
+    }
+  }
+  return out
+}
+
+const cardDetailLinkOptions = computed<AdminSelectOption[]>(() => {
+  const opts: AdminSelectOption[] = [{ value: '', label: 'Без отдельной страницы' }]
+  const seen = new Set<string>([''])
+  const pages = contentPagesCatalog.value
+  const sorted = [...pages].sort((a, b) =>
+    (plainMetaString(a.title) || a.slug).localeCompare(plainMetaString(b.title) || b.slug, 'ru'),
+  )
+  for (const p of sorted) {
+    const path = contentPageSlugToPublicPath(p.slug, p.contentableType)
+    if (seen.has(path)) {
+      continue
+    }
+    seen.add(path)
+    const title = plainMetaString(p.title) || p.slug
+    opts.push({ value: path, label: `${title} — ${path}` })
+  }
+  const fromEditor = new Set<string>([
+    ...collectCardDetailTargetsFromSections(customSectionsByLocale.value.ru),
+    ...collectCardDetailTargetsFromSections(customSectionsByLocale.value.en),
+  ])
+  for (const v of fromEditor) {
+    if (!seen.has(v)) {
+      seen.add(v)
+      opts.push({ value: v, label: `${v} — нет в списке, проверьте путь` })
+    }
+  }
+  return opts
+})
+
+async function loadContentPagesCatalogForCards() {
+  try {
+    const { data } = await api.contentPages.getManageAll({
+      sort: 'title',
+      order: 'asc',
+      per_page: 500,
+      published: '1',
+    })
+    contentPagesCatalog.value = data
+  } catch {
+    contentPagesCatalog.value = []
+  }
+}
+
 const publicSlugPreview = computed(() => form.value.slug?.trim() || '…')
 
 const publicPathHint = computed(() => {
@@ -110,11 +180,72 @@ const seoForTab = computed<SeoFields>({
   },
 })
 
+/**
+ * Вторичная локаль часто хранит только HTML статьи без JSON `{ customSections, articleHtml }`.
+ * Тогда при сохранении `buildContentPageBodyForSave([], …)` перестаёт сериализовать блоки для en
+ * — на сайте в этой локали пропадают hero, split/карусель и т.д. Копируем структуру с основной
+ * локали; тексты в блоках при необходимости правьте на вкладке перевода.
+ */
+function syncSecondaryLocalesCustomSectionsFromPrimary() {
+  const primary = defaultMarineLocale()
+  const primarySections = customSectionsByLocale.value[primary]
+  if (!customPageSectionsHaveEditorContent(primarySections)) {
+    return
+  }
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    if (loc === primary) {
+      continue
+    }
+    if (customPageSectionsHaveEditorContent(customSectionsByLocale.value[loc])) {
+      continue
+    }
+    try {
+      const cloned = JSON.parse(JSON.stringify(primarySections)) as unknown
+      customSectionsByLocale.value[loc] = normalizeCustomPageSections(cloned)
+    } catch {
+      /* оставляем пусто */
+    }
+  }
+}
+
 function applyParsedBodiesToForm() {
   for (const loc of MARINE_CONTENT_LOCALES) {
     const parsed = parseContentPageBody(form.value.translations[loc].body)
     customSectionsByLocale.value[loc] = parsed.customSections ?? []
     form.value.translations[loc].body = normalizeBodyForEditor(parsed.articleHtml)
+  }
+  syncSecondaryLocalesCustomSectionsFromPrimary()
+}
+
+/** Заголовок/лид в форме хранятся как TFT или HTML — для валидации нужен плоский текст. */
+function translationPlainTitle(t: { title: string }): string {
+  return plainMetaString(t.title).trim()
+}
+
+function translationPlainExcerpt(t: { excerpt: string }): string {
+  return plainMetaString(t.excerpt).trim()
+}
+
+/**
+ * Перед сохранением: вторичные локали без авторского текста (title/excerpt/body/seo) получают
+ * свежую копию `customSections` с primary. Иначе автокопия с onMount «устаревает» после правок ru.
+ */
+function syncEmptySecondaryLocalesSectionsFromPrimary() {
+  const primary = defaultMarineLocale()
+  const primarySections = customSectionsByLocale.value[primary]
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    if (loc === primary) {
+      continue
+    }
+    if (!localeIsEffectivelyEmpty(loc)) {
+      continue
+    }
+    try {
+      const cloned = JSON.parse(JSON.stringify(primarySections)) as unknown
+      customSectionsByLocale.value[loc] = normalizeCustomPageSections(cloned)
+    } catch {
+      /* оставляем как есть */
+    }
   }
 }
 
@@ -129,6 +260,7 @@ onMounted(async () => {
         linkId.value = n
       }
     }
+    await loadContentPagesCatalogForCards()
     loading.value = false
     return
   }
@@ -153,17 +285,26 @@ onMounted(async () => {
   } catch {
     await navigateTo('/admin/content-pages')
   } finally {
+    await loadContentPagesCatalogForCards()
     loading.value = false
   }
 })
 
-/** Локаль не заполнялась — можно сохранять только ru (или только primary). */
+/**
+ * Локаль не заполнялась — можно сохранять только ru (или только primary).
+ *
+ * Блоки (`customSections`) в проверке умышленно не учитываем: вторичные локали при загрузке/сохранении
+ * получают автокопию блоков с primary через `syncSecondaryLocalesCustomSectionsFromPrimary`. Если
+ * пользователь редактирует ru (например, привязывает страницу к карточке в секции), автокопия в en
+ * до повторной синхронизации становится «устаревшей», и проверка по структурному совпадению ложно
+ * считала en заполненной — валидация требовала en-заголовок без причины.
+ */
 function localeIsEffectivelyEmpty(loc: MarineContentLocale): boolean {
   const t = form.value.translations[loc]
-  if (t.title?.trim()) {
+  if (translationPlainTitle(t)) {
     return false
   }
-  if (t.excerpt?.trim()) {
+  if (translationPlainExcerpt(t)) {
     return false
   }
   if (!isRichTextEmpty(t.body ?? '')) {
@@ -172,16 +313,13 @@ function localeIsEffectivelyEmpty(loc: MarineContentLocale): boolean {
   if (t.seoTitle?.trim() || t.seoDescription?.trim() || t.seoKeywords?.trim()) {
     return false
   }
-  if (contentPageSectionsAreRenderable(customSectionsByLocale.value[loc])) {
-    return false
-  }
   return true
 }
 
 /** Заголовок + хотя бы статья или публично видимые блоки. */
 function localeContentComplete(loc: MarineContentLocale): boolean {
   const t = form.value.translations[loc]
-  if (!t.title?.trim()) {
+  if (!translationPlainTitle(t)) {
     return false
   }
   const hasBlocks = contentPageSectionsAreRenderable(customSectionsByLocale.value[loc])
@@ -192,10 +330,10 @@ function localeContentComplete(loc: MarineContentLocale): boolean {
   return true
 }
 
-function validate(): boolean {
+function validate(): { ok: true } | { ok: false; reason: 'primary' | 'secondary'; locale: MarineContentLocale } {
   const primary = defaultMarineLocale()
   if (!localeContentComplete(primary)) {
-    return false
+    return { ok: false, reason: 'primary', locale: primary }
   }
   for (const loc of MARINE_CONTENT_LOCALES) {
     if (loc === primary) {
@@ -205,17 +343,25 @@ function validate(): boolean {
       continue
     }
     if (!localeContentComplete(loc)) {
-      return false
+      return { ok: false, reason: 'secondary', locale: loc }
     }
   }
-  return true
+  return { ok: true }
 }
 
 async function submit() {
-  if (!validate()) {
+  syncEmptySecondaryLocalesSectionsFromPrimary()
+  const validation = validate()
+  if (!validation.ok) {
+    const secondaryHint =
+      validation.reason === 'secondary'
+        ? ` Допишите версию «${validation.locale === 'en' ? 'English' : validation.locale}» (заголовок и текст страницы или блоки), либо очистите для этой локали все поля и SEO.`
+        : ''
     await showAdminAlert({
       message:
-        'Укажите для русской версии заголовок и хотя бы одно из: текст страницы или блоки (hero, секции). Английскую версию можно не заполнять; если вы её начали (заголовок, текст, SEO или видимые блоки) — допишите так же, как ru.',
+        'Для русской версии укажите заголовок (осмысленный текст, не только оформление) и хотя бы одно из: текст страницы в редакторе или видимые блоки в «Hero и блоки» (секция с контентом/bаннер с изображением).' +
+        secondaryHint +
+        ' Английскую можно не трогать — если автоматически подставились блоки с ru, сохранение не требует en-заголовка.',
       variant: 'error',
     })
     return
@@ -422,11 +568,16 @@ async function submit() {
                   Добавьте секцию и блок «Баннер / изображение» для hero как на детальных страницах услуг: фон, подпись,
                   затемнение. В секции можно задать тон крошек над баннером. Если нужен только баннер без подписи над ним —
                   отключите «Показывать заголовок секции» в этой секции. Если блоков нет, страница ведёт себя как раньше
-                  (только заголовок и текст ниже).
+                  (только заголовок и текст ниже).                   В блоке «Карточки» можно выбрать внутреннюю страницу — на сайте появится
+                  кнопка «Подробнее». Если для EN не задан свой JSON блоков, при открытии страница подставит
+                  структуру из русской версии (включая URL картинок в split/галерее), чтобы при сохранении не терялись
+                  блоки для английской локали.
                 </p>
                 <AdminCustomSectionsEditor
                   :model-value="customSectionsByLocale[localeTab]"
                   enable-article-placement
+                  enable-card-detail-link
+                  :detail-options="cardDetailLinkOptions"
                   @update:model-value="(v) => (customSectionsByLocale[localeTab] = v)"
                 />
               </div>

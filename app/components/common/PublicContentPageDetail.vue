@@ -27,6 +27,10 @@ defineProps<{
   inquirySourcePage: string
   /** Ложь — не показывать блок заявки (например, невалидный parent slug). */
   inquiryEnabled?: boolean
+  /**
+   * Для маршрута `/{line}/:slug`: короткое значение в карточке CMS без `/` ведёт на `/{line}/…`.
+   */
+  lineMarketingParentSlug?: string | null
 }>()
 </script>
 
@@ -46,6 +50,7 @@ defineProps<{
         placement="pageTop"
         :sections="topCustomSections"
         :page-crumb-items="crumbItems"
+        :line-marketing-parent-slug="lineMarketingParentSlug"
       />
       <article
         class="relative overflow-hidden"
@@ -86,6 +91,7 @@ defineProps<{
         placement="afterArticle"
         :sections="afterArticleCustomSections"
         :page-crumb-items="crumbItems"
+        :line-marketing-parent-slug="lineMarketingParentSlug"
       />
 
       <CommonPageInquiryForm

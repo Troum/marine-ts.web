@@ -632,24 +632,61 @@ export const MtsRichImageCarousel = Node.create({
 
   addAttributes() {
     return {
+      /**
+       * Внимание: атрибут уровня узла `parseHTML` ниже **перетирает** результат
+       * node-level `parseHTML().getAttrs`. Поэтому каждый аргумент здесь должен
+       * сам корректно вытаскивать значение из DOM, иначе после повторного
+       * открытия документа TipTap занулит атрибуты и при сохранении удалит из
+       * HTML слайды/настройки.
+       */
       slides: {
         default: [],
-        parseHTML: () => [],
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return []
+          }
+          const slides: { src: string; alt: string }[] = []
+          for (const img of el.querySelectorAll('img')) {
+            const src = img.getAttribute('src')?.trim() ?? ''
+            const alt = img.getAttribute('alt')?.trim() ?? ''
+            if (src && isSafeCarouselImgSrc(src)) {
+              slides.push({ src, alt })
+            }
+          }
+          return slides
+        },
         renderHTML: () => ({}),
       },
       intervalMs: {
         default: 6000,
-        parseHTML: () => 6000,
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return 6000
+          }
+          const raw = el.getAttribute('data-interval-ms')
+          const v = raw != null && raw !== '' ? Number(raw) : 6000
+          return Number.isFinite(v) && v >= 2000 && v <= 120000 ? v : 6000
+        },
         renderHTML: () => ({}),
       },
       showDots: {
         default: true,
-        parseHTML: () => true,
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return true
+          }
+          return el.getAttribute('data-show-dots') !== 'false'
+        },
         renderHTML: () => ({}),
       },
       ariaLabel: {
         default: 'Галерея изображений',
-        parseHTML: () => '',
+        parseHTML: (el) => {
+          if (typeof el === 'string' || !(el instanceof HTMLElement)) {
+            return 'Галерея изображений'
+          }
+          return el.getAttribute('data-carousel-label')?.trim() || 'Галерея изображений'
+        },
         renderHTML: () => ({}),
       },
     }

@@ -11,6 +11,7 @@ import type {
   PageBreadcrumbTone,
 } from '~/types'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
+import { plainMetaString } from '~/utils/adminThemedTextCodec'
 import { defaultLinePageData, mergeLinePageData } from '~/utils/pageDefaults'
 import { themeTitleTriple } from '~/utils/themeFormattedTitle'
 import {
@@ -808,7 +809,9 @@ function directionDetailOptionsForRow(row: { detailSlug?: string }): AdminSelect
   const seen = new Set<string>()
   const opts: AdminSelectOption[] = [{ value: '', label: 'Без отдельной страницы' }]
 
-  const sorted = [...pages].sort((a, b) => a.title.localeCompare(b.title, 'ru'))
+  const sorted = [...pages].sort((a, b) =>
+    (plainMetaString(a.title) || a.slug).localeCompare(plainMetaString(b.title) || b.slug, 'ru'),
+  )
   for (const p of sorted) {
     if (lineSlug && p.slug === lineSlug) {
       continue
@@ -817,7 +820,7 @@ function directionDetailOptionsForRow(row: { detailSlug?: string }): AdminSelect
       continue
     }
     seen.add(p.slug)
-    opts.push({ value: p.slug, label: `${p.title} · ${p.slug}` })
+    opts.push({ value: p.slug, label: `${plainMetaString(p.title) || p.slug} · ${p.slug}` })
   }
   const d = row.detailSlug?.trim()
   if (d && !seen.has(d)) {

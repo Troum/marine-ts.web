@@ -100,6 +100,7 @@ watchEffect(() => {
     :crumb-items="crumbItems"
     :inquiry-source-page="`${parentSlug}/${childSlug}`"
     :inquiry-enabled="isLineMarketingPageSlug(parentSlug)"
+    :line-marketing-parent-slug="isLineMarketingPageSlug(parentSlug) ? parentSlug : null"
   >
     <template #not-found>
       <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundPage') }}</p>

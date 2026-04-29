@@ -125,7 +125,15 @@ function pickStringArray(v: unknown): string[] {
   if (!Array.isArray(v)) {
     return []
   }
-  return v.filter((x): x is string => typeof x === 'string')
+  const out: string[] = []
+  for (const x of v) {
+    if (typeof x === 'string') {
+      out.push(x)
+    } else if (x != null && (typeof x === 'number' || typeof x === 'boolean')) {
+      out.push(String(x))
+    }
+  }
+  return out
 }
 
 function normalizeCardItem(raw: unknown): LineMarketingCardItem {

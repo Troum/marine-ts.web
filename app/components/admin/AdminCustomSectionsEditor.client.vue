@@ -477,8 +477,8 @@ function blockTypeLabel(b: CustomPageBlock): string {
                   <label :class="sectionLabel">Текст</label>
                   <AdminThemedTextField v-model="card.text" />
                 </div>
-                <div v-if="enableCardDetailLink && detailOptions.length > 0">
-                  <label :class="sectionLabel">Детальная страница (опционально)</label>
+                <div v-if="enableCardDetailLink">
+                  <label :class="sectionLabel">Страница для «Подробнее» (опционально)</label>
                   <AdminSelect
                     :model-value="card.detailSlug ?? ''"
                     :options="detailOptions"
@@ -530,19 +530,37 @@ function blockTypeLabel(b: CustomPageBlock): string {
                   <AdminSelect v-model="block.rightMode" :options="splitRightModeOptions" />
                 </div>
               </div>
-              <div v-for="(_img, ii) in block.images" :key="ii" class="flex flex-wrap items-end gap-2">
-                <div class="min-w-0 flex-1">
-                  <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
-                  <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
+              <div
+                v-for="(_img, ii) in block.images"
+                :key="ii"
+                class="space-y-2 border border-dashed border-mts-border-light bg-mts-bg/30 p-3"
+              >
+                <div class="flex flex-wrap items-end gap-2">
+                  <div class="min-w-0 flex-1">
+                    <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
+                    <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
+                  </div>
+                  <button
+                    v-if="block.images.length > 1"
+                    type="button"
+                    class="btn-secondary px-2 py-2 text-xs text-red-700"
+                    @click="removeImageRow(si, bi, ii)"
+                  >
+                    Удалить
+                  </button>
                 </div>
-                <button
-                  v-if="block.images.length > 1"
-                  type="button"
-                  class="btn-secondary px-2 py-2 text-xs text-red-700"
-                  @click="removeImageRow(si, bi, ii)"
+                <div
+                  v-if="block.images[ii]?.trim()"
+                  class="flex justify-center rounded border border-mts-border bg-mts-bg p-2"
                 >
-                  Удалить
-                </button>
+                  <img
+                    :src="block.images[ii].trim()"
+                    alt=""
+                    class="max-h-40 max-w-full object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
               </div>
               <button
                 type="button"
@@ -605,19 +623,37 @@ function blockTypeLabel(b: CustomPageBlock): string {
                 <label :class="sectionLabel">Колонок (1–4)</label>
                 <AdminInputNumberStepper v-model="block.columns" :min="1" :max="4" :step="1" />
               </div>
-              <div v-for="(_img, ii) in block.images" :key="ii" class="flex flex-wrap items-end gap-2">
-                <div class="min-w-0 flex-1">
-                  <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
-                  <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
+              <div
+                v-for="(_img, ii) in block.images"
+                :key="ii"
+                class="space-y-2 border border-dashed border-mts-border-light bg-mts-bg/30 p-3"
+              >
+                <div class="flex flex-wrap items-end gap-2">
+                  <div class="min-w-0 flex-1">
+                    <label :class="sectionLabel">URL изображения {{ ii + 1 }}</label>
+                    <input v-model="block.images[ii]" type="text" :class="sectionInput" placeholder="/images/…" />
+                  </div>
+                  <button
+                    v-if="block.images.length > 1"
+                    type="button"
+                    class="btn-secondary px-2 py-2 text-xs text-red-700"
+                    @click="removeImageRow(si, bi, ii)"
+                  >
+                    <Trash2 class="h-3.5 w-3.5" />
+                  </button>
                 </div>
-                <button
-                  v-if="block.images.length > 1"
-                  type="button"
-                  class="btn-secondary px-2 py-2 text-xs text-red-700"
-                  @click="removeImageRow(si, bi, ii)"
+                <div
+                  v-if="block.images[ii]?.trim()"
+                  class="flex justify-center rounded border border-mts-border bg-mts-bg p-2"
                 >
-                  <Trash2 class="h-3.5 w-3.5" />
-                </button>
+                  <img
+                    :src="block.images[ii].trim()"
+                    alt=""
+                    class="max-h-40 max-w-full object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
               </div>
               <button
                 type="button"

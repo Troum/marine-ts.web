@@ -1,5 +1,6 @@
 import type { AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import type { ContentPage } from '~/types'
+import { plainMetaString } from '~/utils/adminThemedTextCodec'
 import { contentPageSlugToPublicPath } from '~/utils/contentPageNavPath'
 import { adminSelectOptionsFromPages } from '~/utils/navRoutesFromPages'
 
@@ -32,7 +33,7 @@ export function useAdminPathOptions() {
       })
       const fromApi: AdminSelectOption[] = data.map((p: ContentPage) => {
         const path = contentPageSlugToPublicPath(p.slug, p.contentableType)
-        const title = p.title?.trim() || p.slug
+        const title = plainMetaString(p.title) || p.slug
         return { value: path, label: `${title} — ${path}` }
       })
       const map = new Map<string, AdminSelectOption>()

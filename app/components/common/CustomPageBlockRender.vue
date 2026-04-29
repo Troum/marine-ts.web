@@ -13,14 +13,20 @@ import { resolveHeroImageBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 const props = defineProps<{
   block: CustomPageBlock
-  /** Если задан — будет использован для построения ссылки в карточке. */
+  /** Если задан — для «короткого» значения без ведущего `/` вызывается до префиксов по умолчанию. */
   resolveDetailHref?: (detailSlug: string) => string | null
+  /**
+   * Для страниц вида `/{line}/…`: короткий slug из CMS без `/` превращается в `/{line}/{slug}`.
+   * Полные пути (`/…`) и выдача `resolveDetailHref` не затрагиваются.
+   */
+  lineMarketingParentSlug?: string | null
   /** Палитра крошек над первым баннером секции (только при непустом `pageCrumbItems`). */
   heroImageBreadcrumbTone?: PageBreadcrumbTone | null
   pageCrumbItems?: BreadcrumbItem[]
 }>()
 
 const { t } = useI18n()
+const localePath = useLocalePath()
 
 const directionCardClass =
   'service-card corner-accent p-8'
@@ -30,10 +36,20 @@ function detailHref(detailSlug?: string): string | null {
   if (!s) {
     return null
   }
-  if (props.resolveDetailHref) {
-    return props.resolveDetailHref(s)
+  if (s.startsWith('/')) {
+    return localePath(s)
   }
-  return null
+  if (props.resolveDetailHref) {
+    const mapped = props.resolveDetailHref(s)
+    if (mapped) {
+      return mapped
+    }
+  }
+  const line = props.lineMarketingParentSlug?.trim()
+  if (line) {
+    return localePath(`/${line}/${s}`)
+  }
+  return localePath(`/${s}`)
 }
 
 function splitGridStyle(leftPct: number): { gridTemplateColumns: string } {
@@ -141,8 +157,6 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
           marketingCardsItemAlignClass(block),
           'group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mts-accent',
         ]"
-      >
-      >
       >
         <component
           :is="resolveCrewingIcon(item.icon)"

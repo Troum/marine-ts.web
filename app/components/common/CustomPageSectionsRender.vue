@@ -13,6 +13,8 @@ defineProps<{
   sections: CustomPageSection[] | undefined | null
   /** Если задан — будет проброшен в карточки блока `cards`. */
   resolveDetailHref?: (detailSlug: string) => string | null
+  /** Пробрасывается в карточки: короткий slug → `/{line}/{slug}` на дочерних line-marketing страницах. */
+  lineMarketingParentSlug?: string | null
   /** Для крошек над баннером в пользовательской секции. */
   pageCrumbItems?: BreadcrumbItem[]
   /** Секции под верхом детальной content-page: убрать border/padding сверху у первой. «После статьи» — воздух внутри секции, плотнее к статье. */
@@ -70,6 +72,7 @@ function heroBreadcrumbToneFor(section: CustomPageSection, block: CustomPageBloc
             v-if="run.kind === 'hero'"
             :block="run.block"
             :resolve-detail-href="resolveDetailHref"
+            :line-marketing-parent-slug="lineMarketingParentSlug"
             :hero-image-breadcrumb-tone="heroBreadcrumbToneFor(section, run.block)"
             :page-crumb-items="pageCrumbItems"
           />
@@ -82,6 +85,7 @@ function heroBreadcrumbToneFor(section: CustomPageSection, block: CustomPageBloc
               <CustomPageBlockRender
                 :block="block"
                 :resolve-detail-href="resolveDetailHref"
+                :line-marketing-parent-slug="lineMarketingParentSlug"
                 :hero-image-breadcrumb-tone="heroBreadcrumbToneFor(section, block)"
                 :page-crumb-items="pageCrumbItems"
               />

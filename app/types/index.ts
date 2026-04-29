@@ -820,6 +820,10 @@ export interface LineMarketingCardItem {
   hideIcon?: boolean
   title: string
   text: string
+  /**
+   * Ссылка «Подробнее»: полный внутренний путь (`/about`, `/projects/x`) либо короткий slug
+   * на маркетинговых линиях (`/{line}/{slug}`). Пусто — без ссылки.
+   */
   detailSlug?: string
 }
 
