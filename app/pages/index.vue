@@ -130,7 +130,7 @@ const visibleCustomSections = computed(() =>
       />
     </div>
     <template v-else>
-    <section class="public-hero relative h-screen overflow-hidden">
+    <section class="public-hero relative min-h-[100svh] overflow-x-hidden md:h-screen">
       <div class="absolute inset-0">
         <CommonParallaxHeroMedia
           v-if="activeHeroImage"
@@ -147,11 +147,11 @@ const visibleCustomSections = computed(() =>
         />
       </div>
 
-      <div class="relative z-10 flex h-full flex-col justify-between">
-        <div class="pt-32" />
+      <div class="relative z-10 flex min-h-[100svh] flex-col justify-between md:h-full">
+        <div class="pt-24 sm:pt-28 md:pt-32" />
 
-        <div class="flex flex-1 items-center justify-center px-4">
-          <div class="max-w-4xl text-center">
+        <div class="flex flex-1 items-center justify-center px-4 pb-8 md:pb-0">
+          <div class="w-full max-w-4xl text-center">
             <div
               :class="[
                 'mb-5 flex items-center justify-center gap-3 transition-all duration-500',
@@ -178,7 +178,7 @@ const visibleCustomSections = computed(() =>
                 :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"
               >
                 <h1
-                  class="mts-hero-themed-copy mb-4 text-3xl font-bold leading-tight text-white drop-shadow-lg md:text-4xl lg:text-5xl"
+                  class="mts-hero-themed-copy mb-4 text-2xl font-bold leading-tight text-white drop-shadow-lg sm:text-3xl md:text-4xl lg:text-5xl"
                 >
                   <ThemedContentString
                     v-if="activeHeroDirection"
@@ -187,7 +187,7 @@ const visibleCustomSections = computed(() =>
                   <ThemeFormattedTitle v-else :title="d.hero.titleFormatted" />
                 </h1>
                 <p
-                  class="mts-hero-themed-copy mx-auto max-w-2xl text-lg leading-relaxed text-white/90 drop-shadow md:text-xl"
+                  class="mts-hero-themed-copy mx-auto max-w-2xl text-base leading-relaxed text-white/90 drop-shadow sm:text-lg md:text-xl"
                 >
                   <ThemedContentString
                     :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
@@ -197,14 +197,14 @@ const visibleCustomSections = computed(() =>
             </Transition>
             <div
               :class="[
-                'mt-8 flex flex-wrap items-center justify-center gap-4',
+                'mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4',
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <NuxtLink :to="localePath(d.hero.ctaClientHref)" class="btn-primary">
+              <NuxtLink :to="localePath(d.hero.ctaClientHref)" class="btn-primary w-full sm:w-auto">
                 <ThemedContentString :content="d.hero.ctaClient" />
               </NuxtLink>
-              <NuxtLink :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass">
+              <NuxtLink :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass w-full sm:w-auto">
                 <ThemedContentString :content="d.hero.ctaSeafarer" />
               </NuxtLink>
             </div>
@@ -222,11 +222,11 @@ const visibleCustomSections = computed(() =>
               @mouseenter="activeHeroDirectionIndex = index"
               @focus="activeHeroDirectionIndex = index"
             >
-              <div class="flex items-center justify-between px-4 py-6 md:py-8">
-                <span class="text-sm font-medium text-white md:text-base lg:text-lg">
+              <div class="flex items-center justify-between px-4 py-4 sm:py-5 md:py-8">
+                <span class="text-sm font-medium text-white sm:text-base lg:text-lg">
                   <ThemedContentString :content="row.title" />
                 </span>
-                <span class="ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-white/10 text-white transition-all duration-300 group-hover:translate-x-1 group-hover:bg-white/20">
+                <span class="ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-white/10 text-white transition-all duration-300 group-hover:translate-x-1 group-hover:bg-white/20 sm:h-10 sm:w-10">
                   →
                 </span>
               </div>
@@ -275,7 +275,7 @@ const visibleCustomSections = computed(() =>
           <div
             v-for="row in cardsBlockRows"
             :key="row.title"
-            class="service-card corner-accent flex h-full min-w-0 flex-col p-8"
+            class="service-card corner-accent flex h-full min-w-0 flex-col p-6 sm:p-8"
           >
             <h3 class="font-display text-lg text-body"><ThemedContentString :content="row.title" /></h3>
             <p class="mt-3 flex-1 font-body text-sm text-muted"><ThemedContentString :content="row.description" /></p>
