@@ -102,7 +102,7 @@ async function submit() {
       })),
       offices: form.value.offices.map((o) => ({ ...o })),
     }
-    await api.contactSettings.update(payload)
+    form.value = await api.contactSettings.update(payload)
     adminToast.success('Контактные данные сохранены')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })

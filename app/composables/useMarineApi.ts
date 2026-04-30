@@ -39,6 +39,7 @@ import {
   writeAdminPermissionsToBothStorages,
   writeAdminRolesToBothStorages,
 } from '~/utils/adminPermissionStorage'
+import { normalizeContactSettingsPayload, serializeContactSettingsPayload } from '~/utils/normalizeContactSettingsPayload'
 import { normalizeFooterMenuSettingsPayload } from '~/utils/normalizeFooterMenuSettingsPayload'
 import { normalizeNavigationSettingsPayload } from '~/utils/normalizeNavigationSettingsPayload'
 import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
@@ -646,15 +647,15 @@ export function useMarineApi() {
     },
     contactSettings: {
       get: async () => {
-        const res = await fetchPublic<{ data: SiteContactSettings }>('/contact-settings')
-        return res.data
+        const res = await fetchPublic<unknown>('/contact-settings')
+        return normalizeContactSettingsPayload(res)
       },
       update: async (body: SiteContactSettings) => {
-        const res = await fetchAuth<{ data: SiteContactSettings }>('/contact-settings', {
+        const res = await fetchAuth<unknown>('/contact-settings', {
           method: 'PUT',
-          body,
+          body: serializeContactSettingsPayload(body),
         })
-        return res.data
+        return normalizeContactSettingsPayload(res)
       },
     },
     navigationSettings: {
