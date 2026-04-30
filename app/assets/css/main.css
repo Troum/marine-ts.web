@@ -383,6 +383,25 @@
     @apply size-4 shrink-0 cursor-pointer rounded border border-mts-border bg-mts-surface accent-mts-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) {
+    list-style: none;
+  }
+  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) > li {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) > li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.35em;
+    width: 1em;
+    height: 1em;
+    background-color: var(--color-mts-accent);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='m12 5 7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='m12 5 7 7-7 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
   .mts-markdown {
     @apply max-w-none min-w-0 font-body text-mts-text;
     overflow-x: auto;
@@ -409,14 +428,11 @@
   .mts-markdown :where(ul, ol) {
     @apply mt-4 list-outside space-y-2 pl-6;
   }
-  .mts-markdown ul {
-    @apply list-disc;
-  }
   .mts-markdown ul[data-list-style='circle'] {
-    list-style-type: circle;
+    list-style-type: none;
   }
   .mts-markdown ul[data-list-style='square'] {
-    list-style-type: square;
+    list-style-type: none;
   }
   .mts-markdown ul[data-list-style='none'] {
     list-style-type: none;
