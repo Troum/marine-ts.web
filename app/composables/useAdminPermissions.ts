@@ -46,14 +46,37 @@ export function useAdminPermissions() {
   }
 
   const isGlobalAdmin = computed(() => roles.value.includes('admin'))
+  const isHrManager = computed(() => !isGlobalAdmin.value && roles.value.includes('hr_manager'))
+  const isContentManager = computed(() => !isGlobalAdmin.value && roles.value.includes('content_manager'))
 
   const allow = (permission: string) => isGlobalAdmin.value || permissions.value.includes(permission)
 
+  const canManageNews = computed(() => allow('manage news') && !isHrManager.value)
+  const canManageProjects = computed(() => allow('manage projects') && !isHrManager.value)
+  const canManageServices = computed(() => allow('manage services') && !isHrManager.value)
+  const canManageSeo = computed(() => allow('manage seo') && !isHrManager.value)
+  const canManageVacancies = computed(() => allow('manage vacancies') && !isContentManager.value)
+  const canManageFeedback = computed(() => allow('manage feedback') && !isContentManager.value)
+  const canManagePageInquiries = computed(() => allow('manage page inquiries') && !isContentManager.value)
   const canManageUsers = computed(() => allow('manage users'))
-  const canManageContentPages = computed(() => allow('manage content pages'))
+  const canManageContentPages = computed(() => allow('manage content pages') && !isHrManager.value)
   const canManageGallery = computed(() => allow('manage gallery'))
   const canManageContacts = computed(() => allow('manage contacts'))
   const canManageNavigation = computed(() => allow('manage navigation'))
 
-  return { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation, syncPermissions: sync }
+  return {
+    canManageNews,
+    canManageProjects,
+    canManageServices,
+    canManageSeo,
+    canManageVacancies,
+    canManageFeedback,
+    canManagePageInquiries,
+    canManageUsers,
+    canManageContentPages,
+    canManageGallery,
+    canManageContacts,
+    canManageNavigation,
+    syncPermissions: sync,
+  }
 }

@@ -36,8 +36,21 @@ definePageMeta({
 
 const api = useMarineApi()
 const { logout } = useAuth()
-const { canManageUsers, canManageContentPages, canManageGallery, canManageContacts, canManageNavigation } =
-  useAdminPermissions()
+const {
+  canManageNews,
+  canManageProjects,
+  canManageServices,
+  canManageSeo,
+  canManageVacancies,
+  canManageFeedback,
+  canManagePageInquiries,
+  canManageUsers,
+  canManageContentPages,
+  canManageGallery,
+  canManageContacts,
+  canManageNavigation,
+} = useAdminPermissions()
+const canManageVacancySection = computed(() => canManageContentPages.value && canManageVacancies.value)
 
 const sectionPickerOpen = ref(false)
 const sectionOptions = [
@@ -46,33 +59,38 @@ const sectionOptions = [
     to: '/admin/vacancies/application-forms',
     icon: ClipboardList,
     desc: 'Поданные анкеты кандидатов по вакансиям и открытой форме',
+    permission: canManageVacancies,
   },
   {
     label: 'Вакансии',
     to: '/admin/vacancies-page',
     icon: Users,
     desc: 'Hero, фон, CTA, форма заявки',
+    permission: canManageVacancySection,
   },
-  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA' },
-  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты' },
-  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA' },
+  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA', permission: canManageContentPages },
+  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты', permission: canManageContentPages },
+  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA', permission: canManageContentPages },
   {
     label: 'Судовой менеджмент',
     to: '/admin/line-pages/ship-management',
     icon: Ship,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
+    permission: canManageContentPages,
   },
   {
     label: 'Крюинг-менеджмент',
     to: '/admin/line-pages/crewing-management',
     icon: Users,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
+    permission: canManageContentPages,
   },
-  { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы' },
-  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок' },
-  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA' },
-  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок' },
+  { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы', permission: canManageContentPages },
+  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок', permission: canManageContentPages },
+  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA', permission: canManageContentPages },
+  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок', permission: canManageContentPages },
 ]
+const visibleSectionOptions = computed(() => sectionOptions.filter((s) => s.permission.value))
 
 const news = ref<NewsItem[]>([])
 const projects = ref<Project[]>([])
@@ -116,34 +134,40 @@ const maxDailyViews = computed(() => {
 /** Высота столбиков в px (h-28 ≈ 7rem) */
 const chartBarMaxPx = 112
 
-const statCards = computed(() => [
-  { label: 'Всего новостей', value: stats.value.news_count || news.value.length, icon: Newspaper, color: 'bg-blue-500' },
-  { label: 'Всего проектов', value: stats.value.projects_count || projects.value.length, icon: Briefcase, color: 'bg-green-500' },
-  {
-    label: 'Изб. новостей',
-    value: stats.value.featured_news || news.value.filter((x) => x.featured).length,
-    icon: Eye,
-    color: 'bg-purple-500',
-  },
-  {
-    label: 'Карточек сервисов',
-    value: stats.value.services_count ?? 0,
-    icon: Wrench,
-    color: 'bg-amber-600',
-  },
-  {
-    label: 'Вакансий',
-    value: stats.value.vacancies_count ?? 0,
-    icon: Users,
-    color: 'bg-teal-600',
-  },
-  {
-    label: 'Поданных анкет',
-    value: stats.value.application_forms_count ?? 0,
-    icon: ClipboardList,
-    color: 'bg-slate-600',
-  },
-])
+const statCards = computed(() =>
+  [
+    { label: 'Всего новостей', value: stats.value.news_count || news.value.length, icon: Newspaper, color: 'bg-blue-500', visible: canManageNews.value },
+    { label: 'Всего проектов', value: stats.value.projects_count || projects.value.length, icon: Briefcase, color: 'bg-green-500', visible: canManageProjects.value },
+    {
+      label: 'Изб. новостей',
+      value: stats.value.featured_news || news.value.filter((x) => x.featured).length,
+      icon: Eye,
+      color: 'bg-purple-500',
+      visible: canManageNews.value,
+    },
+    {
+      label: 'Карточек сервисов',
+      value: stats.value.services_count ?? 0,
+      icon: Wrench,
+      color: 'bg-amber-600',
+      visible: canManageServices.value,
+    },
+    {
+      label: 'Вакансий',
+      value: stats.value.vacancies_count ?? 0,
+      icon: Users,
+      color: 'bg-teal-600',
+      visible: canManageVacancies.value,
+    },
+    {
+      label: 'Поданных анкет',
+      value: stats.value.application_forms_count ?? 0,
+      icon: ClipboardList,
+      color: 'bg-slate-600',
+      visible: canManageVacancies.value,
+    },
+  ].filter((card) => card.visible),
+)
 </script>
 
 <template>
@@ -276,7 +300,7 @@ const statCards = computed(() => [
         </section>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageVacancies" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <ClipboardList class="w-5 h-5 text-mts-accent" />
@@ -297,7 +321,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageVacancies" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Users class="w-5 h-5 text-mts-accent" />
@@ -319,7 +343,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManagePageInquiries" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Inbox class="w-5 h-5 text-mts-accent" />
@@ -340,7 +364,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageFeedback" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <MessageSquare class="w-5 h-5 text-mts-accent" />
@@ -361,7 +385,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageContentPages" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <FileText class="w-5 h-5 text-mts-accent" />
@@ -383,7 +407,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageServices" class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
             >
@@ -444,7 +468,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageProjects" class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
             >
@@ -488,7 +512,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageNews" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Newspaper class="w-5 h-5 text-mts-accent" />
@@ -589,7 +613,7 @@ const statCards = computed(() => [
             </div>
           </div>
 
-          <div class="bg-white border border-mts-border">
+          <div v-if="canManageSeo" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Search class="w-5 h-5 text-mts-accent" />
@@ -608,7 +632,7 @@ const statCards = computed(() => [
           </div>
         </div>
 
-        <div class="mt-12">
+        <div v-if="canManageNews" class="mt-12">
           <h2 class="font-display text-2xl text-mts-text mb-6">Последние новости</h2>
           <div class="bg-white border border-mts-border overflow-x-auto">
             <table class="w-full min-w-150">
@@ -669,7 +693,7 @@ const statCards = computed(() => [
             </div>
             <div class="p-2 max-h-[60vh] overflow-y-auto">
               <NuxtLink
-                v-for="s in sectionOptions"
+                v-for="s in visibleSectionOptions"
                 :key="s.to"
                 :to="s.to"
                 class="flex items-center gap-4 p-4 hover:bg-mts-accent/5 transition-colors group"
