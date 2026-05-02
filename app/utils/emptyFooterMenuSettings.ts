@@ -30,5 +30,7 @@ export function emptyFooterMenuSettings(): FooterMenuSettings {
       { path: '/privacy', label: { ru: 'ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ', en: 'PRIVACY POLICY' } },
       { path: '/terms', label: { ru: 'УСЛОВИЯ ИСПОЛЬЗОВАНИЯ', en: 'TERMS OF USE' } },
     ],
+    hideFooterGlobally: false,
+    hideFooterPaths: [],
   }
 }

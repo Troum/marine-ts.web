@@ -45,6 +45,7 @@ const form = ref({
   sortOrder: 0,
   showInquiryForm: false,
   showPublicTitle: true,
+  hideFooter: false,
   translations: mergeContentPageTranslations(),
 })
 
@@ -272,6 +273,7 @@ onMounted(async () => {
       sortOrder: item.sortOrder ?? 0,
       showInquiryForm: item.showInquiryForm ?? false,
       showPublicTitle: item.showPublicTitle !== false,
+      hideFooter: item.hideFooter ?? false,
       translations: mergeContentPageTranslations(item.translations),
     }
     applyParsedBodiesToForm()
@@ -382,6 +384,7 @@ async function submit() {
       sortOrder: Number(form.value.sortOrder ?? 0),
       showInquiryForm: form.value.showInquiryForm ?? false,
       showPublicTitle: form.value.showPublicTitle !== false,
+      hideFooter: form.value.hideFooter ?? false,
       translations,
     }
 
@@ -548,6 +551,10 @@ async function submit() {
                 >Показывать заголовок (h1) в тексте страницы под баннером. Выключите, если заголовок уже в hero —
                 поле «Заголовок» остаётся для крошек, вкладки и SEO.</span
               >
+            </label>
+            <label class="flex cursor-pointer select-none items-center gap-2.5 font-body text-sm text-mts-text">
+              <input v-model="form.hideFooter" type="checkbox" class="mts-checkbox" />
+              <span>Скрыть подвал на этой странице</span>
             </label>
           </section>
 

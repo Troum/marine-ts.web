@@ -73,6 +73,9 @@ const cms = computed<AboutPageData | null>(() => {
 
 const d = computed<AboutPageData>(() => cms.value ?? defaultAboutData(loc.value))
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
+
 const geoLocations = computed<AboutGeoLocation[]>(() => d.value.geography.locations)
 
 /**

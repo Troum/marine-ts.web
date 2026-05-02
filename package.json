@@ -11,6 +11,8 @@
     "gen:lucide-word-ru": "node scripts/gen-lucide-word-ru.mjs"
   },
   "dependencies": {
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/js": "^7.4.47",
     "@nuxtjs/i18n": "^10.2.4",
     "@tiptap/extension-color": "^3.22.4",
     "@tiptap/extension-highlight": "^3.22.2",

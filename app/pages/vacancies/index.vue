@@ -44,6 +44,9 @@ const cms = computed<VacanciesPageData>(() => {
   return defaultListingData('vacancies-page', loc.value) as VacanciesPageData
 })
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const crumbItems = computed(() => breadcrumbs({ label: t('nav.vacancies'), to: '/vacancies' }))
 
 const vacancies = ref<VacancyItem[]>([])

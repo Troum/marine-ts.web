@@ -21,11 +21,45 @@ const form = ref<FooterMenuSettings>(emptyFooterMenuSettings())
 
 const columnLabels = ['Компания / первая колонка', 'Судоремонт / вторая колонка', 'Кандидатам / третья колонка']
 
+const footerVisibilityRoutes = [
+  { path: '/', label: 'Главная' },
+  { path: '/about', label: 'О компании' },
+  { path: '/services', label: 'Судоремонт' },
+  { path: '/projects', label: 'Проекты' },
+  { path: '/gallery', label: 'Галерея' },
+  { path: '/news', label: 'Новости' },
+  { path: '/vacancies', label: 'Вакансии' },
+  { path: '/contacts', label: 'Контакты' },
+  { path: '/application-form', label: 'Анкета' },
+  { path: '/ship-management', label: 'Судовой менеджмент' },
+  { path: '/crewing-management', label: 'Крюинг' },
+] as const
+
+function isFooterPathHidden(path: string): boolean {
+  return form.value.hideFooterPaths?.includes(path) ?? false
+}
+
+function toggleFooterPathHidden(path: string, hide: boolean) {
+  const cur = [...(form.value.hideFooterPaths ?? [])]
+  const i = cur.indexOf(path)
+  if (hide && i < 0) {
+    cur.push(path)
+  }
+  if (!hide && i >= 0) {
+    cur.splice(i, 1)
+  }
+  form.value.hideFooterPaths = cur
+}
+
 function emptyLink(): FooterNavLink {
   return { path: '/', label: { ru: '', en: '' } }
 }
 
 function trimFooterPayload(data: FooterMenuSettings): FooterMenuSettings {
+  const paths = [...(data.hideFooterPaths ?? [])]
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => (p.startsWith('/') ? p : `/${p}`))
   return {
     columns: data.columns.map((col) => ({
       title: { ru: col.title.ru.trim(), en: col.title.en.trim() },
@@ -38,6 +72,8 @@ function trimFooterPayload(data: FooterMenuSettings): FooterMenuSettings {
       path: l.path.trim() || '/',
       label: { ru: l.label.ru.trim(), en: l.label.en.trim() },
     })),
+    hideFooterGlobally: data.hideFooterGlobally === true,
+    hideFooterPaths: [...new Set(paths)],
   }
 }
 
@@ -156,6 +192,35 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           «Контакты» с телефоном и почтой по-прежнему задаётся на странице
           <NuxtLink to="/admin/contacts" class="text-mts-accent underline">контактов</NuxtLink>.
         </p>
+
+        <section class="space-y-4 border border-mts-border bg-mts-bg/40 p-6">
+          <h2 class="mb-2 font-mono text-xs uppercase tracking-widest text-mts-text-secondary">Видимость подвала</h2>
+          <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+            <input v-model="form.hideFooterGlobally" type="checkbox" class="mts-checkbox" />
+            Полностью скрыть подвал на всём сайте
+          </label>
+          <div>
+            <p class="mb-2 font-body text-xs text-mts-text-secondary">
+              Скрыть подвал на отдельных разделах (путь без префикса <span class="font-mono">/en</span>):
+            </p>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+              <label
+                v-for="opt in footerVisibilityRoutes"
+                :key="opt.path"
+                class="inline-flex items-center gap-2 font-body text-sm text-mts-text"
+              >
+                <input
+                  type="checkbox"
+                  class="mts-checkbox"
+                  :checked="isFooterPathHidden(opt.path)"
+                  @change="toggleFooterPathHidden(opt.path, ($event.target as HTMLInputElement).checked)"
+                />
+                {{ opt.label }}
+                <span class="font-mono text-[10px] text-mts-text-secondary">{{ opt.path }}</span>
+              </label>
+            </div>
+          </div>
+        </section>
 
         <section v-for="(col, ci) in form.columns" :key="ci" class="border border-mts-border p-6 bg-mts-bg/40">
           <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary mb-4">{{ columnLabels[ci] }}</h2>

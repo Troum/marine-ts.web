@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { Phone, Mail, MapPin, ExternalLink, Clock } from 'lucide-vue-next'
-import type { Component } from 'vue'
-import type { ContactQuickIconKey, FooterNavColumn, FooterNavLink } from '~/types'
+import { Phone } from 'lucide-vue-next'
+import type { FooterNavColumn, FooterNavLink } from '~/types'
 import { emptyFooterMenuSettings } from '~/utils/emptyFooterMenuSettings'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { contactQuickIcons } from '~/utils/contactQuickIcons'
+import { stripLocalePrefix } from '~/utils/stripLocalePrefix'
 
 const currentYear = new Date().getFullYear()
+const route = useRoute()
 const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const api = useMarineApi()
-
-const quickIcons: Record<ContactQuickIconKey, Component> = {
-  phone: Phone,
-  mail: Mail,
-  'map-pin': MapPin,
-  clock: Clock,
-  link: ExternalLink,
-}
 
 const { data: contactSettings } = await useAsyncData(
   'contact-settings',
@@ -31,6 +25,12 @@ const { data: contactSettings } = await useAsyncData(
 )
 
 const resolvedContacts = computed(() => contactSettings.value ?? contactSettingsDefaults)
+const footerQuickContacts = computed(() =>
+  resolvedContacts.value.quick.filter((item) => item.showInFooter !== false),
+)
+const footerDepartments = computed(() =>
+  resolvedContacts.value.departments.filter((department) => department.showInFooter === true),
+)
 
 function isExternalHttpHref(href: string | null) {
   return href != null && /^https?:\/\//i.test(href.trim())
@@ -57,6 +57,26 @@ onMounted(async () => {
 
 const footerMenu = computed(() => footerRemote.value ?? emptyFooterMenuSettings())
 
+const { hidden: pageFooterHidden } = usePageFooterHidden()
+
+const showFooter = computed(() => {
+  if (pageFooterHidden.value) {
+    return false
+  }
+  const fm = footerMenu.value
+  if (fm.hideFooterGlobally) {
+    return false
+  }
+  const path = stripLocalePrefix(route.path).replace(/\/$/, '') || '/'
+  for (const raw of fm.hideFooterPaths ?? []) {
+    const prefix = (raw.trim().startsWith('/') ? raw.trim() : `/${raw.trim()}`).replace(/\/$/, '') || '/'
+    if (path === prefix || (prefix !== '/' && path.startsWith(`${prefix}/`))) {
+      return false
+    }
+  }
+  return true
+})
+
 function isExternalPath(p: string) {
   return /^https?:\/\//i.test(p.trim())
 }
@@ -74,7 +94,7 @@ function columnHeading(col: FooterNavColumn): string {
 
 <template>
   <!-- Футер на brand-surface (`bg-mts-navy`, текст `mts-frost`). -->
-  <footer class="relative bg-mts-navy text-mts-frost overflow-hidden">
+  <footer v-if="showFooter" class="relative bg-mts-navy text-mts-frost overflow-hidden">
     <div class="mts-content-wrap py-16 lg:py-20 relative z-10">
       <div class="grid md:grid-cols-2 lg:grid-cols-6 gap-12 lg:gap-8">
         <div class="md:col-span-2 lg:col-span-2">
@@ -115,7 +135,7 @@ function columnHeading(col: FooterNavColumn): string {
         <div>
           <h4 class="font-mono text-[10px] font-medium tracking-[0.15em] uppercase text-mts-frost/40 mb-6">{{ t('footer.sectionContacts') }}</h4>
           <ul class="space-y-3">
-            <li v-for="(item, idx) in resolvedContacts.quick" :key="`${item.label}-${idx}`">
+            <li v-for="(item, idx) in footerQuickContacts" :key="`quick-${item.label}-${idx}`">
               <component
                 :is="item.href ? 'a' : 'div'"
                 :href="item.href || undefined"
@@ -127,10 +147,25 @@ function columnHeading(col: FooterNavColumn): string {
                 ]"
               >
                 <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center flex-shrink-0">
-                  <component :is="quickIcons[item.iconKey] ?? Phone" class="w-3.5 h-3.5" />
+                  <component :is="contactQuickIcons[item.iconKey] ?? Phone" class="w-3.5 h-3.5" />
                 </div>
                 <span class="font-body text-xs leading-snug">{{ item.value }}</span>
               </component>
+            </li>
+            <li v-for="(department, idx) in footerDepartments" :key="`department-${department.title}-${idx}`">
+              <a
+                :href="`mailto:${department.email}`"
+                class="flex items-start gap-3 text-mts-frost/65 transition-colors hover:text-primary"
+              >
+                <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center flex-shrink-0">
+                  <component :is="contactQuickIcons.mail" class="w-3.5 h-3.5" />
+                </div>
+                <span class="font-body text-xs leading-snug">
+                  <span class="block text-mts-frost/85">{{ department.title }}</span>
+                  <span class="block">{{ department.phone }}</span>
+                  <span class="block font-mono text-[10px]">{{ department.email }}</span>
+                </span>
+              </a>
             </li>
           </ul>
         </div>

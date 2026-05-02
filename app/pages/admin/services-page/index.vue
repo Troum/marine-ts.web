@@ -226,6 +226,7 @@ async function submit() {
   const hideIntro = src.hideInquiryFormIntro
   const order = src.sectionOrder
   const visibility = src.sectionVisibility
+  const hideFooter = src.hideFooter
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
     data.value[loc].heroImage = heroImg
@@ -233,6 +234,7 @@ async function submit() {
     data.value[loc].hideInquiryFormIntro = hideIntro
     data.value[loc].sectionOrder = order ? [...order] : undefined
     data.value[loc].sectionVisibility = visibility ? { ...visibility } : undefined
+    data.value[loc].hideFooter = hideFooter
   }
   saving.value = true
   try {
@@ -665,6 +667,12 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox">
             Скрыть шапку внутри белой карточки формы
           </label>
+          <div class="border-t border-mts-border pt-4">
+            <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+              <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox">
+              Скрыть подвал на этой странице
+            </label>
+          </div>
         </section>
 
         <div class="flex justify-end">

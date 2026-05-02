@@ -5,6 +5,7 @@ import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.
 import type { HomePageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import { heroOverlaySocialIconOptions } from '~/utils/heroOverlaySocialIcons'
 import {
   defaultHomeData,
   mergeHomePageData,
@@ -14,6 +15,10 @@ import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
+const OVERLAY_SOCIAL_ICON_OPTIONS = heroOverlaySocialIconOptions.map((o) => ({
+  value: o.value,
+  label: o.label,
+}))
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
@@ -126,6 +131,94 @@ async function removeDirectionRow(i: number) {
   }
 }
 
+function addHeroOverlaySocial() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const row = data.value[loc].heroOverlayRow!
+    row.socialLinks.push({ iconKey: 'facebook', href: '' })
+  }
+}
+
+async function removeHeroOverlaySocial(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту иконку соцсети из полосы?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].heroOverlayRow!.socialLinks.splice(i, 1)
+  }
+}
+
+function moveHeroOverlaySocial(i: number, dir: -1 | 1) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const arr = data.value[loc].heroOverlayRow!.socialLinks
+    const j = i + dir
+    if (j < 0 || j >= arr.length) {
+      continue
+    }
+    const a = arr[i]!
+    const b = arr[j]!
+    arr[i] = b
+    arr[j] = a
+  }
+}
+
+function setHeroOverlaySocialField(i: number, field: 'iconKey' | 'href', value: string) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const row = data.value[loc].heroOverlayRow!.socialLinks[i]
+    if (row) {
+      row[field] = value
+    }
+  }
+}
+
+function addHeroOverlayNavLink() {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const row = data.value[loc].heroOverlayRow!
+    row.links.push({ path: '/contacts', label: { ru: '', en: '' } })
+  }
+}
+
+async function removeHeroOverlayNavLink(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту ссылку из полосы?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    data.value[loc].heroOverlayRow!.links.splice(i, 1)
+  }
+}
+
+function moveHeroOverlayNavLink(i: number, dir: -1 | 1) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const arr = data.value[loc].heroOverlayRow!.links
+    const j = i + dir
+    if (j < 0 || j >= arr.length) {
+      continue
+    }
+    const a = arr[i]!
+    const b = arr[j]!
+    arr[i] = b
+    arr[j] = a
+  }
+}
+
+function setHeroOverlayNavPath(i: number, path: string) {
+  for (const loc of MARINE_CONTENT_LOCALES) {
+    const link = data.value[loc].heroOverlayRow!.links[i]
+    if (link) {
+      link.path = path
+    }
+  }
+}
+
 function moveDirectionRow(index: number, dir: -1 | 1) {
   for (const loc of MARINE_CONTENT_LOCALES) {
     const rows = data.value[loc].directions.rows
@@ -225,12 +318,167 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 <input v-model="d.hero.ctaSeafarerHref" type="text" :class="sectionInput" placeholder="/vacancies" />
               </div>
             </div>
-            <div class="grid md:grid-cols-3 gap-4">
-              <div><label :class="sectionLabel">Бейдж ISO</label><AdminThemedTextField v-model="d.hero.badgeIso" :multiline="false" /></div>
-              <div><label :class="sectionLabel">Бейдж IACS</label><AdminThemedTextField v-model="d.hero.badgeIacs" :multiline="false" /></div>
-              <div><label :class="sectionLabel">Бейдж «Лет опыта»</label><AdminThemedTextField v-model="d.hero.badgeYears" :multiline="false" /></div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input v-model="d.hero.hideCtaClient" type="checkbox" class="mts-checkbox" />
+                <span class="font-body text-sm text-mts-text">Скрыть кнопку «Оставить заявку»</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input v-model="d.hero.hideCtaSeafarer" type="checkbox" class="mts-checkbox" />
+                <span class="font-body text-sm text-mts-text">Скрыть кнопку «Заполнить анкету»</span>
+              </label>
             </div>
-            <div><label :class="sectionLabel">Текст «Листайте»</label><AdminThemedTextField v-model="d.hero.scroll" :multiline="false" /></div>
+
+            <div class="mt-6 border border-mts-border bg-mts-bg/40 p-5 space-y-4">
+              <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">
+                Нижняя полоса поверх hero (соцсети и ссылки)
+              </h3>
+              <p class="font-body text-xs leading-relaxed text-mts-text-secondary">
+                Как на референсе: тонкая полоса внизу первого экрана поверх фона. Ссылки на соцсети и разделы задаются одинаково для обеих локалей (URL / путь);
+                подписи текстовых ссылок — отдельно для RU и EN на соответствующей вкладке языка.
+              </p>
+              <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="d.heroOverlayRow!.enabled" type="checkbox" class="mts-checkbox" />
+                Показывать полосу на главной
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="d.heroOverlayRow!.showLanguageSwitch" type="checkbox" class="mts-checkbox" />
+                Показывать переключатель языка в этой полосе
+              </label>
+
+              <div>
+                <p :class="sectionLabel">Иконки и ссылки на соцсети</p>
+                <div class="space-y-3">
+                  <div
+                    v-for="(soc, si) in d.heroOverlayRow!.socialLinks"
+                    :key="`ov-soc-${si}`"
+                    class="flex flex-wrap items-end gap-3 border border-mts-border p-3 bg-mts-bg/50"
+                  >
+                    <div class="min-w-[10rem] flex-1">
+                      <label class="mb-1 block font-mono text-[9px] uppercase text-mts-text-secondary">Иконка</label>
+                      <AdminSelect
+                        :model-value="soc.iconKey"
+                        :options="OVERLAY_SOCIAL_ICON_OPTIONS"
+                        @update:model-value="(v) => setHeroOverlaySocialField(si, 'iconKey', String(v))"
+                      />
+                    </div>
+                    <div class="min-w-[12rem] flex-[2]">
+                      <label class="mb-1 block font-mono text-[9px] uppercase text-mts-text-secondary">URL</label>
+                      <input
+                        :value="soc.href"
+                        type="text"
+                        :class="sectionInput"
+                        placeholder="https://…"
+                        @input="setHeroOverlaySocialField(si, 'href', ($event.target as HTMLInputElement).value)"
+                      />
+                    </div>
+                    <div class="flex gap-1">
+                      <button
+                        type="button"
+                        class="p-2 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                        :disabled="si === 0"
+                        aria-label="Выше"
+                        @click="moveHeroOverlaySocial(si, -1)"
+                      >
+                        <ChevronUp class="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-2 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                        :disabled="si === d.heroOverlayRow!.socialLinks.length - 1"
+                        aria-label="Ниже"
+                        @click="moveHeroOverlaySocial(si, 1)"
+                      >
+                        <ChevronDown class="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-2 text-red-500/80 hover:text-red-600"
+                        aria-label="Удалить"
+                        @click="removeHeroOverlaySocial(si)"
+                      >
+                        <Trash2 class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="mt-3 flex items-center gap-2 font-mono text-xs uppercase text-mts-accent hover:underline"
+                  @click="addHeroOverlaySocial"
+                >
+                  <Plus class="w-4 h-4" />
+                  Добавить соцсеть
+                </button>
+              </div>
+
+              <div>
+                <p :class="sectionLabel">Текстовые ссылки</p>
+                <div class="space-y-4">
+                  <div
+                    v-for="(lnk, li) in d.heroOverlayRow!.links"
+                    :key="`ov-lnk-${li}`"
+                    class="border border-mts-border p-4 bg-mts-bg/50 space-y-3"
+                  >
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <span class="font-mono text-[10px] uppercase text-mts-text-secondary">Ссылка {{ li + 1 }}</span>
+                      <div class="flex gap-1">
+                        <button
+                          type="button"
+                          class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                          :disabled="li === 0"
+                          aria-label="Выше"
+                          @click="moveHeroOverlayNavLink(li, -1)"
+                        >
+                          <ChevronUp class="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                          :disabled="li === d.heroOverlayRow!.links.length - 1"
+                          aria-label="Ниже"
+                          @click="moveHeroOverlayNavLink(li, 1)"
+                        >
+                          <ChevronDown class="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          class="p-1.5 text-red-500/80 hover:text-red-600"
+                          aria-label="Удалить"
+                          @click="removeHeroOverlayNavLink(li)"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <AdminNavPathPick
+                      :model-value="lnk.path"
+                      :path-options="pathOptions"
+                      input-placeholder="/contacts или https://…"
+                      @update:model-value="(p) => setHeroOverlayNavPath(li, p)"
+                    />
+                    <div class="grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label :class="sectionLabel">Подпись (RU)</label>
+                        <AdminThemedTextField v-model="lnk.label.ru" :multiline="false" />
+                      </div>
+                      <div>
+                        <label :class="sectionLabel">Подпись (EN)</label>
+                        <AdminThemedTextField v-model="lnk.label.en" :multiline="false" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="mt-3 flex items-center gap-2 font-mono text-xs uppercase text-mts-accent hover:underline"
+                  @click="addHeroOverlayNavLink"
+                >
+                  <Plus class="w-4 h-4" />
+                  Добавить ссылку
+                </button>
+              </div>
+            </div>
 
             <div class="mt-4 border border-mts-border bg-mts-bg/40 p-4 space-y-4">
               <h3 class="font-mono text-[10px] uppercase tracking-wide text-mts-accent">Карточка «В цифрах» (внутри hero)</h3>
@@ -431,6 +679,12 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
             Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
+          <div class="border-t border-mts-border pt-4">
+            <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+              <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox" />
+              Скрыть подвал на этой странице
+            </label>
+          </div>
         </section>
 
         <div class="flex justify-end">

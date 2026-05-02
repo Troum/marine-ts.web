@@ -14,6 +14,7 @@ import type {
   LineMarketingCustomSection,
   LineMarketingHeroButton,
   LineMarketingSectionId,
+  LineMarketingShipPageVisualStyle,
   LineMarketingSplitBlock,
   LineMarketingTextBlock,
   MarineContentLocale,
@@ -60,6 +61,13 @@ import {
   themeTitleTriple,
 } from '~/utils/themeFormattedTitle'
 
+const HOME_HERO_OVERLAY_DEFAULT: NonNullable<HomePageData['heroOverlayRow']> = {
+  enabled: false,
+  socialLinks: [],
+  links: [],
+  showLanguageSwitch: true,
+}
+
 /* ── Home page: без демо на публичном сайте (контент из CMS) ── */
 
 /**
@@ -100,9 +108,6 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
       ctaClientHref: '/request',
       ctaSeafarer: '',
       ctaSeafarerHref: '/application-form',
-      badgeIso: '',
-      badgeIacs: '',
-      badgeYears: '',
       scroll: '',
     },
     statsCard: { label: '', items: [] },
@@ -139,8 +144,11 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
     heroImage: '',
     sectionOrder: [...HOME_SECTION_DEFAULT_ORDER],
     sectionVisibility,
+    heroOverlayRow: { ...HOME_HERO_OVERLAY_DEFAULT },
   }
 }
+
+export { HOME_HERO_OVERLAY_DEFAULT }
 
 const HOME_DEFAULTS: Record<MarineContentLocale, HomePageData> = {
   ru: createEmptyHomePageData('ru'),
@@ -214,6 +222,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
     customSections,
     sectionOrder,
     sectionVisibility,
+    heroOverlayRow: mergeHomeHeroOverlayRow(parsed.heroOverlayRow, HOME_HERO_OVERLAY_DEFAULT),
   }
 }
 
@@ -231,6 +240,55 @@ function mergeHomeSavedVisibility(parsed: Partial<HomePageData>): Record<string,
     return next
   }
   return sv
+}
+
+function mergeHomeHeroOverlayRow(
+  parsed: HomePageData['heroOverlayRow'] | undefined,
+  def: NonNullable<HomePageData['heroOverlayRow']>,
+): NonNullable<HomePageData['heroOverlayRow']> {
+  if (!parsed || typeof parsed !== 'object') {
+    return { ...def }
+  }
+  const socialRaw = parsed.socialLinks
+  const socialLinks: NonNullable<HomePageData['heroOverlayRow']>['socialLinks'] = []
+  if (Array.isArray(socialRaw)) {
+    for (const row of socialRaw) {
+      if (!row || typeof row !== 'object') {
+        continue
+      }
+      const o = row as Record<string, unknown>
+      const iconKey = typeof o.iconKey === 'string' ? o.iconKey.trim() : 'link'
+      const href = typeof o.href === 'string' ? o.href.trim() : ''
+      if (href) {
+        socialLinks.push({ iconKey: iconKey || 'link', href })
+      }
+    }
+  }
+  const linksRaw = parsed.links
+  const links: NonNullable<HomePageData['heroOverlayRow']>['links'] = []
+  if (Array.isArray(linksRaw)) {
+    for (const row of linksRaw) {
+      if (!row || typeof row !== 'object') {
+        continue
+      }
+      const o = row as Record<string, unknown>
+      const path = typeof o.path === 'string' ? o.path.trim() : ''
+      const lb = o.label && typeof o.label === 'object' ? (o.label as Record<string, unknown>) : {}
+      links.push({
+        path: path || '/',
+        label: {
+          ru: typeof lb.ru === 'string' ? lb.ru : '',
+          en: typeof lb.en === 'string' ? lb.en : '',
+        },
+      })
+    }
+  }
+  return {
+    enabled: parsed.enabled === true,
+    socialLinks,
+    links,
+    showLanguageSwitch: parsed.showLanguageSwitch !== false,
+  }
 }
 
 export function syncHomeStructuralFields(
@@ -284,6 +342,23 @@ export function syncHomeStructuralFields(
     }
     if (src.sectionOrder) {
       d.sectionOrder = [...src.sectionOrder]
+    }
+    d.hideFooter = src.hideFooter
+    d.hero.hideCtaClient = src.hero.hideCtaClient
+    d.hero.hideCtaSeafarer = src.hero.hideCtaSeafarer
+    const srcOverlay = mergeHomeHeroOverlayRow(src.heroOverlayRow, HOME_HERO_OVERLAY_DEFAULT)
+    const curOverlay = mergeHomeHeroOverlayRow(d.heroOverlayRow, HOME_HERO_OVERLAY_DEFAULT)
+    d.heroOverlayRow = {
+      enabled: srcOverlay.enabled,
+      showLanguageSwitch: srcOverlay.showLanguageSwitch,
+      socialLinks: srcOverlay.socialLinks.map((s) => ({ ...s })),
+      links: srcOverlay.links.map((link, i) => ({
+        path: link.path,
+        label: {
+          ru: curOverlay.links[i]?.label.ru ?? link.label.ru,
+          en: curOverlay.links[i]?.label.en ?? link.label.en,
+        },
+      })),
     }
   }
 }
@@ -523,7 +598,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     infoTitle: '',
     formTitle: '',
     formLead: '',
-    officesTitle: '',
+    officesTitle: 'Офисы',
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
@@ -537,7 +612,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     infoTitle: '',
     formTitle: '',
     formLead: '',
-    officesTitle: '',
+    officesTitle: 'Offices',
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
@@ -687,6 +762,19 @@ function mergeCrewingChecklistBlock(
 }
 
 /* ── Line marketing pages (крюинг, судовой менеджмент) ── */
+
+function parseShipPageVisualStyle(
+  raw: unknown,
+  fallback: LineMarketingShipPageVisualStyle | undefined,
+): LineMarketingShipPageVisualStyle {
+  if (raw === 'sepia') {
+    return 'sepia'
+  }
+  if (raw === 'default' || raw == null || raw === '') {
+    return fallback ?? 'default'
+  }
+  return fallback ?? 'default'
+}
 
 function newLineMarketingBlockId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `lm-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
@@ -1012,6 +1100,7 @@ function emptyShipPageData(locale: MarineContentLocale): CrewingPageData {
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
     heroBackgroundImage: '',
+    shipPageVisualStyle: 'default',
   }
 }
 
@@ -1199,6 +1288,8 @@ export function mergeLinePageData(
         ? p.heroBackgroundImage
         : mergeBase.heroBackgroundImage,
     heroBreadcrumbTone: parseStoredPageBreadcrumbTone(p.heroBreadcrumbTone) ?? mergeBase.heroBreadcrumbTone,
+    hideFooter: typeof p.hideFooter === 'boolean' ? p.hideFooter : (mergeBase.hideFooter ?? false),
+    shipPageVisualStyle: parseShipPageVisualStyle(p.shipPageVisualStyle, mergeBase.shipPageVisualStyle),
   }
 }
 

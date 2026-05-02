@@ -282,6 +282,8 @@ export interface ContentPage extends ContentPageSummary {
    * Заголовок по-прежнему нужен для SEO, крошек и вкладки; при false видимый h1 скрыт.
    */
   showPublicTitle?: boolean
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
@@ -390,7 +392,7 @@ export interface AdminRoleOption {
   label: string
 }
 
-export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock' | 'link'
+export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock' | 'link' | 'linkedin' | 'vk' | 'max'
 
 /** Публичные контакты (страница «Контакты»), из API `/contact-settings`. */
 export interface SiteContactSettings {
@@ -399,6 +401,13 @@ export interface SiteContactSettings {
     label: string
     value: string
     href: string | null
+    showInFooter?: boolean
+  }[]
+  departments: {
+    title: string
+    phone: string
+    email: string
+    showInFooter?: boolean
   }[]
   offices: {
     city: string
@@ -417,9 +426,89 @@ export interface NavigationMenuItem {
   children?: NavigationMenuItem[]
 }
 
+/** Режим главного меню: полноэкранный оверлей (бургер) или горизонтальная строка на десктопе. */
+export type MainNavMenuVariant = 'overlay' | 'horizontal'
+
+/** Размер шрифта пунктов горизонтального меню (Tailwind `text-*`). */
+export type MainNavMenuFontSize = 'sm' | 'base' | 'lg' | 'xl' | '2xl'
+
+/** Начертание пунктов горизонтального меню. */
+export type MainNavMenuFontWeight = 'light' | 'normal' | 'medium' | 'semibold' | 'bold'
+
+/** Регистр подписей в горизонтальном меню (Tailwind text-*). */
+export type MainNavMenuTextCase = 'none' | 'lowercase' | 'uppercase' | 'capitalize'
+
+/** Распределение пунктов горизонтальной строки. */
+export type MainNavMenuJustify = 'center' | 'between'
+
 export interface NavigationMenuSettings {
   main: NavigationMenuItem[]
   more: NavigationMenuItem[]
+  menuVariant?: MainNavMenuVariant
+  menuFontSize?: MainNavMenuFontSize
+  menuFontWeight?: MainNavMenuFontWeight
+  /** Регистр текста пунктов (горизонтальное меню). */
+  menuTextCase?: MainNavMenuTextCase
+  /** Выравнивание пунктов по главной оси (`justify-*`). */
+  menuJustify?: MainNavMenuJustify
+  /**
+   * Цвет пунктов горизонтального и полноэкранного меню (CSS-значение, напр. `#1a1a1a`).
+   * Если не задан — используется стандартная цветовая схема темы.
+   */
+  menuItemColor?: string
+  /**
+   * Цвет пунктов меню при наведении курсора.
+   * Если не задан — используется `--color-primary` темы.
+   */
+  menuItemHoverColor?: string
+  /**
+   * Пункты горизонтального меню (десктоп). Если не задан или пуст — используется `main`.
+   */
+  horizItems?: NavigationMenuItem[]
+  /**
+   * Контактный блок в нижней части бургер-оверлея.
+   * Если не задан — используются значения по умолчанию из кода.
+   */
+  burgerContacts?: NavigationBurgerContacts
+}
+
+/** Контактная информация в нижней части бургер-меню. */
+export interface NavigationBurgerSocial {
+  url: string
+  label: string
+}
+
+/** Блок офиса в колонке контактов бургер-меню. */
+export interface NavigationBurgerOffice {
+  /** Подзаголовок (напр. город или страна). */
+  title?: string
+  /** Адрес; допускаются переносы строк. */
+  address: string
+}
+
+export interface NavigationBurgerContacts {
+  /** Заголовок колонки телефонов (по умолчанию «Телефоны»). */
+  phonesTitle?: string
+  /** Список номеров телефонов в виде отображаемого текста (href генерируется автоматически). */
+  phones?: string[]
+  /** Заголовок средней колонки (email и соцсети). */
+  emailTitle?: string
+  /** Несколько адресов электронной почты. */
+  emails?: string[]
+  /** Несколько ссылок на соцсети. */
+  socials?: NavigationBurgerSocial[]
+  /** Общий заголовок колонки офисов. */
+  officesColumnTitle?: string
+  /** Несколько офисов (подзаголовок + адрес). */
+  offices?: NavigationBurgerOffice[]
+  /** @deprecated см. `emails` */
+  email?: string
+  /** @deprecated см. `socials` */
+  socialUrl?: string
+  socialLabel?: string
+  /** @deprecated см. `officesColumnTitle` + `offices` */
+  officeTitle?: string
+  officeAddress?: string
 }
 
 /** Пункт ссылки в подвале (без подменю). */
@@ -437,6 +526,13 @@ export interface FooterNavColumn {
 export interface FooterMenuSettings {
   columns: FooterNavColumn[]
   legal: FooterNavLink[]
+  /** Полностью скрыть подвал на всём сайте. */
+  hideFooterGlobally?: boolean
+  /**
+   * Скрыть подвал на страницах с этими путями (как в браузере без `/en`: `/`, `/about`, `/services/...`).
+   * Префикс локали при проверке отбрасывается.
+   */
+  hideFooterPaths?: string[]
 }
 
 /* ── About page structured data (CMS JSON in body) ── */
@@ -540,6 +636,8 @@ export interface AboutPageData {
   showInquiryForm?: boolean
   hideInquiryFormIntro?: boolean
   hideInquiryFormCardHeading?: boolean
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
   /** Фон первого экрана (Hero). */
   heroImage?: string
   /** Фон секции «История и география». */
@@ -568,16 +666,23 @@ export interface HomeHero {
   /** Клиент: заявка */
   ctaClient: string
   ctaClientHref: string
+  /** Скрыть кнопку клиента (заявка) в hero. */
+  hideCtaClient?: boolean
   /** Моряк: анкета */
   ctaSeafarer: string
   ctaSeafarerHref: string
+  /** Скрыть кнопку моряка (анкета) в hero. */
+  hideCtaSeafarer?: boolean
   /** @deprecated совместимость со старым JSON главной */
   ctaConsult?: string
   /** @deprecated */
   ctaServices?: string
-  badgeIso: string
-  badgeIacs: string
-  badgeYears: string
+  /** @deprecated не используется в новом дизайне */
+  badgeIso?: string
+  /** @deprecated не используется в новом дизайне */
+  badgeIacs?: string
+  /** @deprecated не используется в новом дизайне */
+  badgeYears?: string
   scroll: string
 }
 
@@ -690,6 +795,29 @@ export interface HomeCTA {
   button: string
 }
 
+/** Иконка соцсети в нижней полосе поверх hero на главной. */
+export interface HomeHeroOverlaySocialLink {
+  iconKey: string
+  href: string
+}
+
+/** Текстовая ссылка в полосе поверх hero. */
+export interface HomeHeroOverlayNavLink {
+  path: string
+  label: Record<MarineContentLocale, string>
+}
+
+/**
+ * Нижняя «overlay»-полоса на первом экране главной (соцсети, ссылки, опционально языки).
+ */
+export interface HomeHeroOverlayRow {
+  enabled: boolean
+  socialLinks: HomeHeroOverlaySocialLink[]
+  links: HomeHeroOverlayNavLink[]
+  /** Показывать переключатель RU/EN в этой полосе. */
+  showLanguageSwitch?: boolean
+}
+
 export interface HomePageData {
   hero: HomeHero
   /** Опциональный фон первого экрана (URL); если пусто — без фонового фото. */
@@ -718,6 +846,10 @@ export interface HomePageData {
   sectionOrder?: string[]
   /** Карта видимости секций по id; отсутствие ключа = показывать. */
   sectionVisibility?: Record<string, boolean>
+  /** Полоса поверх hero внизу первого экрана: соцсети и ссылки. */
+  heroOverlayRow?: HomeHeroOverlayRow
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
 }
 
 /* ── Listing page structured data (Ship Repair, Projects, Gallery, News hero+CTA) ── */
@@ -764,6 +896,8 @@ export interface ListingPageData {
   sectionOrder?: string[]
   /** Карта видимости секций по id; отсутствие ключа = показывать. */
   sectionVisibility?: Record<string, boolean>
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
   /**
    * Стиль хлебных крошек в hero.
    * `auto` — светлый текст для маркетингового hero v2 с затемнением.
@@ -795,6 +929,8 @@ export interface ContactsPageData {
   sectionOrder?: string[]
   /** Карта видимости секций по id; отсутствие ключа = показывать. */
   sectionVisibility?: Record<string, boolean>
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
 }
 
 /** Кнопка в hero маркетинговых страниц линий (крюинг / судовой менеджмент), не более двух. */
@@ -1016,6 +1152,9 @@ export type LineMarketingSectionId =
   | 'trust'
   | 'cta'
 
+/** Визуальный тон страницы «Судовой менеджмент» (настройка в админке). */
+export type LineMarketingShipPageVisualStyle = 'default' | 'sepia'
+
 export interface CrewingPageData {
   hero: {
     label: string
@@ -1071,4 +1210,8 @@ export interface CrewingPageData {
    * `auto` — светлый текст при v2 и непустом фоне hero.
    */
   heroBreadcrumbTone?: PageBreadcrumbTone
+  /** Скрыть подвал сайта на этой странице. */
+  hideFooter?: boolean
+  /** Только для `ship-management`: сепия / тёплый тон. */
+  shipPageVisualStyle?: LineMarketingShipPageVisualStyle
 }

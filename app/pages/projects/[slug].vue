@@ -27,6 +27,9 @@ const { data: page, pending } = await useAsyncData(
   { watch: [slug, locale] },
 )
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(page.value?.hideFooter ?? false) })
+
 const parsedBody = computed(() => parseContentPageBody(page.value?.body))
 
 const bodyHtml = computed(() => contentBodyToSafeHtml(parsedBody.value.articleHtml))

@@ -56,7 +56,7 @@ function unwrapFooterPayload(json: unknown): Record<string, unknown> | null {
       return null
     }
     const o = cur as Record<string, unknown>
-    if (Array.isArray(o.columns)) {
+    if (Array.isArray(o.columns) || typeof o.hideFooterGlobally === 'boolean') {
       return o
     }
     const next = o.data
@@ -98,5 +98,25 @@ export function normalizeFooterMenuSettingsPayload(json: unknown): FooterMenuSet
   return {
     columns,
     legal: legal.length > 0 ? legal : [...def.legal],
+    hideFooterGlobally: inner.hideFooterGlobally === true || inner.hide_footer_globally === true,
+    hideFooterPaths: normalizeFooterHidePaths(inner.hideFooterPaths ?? inner.hide_footer_paths),
   }
+}
+
+function normalizeFooterHidePaths(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return []
+  }
+  const out: string[] = []
+  for (const p of raw) {
+    if (typeof p !== 'string') {
+      continue
+    }
+    const t = p.trim()
+    if (!t) {
+      continue
+    }
+    out.push(t.startsWith('/') ? t : `/${t}`)
+  }
+  return [...new Set(out)]
 }

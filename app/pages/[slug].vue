@@ -48,6 +48,9 @@ watch(
 
 const currentPage = computed(() => page.value ?? null)
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(currentPage.value?.hideFooter ?? false) })
+
 const parsedBody = computed(() => parseContentPageBody(currentPage.value?.body))
 const sectionPartition = computed(() => partitionContentPageSectionsForArticle(parsedBody.value.customSections))
 const topCustomSections = computed(() => sectionPartition.value.beforeArticle)

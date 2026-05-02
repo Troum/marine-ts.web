@@ -4,4 +4,13 @@ import type { NavigationMenuSettings } from '~/types'
 export const emptyNavigationSettings = (): NavigationMenuSettings => ({
   main: [],
   more: [],
+  menuVariant: 'overlay',
+  menuFontSize: 'base',
+  menuFontWeight: 'medium',
+  menuTextCase: 'none',
+  menuJustify: 'between',
+  menuItemColor: undefined,
+  menuItemHoverColor: undefined,
+  horizItems: undefined,
+  burgerContacts: undefined,
 })

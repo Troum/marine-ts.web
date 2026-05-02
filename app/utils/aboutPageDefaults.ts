@@ -248,6 +248,7 @@ function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPa
       p.sectionVisibility && typeof p.sectionVisibility === 'object'
         ? (p.sectionVisibility as Record<string, boolean>)
         : base.sectionVisibility,
+    hideFooter: typeof p.hideFooter === 'boolean' ? p.hideFooter : base.hideFooter,
   }
 }
 
@@ -372,5 +373,6 @@ export function syncStructuralFields(
     if (src.sectionVisibility && typeof src.sectionVisibility === 'object') {
       dst.sectionVisibility = { ...src.sectionVisibility }
     }
+    dst.hideFooter = src.hideFooter
   }
 }

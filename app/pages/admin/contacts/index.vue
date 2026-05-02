@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus, Trash2, Phone, Mail, MapPin, Clock, ExternalLink } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-vue-next'
 import type { SiteContactSettings } from '~/types'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { contactQuickIconOptions } from '~/utils/contactQuickIcons'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
@@ -19,14 +20,6 @@ const { confirm } = useConfirm()
 const loading = ref(true)
 const saving = ref(false)
 const form = ref<SiteContactSettings>(structuredClone(contactSettingsDefaults))
-
-const iconOptions = [
-  { value: 'phone' as const, label: 'Телефон', icon: Phone },
-  { value: 'mail' as const, label: 'Почта', icon: Mail },
-  { value: 'map-pin' as const, label: 'Адрес', icon: MapPin },
-  { value: 'clock' as const, label: 'Время', icon: Clock },
-  { value: 'link' as const, label: 'Ссылка', icon: ExternalLink },
-]
 
 onMounted(async () => {
   if (!canManageContacts.value) {
@@ -49,6 +42,7 @@ function addQuick() {
     label: '',
     value: '',
     href: null,
+    showInFooter: false,
   })
 }
 
@@ -92,6 +86,30 @@ async function removeOffice(i: number) {
   form.value.offices.splice(i, 1)
 }
 
+function addDepartment() {
+  form.value.departments.push({
+    title: '',
+    phone: '',
+    email: '',
+    showInFooter: false,
+  })
+}
+
+async function removeDepartment(i: number) {
+  if (form.value.departments.length <= 1) {
+    return
+  }
+  const ok = await confirm({
+    message: 'Удалить этот отдел из списка?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  form.value.departments.splice(i, 1)
+}
+
 async function submit() {
   saving.value = true
   try {
@@ -99,6 +117,11 @@ async function submit() {
       quick: form.value.quick.map((r) => ({
         ...r,
         href: r.href?.trim() ? r.href.trim() : null,
+        showInFooter: r.showInFooter === true,
+      })),
+      departments: form.value.departments.map((d) => ({
+        ...d,
+        showInFooter: d.showInFooter === true,
       })),
       offices: form.value.offices.map((o) => ({ ...o })),
     }
@@ -145,7 +168,7 @@ async function submit() {
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Иконка</label
               >
-              <AdminSelect v-model="row.iconKey" :options="iconOptions" />
+              <AdminSelect v-model="row.iconKey" :options="contactQuickIconOptions" />
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
@@ -180,7 +203,11 @@ async function submit() {
                 placeholder="Например tel:84012355290"
               />
             </div>
-            <div class="sm:col-span-2 flex justify-end">
+            <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-4">
+              <label class="inline-flex items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="row.showInFooter" type="checkbox" class="mts-checkbox" />
+                Показывать в футере
+              </label>
               <button
                 v-if="form.quick.length > 1"
                 type="button"
@@ -195,6 +222,71 @@ async function submit() {
           <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addQuick">
             <Plus class="h-4 w-4" />
             Добавить строку
+          </button>
+        </div>
+
+        <h2 class="font-display text-lg text-mts-text mb-4">Отделы</h2>
+        <p class="mb-4 font-body text-sm text-mts-text-secondary">
+          Отделы отображаются на странице «Контакты». Отдельным флажком можно выбрать, какие отделы вывести в футере.
+        </p>
+        <div class="space-y-6 mb-10">
+          <div
+            v-for="(department, i) in form.departments"
+            :key="i"
+            class="grid gap-4 border border-mts-border p-4 bg-mts-bg/50 sm:grid-cols-2"
+          >
+            <div class="sm:col-span-2">
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Название отдела
+              </label>
+              <input
+                v-model="department.title"
+                type="text"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Телефон
+              </label>
+              <input
+                v-model="department.phone"
+                type="text"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Email
+              </label>
+              <input
+                v-model="department.email"
+                type="email"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div class="sm:col-span-2 flex flex-wrap items-center justify-between gap-4">
+              <label class="inline-flex items-center gap-2 font-body text-sm text-mts-text">
+                <input v-model="department.showInFooter" type="checkbox" class="mts-checkbox" />
+                Показывать в футере
+              </label>
+              <button
+                v-if="form.departments.length > 1"
+                type="button"
+                class="btn-secondary inline-flex items-center gap-2 text-red-700 border-red-200 hover:border-red-400"
+                @click="removeDepartment(i)"
+              >
+                <Trash2 class="h-4 w-4" />
+                Удалить отдел
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addDepartment">
+            <Plus class="h-4 w-4" />
+            Добавить отдел
           </button>
         </div>
 

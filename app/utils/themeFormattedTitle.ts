@@ -346,12 +346,11 @@ export function mergeHomeHero(parsed: Partial<HomeHero> | undefined, base: HomeH
     /* href — URL: ранее ввод шёл через AdminThemedTextField и мог содержать HTML.
        Срезаем теги к плейн-строке перед отдачей в форму. */
     ctaClientHref: typeof h.ctaClientHref === 'string' ? stripHtmlToPlainTrim(h.ctaClientHref) : '/request',
+    hideCtaClient: typeof h.hideCtaClient === 'boolean' ? h.hideCtaClient : (base.hideCtaClient ?? false),
     ctaSeafarer: typeof h.ctaSeafarer === 'string' ? h.ctaSeafarer : (h.ctaServices as string) ?? base.ctaSeafarer,
     ctaSeafarerHref:
       typeof h.ctaSeafarerHref === 'string' ? stripHtmlToPlainTrim(h.ctaSeafarerHref) : '/application-form',
-    badgeIso: typeof h.badgeIso === 'string' ? h.badgeIso : base.badgeIso,
-    badgeIacs: typeof h.badgeIacs === 'string' ? h.badgeIacs : base.badgeIacs,
-    badgeYears: typeof h.badgeYears === 'string' ? h.badgeYears : base.badgeYears,
+    hideCtaSeafarer: typeof h.hideCtaSeafarer === 'boolean' ? h.hideCtaSeafarer : (base.hideCtaSeafarer ?? false),
     scroll: typeof h.scroll === 'string' ? h.scroll : base.scroll,
   }
 }

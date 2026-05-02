@@ -45,6 +45,9 @@ const cms = computed<ProjectsPageData>(() => {
   return defaultListingData('projects-page', loc.value) as ProjectsPageData
 })
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.projects'), to: '/projects' }),
 )

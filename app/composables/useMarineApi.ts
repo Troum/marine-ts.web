@@ -571,6 +571,7 @@ export function useMarineApi() {
         sortOrder?: number
         showInquiryForm?: boolean
         showPublicTitle?: boolean
+        hideFooter?: boolean
         contentableType?: ContentPageContentableType
         contentableId?: number
         translations: Record<MarineContentLocale, ContentPageTranslationPayload>

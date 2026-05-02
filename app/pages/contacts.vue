@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Phone, Mail, MapPin, Clock, ExternalLink, Send, Loader2 } from 'lucide-vue-next'
-import type { Component } from 'vue'
-import type { ContactQuickIconKey, ContactsPageData, MarineContentLocale } from '~/types'
+import { Phone, Send, Loader2 } from 'lucide-vue-next'
+import type { ContactsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { contactQuickIcons } from '~/utils/contactQuickIcons'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { CONTACTS_SECTION_DEFAULT_ORDER, defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
@@ -37,6 +37,9 @@ const cms = computed<ContactsPageData>(() => {
   return defaultContactsData(loc.value)
 })
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.contacts'), to: '/contacts' }),
 )
@@ -57,14 +60,8 @@ const { data: contactSettings, pending: contactsPending } = await useAsyncData(
 )
 
 const resolvedContacts = computed(() => contactSettings.value ?? contactSettingsDefaults)
-
-const quickIcons: Record<ContactQuickIconKey, Component> = {
-  phone: Phone,
-  mail: Mail,
-  'map-pin': MapPin,
-  clock: Clock,
-  link: ExternalLink,
-}
+const officesTitle = computed(() => cms.value.officesTitle || (loc.value === 'en' ? 'Offices' : 'Офисы'))
+const departmentsTitle = computed(() => (loc.value === 'en' ? 'Departments' : 'Отделы'))
 
 const form = ref({
   name: '',
@@ -132,7 +129,7 @@ async function submitFeedback() {
     <template v-for="sid in sectionOrderEffective" :key="sid">
       <section v-if="sid === 'contacts' && sectionShown('contacts')" class="relative py-24 overflow-hidden">
       <div class="mts-content-wrap relative z-10">
-        <div class="grid lg:grid-cols-2 gap-12">
+        <div class="grid lg:grid-cols-2 gap-12 items-start">
           <div>
             <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
             <div v-if="contactsPending" class="flex items-center gap-2 text-muted font-body text-sm mb-12">
@@ -149,7 +146,7 @@ async function submitFeedback() {
                 :class="item.href ? '' : 'cursor-default'"
               >
                 <div class="w-10 h-10 bg-white border border-border flex items-center justify-center">
-                  <component :is="quickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-primary" />
+                  <component :is="contactQuickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-primary" />
                 </div>
                 <div>
                   <p class="font-mono text-[10px] uppercase tracking-wide text-muted">{{ item.label }}</p>
@@ -157,8 +154,28 @@ async function submitFeedback() {
                 </div>
               </component>
             </div>
+
+            <div v-if="resolvedContacts.departments.length" class="mb-12">
+              <h3 class="font-display text-lg text-body mb-4">{{ departmentsTitle }}</h3>
+              <div class="grid gap-4">
+                <div
+                  v-for="(department, idx) in resolvedContacts.departments"
+                  :key="`${department.title}-${idx}`"
+                  class="public-card p-5"
+                >
+                  <h4 class="font-display text-base text-body">{{ department.title }}</h4>
+                  <p class="mt-3 font-body text-sm text-muted">{{ department.phone }}</p>
+                  <a
+                    :href="`mailto:${department.email}`"
+                    class="mt-2 inline-flex font-mono text-xs text-primary hover:underline"
+                  >
+                    {{ department.email }}
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card-tech p-8">
+          <div class="card-tech w-full p-8">
             <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-body">
               <Send class="h-5 w-5 text-primary" />
               <ThemedContentString :content="cms.formTitle" />
@@ -232,7 +249,7 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="cms.officesTitle" /></h2>
+          <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="officesTitle" /></h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"

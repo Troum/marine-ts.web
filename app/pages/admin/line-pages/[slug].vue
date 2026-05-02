@@ -7,6 +7,7 @@ import type {
   LineMarketingContentBlock,
   LineMarketingCustomSection,
   LineMarketingSectionId,
+  LineMarketingShipPageVisualStyle,
   MarineContentLocale,
   PageBreadcrumbTone,
 } from '~/types'
@@ -131,6 +132,11 @@ const collapsed = ref<Record<string, boolean>>({
 const crewingStructureOptions: AdminSelectOption[] = [
   { value: 'v2', label: 'Новая структура (секции как на «О компании»)' },
   { value: 'legacy', label: 'Классическая (направления, чек-лист, принципы)' },
+]
+
+const shipPageVisualOptions: AdminSelectOption[] = [
+  { value: 'default', label: 'Обычная цветопередача' },
+  { value: 'sepia', label: 'Сепия (тёплый тон на всей странице)' },
 ]
 
 function onCrewingStructureChange(mode: string) {
@@ -866,6 +872,8 @@ async function submit() {
   const heroBg = data.value[localeTab.value].heroBackgroundImage
   const sectionOrder = data.value[localeTab.value].sectionOrder
   const sectionVisibility = data.value[localeTab.value].sectionVisibility
+  const hideFooter = data.value[localeTab.value].hideFooter
+  const shipPageVisualStyle = data.value[localeTab.value].shipPageVisualStyle ?? 'default'
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
     data.value[loc].hideInquiryFormCardHeading = hideInquiryCardHeading
@@ -873,6 +881,8 @@ async function submit() {
     data.value[loc].heroBackgroundImage = heroBg
     data.value[loc].sectionOrder = [...sectionOrder]
     data.value[loc].sectionVisibility = { ...sectionVisibility }
+    data.value[loc].hideFooter = hideFooter
+    data.value[loc].shipPageVisualStyle = shipPageVisualStyle
   }
   saving.value = true
   try {
@@ -1009,6 +1019,19 @@ function directionPreviewPath(detailSlug: string) {
             Классическая вёрстка — направления, чек-лист и блоки принципов/аудитории. Новая — пять секций (технический
             менеджмент), Rich Text через TipTap; отдельного блока CTA перед формой нет — текст призыва в финальной секции.
           </p>
+          <div class="max-w-3xl space-y-2 border-t border-mts-border pt-4">
+            <label :class="sectionLabel">Визуальный тон страницы</label>
+            <AdminSelect
+              :model-value="d.shipPageVisualStyle ?? 'default'"
+              :options="shipPageVisualOptions"
+              class="max-w-xl"
+              @update:model-value="(v) => (d.shipPageVisualStyle = v as LineMarketingShipPageVisualStyle)"
+            />
+            <p class="font-body text-xs text-mts-text-secondary">
+              Сепия слегка «старит» всю страницу (и фото в hero). Для более мягкого эффекта можно позже ограничить только
+              фоновое изображение — напишите, если понадобится.
+            </p>
+          </div>
         </section>
 
         <!-- Hero — фиксирована, не скрывается, не переносится. -->
@@ -2315,6 +2338,12 @@ function directionPreviewPath(detailSlug: string) {
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
             Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
+          <div class="border-t border-mts-border pt-4">
+            <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+              <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox" />
+              Скрыть подвал на этой странице
+            </label>
+          </div>
         </section>
 
         <div class="flex justify-end">

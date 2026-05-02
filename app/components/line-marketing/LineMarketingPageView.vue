@@ -86,6 +86,9 @@ const cms = computed<CrewingPageData>(() => {
   return defaultLinePageData(props.slug, loc.value)
 })
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const lineV2 = computed((): LineMarketingV2Payload | null => {
   if (props.slug === 'crewing-management' && cms.value.crewingPageLayout === 'v2' && cms.value.crewingV2) {
     return { kind: 'crewing', data: cms.value.crewingV2 }
@@ -241,10 +244,18 @@ const heroBreadcrumbsOnDark = computed(() =>
   resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, heroBreadcrumbAutoOnDark.value),
 )
 
+const linePageRootClass = computed(() => {
+  const cls = ['relative', 'mts-line-marketing-root', 'bg-white']
+  if (props.slug === 'ship-management' && (cms.value.shipPageVisualStyle ?? 'default') === 'sepia') {
+    cls.push('mts-line-page-ship-sepia')
+  }
+  return cls
+})
+
 </script>
 
 <template>
-  <div class="bg-white">
+  <div :class="linePageRootClass">
     <section
       :class="[
         'relative flex items-center overflow-hidden',

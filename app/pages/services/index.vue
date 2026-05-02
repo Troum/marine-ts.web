@@ -51,6 +51,9 @@ const isServicesV2 = computed(
   () => cms.value.servicesPageLayout === 'v2' && cms.value.servicesV2 != null,
 )
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.services'), to: '/services' }),
 )

@@ -37,6 +37,9 @@ const cms = computed<ListingPageData>(() => {
   return defaultListingData('news-page', loc.value)
 })
 
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
+
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.news'), to: '/news' }),
 )

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ChevronDown } from 'lucide-vue-next'
-import type { HomePageData, MarineContentLocale } from '~/types'
+import type { HomeHeroOverlayNavLink, HomePageData, MarineContentLocale } from '~/types'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import { mergeHomePageData } from '~/utils/pageDefaults'
+import { mergeHomePageData, HOME_HERO_OVERLAY_DEFAULT } from '~/utils/pageDefaults'
+import { heroOverlaySocialIcons } from '~/utils/heroOverlaySocialIcons'
+import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import { isSectionVisible } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('home')
@@ -50,6 +51,9 @@ const d = computed<HomePageData>(() => {
   const l = loc.value
   return cms.value ?? mergeHomePageData(l, null)
 })
+
+const { setHidden: setFooterHidden } = usePageFooterHidden()
+watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
 
 const isVisible = ref(false)
 onMounted(() => { isVisible.value = true })
@@ -103,10 +107,6 @@ const directionsGridClass = computed(() => {
   return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
 })
 
-function scrollToAbout() {
-  document.querySelector('#directions-section')?.scrollIntoView({ behavior: 'smooth' })
-}
-
 /**
  * Кастомные секции главной — единственный «динамический» блок ниже секции
  * «Чем мы занимаемся». Порядок берётся из `customSections` (как его задал
@@ -118,6 +118,43 @@ const visibleCustomSections = computed(() =>
     isSectionVisible(d.value.sectionVisibility, `custom:${s.id}`),
   ),
 )
+
+function mergeHeroOverlay() {
+  const o = d.value.heroOverlayRow
+  if (!o || typeof o !== 'object') {
+    return { ...HOME_HERO_OVERLAY_DEFAULT }
+  }
+  return {
+    enabled: o.enabled === true,
+    showLanguageSwitch: o.showLanguageSwitch !== false,
+    socialLinks: Array.isArray(o.socialLinks) ? o.socialLinks : [],
+    links: Array.isArray(o.links) ? o.links : [],
+  }
+}
+
+const overlayRow = computed(() => mergeHeroOverlay())
+
+const showHeroOverlayRow = computed(() => {
+  const o = overlayRow.value
+  if (!o.enabled) {
+    return false
+  }
+  return (
+    o.socialLinks.length > 0 ||
+    o.links.length > 0 ||
+    o.showLanguageSwitch === true
+  )
+})
+
+function isOverlayExternal(path: string) {
+  return /^https?:\/\//i.test(path.trim())
+}
+
+function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
+  const loc = locale.value === 'en' ? 'en' : 'ru'
+  const raw = row.label[loc] || row.label.ru || row.label.en || ''
+  return flattenEncodedOrPlain(raw)
+}
 </script>
 
 <template>
@@ -196,15 +233,16 @@ const visibleCustomSections = computed(() =>
               </div>
             </Transition>
             <div
+              v-if="!d.hero.hideCtaClient || !d.hero.hideCtaSeafarer"
               :class="[
                 'mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4',
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <NuxtLink :to="localePath(d.hero.ctaClientHref)" class="btn-primary w-full sm:w-auto">
+              <NuxtLink v-if="!d.hero.hideCtaClient" :to="localePath(d.hero.ctaClientHref)" class="btn-primary w-full sm:w-auto">
                 <ThemedContentString :content="d.hero.ctaClient" />
               </NuxtLink>
-              <NuxtLink :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass w-full sm:w-auto">
+              <NuxtLink v-if="!d.hero.hideCtaSeafarer" :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass w-full sm:w-auto">
                 <ThemedContentString :content="d.hero.ctaSeafarer" />
               </NuxtLink>
             </div>
@@ -235,17 +273,58 @@ const visibleCustomSections = computed(() =>
           </div>
         </div>
 
-        <button
-          type="button"
-          :class="[
-            'absolute bottom-32 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-1 text-white/70 transition-all duration-300 hover:text-white lg:flex',
-            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-          ]"
-          @click="scrollToAbout"
+        <div
+          v-if="showHeroOverlayRow"
+          class="absolute bottom-10 left-0 right-0 z-20"
         >
-          <span class="font-mono text-xs uppercase tracking-wide"><ThemedContentString :content="d.hero.scroll" /></span>
-          <ChevronDown class="block w-4 h-4 animate-bounce" />
-        </button>
+          <div class="mx-auto max-w-[70%] px-6 py-4 md:px-0">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div v-if="overlayRow.socialLinks.length" class="flex flex-wrap items-center gap-4">
+                <a
+                  v-for="(s, i) in overlayRow.socialLinks"
+                  :key="`hero-ov-soc-${i}-${s.href}`"
+                  :href="s.href"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-white/85 transition-colors hover:text-primary"
+                  :aria-label="s.iconKey"
+                >
+                  <component
+                    :is="heroOverlaySocialIcons[s.iconKey] ?? heroOverlaySocialIcons.link"
+                    class="h-6 w-6 shrink-0"
+                  />
+                </a>
+              </div>
+              <div
+                :class="[
+                  'flex flex-wrap items-center gap-x-6 gap-y-2 md:justify-end',
+                  overlayRow.socialLinks.length ? '' : 'md:ml-auto',
+                ]"
+              >
+                <template v-for="(lnk, i) in overlayRow.links" :key="`hero-ov-lnk-${i}-${lnk.path}`">
+                  <NuxtLink
+                    v-if="!isOverlayExternal(lnk.path)"
+                    :to="localePath(lnk.path)"
+                    class="font-body text-sm text-white/90 underline-offset-4 transition-colors hover:text-primary"
+                  >
+                    {{ overlayLinkLabel(lnk) }}
+                  </NuxtLink>
+                  <a
+                    v-else
+                    :href="lnk.path"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-body text-sm text-white/90 underline-offset-4 transition-colors hover:text-primary"
+                  >
+                    {{ overlayLinkLabel(lnk) }}
+                  </a>
+                </template>
+                <LayoutLanguageSwitch v-if="overlayRow.showLanguageSwitch" dark class="shrink-0" />
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
