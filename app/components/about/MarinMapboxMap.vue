@@ -1,7 +1,17 @@
 <script setup lang="ts">
+/**
+ * Нативные слои Mapbox (без HTML overlay):
+ * - точки: circle layer
+ * - подписи: symbol layer (справа от точки, на том же уровне)
+ *
+ * Базовые подписи карты НЕ скрываем.
+ */
 import 'mapbox-gl/dist/mapbox-gl.css'
-import type { Map as MapboxMap, Marker as MapboxMarker } from 'mapbox-gl'
+import type { FeatureCollection, Point } from 'geojson'
+import type { GeoJSONSource, Map as MapboxMap } from 'mapbox-gl'
 import type { AboutGeoLocation } from '~/types'
+
+type Loc = AboutGeoLocation & { lng: number, lat: number }
 
 const props = defineProps<{
   locations: AboutGeoLocation[]
@@ -12,51 +22,66 @@ const mapEl = ref<HTMLDivElement | null>(null)
 
 let mapboxgl: typeof import('mapbox-gl') | null = null
 let map: MapboxMap | null = null
-let markers: MapboxMarker[] = []
-
-const validLocations = computed(() =>
-  props.locations.filter(
-    (l) =>
-      Number.isFinite(l.lng)
-      && Number.isFinite(l.lat)
-      && l.lng >= -180
-      && l.lng <= 180
-      && l.lat >= -90
-      && l.lat <= 90,
-  ),
-)
-function buildDotEl(): HTMLDivElement {
-  const wrap = document.createElement('div')
-  wrap.className = 'mts-mb-marker'
-
-  const ping = document.createElement('span')
-  ping.className = 'mts-mb-marker__ping'
-  ping.setAttribute('aria-hidden', 'true')
-
-  const dot = document.createElement('span')
-  dot.className = 'mts-mb-marker__dot'
-  dot.setAttribute('aria-hidden', 'true')
-
-  wrap.append(ping, dot)
-  return wrap
-}
-
-function buildLabelEl(name: string): HTMLDivElement {
-  const el = document.createElement('div')
-  el.className = 'mts-mb-label'
-  el.textContent = name
-  return el
-}
+const SOURCE_ID = 'mts-geo-points'
+const PULSE_LAYER_ID = 'mts-geo-points-pulse'
+const DOT_LAYER_ID = 'mts-geo-points-dot'
+const LABEL_LAYER_ID = 'mts-geo-points-label'
+const PULSE_PERIOD_MS = 1900
 
 let containerResizeObs: ResizeObserver | null = null
+let pulseRaf = 0
+let pulseStartedAt = 0
+let reduceMotion = false
+
+function asCoord(v: unknown): number {
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    return v
+  }
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : Number.NaN
+  }
+  return Number.NaN
+}
+
+const validLocations = computed<Loc[]>(() =>
+  props.locations
+    .map((l) => {
+      const r = l as unknown as Record<string, unknown>
+      const lng = asCoord(r.lng ?? r.longitude ?? r.lon)
+      const lat = asCoord(r.lat ?? r.latitude)
+      return { ...l, lng, lat }
+    })
+    .filter(
+      (l) =>
+        Number.isFinite(l.lng)
+        && Number.isFinite(l.lat)
+        && l.lng >= -180
+        && l.lng <= 180
+        && l.lat >= -90
+        && l.lat <= 90,
+    ),
+)
+
+function toFeatureCollection(locations: Loc[]): FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: locations.map((loc) => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [loc.lng, loc.lat],
+      } satisfies Point,
+      properties: {
+        name: String((loc.name ?? '').trim()),
+      },
+    })),
+  }
+}
 
 function destroyMap() {
   containerResizeObs?.disconnect()
   containerResizeObs = null
-  for (const m of markers) {
-    m.remove()
-  }
-  markers = []
   if (map) {
     map.remove()
     map = null
@@ -83,11 +108,6 @@ function fitToMarkers() {
   })
 }
 
-/**
- * HTML-маркеры Mapbox привязываются к проекции canvas. Если контейнер
- * с aspect-ratio / flex получил финальную высоту после первого кадра
- * или после SSR → ClientOnly, без `resize()` точки визуально «уползают».
- */
 function syncMapSizeAndFrame(): void {
   if (!map) {
     return
@@ -96,62 +116,166 @@ function syncMapSizeAndFrame(): void {
   fitToMarkers()
 }
 
-const LABEL_OFFSET_PX = 14
-
-function renderMarkers() {
-  if (!map || !mapboxgl) {
-    return
+function themeVar(name: string, fallback: string): string {
+  if (!import.meta.client) {
+    return fallback
   }
-  for (const m of markers) {
-    m.remove()
-  }
-  markers = []
-
-  for (const loc of validLocations.value) {
-    const dotMarker = new mapboxgl.Marker({ element: buildDotEl(), anchor: 'center' })
-      .setLngLat([loc.lng, loc.lat])
-      .addTo(map)
-    markers.push(dotMarker)
-
-    const name = (loc.name ?? '').trim()
-    if (name.length === 0) {
-      continue
-    }
-    const anchor: 'left' | 'right' = loc.labelOnRight ? 'left' : 'right'
-    const offset: [number, number] = loc.labelOnRight
-      ? [LABEL_OFFSET_PX, 0]
-      : [-LABEL_OFFSET_PX, 0]
-
-    const labelMarker = new mapboxgl.Marker({
-      element: buildLabelEl(name),
-      anchor,
-      offset,
-    })
-      .setLngLat([loc.lng, loc.lat])
-      .addTo(map)
-    markers.push(labelMarker)
-  }
+  const v = getComputedStyle(document.body).getPropertyValue(name).trim()
+  return v || fallback
 }
-function hideAllLabels() {
+
+function applyThemeToPointLayers(): void {
   if (!map) {
     return
   }
-  const style = map.getStyle()
-  const layers = style?.layers ?? []
+  const marker = themeVar('--color-mts-marker', themeVar('--color-mts-accent', '#c84b4b'))
+  const markerLight = themeVar('--color-mts-accent-light', '#d76565')
+  const label = themeVar('--color-mts-frost', '#e6edf2')
+  if (map.getLayer(PULSE_LAYER_ID)) {
+    map.setPaintProperty(PULSE_LAYER_ID, 'circle-color', markerLight)
+  }
+  if (map.getLayer(DOT_LAYER_ID)) {
+    map.setPaintProperty(DOT_LAYER_ID, 'circle-color', marker)
+    map.setPaintProperty(DOT_LAYER_ID, 'circle-stroke-color', markerLight)
+  }
+  if (map.getLayer(LABEL_LAYER_ID)) {
+    map.setPaintProperty(LABEL_LAYER_ID, 'text-color', label)
+  }
+}
+
+function stopPulseAnimation(): void {
+  if (pulseRaf) {
+    cancelAnimationFrame(pulseRaf)
+    pulseRaf = 0
+  }
+  pulseStartedAt = 0
+}
+
+function pulseTick(ts: number): void {
+  if (!map || !map.getLayer(PULSE_LAYER_ID)) {
+    stopPulseAnimation()
+    return
+  }
+  if (pulseStartedAt === 0) {
+    pulseStartedAt = ts
+  }
+  const p = ((ts - pulseStartedAt) % PULSE_PERIOD_MS) / PULSE_PERIOD_MS
+  const radius = 5 + 8 * p
+  const opacity = 0.34 * (1 - p)
+  map.setPaintProperty(PULSE_LAYER_ID, 'circle-radius', radius)
+  map.setPaintProperty(PULSE_LAYER_ID, 'circle-opacity', opacity)
+  pulseRaf = requestAnimationFrame(pulseTick)
+}
+
+function startPulseAnimation(): void {
+  if (reduceMotion || pulseRaf || !map?.getLayer(PULSE_LAYER_ID)) {
+    return
+  }
+  pulseRaf = requestAnimationFrame(pulseTick)
+}
+
+function hideBasemapSymbolLabels(): void {
+  if (!map) {
+    return
+  }
+  const layers = map.getStyle().layers ?? []
   for (const layer of layers) {
-    if (layer.type === 'symbol') {
-      try {
-        map.setLayoutProperty(layer.id, 'visibility', 'none')
-      } catch {
-        /* слой мог быть удалён до момента вызова — игнорируем */
-      }
+    if (layer.type !== 'symbol') {
+      continue
+    }
+    if (layer.id === LABEL_LAYER_ID) {
+      continue
+    }
+    try {
+      map.setLayoutProperty(layer.id, 'visibility', 'none')
+    } catch {
+      /* style may mutate between events */
     }
   }
+}
+
+function ensureSourceAndLayers() {
+  if (!map || !mapboxgl || !map.isStyleLoaded()) {
+    return
+  }
+  const fc = toFeatureCollection(validLocations.value)
+  if (!map.getSource(SOURCE_ID)) {
+    map.addSource(SOURCE_ID, { type: 'geojson', data: fc })
+  } else {
+    (map.getSource(SOURCE_ID) as GeoJSONSource).setData(fc)
+  }
+  if (!map.getLayer(PULSE_LAYER_ID)) {
+    map.addLayer({
+      id: PULSE_LAYER_ID,
+      type: 'circle',
+      source: SOURCE_ID,
+      paint: {
+        'circle-radius': 9,
+        'circle-color': '#d76565',
+        'circle-opacity': reduceMotion ? 0.14 : 0.28,
+      },
+    })
+  }
+  if (!map.getLayer(DOT_LAYER_ID)) {
+    map.addLayer({
+      id: DOT_LAYER_ID,
+      type: 'circle',
+      source: SOURCE_ID,
+      paint: {
+        'circle-radius': 4.2,
+        'circle-color': '#c96667',
+        'circle-stroke-width': 1.4,
+        'circle-stroke-color': '#d76565',
+      },
+    })
+  }
+  if (!map.getLayer(LABEL_LAYER_ID)) {
+    map.addLayer({
+      id: LABEL_LAYER_ID,
+      type: 'symbol',
+      source: SOURCE_ID,
+      filter: ['>', ['length', ['get', 'name']], 0],
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 11,
+        'text-anchor': 'left',
+        'text-offset': [0.9, 0],
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': '#e6edf2',
+        'text-halo-color': 'rgba(5, 13, 18, 0.85)',
+        'text-halo-width': 2,
+      },
+    })
+  }
+  applyThemeToPointLayers()
+  if (reduceMotion) {
+    if (map.getLayer(PULSE_LAYER_ID)) {
+      map.setPaintProperty(PULSE_LAYER_ID, 'circle-radius', 9)
+      map.setPaintProperty(PULSE_LAYER_ID, 'circle-opacity', 0.14)
+    }
+    stopPulseAnimation()
+  } else {
+    startPulseAnimation()
+  }
+}
+
+function scheduleSync(): void {
+  requestAnimationFrame(() => {
+    syncMapSizeAndFrame()
+    requestAnimationFrame(() => {
+      syncMapSizeAndFrame()
+    })
+  })
 }
 
 onMounted(async () => {
   if (!mapEl.value || !props.accessToken) {
     return
+  }
+  if (import.meta.client) {
+    reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   }
   const mod = await import('mapbox-gl')
   mapboxgl = (mod as unknown as { default?: typeof import('mapbox-gl') }).default ?? mod
@@ -169,14 +293,29 @@ onMounted(async () => {
   })
 
   map.on('load', () => {
-    hideAllLabels()
-    renderMarkers()
-    requestAnimationFrame(() => {
-      syncMapSizeAndFrame()
-      requestAnimationFrame(syncMapSizeAndFrame)
-    })
+    ensureSourceAndLayers()
+    hideBasemapSymbolLabels()
+    scheduleSync()
   })
-  map.on('styledata', hideAllLabels)
+
+  map.on('styledata', () => {
+    if (!map?.isStyleLoaded()) {
+      return
+    }
+    ensureSourceAndLayers()
+    hideBasemapSymbolLabels()
+    scheduleSync()
+  })
+
+  map.on('moveend', () => {
+    syncMapSizeAndFrame()
+  })
+
+  map.once('idle', () => {
+    ensureSourceAndLayers()
+    hideBasemapSymbolLabels()
+    scheduleSync()
+  })
 
   const el = mapEl.value
   if (el && typeof ResizeObserver !== 'undefined') {
@@ -196,85 +335,18 @@ onMounted(async () => {
 watch(
   validLocations,
   () => {
-    if (!map) {
-      return
-    }
-    renderMarkers()
-    requestAnimationFrame(syncMapSizeAndFrame)
+    ensureSourceAndLayers()
+    scheduleSync()
   },
   { deep: true },
 )
 
 onBeforeUnmount(() => {
+  stopPulseAnimation()
   destroyMap()
 })
 </script>
 
 <template>
-  <div ref="mapEl" class="absolute inset-0 size-full" />
+  <div ref="mapEl" class="absolute inset-0 z-0 size-full min-h-0" />
 </template>
-
-<style>
-.mts-mb-marker {
-  position: relative;
-  display: block;
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  pointer-events: none;
-  /* Явный геометрический центр для anchor:center у Mapbox Marker */
-  transform-origin: center center;
-}
-.mts-mb-marker__dot {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  margin-left: -7px;
-  margin-top: -7px;
-  border-radius: 9999px;
-  background-color: var(--color-mts-accent-dark, #c96667);
-  box-shadow: 0 0 0 2px rgba(46, 163, 255, 0.25);
-}
-.mts-mb-marker__ping {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  margin-left: -7px;
-  margin-top: -7px;
-  border-radius: 9999px;
-  background-color: var(--color-mts-accent-dark, #c96667);
-  opacity: 0.55;
-  transform-origin: center center;
-  animation: mts-mb-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
-.mts-mb-label {
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--color-mts-frost, #e6edf2);
-  text-shadow:
-    0 0 2px rgba(5, 13, 18, 0.85),
-    0 1px 2px rgba(5, 13, 18, 0.7);
-  pointer-events: none;
-  user-select: none;
-}
-@keyframes mts-mb-ping {
-  0% {
-    transform: scale(0.65);
-    opacity: 0.5;
-  }
-  75%,
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-</style>

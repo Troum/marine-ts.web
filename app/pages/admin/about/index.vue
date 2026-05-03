@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus, Trash2, Upload, ExternalLink } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, MapPin, Plus, Trash2, Upload, ExternalLink } from 'lucide-vue-next'
 import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type { AboutPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
@@ -79,6 +79,13 @@ function initialAboutAdminData(): Record<MarineContentLocale, AboutPageData> {
 const data = ref<Record<MarineContentLocale, AboutPageData>>(initialAboutAdminData())
 
 const d = computed(() => data.value[localeTab.value])
+
+/** Раскрытая строка «карта + ГМС» для geography.locations[index]. */
+const expandedGeoRow = ref<number | null>(null)
+
+function toggleGeoRow(i: number): void {
+  expandedGeoRow.value = expandedGeoRow.value === i ? null : i
+}
 
 const collapsed = ref<Record<string, boolean>>({
   sec1: false,
@@ -205,6 +212,11 @@ async function removeLocation(i: number) {
   if (!ok) return
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].geography.locations.splice(i, 1)
+  }
+  if (expandedGeoRow.value === i) {
+    expandedGeoRow.value = null
+  } else if (expandedGeoRow.value !== null && expandedGeoRow.value > i) {
+    expandedGeoRow.value -= 1
   }
 }
 
@@ -657,7 +669,8 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemedTextField v-model="d.geography.lead" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">
-              Долгота (lng, -180…180) и широта (lat, -90…90) — координаты порта для Mapbox. Шаг 0.0001°.
+              Долгота (lng, -180…180) и широта (lat, -90…90) — те же десятичные координаты, что на сайте (Mapbox). Шаг 0.0001°.
+              Кнопка с иконкой карты открывает выбор точки на карте и ввод в градусах/минутах/секундах.
             </p>
             <div class="overflow-x-auto border border-mts-border">
               <table class="w-full min-w-[640px] text-left text-sm">
@@ -666,46 +679,65 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                     <th class="px-3 py-2">Название</th>
                     <th class="px-3 py-2 w-44">Долгота (lng)</th>
                     <th class="px-3 py-2 w-44">Широта (lat)</th>
+                    <th class="px-3 py-2 w-10 text-center" title="Карта и ГМС">⌖</th>
                     <th class="px-3 py-2 w-28">Подпись справа</th>
                     <th class="px-3 py-2 w-12" />
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(locRow, i) in d.geography.locations" :key="i" class="border-t border-mts-border align-middle">
-                    <td class="px-3 py-2">
-                      <input v-model="locRow.name" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-body text-sm focus:outline-none focus:border-mts-accent" />
-                    </td>
-                    <td class="px-3 py-2 w-44">
-                      <AdminInputNumberStepper
-                        v-model="locRow.lng"
-                        variant="full"
-                        :min="-180"
-                        :max="180"
-                        :step="0.0001"
-                        decrement-label="Уменьшить долготу"
-                        increment-label="Увеличить долготу"
-                      />
-                    </td>
-                    <td class="px-3 py-2 w-44">
-                      <AdminInputNumberStepper
-                        v-model="locRow.lat"
-                        variant="full"
-                        :min="-90"
-                        :max="90"
-                        :step="0.0001"
-                        decrement-label="Уменьшить широту"
-                        increment-label="Увеличить широту"
-                      />
-                    </td>
-                    <td class="px-3 py-2 text-center">
-                      <input v-model="locRow.labelOnRight" type="checkbox" class="mts-checkbox" />
-                    </td>
-                    <td class="px-3 py-2 text-center">
-                      <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeLocation(i)">
-                        <Trash2 class="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
+                  <template v-for="(locRow, i) in d.geography.locations" :key="i">
+                    <tr class="border-t border-mts-border align-middle">
+                      <td class="px-3 py-2">
+                        <input v-model="locRow.name" class="w-full bg-transparent border-b border-mts-border px-1 py-1 font-body text-sm focus:outline-none focus:border-mts-accent" />
+                      </td>
+                      <td class="px-3 py-2 w-44">
+                        <AdminInputNumberStepper
+                          v-model="locRow.lng"
+                          variant="full"
+                          :min="-180"
+                          :max="180"
+                          :step="0.0001"
+                          decrement-label="Уменьшить долготу"
+                          increment-label="Увеличить долготу"
+                        />
+                      </td>
+                      <td class="px-3 py-2 w-44">
+                        <AdminInputNumberStepper
+                          v-model="locRow.lat"
+                          variant="full"
+                          :min="-90"
+                          :max="90"
+                          :step="0.0001"
+                          decrement-label="Уменьшить широту"
+                          increment-label="Увеличить широту"
+                        />
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          class="inline-flex items-center justify-center rounded-sm p-1.5 text-mts-text-secondary transition-colors hover:bg-mts-bg hover:text-mts-accent"
+                          :class="expandedGeoRow === i ? 'bg-mts-bg text-mts-accent' : ''"
+                          :title="expandedGeoRow === i ? 'Скрыть карту и ГМС' : 'Карта и ГМС'"
+                          @click="toggleGeoRow(i)"
+                        >
+                          <MapPin class="h-4 w-4" aria-hidden="true" />
+                        </button>
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <input v-model="locRow.labelOnRight" type="checkbox" class="mts-checkbox" />
+                      </td>
+                      <td class="px-3 py-2 text-center">
+                        <button type="button" class="text-mts-text-secondary hover:text-red-500 transition-colors" @click="removeLocation(i)">
+                          <Trash2 class="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                    <tr v-if="expandedGeoRow === i" class="border-t border-mts-border bg-mts-bg/25">
+                      <td colspan="6" class="px-3 py-4">
+                        <AdminGeoCoordinatesEditor v-model:lat="locRow.lat" v-model:lng="locRow.lng" />
+                      </td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>

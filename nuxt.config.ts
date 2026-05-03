@@ -77,6 +77,8 @@ export default defineNuxtConfig({
       mapboxToken:
         import.meta.env.NUXT_PUBLIC_MAPBOX_TOKEN
         ?? 'pk.eyJ1IjoidHJvdW0iLCJhIjoiY2tlZWdvMWVoMTJiYzJ6bWkzbWp4NmR4ZSJ9.GUTHIgv8DFR8rwZ2WzsjhA',
+      /** Fallback для выбора координат в админке, если не задан Mapbox-токен. */
+      yandexMapsApiKey: import.meta.env.NUXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '',
     },
   },
   app: {

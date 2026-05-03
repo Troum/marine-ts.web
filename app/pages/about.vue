@@ -76,7 +76,7 @@ const d = computed<AboutPageData>(() => cms.value ?? defaultAboutData(loc.value)
 const { setHidden: setFooterHidden } = usePageFooterHidden()
 watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
 
-const geoLocations = computed<AboutGeoLocation[]>(() => d.value.geography.locations)
+const geoLocations = computed<AboutGeoLocation[]>(() => d.value.geography?.locations ?? [])
 
 /**
  * Эффективный порядок блоков после шести основных секций
@@ -460,16 +460,18 @@ function hasImage(src?: string | null): boolean {
     <!-- География, сертификаты и пользовательские блоки -->
     <template v-for="sid in sectionOrderEffective" :key="sid">
       <section v-if="sid === 'geography' && sectionShown('geography')" class="relative overflow-hidden">
-        <AboutSectionContentParallax class="block">
-          <AboutServiceGeographyMap
-            class="relative z-10"
-            theme="dark"
-            :locations="geoLocations"
-            :label="d.geography.label"
-            :title="d.geography.title"
-            :lead="d.geography.lead"
-          />
-        </AboutSectionContentParallax>
+        <!--
+          Не оборачиваем в AboutSectionContentParallax: transform на предке
+          смещает HTML-маркеры Mapbox относительно тайлов карты.
+        -->
+        <AboutServiceGeographyMap
+          class="relative z-10"
+          theme="dark"
+          :locations="geoLocations"
+          :label="d.geography.label"
+          :title="d.geography.title"
+          :lead="d.geography.lead"
+        />
       </section>
 
       <section
