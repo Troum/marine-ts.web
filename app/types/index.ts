@@ -472,6 +472,13 @@ export interface NavigationMenuSettings {
   burgerContacts?: NavigationBurgerContacts
 }
 
+/** Публичная тема: `default` — Marin; `scglobal` — Golden Sepia (имя в админке). */
+export type SitePublicThemeId = 'default' | 'scglobal'
+
+export interface SiteAppearanceSettings {
+  theme: SitePublicThemeId
+}
+
 /** Контактная информация в нижней части бургер-меню. */
 export interface NavigationBurgerSocial {
   url: string
@@ -1152,10 +1159,6 @@ export type LineMarketingSectionId =
   | 'trust'
   | 'cta'
 
-/** Визуальный тон страницы «Судовой менеджмент» (настройка в админке). */
-export type LineMarketingShipPageVisualStyle = 'default' | 'sepia'
-
-export interface CrewingPageData {
   hero: {
     label: string
     titleFormatted: ThemeFormattedTitle
@@ -1212,6 +1215,4 @@ export interface CrewingPageData {
   heroBreadcrumbTone?: PageBreadcrumbTone
   /** Скрыть подвал сайта на этой странице. */
   hideFooter?: boolean
-  /** Только для `ship-management`: сепия / тёплый тон. */
-  shipPageVisualStyle?: LineMarketingShipPageVisualStyle
 }

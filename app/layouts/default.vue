@@ -1,13 +1,9 @@
 <script setup lang="ts">
-useHead({
-  bodyAttrs: {
-    class: '',
-  },
-})
+useSiteAppearance()
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-white text-body">
+  <div class="flex min-h-screen flex-col bg-transparent text-body">
     <LayoutNavigation />
     <main class="flex-grow">
       <slot />

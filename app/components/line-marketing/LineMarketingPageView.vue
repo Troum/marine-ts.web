@@ -244,18 +244,10 @@ const heroBreadcrumbsOnDark = computed(() =>
   resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, heroBreadcrumbAutoOnDark.value),
 )
 
-const linePageRootClass = computed(() => {
-  const cls = ['relative', 'mts-line-marketing-root', 'bg-white']
-  if (props.slug === 'ship-management' && (cms.value.shipPageVisualStyle ?? 'default') === 'sepia') {
-    cls.push('mts-line-page-ship-sepia')
-  }
-  return cls
-})
-
 </script>
 
 <template>
-  <div :class="linePageRootClass">
+  <div class="relative mts-line-marketing-root bg-white">
     <section
       :class="[
         'relative flex items-center overflow-hidden',

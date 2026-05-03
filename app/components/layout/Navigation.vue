@@ -19,6 +19,9 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { locale } = useI18n()
 const api = useMarineApi()
+const { settings: siteAppearance } = useSiteAppearance()
+/** Публичная тема «Golden Sepia» (id в API — `scglobal`). */
+const isGoldenSepiaTheme = computed(() => siteAppearance.value.theme === 'scglobal')
 
 const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncData(
   'site-navigation',
@@ -216,13 +219,14 @@ const navColorVars = computed(() => {
 
 /**
  * Определяет, прокрутил ли пользователь страницу вниз.
- * При прокрутке nav получает непрозрачный фон и тёмный текст;
- * в самом верху — прозрачный фон и белый текст (на тёмном hero).
+ * При прокрутке — тёмное стекло без светлой обводки; вверху — прозрачный фон.
+ * Активный пункт меню: акцент `primary` (в Golden Sepia — золото), без белой border-top.
  */
 const scrollY = ref(0)
 if (import.meta.client) {
   onMounted(() => {
     const onScroll = () => { scrollY.value = window.scrollY }
+    onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     onUnmounted(() => window.removeEventListener('scroll', onScroll))
   })
@@ -231,23 +235,22 @@ const isScrolled = computed(() => scrollY.value > 40)
 
 const hasCustomHoverColor = computed(() => !!menu.value.menuItemHoverColor)
 
-const isHomePage = computed(() => stripLocalePrefix(route.path) === '/')
-
 const horizLinkClasses = computed(() => {
-  const colorClasses = isScrolled.value
-    ? 'text-body hover:text-primary'
-    : 'text-white/90 hover:text-white'
+  const tone =
+    !isScrolled.value && isGoldenSepiaTheme.value
+      ? 'text-white hover:text-primary'
+      : 'text-white/90 hover:text-white'
   return [
     horizSizeClass.value,
     horizWeightClass.value,
     horizCaseClass.value,
     'tracking-tight transition-colors',
-    colorClasses,
+    tone,
     hasCustomHoverColor.value ? 'mts-nav-hover-custom' : '',
   ].filter(Boolean)
 })
 
-const horizActiveClass = '!border-primary text-primary'
+const horizActiveClass = computed(() => '!border-primary text-primary')
 
 const isMenuOpen = ref(false)
 
@@ -289,10 +292,10 @@ watch(
   <header :style="navColorVars">
     <nav
       :class="[
-        'fixed z-50 transition-all duration-500',
+        'fixed z-50 transition-[left,right,top,border-radius,background-color,box-shadow,backdrop-filter,-webkit-backdrop-filter] duration-500 ease-out',
         isScrolled
-          ? 'left-12 right-12 top-3 rounded-2xl bg-white/75 backdrop-blur-xl shadow-lg border border-black/[0.06]'
-          : 'left-0 right-0 top-0 bg-transparent',
+          ? 'left-12 right-12 top-3 rounded-2xl bg-[color-mix(in_srgb,var(--color-mts-navy)_88%,transparent)] shadow-[0_4px_24px_rgb(0_0_0/0.25)] backdrop-blur-xl backdrop-saturate-150'
+          : 'left-0 right-0 top-0 border-transparent bg-transparent shadow-none',
       ]"
     >
       <div class="flex w-full items-center gap-4 px-6 py-4 lg:px-10">
@@ -322,7 +325,10 @@ watch(
                 ]"
               >
                 {{ labelForLocale(item) }}
-                <ChevronDown class="h-3.5 w-3.5 opacity-70" />
+                <ChevronDown
+                  class="h-3.5 w-3.5 opacity-70"
+                  :class="!isScrolled && isGoldenSepiaTheme ? 'text-primary' : ''"
+                />
               </button>
               <div
                 class="pointer-events-none invisible absolute left-0 top-full z-[60] pt-2 opacity-0 transition group-hover/nav:pointer-events-auto group-hover/nav:visible group-hover/nav:opacity-100"

@@ -28,6 +28,7 @@ const ADMIN_ROUTE_PERMISSIONS: Array<{ prefix: string; permissions: string[] }> 
   { prefix: '/admin/contacts', permissions: ['manage contacts'] },
   { prefix: '/admin/navigation', permissions: ['manage navigation'] },
   { prefix: '/admin/footer-navigation', permissions: ['manage navigation'] },
+  { prefix: '/admin/appearance', permissions: ['manage navigation'] },
 ]
 
 function requiredPermissionsForPath(path: string): string[] {

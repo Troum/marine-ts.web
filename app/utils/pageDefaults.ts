@@ -14,7 +14,6 @@ import type {
   LineMarketingCustomSection,
   LineMarketingHeroButton,
   LineMarketingSectionId,
-  LineMarketingShipPageVisualStyle,
   LineMarketingSplitBlock,
   LineMarketingTextBlock,
   MarineContentLocale,
@@ -763,19 +762,6 @@ function mergeCrewingChecklistBlock(
 
 /* ── Line marketing pages (крюинг, судовой менеджмент) ── */
 
-function parseShipPageVisualStyle(
-  raw: unknown,
-  fallback: LineMarketingShipPageVisualStyle | undefined,
-): LineMarketingShipPageVisualStyle {
-  if (raw === 'sepia') {
-    return 'sepia'
-  }
-  if (raw === 'default' || raw == null || raw === '') {
-    return fallback ?? 'default'
-  }
-  return fallback ?? 'default'
-}
-
 function newLineMarketingBlockId(): string {
   return typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `lm-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
 }
@@ -1100,7 +1086,6 @@ function emptyShipPageData(locale: MarineContentLocale): CrewingPageData {
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
     heroBackgroundImage: '',
-    shipPageVisualStyle: 'default',
   }
 }
 
@@ -1289,7 +1274,6 @@ export function mergeLinePageData(
         : mergeBase.heroBackgroundImage,
     heroBreadcrumbTone: parseStoredPageBreadcrumbTone(p.heroBreadcrumbTone) ?? mergeBase.heroBreadcrumbTone,
     hideFooter: typeof p.hideFooter === 'boolean' ? p.hideFooter : (mergeBase.hideFooter ?? false),
-    shipPageVisualStyle: parseShipPageVisualStyle(p.shipPageVisualStyle, mergeBase.shipPageVisualStyle),
   }
 }
 

@@ -27,6 +27,7 @@ import type {
   SiteContactSettings,
   NavigationMenuSettings,
   FooterMenuSettings,
+  SiteAppearanceSettings,
   Stats,
   VacancyApplicationForm,
   VacancyItem,
@@ -39,6 +40,7 @@ import {
   writeAdminPermissionsToBothStorages,
   writeAdminRolesToBothStorages,
 } from '~/utils/adminPermissionStorage'
+import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 import { normalizeContactSettingsPayload, serializeContactSettingsPayload } from '~/utils/normalizeContactSettingsPayload'
 import { normalizeFooterMenuSettingsPayload } from '~/utils/normalizeFooterMenuSettingsPayload'
 import { normalizeNavigationSettingsPayload } from '~/utils/normalizeNavigationSettingsPayload'
@@ -670,6 +672,19 @@ export function useMarineApi() {
           body,
         })
         return normalizeNavigationSettingsPayload(res)
+      },
+    },
+    appearanceSettings: {
+      get: async () => {
+        const res = await fetchPublic<unknown>('/appearance-settings')
+        return normalizeAppearanceSettingsPayload(res)
+      },
+      update: async (body: SiteAppearanceSettings) => {
+        const res = await fetchAuth<unknown>('/appearance-settings', {
+          method: 'PUT',
+          body,
+        })
+        return normalizeAppearanceSettingsPayload(res)
       },
     },
     footerNavigationSettings: {

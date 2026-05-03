@@ -115,9 +115,81 @@
     min-height: 0;
   }
 
-  /** Маркетинг «Судовой менеджмент»: сепия на корневом контейнере (админка → JSON). */
-  body:not(.admin-shell) .mts-line-page-ship-sepia {
-    filter: sepia(0.28) saturate(0.9) contrast(1.03);
+  /**
+   * Глобальная тёмная тема Golden Sepia (id в API — `scglobal`), переключатель → `appearance-settings`.
+   * Референс палитры: `sepia/scglobal-tailwind-theme.css` на машине разработчика.
+   */
+  body:not(.admin-shell).mts-theme-scglobal {
+    --color-primary: #c69c6d;
+    --color-primary-dark: #b88d5a;
+    --color-body: #f5f5f5;
+    --color-muted: rgb(255 255 255 / 0.68);
+    --color-border: rgb(255 255 255 / 0.12);
+    --color-bg-light: #0d131f;
+
+    --color-mts-bg: #131f33;
+    --color-mts-surface: #1b2940;
+    --color-mts-accent: #c69c6d;
+    --color-mts-accent-light: #d4b996;
+    --color-mts-accent-dark: #a07d53;
+    --color-mts-text: #fafafa;
+    --color-mts-text-secondary: rgb(255 255 255 / 0.88);
+    --color-mts-text-muted: rgb(255 255 255 / 0.65);
+    --color-mts-border: rgb(255 255 255 / 0.12);
+    --color-mts-border-light: rgb(255 255 255 / 0.08);
+    --color-mts-grid: rgb(255 255 255 / 0.1);
+    --color-mts-dark: #222222;
+    --color-mts-navy: #131f33;
+    --color-mts-navy-deep: #0d131f;
+    --color-mts-frost: #ffffff;
+    --color-mts-slate-muted: rgb(255 255 255 / 0.72);
+    --color-mts-marker: #c69c6d;
+
+    background-color: #131f33;
+    color: var(--color-mts-text);
+  }
+
+  /** Горизонтальный nav: позиция, прозрачность и glass при скролле — в `Navigation.vue` (без переопределений здесь). */
+
+  body:not(.admin-shell).mts-theme-scglobal .bg-white,
+  body:not(.admin-shell).mts-theme-scglobal .bg-bg-light {
+    background-color: #1b2940 !important;
+  }
+
+  body:not(.admin-shell).mts-theme-scglobal .card-tech,
+  body:not(.admin-shell).mts-theme-scglobal .public-card,
+  body:not(.admin-shell).mts-theme-scglobal .public-card-interactive {
+    background-color: #1b2940 !important;
+    border-color: rgb(255 255 255 / 0.12) !important;
+  }
+
+  /**
+   * Карточки направлений (`.service-card`): убрать светлые «стеклянные» белые рамки в Golden Sepia.
+   */
+  body:not(.admin-shell).mts-theme-scglobal .service-card {
+    border-color: rgb(255 255 255 / 0.14) !important;
+    background-color: color-mix(in srgb, var(--color-mts-surface) 88%, transparent) !important;
+    box-shadow:
+      0 18px 48px -28px rgb(0 0 0 / 0.55),
+      inset 0 1px 0 rgb(255 255 255 / 0.08) !important;
+  }
+  body:not(.admin-shell).mts-theme-scglobal .service-card:hover {
+    border-color: rgb(255 255 255 / 0.22) !important;
+    background-color: color-mix(in srgb, var(--color-mts-surface) 93%, transparent) !important;
+  }
+
+  /** Поля форм: нижняя линия не серая «светлая полоса» на тёмном фоне. */
+  body:not(.admin-shell).mts-theme-scglobal .form-input {
+    border-bottom-color: rgb(255 255 255 / 0.22) !important;
+  }
+
+  body:not(.admin-shell).mts-theme-scglobal .btn-secondary {
+    @apply border-white/25 bg-white/10 text-mts-frost backdrop-blur-sm;
+  }
+  body:not(.admin-shell).mts-theme-scglobal .btn-secondary:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background-color: rgb(255 255 255 / 0.14);
   }
 
   /** Оверлеи на фото на странице «О нас» (токены `--color-mts-*`). */
