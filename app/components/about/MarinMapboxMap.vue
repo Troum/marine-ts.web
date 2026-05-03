@@ -32,6 +32,7 @@ let containerResizeObs: ResizeObserver | null = null
 let pulseRaf = 0
 let pulseStartedAt = 0
 let reduceMotion = false
+let isFittingBounds = false
 
 function asCoord(v: unknown): number {
   if (typeof v === 'number' && Number.isFinite(v)) {
@@ -92,9 +93,14 @@ function fitToMarkers() {
   if (!map || !mapboxgl || validLocations.value.length === 0) {
     return
   }
+  if (isFittingBounds) {
+    return
+  }
+  isFittingBounds = true
   if (validLocations.value.length === 1) {
     const only = validLocations.value[0]!
     map.jumpTo({ center: [only.lng, only.lat], zoom: 2 })
+    isFittingBounds = false
     return
   }
   const bounds = new mapboxgl.LngLatBounds()
@@ -106,6 +112,7 @@ function fitToMarkers() {
     duration: 0,
     maxZoom: 3,
   })
+  isFittingBounds = false
 }
 
 function syncMapSizeAndFrame(): void {
@@ -113,7 +120,6 @@ function syncMapSizeAndFrame(): void {
     return
   }
   map.resize()
-  fitToMarkers()
 }
 
 function themeVar(name: string, fallback: string): string {
@@ -295,6 +301,7 @@ onMounted(async () => {
   map.on('load', () => {
     ensureSourceAndLayers()
     hideBasemapSymbolLabels()
+    fitToMarkers()
     scheduleSync()
   })
 
@@ -304,16 +311,14 @@ onMounted(async () => {
     }
     ensureSourceAndLayers()
     hideBasemapSymbolLabels()
+    fitToMarkers()
     scheduleSync()
-  })
-
-  map.on('moveend', () => {
-    syncMapSizeAndFrame()
   })
 
   map.once('idle', () => {
     ensureSourceAndLayers()
     hideBasemapSymbolLabels()
+    fitToMarkers()
     scheduleSync()
   })
 
@@ -336,6 +341,7 @@ watch(
   validLocations,
   () => {
     ensureSourceAndLayers()
+    fitToMarkers()
     scheduleSync()
   },
   { deep: true },
