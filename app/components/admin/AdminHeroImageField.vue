@@ -2,6 +2,9 @@
 /**
  * Необязательный фон hero: URL вручную или загрузка файла (POST /media).
  */
+import { Loader2, Images, X } from 'lucide-vue-next'
+import type { MediaLibraryItem } from '~/types'
+
 const props = withDefaults(
   defineProps<{
     modelValue?: string | null
@@ -28,6 +31,14 @@ const adminToast = useAdminToast()
 
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+const mediaOpen = ref(false)
+const mediaLoading = ref(false)
+const mediaItems = ref<MediaLibraryItem[]>([])
+const mediaLoaded = ref(false)
+
+const imageMediaItems = computed(() =>
+  mediaItems.value.filter((item) => /\.(avif|jpe?g|png|webp|gif|svg)$/i.test(item.filename || item.url)),
+)
 
 const urlProxy = computed({
   get: () => props.modelValue ?? '',
@@ -63,6 +74,66 @@ function clear() {
 function pickFile() {
   fileInput.value?.click()
 }
+
+async function loadMediaLibrary(force = false) {
+  if (mediaLoaded.value && !force) {
+    return
+  }
+  mediaLoading.value = true
+  try {
+    const list = await api.media.listManage()
+    mediaItems.value = [...list].sort((a, b) =>
+      (new Date(b.modified_at).getTime() || 0) - (new Date(a.modified_at).getTime() || 0),
+    )
+    mediaLoaded.value = true
+  } catch {
+    adminToast.show({ title: 'Ошибка', message: 'Не удалось загрузить медиатеку' })
+  } finally {
+    mediaLoading.value = false
+  }
+}
+
+async function openMediaLibrary() {
+  mediaOpen.value = true
+  await loadMediaLibrary()
+}
+
+function closeMediaLibrary() {
+  mediaOpen.value = false
+}
+
+function selectFromLibrary(url: string) {
+  emit('update:modelValue', url)
+  adminToast.success('Изображение выбрано из медиатеки')
+  closeMediaLibrary()
+}
+
+function onBackdropClick(e: MouseEvent) {
+  if (e.target === e.currentTarget) {
+    closeMediaLibrary()
+  }
+}
+
+let savedBodyOverflow: string | null = null
+watch(mediaOpen, (open) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  if (open) {
+    savedBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+  } else if (savedBodyOverflow !== null) {
+    document.body.style.overflow = savedBodyOverflow
+    savedBodyOverflow = null
+  }
+})
+
+onBeforeUnmount(() => {
+  if (typeof window !== 'undefined' && savedBodyOverflow !== null) {
+    document.body.style.overflow = savedBodyOverflow
+    savedBodyOverflow = null
+  }
+})
 </script>
 
 <template>
@@ -79,6 +150,14 @@ function pickFile() {
           @click="pickFile"
         >
           {{ uploading ? 'Загрузка…' : 'Загрузить файл' }}
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-1.5 border border-mts-border bg-white px-4 font-mono text-[10px] font-bold uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent"
+          @click="openMediaLibrary"
+        >
+          <Images class="h-3.5 w-3.5" />
+          Выбрать из медиатеки
         </button>
         <button
           v-if="modelValue"
@@ -101,5 +180,89 @@ function pickFile() {
     <div v-if="modelValue" class="mt-2 overflow-hidden rounded border border-mts-border bg-mts-bg">
       <img :src="modelValue" alt="" class="max-h-40 w-full object-cover object-center" loading="lazy" />
     </div>
+
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="mediaOpen"
+          class="fixed inset-0 z-[245] flex items-stretch justify-center p-4 sm:items-center sm:p-6"
+          role="presentation"
+          @click="onBackdropClick"
+        >
+          <div class="absolute inset-0 bg-black/55" aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            class="relative z-10 flex max-h-[min(92vh,1000px)] w-full max-w-6xl flex-col overflow-hidden border border-mts-border bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)]"
+          >
+            <header class="flex items-start justify-between gap-3 border-b border-mts-border px-6 py-4">
+              <div class="min-w-0">
+                <h2 class="font-display text-lg text-mts-text">Медиатека</h2>
+                <p class="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
+                  {{ imageMediaItems.length }} файлов
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex h-9 items-center justify-center border border-mts-border bg-white px-3 font-mono text-[10px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent disabled:opacity-50"
+                  :disabled="mediaLoading"
+                  @click="loadMediaLibrary(true)"
+                >
+                  {{ mediaLoading ? 'Загрузка…' : 'Обновить' }}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Закрыть"
+                  class="inline-flex h-9 w-9 items-center justify-center text-mts-text-secondary transition-colors hover:text-mts-accent"
+                  @click="closeMediaLibrary"
+                >
+                  <X class="h-5 w-5" />
+                </button>
+              </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+              <div v-if="mediaLoading" class="flex items-center justify-center py-16 text-mts-text-secondary">
+                <Loader2 class="h-5 w-5 animate-spin" />
+              </div>
+              <div
+                v-else-if="imageMediaItems.length === 0"
+                class="flex items-center justify-center rounded border border-dashed border-mts-border bg-mts-bg/40 px-3 py-12 font-body text-sm text-mts-text-secondary"
+              >
+                В медиатеке пока нет изображений.
+              </div>
+              <div
+                v-else
+                class="grid gap-3"
+                style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr))"
+              >
+                <button
+                  v-for="item in imageMediaItems"
+                  :key="item.url"
+                  type="button"
+                  class="group overflow-hidden border border-mts-border bg-white text-left transition-colors hover:border-mts-accent"
+                  @click="selectFromLibrary(item.url)"
+                >
+                  <div class="aspect-[4/3] overflow-hidden bg-mts-bg">
+                    <img :src="item.url" alt="" class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" loading="lazy" decoding="async" />
+                  </div>
+                  <div class="border-t border-mts-border p-2">
+                    <p class="truncate font-body text-xs text-mts-text" :title="item.filename">{{ item.filename }}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
