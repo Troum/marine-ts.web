@@ -48,7 +48,11 @@ function buildLabelEl(name: string): HTMLDivElement {
   return el
 }
 
+let containerResizeObs: ResizeObserver | null = null
+
 function destroyMap() {
+  containerResizeObs?.disconnect()
+  containerResizeObs = null
   for (const m of markers) {
     m.remove()
   }
@@ -65,8 +69,7 @@ function fitToMarkers() {
   }
   if (validLocations.value.length === 1) {
     const only = validLocations.value[0]!
-    map.setCenter([only.lng, only.lat])
-    map.setZoom(2)
+    map.jumpTo({ center: [only.lng, only.lat], zoom: 2 })
     return
   }
   const bounds = new mapboxgl.LngLatBounds()
@@ -78,6 +81,19 @@ function fitToMarkers() {
     duration: 0,
     maxZoom: 3,
   })
+}
+
+/**
+ * HTML-маркеры Mapbox привязываются к проекции canvas. Если контейнер
+ * с aspect-ratio / flex получил финальную высоту после первого кадра
+ * или после SSR → ClientOnly, без `resize()` точки визуально «уползают».
+ */
+function syncMapSizeAndFrame(): void {
+  if (!map) {
+    return
+  }
+  map.resize()
+  fitToMarkers()
 }
 
 const LABEL_OFFSET_PX = 14
@@ -155,9 +171,26 @@ onMounted(async () => {
   map.on('load', () => {
     hideAllLabels()
     renderMarkers()
-    fitToMarkers()
+    requestAnimationFrame(() => {
+      syncMapSizeAndFrame()
+      requestAnimationFrame(syncMapSizeAndFrame)
+    })
   })
   map.on('styledata', hideAllLabels)
+
+  const el = mapEl.value
+  if (el && typeof ResizeObserver !== 'undefined') {
+    containerResizeObs = new ResizeObserver(() => {
+      syncMapSizeAndFrame()
+    })
+    containerResizeObs.observe(el)
+  }
+
+  if (import.meta.client && document.fonts?.ready) {
+    void document.fonts.ready.then(() => {
+      syncMapSizeAndFrame()
+    })
+  }
 })
 
 watch(
@@ -167,7 +200,7 @@ watch(
       return
     }
     renderMarkers()
-    fitToMarkers()
+    requestAnimationFrame(syncMapSizeAndFrame)
   },
   { deep: true },
 )
@@ -184,24 +217,38 @@ onBeforeUnmount(() => {
 <style>
 .mts-mb-marker {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 14px;
   height: 14px;
+  flex-shrink: 0;
   pointer-events: none;
+  /* Явный геометрический центр для anchor:center у Mapbox Marker */
+  transform-origin: center center;
 }
 .mts-mb-marker__dot {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -7px;
   border-radius: 9999px;
   background-color: var(--color-mts-accent-dark, #c96667);
   box-shadow: 0 0 0 2px rgba(46, 163, 255, 0.25);
 }
 .mts-mb-marker__ping {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -7px;
   border-radius: 9999px;
   background-color: var(--color-mts-accent-dark, #c96667);
   opacity: 0.55;
+  transform-origin: center center;
   animation: mts-mb-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 

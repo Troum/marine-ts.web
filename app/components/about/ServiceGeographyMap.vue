@@ -47,7 +47,7 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
     ]"
     aria-labelledby="service-geography-heading"
   >
-    <div class="relative w-full aspect-426/232 min-h-105 sm:min-h-130 lg:min-h-155">
+    <div class="relative w-full aspect-[426/232] min-h-105 sm:min-h-130 lg:min-h-155">
       <ClientOnly>
         <MarinMapboxMap
           v-if="mapboxToken"
