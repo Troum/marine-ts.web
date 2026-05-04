@@ -47,7 +47,9 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
     ]"
     aria-labelledby="service-geography-heading"
   >
-    <div class="relative w-full aspect-[426/232] min-h-105 sm:min-h-130 lg:min-h-155">
+    <div
+      class="relative h-[18.5rem] min-h-[18.5rem] w-full sm:h-[24rem] sm:min-h-[24rem] lg:h-[32rem] lg:min-h-[32rem] xl:h-[38rem] xl:min-h-[38rem]"
+    >
       <ClientOnly>
         <MarinMapboxMap
           v-if="mapboxToken"
@@ -77,7 +79,7 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
       />
       <div class="pointer-events-none absolute inset-0 z-40">
         <div
-          class="mts-content-wrap flex h-full pt-20 pb-10 sm:pt-24 sm:pb-12 lg:pt-32 lg:pb-16 xl:pt-36"
+          class="mts-content-wrap flex h-full pt-10 pb-6 sm:pt-20 sm:pb-12 lg:pt-32 lg:pb-16 xl:pt-36"
         >
           <div class="max-w-7xl pointer-events-auto">
             <div v-if="theme === 'light'" class="flex items-center gap-3 mb-4">
@@ -94,8 +96,8 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
               :class="[
                 'font-display font-bold leading-tight mb-4 lg:mb-6',
                 theme === 'dark'
-                  ? 'text-2xl lg:text-[34px] text-primary lg:leading-10'
-                  : 'text-2xl lg:text-3xl text-body',
+                  ? 'text-xl sm:text-2xl lg:text-[34px] text-primary lg:leading-10'
+                  : 'text-xl sm:text-2xl lg:text-3xl text-body',
               ]"
             >
               <ThemedContentString :content="displayTitle" />
