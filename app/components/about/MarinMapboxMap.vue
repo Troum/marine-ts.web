@@ -89,6 +89,31 @@ function destroyMap() {
   }
 }
 
+function fitOptionsForViewport() {
+  const viewportWidth
+    = mapEl.value?.clientWidth
+      ?? (import.meta.client ? window.innerWidth : 1024)
+
+  if (viewportWidth < 640) {
+    return {
+      padding: { top: 24, right: 18, bottom: 24, left: 18 },
+      maxZoom: 3.8,
+    }
+  }
+
+  if (viewportWidth < 1024) {
+    return {
+      padding: { top: 44, right: 44, bottom: 44, left: 44 },
+      maxZoom: 3.4,
+    }
+  }
+
+  return {
+    padding: { top: 80, right: 80, bottom: 80, left: 80 },
+    maxZoom: 3,
+  }
+}
+
 function fitToMarkers() {
   if (!map || !mapboxgl || validLocations.value.length === 0) {
     return
@@ -107,10 +132,11 @@ function fitToMarkers() {
   for (const l of validLocations.value) {
     bounds.extend([l.lng, l.lat])
   }
+  const fitOptions = fitOptionsForViewport()
   map.fitBounds(bounds, {
-    padding: { top: 80, right: 80, bottom: 80, left: 80 },
+    padding: fitOptions.padding,
     duration: 0,
-    maxZoom: 3,
+    maxZoom: fitOptions.maxZoom,
   })
   isFittingBounds = false
 }
@@ -326,6 +352,7 @@ onMounted(async () => {
   if (el && typeof ResizeObserver !== 'undefined') {
     containerResizeObs = new ResizeObserver(() => {
       syncMapSizeAndFrame()
+      fitToMarkers()
     })
     containerResizeObs.observe(el)
   }
