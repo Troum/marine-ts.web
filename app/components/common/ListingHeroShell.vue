@@ -9,6 +9,8 @@ const props = withDefaults(
     heroImage?: string | null
     /** Градиентное затемнение поверх фото (лучше сочетать со светлым текстом в слоте). */
     heroVeil?: boolean
+    /** Прозрачность затемнения hero (0..1). Если не задано — используется дефолтный градиент. */
+    heroVeilOpacity?: number | null
     /** Полная высота первого экрана (viewport), как маркетинговый hero на линии. */
     fullViewport?: boolean
     /**
@@ -23,6 +25,7 @@ const props = withDefaults(
   }>(),
   {
     heroVeil: false,
+    heroVeilOpacity: null,
     fullViewport: false,
     parallaxMediaActive: true,
     heroContentParallax: false,
@@ -31,6 +34,16 @@ const props = withDefaults(
 )
 
 const mediaActive = computed(() => props.parallaxMediaActive ?? true)
+const heroVeilStyle = computed<Record<string, string> | undefined>(() => {
+  if (props.heroVeilOpacity == null) {
+    return undefined
+  }
+  const clamped = Math.min(1, Math.max(0, props.heroVeilOpacity))
+  return {
+    backgroundColor: `rgba(0, 17, 46, ${clamped})`,
+    backgroundImage: 'none',
+  }
+})
 
 const resolvedHeroImage = computed(() => {
   const raw = (props.heroImage ?? '').trim()
@@ -71,7 +84,11 @@ const resolvedHeroImage = computed(() => {
       <CommonParallaxHeroMedia :image="resolvedHeroImage" :active="mediaActive" />
       <div
         v-if="props.heroVeil"
-        class="pointer-events-none absolute inset-0 z-[1] mts-line-marketing-hero-veil"
+        :class="[
+          'pointer-events-none absolute inset-0 z-[1]',
+          props.heroVeilOpacity == null ? 'mts-line-marketing-hero-veil' : '',
+        ]"
+        :style="heroVeilStyle"
         aria-hidden="true"
       />
     </div>

@@ -109,7 +109,7 @@ async function submitFeedback() {
 
 <template>
   <div class="bg-white">
-    <ListingHeroShell :hero-image="cms.heroImage">
+    <ListingHeroShell :hero-image="cms.heroImage" :hero-veil="true" :hero-veil-opacity="0.45">
       <div class="max-w-7xl">
         <Breadcrumbs :items="crumbItems" />
         <div class="mb-4 flex items-center gap-3">
