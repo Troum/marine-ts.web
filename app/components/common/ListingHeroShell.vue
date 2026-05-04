@@ -31,28 +31,13 @@ const props = withDefaults(
 
 const mediaActive = computed(() => props.parallaxMediaActive ?? true)
 
-/**
- * В CMS иногда сохраняется абсолютный URL с api-доменом:
- * `https://api-.../storage/...`.
- * Для публичной витрины безопаснее рендерить локальный относительный путь `/storage/...`,
- * чтобы не зависеть от CORS/CSP и междоменного доступа к статике.
- */
 const resolvedHeroImage = computed(() => {
   const raw = (props.heroImage ?? '').trim()
   if (!raw) {
     return ''
   }
-  if (!/^https?:\/\//i.test(raw)) {
-    return raw
-  }
-  try {
-    const u = new URL(raw)
-    if (u.pathname.startsWith('/storage/')) {
-      return `${u.pathname}${u.search}${u.hash}`
-    }
-  } catch {
-    /* invalid URL, fall through */
-  }
+  // Абсолютные URL (например, api-домен со storage) оставляем без изменений.
+  // Относительные `/storage/...` тоже поддерживаются как есть.
   return raw
 })
 </script>
