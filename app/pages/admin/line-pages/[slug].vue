@@ -861,6 +861,7 @@ async function submit() {
   }
   await nextTick()
   const inq = data.value[localeTab.value].showInquiryForm
+  const inquiryForm = data.value[localeTab.value].inquiryForm
   const hideInquiryCardHeading = data.value[localeTab.value].hideInquiryFormCardHeading
   const hideInquiryIntro = data.value[localeTab.value].hideInquiryFormIntro
   const heroBg = data.value[localeTab.value].heroBackgroundImage
@@ -869,6 +870,14 @@ async function submit() {
   const hideFooter = data.value[localeTab.value].hideFooter
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].inquiryForm = inquiryForm
+      ? {
+          vesselTypes: [...(inquiryForm.vesselTypes ?? [])],
+          requiredServices: [...(inquiryForm.requiredServices ?? [])],
+          vesselTypeLabels: { ...(inquiryForm.vesselTypeLabels ?? {}) },
+          requiredServiceLabels: { ...(inquiryForm.requiredServiceLabels ?? {}) },
+        }
+      : undefined
     data.value[loc].hideInquiryFormCardHeading = hideInquiryCardHeading
     data.value[loc].hideInquiryFormIntro = hideInquiryIntro
     data.value[loc].heroBackgroundImage = heroBg
@@ -2317,6 +2326,7 @@ function directionPreviewPath(detailSlug: string) {
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
             Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
+          <AdminPageInquiryConfigEditor v-if="d.showInquiryForm" v-model="d.inquiryForm" />
           <div class="border-t border-mts-border pt-4">
             <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
               <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox" />

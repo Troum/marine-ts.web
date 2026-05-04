@@ -226,6 +226,7 @@ onMounted(() => {
       source-page="vacancies"
       :hide-intro="cms.hideInquiryFormIntro === true"
       :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+      :config="cms.inquiryForm"
     />
   </div>
 </template>

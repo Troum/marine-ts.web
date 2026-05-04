@@ -377,6 +377,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
       source-page="home"
       :hide-intro="d.hideInquiryFormIntro === true"
       :hide-form-card-heading="d.hideInquiryFormCardHeading === true"
+      :config="d.inquiryForm"
     />
     </template>
   </div>

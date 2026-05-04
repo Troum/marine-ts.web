@@ -264,6 +264,7 @@ const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
       source-page="projects"
       :hide-intro="cms.hideInquiryFormIntro === true"
       :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+      :config="cms.inquiryForm"
     />
   </div>
 </template>

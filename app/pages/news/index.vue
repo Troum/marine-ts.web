@@ -202,6 +202,7 @@ function sectionShown(id: string): boolean {
       source-page="news"
       :hide-intro="cms.hideInquiryFormIntro === true"
       :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+      :config="cms.inquiryForm"
     />
   </div>
 </template>

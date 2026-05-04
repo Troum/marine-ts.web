@@ -8,6 +8,7 @@ import type {
 import { normalizeCustomPageSections } from '~/utils/customPageSections'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { mergeAboutHero, themeFormattedTitleToHtml, themeTitleTriple } from '~/utils/themeFormattedTitle'
+import { normalizePageInquiryFormConfig } from '~/utils/pageInquiryFormOptions'
 
 const LEGACY_SECTION_IDS = new Set(['ecosystem', 'mission', 'why', 'stats'])
 
@@ -167,6 +168,11 @@ function migrateLegacyAbout(
     geography: geographyMerged,
     certificates: certificatesMerged,
     showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    hideHeroPrimaryButton:
+      typeof p.hideHeroPrimaryButton === 'boolean' ? p.hideHeroPrimaryButton : base.hideHeroPrimaryButton,
+    hideHeroSecondaryButton:
+      typeof p.hideHeroSecondaryButton === 'boolean' ? p.hideHeroSecondaryButton : base.hideHeroSecondaryButton,
+    inquiryForm: normalizePageInquiryFormConfig(p.inquiryForm),
     hideInquiryFormIntro:
       typeof p.hideInquiryFormIntro === 'boolean' ? p.hideInquiryFormIntro : base.hideInquiryFormIntro,
     hideInquiryFormCardHeading:
@@ -236,6 +242,11 @@ function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPa
         ? { ...base.certificates, ...c, items: c.items ?? base.certificates.items }
         : base.certificates,
     showInquiryForm: typeof p.showInquiryForm === 'boolean' ? p.showInquiryForm : base.showInquiryForm,
+    hideHeroPrimaryButton:
+      typeof p.hideHeroPrimaryButton === 'boolean' ? p.hideHeroPrimaryButton : base.hideHeroPrimaryButton,
+    hideHeroSecondaryButton:
+      typeof p.hideHeroSecondaryButton === 'boolean' ? p.hideHeroSecondaryButton : base.hideHeroSecondaryButton,
+    inquiryForm: normalizePageInquiryFormConfig(p.inquiryForm),
     hideInquiryFormIntro:
       typeof p.hideInquiryFormIntro === 'boolean' ? p.hideInquiryFormIntro : base.hideInquiryFormIntro,
     hideInquiryFormCardHeading:
@@ -257,6 +268,8 @@ function emptyAboutPageData(_locale: MarineContentLocale): AboutPageData {
   return {
     aboutVersion: 2,
     sec1Hero: { title: '', body: b },
+    hideHeroPrimaryButton: false,
+    hideHeroSecondaryButton: false,
     sec2History: { title: '', body: b, cards: [] },
     sec3Technical: { title: '', lead: b, lead2: b, cards: [] },
     sec4Crewing: { title: '', lead: b, lead2: b, cards: [] },
@@ -265,6 +278,7 @@ function emptyAboutPageData(_locale: MarineContentLocale): AboutPageData {
     geography: { label: '', title: '', lead: '', locations: [] },
     certificates: { title: '', items: [] },
     showInquiryForm: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
     heroImage: '',
@@ -359,6 +373,9 @@ export function syncStructuralFields(
     dst.certificates.items.length = src.certificates.items.length
 
     dst.showInquiryForm = src.showInquiryForm
+    dst.hideHeroPrimaryButton = src.hideHeroPrimaryButton
+    dst.hideHeroSecondaryButton = src.hideHeroSecondaryButton
+    dst.inquiryForm = normalizePageInquiryFormConfig(src.inquiryForm)
     dst.hideInquiryFormIntro = src.hideInquiryFormIntro
     dst.hideInquiryFormCardHeading = src.hideInquiryFormCardHeading
     dst.heroImage = src.heroImage

@@ -59,6 +59,7 @@ import {
   themeTitlePair,
   themeTitleTriple,
 } from '~/utils/themeFormattedTitle'
+import { normalizePageInquiryFormConfig } from '~/utils/pageInquiryFormOptions'
 
 const HOME_HERO_OVERLAY_DEFAULT: NonNullable<HomePageData['heroOverlayRow']> = {
   enabled: false,
@@ -140,6 +141,7 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroImage: '',
     sectionOrder: [...HOME_SECTION_DEFAULT_ORDER],
     sectionVisibility,
@@ -217,6 +219,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
       typeof parsed.hideInquiryFormCardHeading === 'boolean'
         ? parsed.hideInquiryFormCardHeading
         : def.hideInquiryFormCardHeading,
+    inquiryForm: normalizePageInquiryFormConfig(parsed.inquiryForm),
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
     customSections,
     sectionOrder,
@@ -315,6 +318,7 @@ export function syncHomeStructuralFields(
     d.showInquiryForm = src.showInquiryForm
     d.hideInquiryFormIntro = src.hideInquiryFormIntro
     d.hideInquiryFormCardHeading = src.hideInquiryFormCardHeading
+    d.inquiryForm = normalizePageInquiryFormConfig(src.inquiryForm)
     d.showStatsCard = src.showStatsCard
     d.showProcess = src.showProcess
     d.heroImage = src.heroImage
@@ -372,12 +376,14 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     },
     en: {
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     },
   },
@@ -386,12 +392,14 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     } as ProjectsPageData,
     en: {
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     } as ProjectsPageData,
   },
@@ -400,11 +408,13 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       heroImage: '',
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
     },
     en: {
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       heroImage: '',
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
     },
   },
   'news-page': {
@@ -422,12 +432,14 @@ const LISTING_DEFAULTS: Record<ListingSlug, Record<MarineContentLocale, ListingP
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     } as ProjectsPageData,
     en: {
       hero: { titleFormatted: themeTitleTriple('', '', ''), lead: '' },
       cta: { title: '', buttonText: '' },
       showInquiryForm: false,
+      inquiryForm: normalizePageInquiryFormConfig(undefined),
       heroImage: '',
     } as ProjectsPageData,
   },
@@ -567,6 +579,7 @@ export function mergeListingPageData(slug: string, locale: MarineContentLocale, 
     hero,
     cta: p.cta ? { ...base.cta!, ...p.cta } : base.cta,
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    inquiryForm: normalizePageInquiryFormConfig(p.inquiryForm),
     hideInquiryFormIntro:
       typeof p.hideInquiryFormIntro === 'boolean'
         ? p.hideInquiryFormIntro
@@ -601,6 +614,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroImage: '',
   },
   en: {
@@ -615,6 +629,7 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroImage: '',
   },
 }
@@ -653,6 +668,7 @@ export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown)
     formLead: typeof p.formLead === 'string' ? p.formLead : base.formLead,
     officesTitle: typeof p.officesTitle === 'string' ? p.officesTitle : base.officesTitle,
     showInquiryForm: p.showInquiryForm ?? base.showInquiryForm,
+    inquiryForm: normalizePageInquiryFormConfig(p.inquiryForm),
     hideInquiryFormIntro:
       typeof p.hideInquiryFormIntro === 'boolean'
         ? p.hideInquiryFormIntro
@@ -1085,6 +1101,7 @@ function emptyShipPageData(locale: MarineContentLocale): CrewingPageData {
     showInquiryForm: true,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroBackgroundImage: '',
   }
 }
@@ -1126,6 +1143,7 @@ function emptyCrewingPageData(locale: MarineContentLocale): CrewingPageData {
     showInquiryForm: true,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroBackgroundImage: '',
   }
 }
@@ -1260,6 +1278,7 @@ export function mergeLinePageData(
     },
     checklist,
     showInquiryForm: p.showInquiryForm ?? mergeBase.showInquiryForm,
+    inquiryForm: normalizePageInquiryFormConfig(p.inquiryForm),
     hideInquiryFormIntro:
       typeof p.hideInquiryFormIntro === 'boolean'
         ? p.hideInquiryFormIntro

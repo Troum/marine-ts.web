@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { Loader2, Mail, Phone } from 'lucide-vue-next'
-import type { PageInquiryServiceId, PageInquiryVesselType, SiteContactSettings } from '~/types'
+import { Check, ChevronDown, Loader2, Mail, Phone, Search, X } from 'lucide-vue-next'
+import type { PageInquiryFormConfig, SiteContactSettings } from '~/types'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { normalizePageInquiryFormConfig } from '~/utils/pageInquiryFormOptions'
+import 'flag-icons/css/flag-icons.min.css'
 
 /**
  * Поля и подписи синхронизированы с дизайном Figma «Оставьте заявку»:
@@ -10,11 +12,8 @@ import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
  * услуги (множ.), особые требования/комментарии (опц.) и согласие с
  * политикой конфиденциальности.
  *
- * Машинно-читаемые id чек-боксов (`vessel_types[]`, `required_services[]`)
- * захардкожены здесь и продублированы:
- *   – на бэкенде: `StorePageInquiryRequest::ALLOWED_*` (валидация);
- *   – в типах фронта: `PageInquiryVesselType` / `PageInquiryServiceId`.
- * Если добавляешь новый id — обнови все три места.
+ * Наборы чек-боксов приходят из CMS (`props.config`) и могут отличаться
+ * в зависимости от страницы (`sourcePage`), например для /contacts или /about.
  */
 const props = withDefaults(
   defineProps<{
@@ -24,31 +23,22 @@ const props = withDefaults(
     hideIntro?: boolean
     /** Скрыть заголовок, подзаголовок и лид внутри белой карточки над полями (см. `hideInquiryFormCardHeading` в CMS line-страниц). */
     hideFormCardHeading?: boolean
+    /** Конфиг состава чекбоксов (админка страницы). */
+    config?: PageInquiryFormConfig | null
   }>(),
-  { hideIntro: false, hideFormCardHeading: false },
+  { hideIntro: false, hideFormCardHeading: false, config: null },
 )
 
-const { t } = useI18n()
+const { t, te, locale } = useI18n()
 const api = useMarineApi()
 
-const VESSEL_TYPES: PageInquiryVesselType[] = [
-  'dry_cargo',
-  'tanker',
-  'container',
-  'tug',
-  'service',
-  'other',
-]
-const REQUIRED_SERVICES: PageInquiryServiceId[] = [
-  'technical',
-  'crewing',
-  'audit',
-  'commercial',
-  'insurance',
-  'other',
-]
-const VESSEL_TYPE_SET = new Set<PageInquiryVesselType>(VESSEL_TYPES)
-const REQUIRED_SERVICE_SET = new Set<PageInquiryServiceId>(REQUIRED_SERVICES)
+const normalizedConfig = computed(() => normalizePageInquiryFormConfig(props.config))
+const vesselTypeOptions = computed(() => normalizedConfig.value.vesselTypes ?? [])
+const requiredServiceOptions = computed(() => normalizedConfig.value.requiredServices ?? [])
+const vesselTypeLabelMap = computed(() => normalizedConfig.value.vesselTypeLabels ?? {})
+const requiredServiceLabelMap = computed(() => normalizedConfig.value.requiredServiceLabels ?? {})
+const vesselTypeSet = computed(() => new Set(vesselTypeOptions.value))
+const requiredServiceSet = computed(() => new Set(requiredServiceOptions.value))
 
 const FIELD_LIMITS = {
   name: 255,
@@ -70,11 +60,11 @@ interface InquiryFormState {
   position: string
   phone: string
   email: string
-  vesselTypes: PageInquiryVesselType[]
+  vesselTypes: string[]
   vesselsCount: number | null
   vesselFlag: string
   mainPorts: string
-  requiredServices: PageInquiryServiceId[]
+  requiredServices: string[]
   message: string
   consent: boolean
 }
@@ -147,11 +137,11 @@ function trimmedForm() {
     position: form.value.position.trim(),
     phone: form.value.phone.trim(),
     email: form.value.email.trim(),
-    vesselTypes: form.value.vesselTypes.filter((v) => VESSEL_TYPE_SET.has(v)),
+    vesselTypes: form.value.vesselTypes.filter((v) => vesselTypeSet.value.has(v)),
     vesselsCount: form.value.vesselsCount,
     vesselFlag: form.value.vesselFlag.trim(),
     mainPorts: form.value.mainPorts.trim(),
-    requiredServices: form.value.requiredServices.filter((v) => REQUIRED_SERVICE_SET.has(v)),
+    requiredServices: form.value.requiredServices.filter((v) => requiredServiceSet.value.has(v)),
     message: form.value.message.trim(),
     sourcePage: props.sourcePage.trim(),
     consent: form.value.consent,
@@ -174,7 +164,7 @@ function validateForm(): ReturnType<typeof trimmedForm> | null {
   } else if (!SIMPLE_EMAIL_RE.test(payload.email)) {
     errors.push(t('pages.pageInquiry.validation.emailInvalid'))
   }
-  if (payload.vesselTypes.length === 0) {
+  if (vesselTypeOptions.value.length > 0 && payload.vesselTypes.length === 0) {
     errors.push(t('pages.pageInquiry.validation.vesselTypesRequired'))
   }
   if (!Number.isInteger(payload.vesselsCount) || payload.vesselsCount == null || payload.vesselsCount < 1) {
@@ -183,7 +173,7 @@ function validateForm(): ReturnType<typeof trimmedForm> | null {
     errors.push(t('pages.pageInquiry.validation.vesselsCountMax'))
   }
   if (!payload.vesselFlag) errors.push(t('pages.pageInquiry.validation.vesselFlagRequired'))
-  if (payload.requiredServices.length === 0) {
+  if (requiredServiceOptions.value.length > 0 && payload.requiredServices.length === 0) {
     errors.push(t('pages.pageInquiry.validation.requiredServicesRequired'))
   }
   if (!payload.sourcePage) errors.push(t('pages.pageInquiry.validation.sourcePageRequired'))
@@ -239,11 +229,100 @@ async function onSubmit() {
   }
 }
 
-function vesselTypeLabel(id: PageInquiryVesselType): string {
-  return t(`pages.pageInquiry.vesselTypes.${id}`)
+function humanizeOptionId(value: string): string {
+  const normalized = value.replace(/[_-]+/g, ' ').trim()
+  return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : value
 }
-function requiredServiceLabel(id: PageInquiryServiceId): string {
-  return t(`pages.pageInquiry.requiredServices.${id}`)
+
+function vesselTypeLabel(id: string): string {
+  const custom = vesselTypeLabelMap.value[id]
+  if (custom) {
+    return custom
+  }
+  const key = `pages.pageInquiry.vesselTypes.${id}`
+  return te(key) ? t(key) : humanizeOptionId(id)
+}
+function requiredServiceLabel(id: string): string {
+  const custom = requiredServiceLabelMap.value[id]
+  if (custom) {
+    return custom
+  }
+  const key = `pages.pageInquiry.requiredServices.${id}`
+  return te(key) ? t(key) : humanizeOptionId(id)
+}
+
+type FlagCountryOption = { code: string; name: string }
+
+const flagPickerOpen = ref(false)
+const flagSearch = ref('')
+
+// Full ISO 3166-1 alpha-2 list (sorted). Intl.supportedValuesOf does not support 'region'.
+const ALL_COUNTRY_CODES: readonly string[] = [
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN',
+  'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE',
+  'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF',
+  'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM',
+  'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM',
+  'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC',
+  'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK',
+  'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA',
+  'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG',
+  'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO',
+  'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
+  'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW',
+]
+
+const countryCodes = computed<string[]>(() => [...ALL_COUNTRY_CODES])
+
+const flagDisplayNames = computed(() =>
+  new Intl.DisplayNames([locale.value === 'ru' ? 'ru' : 'en'], { type: 'region' }),
+)
+
+const allFlagCountries = computed<FlagCountryOption[]>(() =>
+  countryCodes.value.map((code) => ({
+    code,
+    name: flagDisplayNames.value.of(code) ?? code,
+  })),
+)
+
+const filteredFlagCountries = computed<FlagCountryOption[]>(() => {
+  const q = flagSearch.value.trim().toLowerCase()
+  if (!q) {
+    return allFlagCountries.value
+  }
+  return allFlagCountries.value.filter((row) =>
+    row.code.toLowerCase().includes(q) || row.name.toLowerCase().includes(q),
+  )
+})
+
+const selectedFlagCountry = computed<FlagCountryOption | null>(() => {
+  const code = form.value.vesselFlag.trim().toUpperCase()
+  if (!code) {
+    return null
+  }
+  return allFlagCountries.value.find((row) => row.code === code) ?? { code, name: code }
+})
+
+function flagClass(code: string): string {
+  return `fi fi-${code.toLowerCase()}`
+}
+
+function openFlagPicker() {
+  flagSearch.value = ''
+  flagPickerOpen.value = true
+}
+
+function closeFlagPicker() {
+  flagPickerOpen.value = false
+}
+
+function pickFlagCountry(code: string) {
+  form.value.vesselFlag = code.toUpperCase()
+  flagPickerOpen.value = false
 }
 
 /**
@@ -366,13 +445,13 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
             </div>
 
             <!-- Тип судна -->
-            <fieldset>
+            <fieldset v-if="vesselTypeOptions.length > 0">
               <legend :class="FIELD_GROUP_LABEL_CLASS">
                 {{ t('pages.pageInquiry.labelVesselTypes') }}
               </legend>
               <div class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                 <CommonMarinCheckbox
-                  v-for="id in VESSEL_TYPES"
+                  v-for="id in vesselTypeOptions"
                   :key="id"
                   v-model="form.vesselTypes"
                   :value="id"
@@ -401,13 +480,29 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
                 <label :for="`pi-${sourcePage}-flag`" :class="FIELD_LABEL_CLASS">{{
                   t('pages.pageInquiry.labelVesselFlag')
                 }}</label>
-                <input
-                  :id="`pi-${sourcePage}-flag`"
-                  v-model="form.vesselFlag"
-                  required
-                  type="text"
-                  :class="FIELD_INPUT_CLASS"
-                />
+                <input :id="`pi-${sourcePage}-flag`" v-model="form.vesselFlag" type="hidden" />
+                <button
+                  type="button"
+                  class="mt-1.5 flex w-full items-center justify-between border-0 border-b border-border bg-transparent px-0 py-2 text-left text-sm text-body transition-colors hover:border-primary focus:border-primary focus:outline-none"
+                  @click="openFlagPicker"
+                >
+                  <span class="inline-flex items-center gap-2">
+                    <span
+                      v-if="selectedFlagCountry"
+                      :class="flagClass(selectedFlagCountry.code)"
+                      class="h-4 w-6 rounded-[2px] bg-contain bg-center bg-no-repeat"
+                      aria-hidden="true"
+                    />
+                    <span class="font-body">
+                      {{
+                        selectedFlagCountry
+                          ? `${selectedFlagCountry.name} (${selectedFlagCountry.code})`
+                          : t('pages.pageInquiry.labelVesselFlag')
+                      }}
+                    </span>
+                  </span>
+                  <ChevronDown class="h-4 w-4 text-muted" />
+                </button>
               </div>
               <div>
                 <label :for="`pi-${sourcePage}-ports`" :class="FIELD_LABEL_CLASS">{{
@@ -423,13 +518,13 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
             </div>
 
             <!-- Требуемые услуги -->
-            <fieldset>
+            <fieldset v-if="requiredServiceOptions.length > 0">
               <legend :class="FIELD_GROUP_LABEL_CLASS">
                 {{ t('pages.pageInquiry.labelRequiredServices') }}
               </legend>
               <div class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                 <CommonMarinCheckbox
-                  v-for="id in REQUIRED_SERVICES"
+                  v-for="id in requiredServiceOptions"
                   :key="id"
                   v-model="form.requiredServices"
                   :value="id"
@@ -550,5 +645,85 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
         </div>
       </div>
     </div>
+    <Teleport to="body">
+      <div
+        v-if="flagPickerOpen"
+        class="fixed inset-0 z-[160] bg-slate-900/60 p-4 backdrop-blur-[2px]"
+        @click.self="closeFlagPicker"
+      >
+        <div class="mx-auto flex h-full w-full max-w-4xl flex-col rounded-md border border-border bg-white shadow-2xl">
+          <div class="flex items-center justify-between border-b border-border px-4 py-3">
+            <p class="font-display text-lg text-body">{{ t('pages.pageInquiry.labelVesselFlag') }}</p>
+            <button type="button" class="rounded-sm p-1 text-muted hover:text-body" @click="closeFlagPicker">
+              <X class="h-4 w-4" />
+            </button>
+          </div>
+          <div class="border-b border-border px-4 py-3">
+            <label class="flex items-center gap-2 border border-border px-3 py-2">
+              <Search class="h-4 w-4 text-muted" />
+              <input
+                v-model="flagSearch"
+                type="search"
+                class="w-full bg-transparent text-sm text-body outline-none placeholder:text-muted"
+                placeholder="Поиск по стране или коду (US, DE, ...)"
+              />
+            </label>
+          </div>
+          <div class="min-h-0 flex-1 overflow-y-auto p-2">
+            <!-- Desktop: tile grid (12 columns) -->
+            <div class="hidden sm:grid sm:grid-cols-[repeat(12,minmax(0,1fr))] sm:gap-1">
+              <button
+                v-for="country in filteredFlagCountries"
+                :key="country.code"
+                type="button"
+                :title="`${country.name} (${country.code})`"
+                class="group relative flex flex-col items-center gap-1 rounded-sm p-1.5 text-center transition-colors hover:bg-bg-light"
+                :class="selectedFlagCountry?.code === country.code ? 'bg-bg-light ring-1 ring-primary/40' : ''"
+                @click="pickFlagCountry(country.code)"
+              >
+                <span
+                  :class="flagClass(country.code)"
+                  class="block h-5 w-7 rounded-[2px] bg-contain bg-center bg-no-repeat shadow-sm"
+                  aria-hidden="true"
+                />
+                <span class="block truncate font-mono text-[9px] leading-none text-muted group-hover:text-body">
+                  {{ country.code }}
+                </span>
+                <Check
+                  v-if="selectedFlagCountry?.code === country.code"
+                  class="absolute right-0.5 top-0.5 h-3 w-3 text-primary"
+                />
+              </button>
+            </div>
+            <!-- Mobile: compact list -->
+            <div class="sm:hidden">
+              <button
+                v-for="country in filteredFlagCountries"
+                :key="country.code"
+                type="button"
+                class="flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 text-left text-sm text-body hover:bg-bg-light"
+                @click="pickFlagCountry(country.code)"
+              >
+                <span class="inline-flex items-center gap-3">
+                  <span
+                    :class="flagClass(country.code)"
+                    class="h-4 w-6 rounded-[2px] bg-contain bg-center bg-no-repeat"
+                    aria-hidden="true"
+                  />
+                  <span>{{ country.name }}</span>
+                </span>
+                <span class="inline-flex items-center gap-2 text-xs text-muted">
+                  {{ country.code }}
+                  <Check
+                    v-if="selectedFlagCountry?.code === country.code"
+                    class="h-3.5 w-3.5 text-primary"
+                  />
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>

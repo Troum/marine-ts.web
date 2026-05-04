@@ -5,7 +5,7 @@
  * Тот же каркас, что у /projects/:slug и маркетинговых линеек; визуально согласован с about (`mts-about-shell`).
  */
 import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
-import type { CustomPageSection } from '~/types'
+import type { CustomPageSection, PageInquiryFormConfig } from '~/types'
 import { Loader2 } from 'lucide-vue-next'
 import ThemedContentString from "~/components/common/ThemedContentString.vue";
 
@@ -15,6 +15,7 @@ defineProps<{
     title: string
     excerpt?: string | null
     showInquiryForm?: boolean
+    inquiryForm?: PageInquiryFormConfig
     showPublicTitle?: boolean
   } | null
   bodyHtml: string
@@ -97,6 +98,7 @@ defineProps<{
       <CommonPageInquiryForm
         v-if="inquiryEnabled !== false && page.showInquiryForm"
         :source-page="inquirySourcePage"
+        :config="page.inquiryForm"
       />
     </template>
   </div>

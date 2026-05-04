@@ -109,6 +109,7 @@ function sectionTitle(id: string): string {
 function setPageLayout(mode: 'legacy' | 'v2') {
   const shared = {
     showInquiryForm: data.value.ru.showInquiryForm,
+    inquiryForm: data.value.ru.inquiryForm,
     heroImage: data.value.ru.heroImage,
     hideInquiryFormCardHeading: data.value.ru.hideInquiryFormCardHeading,
     hideInquiryFormIntro: data.value.ru.hideInquiryFormIntro,
@@ -120,6 +121,14 @@ function setPageLayout(mode: 'legacy' | 'v2') {
       data.value[loc] = {
         ...fresh,
         showInquiryForm: shared.showInquiryForm,
+        inquiryForm: shared.inquiryForm
+          ? {
+              vesselTypes: [...(shared.inquiryForm.vesselTypes ?? [])],
+              requiredServices: [...(shared.inquiryForm.requiredServices ?? [])],
+              vesselTypeLabels: { ...(shared.inquiryForm.vesselTypeLabels ?? {}) },
+              requiredServiceLabels: { ...(shared.inquiryForm.requiredServiceLabels ?? {}) },
+            }
+          : undefined,
         hideInquiryFormCardHeading: shared.hideInquiryFormCardHeading,
         hideInquiryFormIntro: shared.hideInquiryFormIntro,
         heroImage: shared.heroImage,
@@ -135,6 +144,14 @@ function setPageLayout(mode: 'legacy' | 'v2') {
         hero: { ...cur.hero },
         cta: cur.cta ? { ...cur.cta } : { title: '', buttonText: '' },
         showInquiryForm: cur.showInquiryForm,
+        inquiryForm: cur.inquiryForm
+          ? {
+              vesselTypes: [...(cur.inquiryForm.vesselTypes ?? [])],
+              requiredServices: [...(cur.inquiryForm.requiredServices ?? [])],
+              vesselTypeLabels: { ...(cur.inquiryForm.vesselTypeLabels ?? {}) },
+              requiredServiceLabels: { ...(cur.inquiryForm.requiredServiceLabels ?? {}) },
+            }
+          : undefined,
         hideInquiryFormCardHeading: cur.hideInquiryFormCardHeading,
         hideInquiryFormIntro: cur.hideInquiryFormIntro,
         heroImage: cur.heroImage,
@@ -221,6 +238,7 @@ async function submit() {
   await nextTick()
   const src = data.value[localeTab.value]
   const inq = src.showInquiryForm
+  const inquiryForm = src.inquiryForm
   const heroImg = src.heroImage
   const hideCard = src.hideInquiryFormCardHeading
   const hideIntro = src.hideInquiryFormIntro
@@ -229,6 +247,14 @@ async function submit() {
   const hideFooter = src.hideFooter
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].inquiryForm = inquiryForm
+      ? {
+          vesselTypes: [...(inquiryForm.vesselTypes ?? [])],
+          requiredServices: [...(inquiryForm.requiredServices ?? [])],
+          vesselTypeLabels: { ...(inquiryForm.vesselTypeLabels ?? {}) },
+          requiredServiceLabels: { ...(inquiryForm.requiredServiceLabels ?? {}) },
+        }
+      : undefined
     data.value[loc].heroImage = heroImg
     data.value[loc].hideInquiryFormCardHeading = hideCard
     data.value[loc].hideInquiryFormIntro = hideIntro
@@ -667,6 +693,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox">
             Скрыть шапку внутри белой карточки формы
           </label>
+          <AdminPageInquiryConfigEditor
+            v-if="d.showInquiryForm"
+            :model-value="d.inquiryForm"
+            @update:model-value="(v) => (data[localeTab].inquiryForm = v)"
+          />
           <div class="border-t border-mts-border pt-4">
             <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
               <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox">

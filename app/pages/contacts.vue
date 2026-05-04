@@ -279,6 +279,7 @@ async function submitFeedback() {
       source-page="contacts"
       :hide-intro="cms.hideInquiryFormIntro === true"
       :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
+      :config="cms.inquiryForm"
     />
   </div>
 </template>

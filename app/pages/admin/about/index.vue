@@ -364,6 +364,16 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 @update:model-value="d.sec1Hero.body = $event"
               />
             </div>
+            <div class="grid gap-2 md:grid-cols-2">
+              <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+                <input v-model="d.hideHeroPrimaryButton" type="checkbox" class="mts-checkbox" />
+                Скрыть кнопку «Связаться»
+              </label>
+              <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
+                <input v-model="d.hideHeroSecondaryButton" type="checkbox" class="mts-checkbox" />
+                Скрыть кнопку «Подать анкету»
+              </label>
+            </div>
           </div>
         </AdminCollapsibleSection>
 
@@ -839,6 +849,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
             Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
+          <AdminPageInquiryConfigEditor v-if="d.showInquiryForm" v-model="d.inquiryForm" />
           <div class="border-t border-mts-border pt-4">
             <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
               <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox" />

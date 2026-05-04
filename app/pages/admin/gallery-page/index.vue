@@ -101,6 +101,7 @@ onMounted(async () => {
 async function submit() {
   const src = data.value[localeTab.value]
   const inq = src.showInquiryForm
+  const inquiryForm = src.inquiryForm
   const hideIntro = src.hideInquiryFormIntro
   const hideCard = src.hideInquiryFormCardHeading
   const heroImg = src.heroImage
@@ -109,6 +110,14 @@ async function submit() {
   const hideFooter = src.hideFooter
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].showInquiryForm = inq
+    data.value[loc].inquiryForm = inquiryForm
+      ? {
+          vesselTypes: [...(inquiryForm.vesselTypes ?? [])],
+          requiredServices: [...(inquiryForm.requiredServices ?? [])],
+          vesselTypeLabels: { ...(inquiryForm.vesselTypeLabels ?? {}) },
+          requiredServiceLabels: { ...(inquiryForm.requiredServiceLabels ?? {}) },
+        }
+      : undefined
     data.value[loc].hideInquiryFormIntro = hideIntro
     data.value[loc].hideInquiryFormCardHeading = hideCard
     data.value[loc].heroImage = heroImg
@@ -225,6 +234,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <input v-model="d.hideInquiryFormCardHeading" type="checkbox" class="mts-checkbox" />
             Скрыть заголовок и подписи внутри белой карточки (над полями формы)
           </label>
+          <AdminPageInquiryConfigEditor v-if="d.showInquiryForm" v-model="d.inquiryForm" />
           <div class="border-t border-mts-border pt-4">
             <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
               <input v-model="d.hideFooter" type="checkbox" class="mts-checkbox" />

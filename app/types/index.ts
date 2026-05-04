@@ -354,6 +354,16 @@ export type PageInquiryServiceId =
   | 'insurance'
   | 'other'
 
+/**
+ * Конфиг видимости чекбоксов формы «Оставьте заявку» для конкретной страницы.
+ */
+export interface PageInquiryFormConfig {
+  vesselTypes?: string[]
+  requiredServices?: string[]
+  vesselTypeLabels?: Record<string, string>
+  requiredServiceLabels?: Record<string, string>
+}
+
 /** Заявка с формы «подключённой» страницы (судовой менеджмент и др.). */
 export interface PageInquiry {
   id: number
@@ -362,11 +372,11 @@ export interface PageInquiry {
   position: string | null
   phone: string | null
   email: string
-  vesselTypes: PageInquiryVesselType[]
+  vesselTypes: string[]
   vesselsCount: number | null
   vesselFlag: string | null
   mainPorts: string | null
-  requiredServices: PageInquiryServiceId[]
+  requiredServices: string[]
   message: string | null
   sourcePage: string
   ip: string | null
@@ -628,6 +638,10 @@ export interface AboutPageData {
   aboutVersion?: 2
   /** Секция 1. Hero / первый экран. */
   sec1Hero: { title: string; body: string }
+  /** Скрыть кнопку «Связаться» в hero первого экрана. */
+  hideHeroPrimaryButton?: boolean
+  /** Скрыть кнопку «Подать анкету» в hero первого экрана. */
+  hideHeroSecondaryButton?: boolean
   /** Секция 2. История и география. */
   sec2History: { title: string; body: string; cards: AboutRichCard[] }
   /** Секция 3. Технический менеджмент. */
@@ -643,6 +657,7 @@ export interface AboutPageData {
   showInquiryForm?: boolean
   hideInquiryFormIntro?: boolean
   hideInquiryFormCardHeading?: boolean
+  inquiryForm?: PageInquiryFormConfig
   /** Скрыть подвал сайта на этой странице. */
   hideFooter?: boolean
   /** Фон первого экрана (Hero). */
@@ -847,6 +862,7 @@ export interface HomePageData {
   showInquiryForm?: boolean
   hideInquiryFormIntro?: boolean
   hideInquiryFormCardHeading?: boolean
+  inquiryForm?: PageInquiryFormConfig
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
   customSections?: LineMarketingCustomSection[]
   /** Порядок секций (включая `custom:<uuid>`); hero фиксирован первым и не входит. */
@@ -886,6 +902,7 @@ export interface ListingPageData {
   hero: ListingHero
   cta?: ListingCTA
   showInquiryForm?: boolean
+  inquiryForm?: PageInquiryFormConfig
   /** Скрыть блок над карточкой («Заявка», заголовок, лид из i18n) — см. `hideIntro` в PageInquiryForm. */
   hideInquiryFormIntro?: boolean
   /** Скрыть заголовок внутри карточки формы заявки (листинги с формой). */
@@ -928,6 +945,7 @@ export interface ContactsPageData {
   showInquiryForm?: boolean
   hideInquiryFormIntro?: boolean
   hideInquiryFormCardHeading?: boolean
+  inquiryForm?: PageInquiryFormConfig
   /** Опциональный фон hero. */
   heroImage?: string
   /** Пользовательские секции (вставляются после штатных, перед формой заявки). */
@@ -1199,6 +1217,7 @@ export type LineMarketingSectionId =
   }
   checklist: CrewingChecklistBlock
   showInquiryForm?: boolean
+  inquiryForm?: PageInquiryFormConfig
   /** Скрыть блок над карточкой («Заявка», заголовок, лид из i18n). */
   hideInquiryFormIntro?: boolean
   /**

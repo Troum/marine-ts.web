@@ -29,6 +29,7 @@
     "@tiptap/vue-3": "^3.22.2",
     "@types/mapbox-gl": "^3.4.1",
     "@vueuse/core": "^14.2.1",
+    "flag-icons": "^7.5.0",
     "isomorphic-dompurify": "^2.36.0",
     "libphonenumber-js": "^1.12.41",
     "lucide-vue-next": "^1.0.0",

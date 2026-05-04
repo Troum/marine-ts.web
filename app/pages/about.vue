@@ -164,11 +164,19 @@ function hasImage(src?: string | null): boolean {
             <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec1Hero.body)" />
           </div>
 
-          <div class="mb-10 flex flex-wrap items-center gap-4">
-            <NuxtLink :to="localePath('/request')" class="btn-primary inline-flex items-center justify-center">
+          <div
+            v-if="d.hideHeroPrimaryButton !== true || d.hideHeroSecondaryButton !== true"
+            class="mb-10 flex flex-wrap items-center gap-4"
+          >
+            <NuxtLink
+              v-if="d.hideHeroPrimaryButton !== true"
+              :to="localePath('/request')"
+              class="btn-primary inline-flex items-center justify-center"
+            >
               {{ t('header.ctaContact') }}
             </NuxtLink>
             <NuxtLink
+              v-if="d.hideHeroSecondaryButton !== true"
               :to="localePath('/application-form')"
               class="btn-secondary-glass inline-flex items-center justify-center"
             >
@@ -524,6 +532,7 @@ function hasImage(src?: string | null): boolean {
       source-page="about"
       :hide-intro="d.hideInquiryFormIntro === true"
       :hide-form-card-heading="d.hideInquiryFormCardHeading === true"
+      :config="d.inquiryForm"
     />
     </template>
   </div>
