@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('about')
 import { ChevronDown, FileDown, Loader2 } from 'lucide-vue-next'
 import type { AboutGeoLocation, AboutPageData, MarineContentLocale } from '~/types'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'

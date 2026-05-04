@@ -245,17 +245,12 @@ async function handleDuplicate(row: ContentPage) {
             <NuxtLink to="/admin" class="text-mts-text-secondary hover:text-mts-accent transition-colors">
               <ArrowLeft class="w-5 h-5" />
             </NuxtLink>
-            <h1 class="font-display text-xl text-mts-text">Судоремонт</h1>
+            <h1 class="font-display text-xl text-mts-text">Текстовые страницы</h1>
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <AdminPlusLink to="/admin/services/new" variant="outline">Карточка</AdminPlusLink>
-            <AdminPlusLink to="/admin/content-pages/new">Страница</AdminPlusLink>
-          </div>
+          <AdminPlusLink to="/admin/content-pages/new">Добавить страницу</AdminPlusLink>
         </div>
       </div>
     </header>
-
-    <AdminServicesSectionNav active="pages" />
 
     <main class="max-w-[1600px] mx-auto px-6 lg:px-12 py-8">
       <AdminListToolbar

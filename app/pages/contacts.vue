@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('contacts')
 import { Phone, Send, Loader2 } from 'lucide-vue-next'
 import type { ContactsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'

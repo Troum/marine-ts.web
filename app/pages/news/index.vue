@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('news')
 import { Calendar, User, Loader2, MoveRight } from 'lucide-vue-next'
 import type { NewsItem, ListingPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'

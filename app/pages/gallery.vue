@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('gallery')
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'

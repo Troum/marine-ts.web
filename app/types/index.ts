@@ -373,10 +373,14 @@ export interface PageInquiry {
   phone: string | null
   email: string
   vesselTypes: string[]
+  /** Человекочитаемые подписи для id типов судна: { id: label }. */
+  vesselTypeLabels: Record<string, string>
   vesselsCount: number | null
   vesselFlag: string | null
   mainPorts: string | null
   requiredServices: string[]
+  /** Человекочитаемые подписи для id услуг: { id: label }. */
+  requiredServiceLabels: Record<string, string>
   message: string | null
   sourcePage: string
   ip: string | null
@@ -485,8 +489,22 @@ export interface NavigationMenuSettings {
 /** Публичная тема: `default` — Marin; `scglobal` — Golden Sepia (имя в админке). */
 export type SitePublicThemeId = 'default' | 'scglobal'
 
+/** Ключи разделов публичного сайта, которые можно скрыть. */
+export type SiteSectionKey =
+  | 'about'
+  | 'services'
+  | 'ship_management'
+  | 'crewing_management'
+  | 'contacts'
+  | 'gallery'
+  | 'projects'
+  | 'news'
+  | 'vacancies'
+
 export interface SiteAppearanceSettings {
   theme: SitePublicThemeId
+  /** Разделы, которые скрыты на публичном сайте (отдают 404). */
+  hiddenSections: Partial<Record<SiteSectionKey, boolean>>
 }
 
 /** Контактная информация в нижней части бургер-меню. */

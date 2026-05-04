@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('projects')
 import { MapPin, Calendar, ArrowRight, Ship, Loader2 } from 'lucide-vue-next'
 import type { Project, ProjectsPageData, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'

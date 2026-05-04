@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('vacancies')
 import { MapPin, Briefcase, Loader2, ArrowRight } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'

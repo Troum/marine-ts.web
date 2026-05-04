@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useSectionGuard('services')
 import { Check, Loader2 } from 'lucide-vue-next'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import type { ServiceItem, ListingPageData, MarineContentLocale } from '~/types'

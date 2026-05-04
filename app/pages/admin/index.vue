@@ -5,6 +5,7 @@ import {
   LogOut,
   Edit,
   Eye,
+  EyeOff,
   Loader2,
   Wrench,
   Search,
@@ -26,6 +27,7 @@ import {
   Inbox,
   LayoutList,
   Palette,
+  BookOpen,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -408,6 +410,49 @@ const statCards = computed(() =>
             </div>
           </div>
 
+          <div v-if="canManageContentPages" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <BookOpen class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Текстовые страницы</h2>
+              </div>
+              <AdminPlusLink to="/admin/content-pages/new">Добавить</AdminPlusLink>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Произвольные страницы с собственным URL: описания услуг, справочные материалы и другие текстовые разделы.
+              </p>
+              <NuxtLink
+                to="/admin/content-pages"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Управление страницами
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+            <div class="p-6 border-b border-mts-border flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <EyeOff class="w-5 h-5 text-mts-accent" />
+                <h2 class="font-display text-base text-mts-text">Разделы сайта</h2>
+              </div>
+            </div>
+            <div class="p-6">
+              <p class="font-body text-sm text-mts-text-secondary mb-4">
+                Управление видимостью разделов: скрытый раздел недоступен для посетителей и возвращает страницу 404.
+              </p>
+              <NuxtLink
+                to="/admin/sections"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Настроить разделы
+              </NuxtLink>
+            </div>
+          </div>
+
           <div v-if="canManageServices" class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
@@ -416,35 +461,19 @@ const statCards = computed(() =>
                 <Wrench class="w-5 h-5 shrink-0 text-mts-accent" />
                 <h2 class="font-display text-base text-mts-text">Судоремонт</h2>
               </div>
-              <div class="flex shrink-0 flex-nowrap items-center gap-2">
-                <AdminPlusLink v-if="canManageContentPages" to="/admin/content-pages/new" variant="outline">
-                  Страница
-                </AdminPlusLink>
-                <AdminPlusLink to="/admin/services/new">Карточка</AdminPlusLink>
-              </div>
+              <AdminPlusLink to="/admin/services/new">Карточка</AdminPlusLink>
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Раздел «Судоремонт» на сайте: карточки каталога и при необходимости отдельные текстовые страницы по URL в корне
-                сайта (/…)
+                Карточки каталога сервисов судоремонта на публичной странице.
               </p>
-              <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-6">
-                <NuxtLink
-                  to="/admin/services"
-                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-                >
-                  <Edit class="w-4 h-4" />
-                  Карточки на сайте
-                </NuxtLink>
-                <NuxtLink
-                  v-if="canManageContentPages"
-                  to="/admin/content-pages"
-                  class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
-                >
-                  <Edit class="w-4 h-4" />
-                  Текстовые страницы
-                </NuxtLink>
-              </div>
+              <NuxtLink
+                to="/admin/services"
+                class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
+              >
+                <Edit class="w-4 h-4" />
+                Карточки на сайте
+              </NuxtLink>
             </div>
           </div>
 

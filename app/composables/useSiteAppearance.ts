@@ -1,8 +1,9 @@
-import type { SiteAppearanceSettings } from '~/types'
+import type { SiteAppearanceSettings, SiteSectionKey } from '~/types'
 import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 
 /**
  * Глобальная тема публичного сайта (Marin / Golden Sepia): загрузка и класс на `<body>` для SSR/CSR.
+ * Также хранит `hiddenSections` — разделы, скрытые администратором (отдают 404).
  * Админка (`admin-shell` на body) не затрагивается.
  */
 export function useSiteAppearance() {
@@ -30,8 +31,13 @@ export function useSiteAppearance() {
     },
   })
 
+  function isSectionHidden(key: SiteSectionKey): boolean {
+    return settings.value.hiddenSections[key] === true
+  }
+
   return {
     settings,
     refresh,
+    isSectionHidden,
   }
 }

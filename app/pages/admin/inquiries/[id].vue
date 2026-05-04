@@ -1,14 +1,9 @@
 <script setup lang="ts">
+import 'flag-icons/css/flag-icons.min.css'
 import { ArrowLeft, Loader2, Trash2 } from 'lucide-vue-next'
-import type { PageInquiry, PageInquiryServiceId, PageInquiryVesselType } from '~/types'
+import type { PageInquiry } from '~/types'
 
-/**
- * Локализованные подписи для машинных id чек-боксов формы. Идентификаторы
- * валидируются на бэкенде (`StorePageInquiryRequest::ALLOWED_*`), здесь
- * только UI-перевод. Если добавляется новый id — продублировать в
- * `PageInquiryForm.vue` (источник истины для подписей пользователя).
- */
-const VESSEL_TYPE_LABEL: Record<PageInquiryVesselType, string> = {
+const BUILT_IN_VESSEL_TYPE_LABEL: Record<string, string> = {
   dry_cargo: 'Сухогруз',
   tanker: 'Танкер',
   container: 'Контейнеровоз',
@@ -16,7 +11,7 @@ const VESSEL_TYPE_LABEL: Record<PageInquiryVesselType, string> = {
   service: 'Служебное судно',
   other: 'Другое',
 }
-const REQUIRED_SERVICE_LABEL: Record<PageInquiryServiceId, string> = {
+const BUILT_IN_REQUIRED_SERVICE_LABEL: Record<string, string> = {
   technical: 'Технический менеджмент (ремонт, докование, снабжение)',
   crewing: 'Крюинг (подбор и обучение экипажей)',
   audit: 'Аудит и сертификация (ISM, ISPS, MLC)',
@@ -25,11 +20,46 @@ const REQUIRED_SERVICE_LABEL: Record<PageInquiryServiceId, string> = {
   other: 'Другое',
 }
 
-function vesselTypeLabel(id: string): string {
-  return VESSEL_TYPE_LABEL[id as PageInquiryVesselType] ?? id
+/** Убирает суффикс-временну́ю метку (_1746123456789) и делает текст читаемым. */
+function humanizeId(id: string): string {
+  return id
+    .replace(/_[a-z0-9]{5,}$/i, '')   // strip timestamp / base36 suffix
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
 }
-function requiredServiceLabel(id: string): string {
-  return REQUIRED_SERVICE_LABEL[id as PageInquiryServiceId] ?? id
+
+function vesselTypeLabel(id: string, labelsMap?: Record<string, string>): string {
+  return labelsMap?.[id] ?? BUILT_IN_VESSEL_TYPE_LABEL[id] ?? humanizeId(id)
+}
+function requiredServiceLabel(id: string, labelsMap?: Record<string, string>): string {
+  return labelsMap?.[id] ?? BUILT_IN_REQUIRED_SERVICE_LABEL[id] ?? humanizeId(id)
+}
+
+const SOURCE_PAGE_LABELS: Record<string, string> = {
+  home: 'Главная',
+  about: 'О компании',
+  services: 'Судоремонт',
+  'ship-management': 'Судовой менеджмент',
+  'crewing-management': 'Крюинг-менеджмент',
+  contacts: 'Контакты',
+  gallery: 'Галерея',
+  projects: 'Проекты',
+  news: 'Новости',
+  vacancies: 'Вакансии',
+  request: 'Форма заявки',
+}
+
+function sourcePageLabel(page: string): string {
+  return SOURCE_PAGE_LABELS[page] ?? page
+}
+
+const regionDisplayNames = new Intl.DisplayNames(['ru'], { type: 'region' })
+function flagLabel(code: string): string {
+  try {
+    return regionDisplayNames.of(code) ?? code
+  } catch {
+    return code
+  }
 }
 
 definePageMeta({
@@ -152,7 +182,10 @@ async function handleDelete() {
           </div>
           <div>
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Страница (источник)</dt>
-            <dd class="mt-1 font-mono text-sm text-mts-text">{{ item.sourcePage }}</dd>
+            <dd class="mt-1 flex items-center gap-2 font-body text-mts-text">
+              {{ sourcePageLabel(item.sourcePage) }}
+              <span class="font-mono text-xs text-mts-text-secondary">({{ item.sourcePage }})</span>
+            </dd>
           </div>
           <div>
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Имя</dt>
@@ -184,9 +217,9 @@ async function handleDelete() {
               <span
                 v-for="t in item.vesselTypes"
                 :key="t"
-                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-mono text-[11px] text-mts-text"
+                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-body text-sm text-mts-text"
               >
-                {{ vesselTypeLabel(t) }}
+                {{ vesselTypeLabel(t, item.vesselTypeLabels) }}
               </span>
             </dd>
           </div>
@@ -196,7 +229,15 @@ async function handleDelete() {
           </div>
           <div v-if="item.vesselFlag">
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Флаг судна</dt>
-            <dd class="mt-1 font-body text-mts-text">{{ item.vesselFlag }}</dd>
+            <dd class="mt-1 flex items-center gap-2.5 font-body text-mts-text">
+              <span
+                :class="`fi fi-${item.vesselFlag.toLowerCase()}`"
+                class="inline-block h-4 w-6 rounded-[2px] bg-cover bg-center shadow-sm"
+                aria-hidden="true"
+              />
+              <span>{{ flagLabel(item.vesselFlag) }}</span>
+              <span class="font-mono text-xs text-mts-text-secondary">({{ item.vesselFlag }})</span>
+            </dd>
           </div>
           <div v-if="item.mainPorts">
             <dt class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Основные порты захода</dt>
@@ -208,9 +249,9 @@ async function handleDelete() {
               <span
                 v-for="s in item.requiredServices"
                 :key="s"
-                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-mono text-[11px] text-mts-text"
+                class="inline-flex items-center border border-mts-border bg-mts-bg px-2.5 py-1 font-body text-sm text-mts-text"
               >
-                {{ requiredServiceLabel(s) }}
+                {{ requiredServiceLabel(s, item.requiredServiceLabels) }}
               </span>
             </dd>
           </div>

@@ -996,11 +996,15 @@ export function useMarineApi() {
         email: string
         /** Машинные id выбранных типов судна (см. `PageInquiryVesselType`). */
         vesselTypes: string[]
+        /** Подписи для кастомных типов судна { id: label }. */
+        vesselTypeLabels?: Record<string, string>
         vesselsCount: number
         vesselFlag: string
         mainPorts?: string | null
         /** Машинные id выбранных услуг (см. `PageInquiryServiceId`). */
         requiredServices: string[]
+        /** Подписи для кастомных услуг { id: label }. */
+        requiredServiceLabels?: Record<string, string>
         message?: string | null
         sourcePage: string
         consent: boolean
@@ -1012,10 +1016,12 @@ export function useMarineApi() {
           phone: body.phone,
           email: body.email,
           vessel_types: body.vesselTypes,
+          vessel_type_labels: body.vesselTypeLabels ?? null,
           vessels_count: body.vesselsCount,
           vessel_flag: body.vesselFlag,
           main_ports: body.mainPorts ?? null,
           required_services: body.requiredServices,
+          required_service_labels: body.requiredServiceLabels ?? null,
           message: body.message ?? null,
           source_page: body.sourcePage,
           consent: body.consent,
