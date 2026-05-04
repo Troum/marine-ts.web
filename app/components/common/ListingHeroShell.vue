@@ -30,13 +30,38 @@ const props = withDefaults(
 )
 
 const mediaActive = computed(() => props.parallaxMediaActive ?? true)
+
+/**
+ * В CMS иногда сохраняется абсолютный URL с api-доменом:
+ * `https://api-.../storage/...`.
+ * Для публичной витрины безопаснее рендерить локальный относительный путь `/storage/...`,
+ * чтобы не зависеть от CORS/CSP и междоменного доступа к статике.
+ */
+const resolvedHeroImage = computed(() => {
+  const raw = (props.heroImage ?? '').trim()
+  if (!raw) {
+    return ''
+  }
+  if (!/^https?:\/\//i.test(raw)) {
+    return raw
+  }
+  try {
+    const u = new URL(raw)
+    if (u.pathname.startsWith('/storage/')) {
+      return `${u.pathname}${u.search}${u.hash}`
+    }
+  } catch {
+    /* invalid URL, fall through */
+  }
+  return raw
+})
 </script>
 
 <template>
   <section
     :class="[
       'relative overflow-hidden',
-      props.heroImage
+      resolvedHeroImage
         ? props.fullViewport
           ? 'min-h-[100svh] pb-16 pt-36 lg:pb-20 lg:pt-44'
           : 'min-h-[52vh] pb-16 pt-36 lg:pb-20 lg:pt-44'
@@ -46,18 +71,18 @@ const mediaActive = computed(() => props.parallaxMediaActive ?? true)
     ]"
   >
     <div
-      v-if="props.heroImage && props.heroRails"
+      v-if="resolvedHeroImage && props.heroRails"
       class="pointer-events-none absolute top-0 left-1/4 z-[2] h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent"
       aria-hidden="true"
     />
     <div
-      v-if="props.heroImage && props.heroRails"
+      v-if="resolvedHeroImage && props.heroRails"
       class="pointer-events-none absolute top-0 right-1/4 z-[2] h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent"
       aria-hidden="true"
     />
 
-    <div v-if="props.heroImage" class="absolute inset-0">
-      <CommonParallaxHeroMedia :image="props.heroImage" :active="mediaActive" />
+    <div v-if="resolvedHeroImage" class="absolute inset-0">
+      <CommonParallaxHeroMedia :image="resolvedHeroImage" :active="mediaActive" />
       <div
         v-if="props.heroVeil"
         class="pointer-events-none absolute inset-0 z-[1] mts-line-marketing-hero-veil"
@@ -66,7 +91,7 @@ const mediaActive = computed(() => props.parallaxMediaActive ?? true)
     </div>
     <div class="relative z-10 mts-content-wrap">
       <AboutSectionContentParallax
-        v-if="props.heroContentParallax && props.heroImage"
+        v-if="props.heroContentParallax && resolvedHeroImage"
         :max-shift="32"
         :factor="0.085"
         class="w-full max-w-none"
