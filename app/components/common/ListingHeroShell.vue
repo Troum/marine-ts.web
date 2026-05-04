@@ -24,6 +24,7 @@ const props = withDefaults(
   {
     heroVeil: false,
     fullViewport: false,
+    parallaxMediaActive: true,
     heroContentParallax: false,
     heroRails: false,
   },
