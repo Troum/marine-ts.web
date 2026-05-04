@@ -273,21 +273,24 @@ const heroBreadcrumbsOnDark = computed(() =>
               :delay-ms="200 + i * 90"
             >
               <div
-                class="corner-accent flex min-h-full min-w-0 flex-col rounded-xl border border-border/80 bg-white/90 p-6 shadow-sm"
+                class="service-card corner-accent flex min-h-full min-w-0 flex-col p-6"
               >
                 <div class="mb-3 flex items-start justify-between gap-2">
-                  <span class="font-display text-3xl tabular-nums text-[rgb(193,64,66)]">
+                  <span class="font-display text-3xl tabular-nums text-mts-accent">
                     {{ String(i + 1).padStart(2, '0') }}
                   </span>
                   <component
                     :is="resolveCrewingIcon(solutionDecorIcons[Math.min(i, solutionDecorIcons.length - 1)] ?? 'Ship')"
-                    class="h-7 w-7 shrink-0 text-[rgb(193,64,66)]"
+                    class="h-7 w-7 shrink-0 text-mts-accent"
                   />
                 </div>
-                <h3 class="font-display mb-3 text-base text-body">
+                <h3 class="font-display mb-3 text-base text-mts-text">
                   <ThemedContentString :content="c.title" />
                 </h3>
-                <div class="mts-markdown flex-1 text-sm leading-relaxed text-muted" v-html="lineRichHtml(c.text)" />
+                <div
+                  class="mts-markdown flex-1 text-sm leading-relaxed text-mts-text-secondary [&_strong]:text-mts-text"
+                  v-html="lineRichHtml(c.text)"
+                />
               </div>
             </MarinReveal>
           </div>
@@ -312,18 +315,18 @@ const heroBreadcrumbsOnDark = computed(() =>
               :delay-ms="160 + i * 90"
             >
               <div
-                class="flex h-full gap-5 rounded-xl border border-border/80 bg-white p-6 shadow-sm"
+                class="service-card flex h-full gap-5 p-6"
               >
                 <component
                   :is="resolveCrewingIcon(advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'BadgeCheck')"
-                  class="mt-0.5 h-8 w-8 shrink-0 text-primary"
+                  class="mt-0.5 h-8 w-8 shrink-0 text-mts-accent"
                 />
                 <div class="min-w-0">
-                  <h3 class="font-display mb-2 text-lg text-body">
+                  <h3 class="font-display mb-2 text-lg text-mts-text">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown text-sm leading-relaxed text-muted [&_strong]:text-body"
+                    class="mts-markdown text-sm leading-relaxed text-mts-text-secondary [&_strong]:text-mts-text"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
