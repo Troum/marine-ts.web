@@ -479,6 +479,8 @@
       "consentEn1": "I confirm that the details given are to the best of my knowledge accurate and true...",
       "consentEn2": "By submitting the application form, I give my consent to LLC \"Marine Technical Solutions\" for the processing of personal data...",
       "dobPlaceholder": "ДД.ММ.ГГГГ",
+      "fileInputChoose": "Выберите файл",
+      "fileInputNone": "Файл не выбран",
       "errPhoneInvalid": "Укажите корректный мобильный телефон (для зарубежных номеров используйте + и код страны)",
       "errDobInvalid": "Выберите корректную дату рождения",
       "errFieldRequired": "Обязательное поле",

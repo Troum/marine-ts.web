@@ -354,14 +354,18 @@ export type PageInquiryServiceId =
   | 'insurance'
   | 'other'
 
+/** Одна строка или ru/en (API может отдавать legacy string). */
+export type LocalizedLine = string | { ru: string; en: string }
+
 /**
  * Конфиг видимости чекбоксов формы «Оставьте заявку» для конкретной страницы.
  */
 export interface PageInquiryFormConfig {
   vesselTypes?: string[]
   requiredServices?: string[]
-  vesselTypeLabels?: Record<string, string>
-  requiredServiceLabels?: Record<string, string>
+  /** Подписи чекбоксов: строка или ru/en. */
+  vesselTypeLabels?: Record<string, LocalizedLine>
+  requiredServiceLabels?: Record<string, LocalizedLine>
 }
 
 /** Заявка с формы «подключённой» страницы (судовой менеджмент и др.). */
@@ -417,21 +421,21 @@ export interface ContactSocialLink {
 export interface SiteContactSettings {
   quick: {
     iconKey: ContactQuickIconKey
-    label: string
-    value: string
+    label: LocalizedLine
+    value: LocalizedLine
     href: string | null
     showInFooter?: boolean
   }[]
   departments: {
-    title: string
+    title: LocalizedLine
     phone: string
     email: string
     showInFooter?: boolean
   }[]
   offices: {
-    city: string
-    country: string
-    address: string
+    city: LocalizedLine
+    country: LocalizedLine
+    address: LocalizedLine
     phone: string
     email: string
   }[]
@@ -531,17 +535,17 @@ export interface NavigationBurgerOffice {
 
 export interface NavigationBurgerContacts {
   /** Заголовок колонки телефонов (по умолчанию «Телефоны»). */
-  phonesTitle?: string
+  phonesTitle?: LocalizedLine
   /** Список номеров телефонов в виде отображаемого текста (href генерируется автоматически). */
   phones?: string[]
   /** Заголовок средней колонки (email и соцсети). */
-  emailTitle?: string
+  emailTitle?: LocalizedLine
   /** Несколько адресов электронной почты. */
   emails?: string[]
   /** Несколько ссылок на соцсети. */
   socials?: NavigationBurgerSocial[]
   /** Общий заголовок колонки офисов. */
-  officesColumnTitle?: string
+  officesColumnTitle?: LocalizedLine
   /** Несколько офисов (подзаголовок + адрес). */
   offices?: NavigationBurgerOffice[]
   /** @deprecated см. `emails` */

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Phone } from 'lucide-vue-next'
-import type { FooterNavColumn, FooterNavLink } from '~/types'
+import type { FooterNavColumn, FooterNavLink, LocalizedLine, MarineContentLocale } from '~/types'
 import { emptyFooterMenuSettings } from '~/utils/emptyFooterMenuSettings'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 import { contactQuickIcons } from '~/utils/contactQuickIcons'
 import { heroOverlaySocialIcons } from '~/utils/heroOverlaySocialIcons'
-import { stripLocalePrefix } from '~/utils/stripLocalePrefix'
+import { pickLocalized } from '~/utils/bilingualField'
 
 const currentYear = new Date().getFullYear()
 const route = useRoute()
@@ -13,8 +13,8 @@ const localePath = useLocalePath()
 const { t, locale } = useI18n()
 const api = useMarineApi()
 
-const { data: contactSettings } = await useAsyncData(
-  'contact-settings',
+const { data: contactSettings, refresh: refreshContactSettings } = await useAsyncData(
+  () => `contact-settings-${locale.value}`,
   async () => {
     try {
       return await api.contactSettings.get()
@@ -22,8 +22,12 @@ const { data: contactSettings } = await useAsyncData(
       return null
     }
   },
-  { default: () => null, server: true },
+  { default: () => null, server: true, watch: [locale] },
 )
+
+watch(locale, () => {
+  refreshContactSettings()
+})
 
 const resolvedContacts = computed(() => contactSettings.value ?? contactSettingsDefaults)
 
@@ -84,7 +88,9 @@ function isExternalPath(p: string) {
   return /^https?:\/\//i.test(p.trim())
 }
 
-function stripHtml(s: string): string {
+function contactLine(v: LocalizedLine | undefined): string {
+  return pickLocalized(v ?? '', loc.value, '')
+}
   return s.replace(/<[^>]*>/g, '').trim()
 }
 
@@ -172,7 +178,7 @@ function columnHeading(col: FooterNavColumn): string {
                 <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center flex-shrink-0">
                   <component :is="contactQuickIcons[item.iconKey] ?? Phone" class="w-3.5 h-3.5" />
                 </div>
-                <span class="font-body text-xs leading-snug whitespace-pre-line">{{ item.value }}</span>
+                <span class="font-body text-xs leading-snug whitespace-pre-line">{{ contactLine(item.value) }}</span>
               </component>
             </li>
             <li v-for="(department, idx) in footerDepartments" :key="`department-${department.title}-${idx}`">
@@ -184,7 +190,7 @@ function columnHeading(col: FooterNavColumn): string {
                   <component :is="contactQuickIcons.mail" class="w-3.5 h-3.5" />
                 </div>
                 <span class="font-body text-xs leading-snug">
-                  <span class="block text-mts-frost/85">{{ department.title }}</span>
+                  <span class="block text-mts-frost/85">{{ contactLine(department.title) }}</span>
                   <span class="block">{{ department.phone }}</span>
                   <span class="block font-mono text-[10px]">{{ department.email }}</span>
                 </span>

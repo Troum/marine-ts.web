@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-vue-next'
 import type { SiteContactSettings } from '~/types'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { parseBilingual, serializeBilingual } from '~/utils/bilingualField'
 import { contactQuickIconOptions } from '~/utils/contactQuickIcons'
 import { heroOverlaySocialIcons, heroOverlaySocialIconOptions } from '~/utils/heroOverlaySocialIcons'
 import { useConfirm } from '~/composables/useConfirmAction'
@@ -22,13 +23,34 @@ const loading = ref(true)
 const saving = ref(false)
 const form = ref<SiteContactSettings>(structuredClone(contactSettingsDefaults))
 
+function normalizeEditorContacts(src: SiteContactSettings): SiteContactSettings {
+  return {
+    socials: [...(src.socials ?? [])],
+    quick: src.quick.map((q) => ({
+      ...q,
+      label: parseBilingual(q.label),
+      value: parseBilingual(q.value),
+    })),
+    departments: src.departments.map((d) => ({
+      ...d,
+      title: parseBilingual(d.title),
+    })),
+    offices: src.offices.map((o) => ({
+      ...o,
+      city: parseBilingual(o.city),
+      country: parseBilingual(o.country),
+      address: parseBilingual(o.address),
+    })),
+  }
+}
+
 onMounted(async () => {
   if (!canManageContacts.value) {
     await navigateTo('/admin')
     return
   }
   try {
-    form.value = await api.contactSettings.get()
+    form.value = normalizeEditorContacts(await api.contactSettings.get())
   } catch {
     await showAdminAlert({ message: 'Не удалось загрузить контакты', variant: 'error' })
     form.value = structuredClone(contactSettingsDefaults)
@@ -55,8 +77,8 @@ async function removeSocial(i: number) {
 function addQuick() {
   form.value.quick.push({
     iconKey: 'phone',
-    label: '',
-    value: '',
+    label: { ru: '', en: '' },
+    value: { ru: '', en: '' },
     href: null,
     showInFooter: false,
   })
@@ -79,9 +101,9 @@ async function removeQuick(i: number) {
 
 function addOffice() {
   form.value.offices.push({
-    city: '',
-    country: '',
-    address: '',
+    city: { ru: '', en: '' },
+    country: { ru: '', en: '' },
+    address: { ru: '', en: '' },
     phone: '',
     email: '',
   })
@@ -104,7 +126,7 @@ async function removeOffice(i: number) {
 
 function addDepartment() {
   form.value.departments.push({
-    title: '',
+    title: { ru: '', en: '' },
     phone: '',
     email: '',
     showInFooter: false,
@@ -135,17 +157,45 @@ async function submit() {
         url: s.url.trim(),
       })).filter((s) => s.url !== ''),
       quick: form.value.quick.map((r) => ({
-        ...r,
+        iconKey: r.iconKey,
+        label: serializeBilingual(
+          parseBilingual(r.label).ru,
+          parseBilingual(r.label).en,
+        ),
+        value: serializeBilingual(
+          parseBilingual(r.value).ru,
+          parseBilingual(r.value).en,
+        ),
         href: r.href?.trim() ? r.href.trim() : null,
         showInFooter: r.showInFooter === true,
       })),
       departments: form.value.departments.map((d) => ({
-        ...d,
+        title: serializeBilingual(
+          parseBilingual(d.title).ru,
+          parseBilingual(d.title).en,
+        ),
+        phone: d.phone,
+        email: d.email,
         showInFooter: d.showInFooter === true,
       })),
-      offices: form.value.offices.map((o) => ({ ...o })),
+      offices: form.value.offices.map((o) => ({
+        city: serializeBilingual(
+          parseBilingual(o.city).ru,
+          parseBilingual(o.city).en,
+        ),
+        country: serializeBilingual(
+          parseBilingual(o.country).ru,
+          parseBilingual(o.country).en,
+        ),
+        address: serializeBilingual(
+          parseBilingual(o.address).ru,
+          parseBilingual(o.address).en,
+        ),
+        phone: o.phone,
+        email: o.email,
+      })),
     }
-    form.value = await api.contactSettings.update(payload)
+    form.value = normalizeEditorContacts(await api.contactSettings.get())
     adminToast.success('Контактные данные сохранены')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })
@@ -257,31 +307,57 @@ async function submit() {
               >
               <AdminSelect v-model="row.iconKey" :options="contactQuickIconOptions" />
             </div>
-            <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Подпись</label
-              >
-              <input
-                v-model="row.label"
-                type="text"
-                required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Подпись (RU)</label
+                >
+                <input
+                  v-model="row.label.ru"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Подпись (EN)</label
+                >
+                <input
+                  v-model="row.label.en"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
             </div>
-            <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Текст</label
-              >
-              <textarea
-                v-model="row.value"
-                required
-                rows="3"
-                class="w-full resize-y min-h-[4.5rem] border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
-              <p class="mt-1 font-body text-xs text-mts-text-secondary">
-                Для адреса можно сделать перенос строки (Enter) — так он отобразится в футере и на странице «Контакты».
-              </p>
+            <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Текст (RU)</label
+                >
+                <textarea
+                  v-model="row.value.ru"
+                  required
+                  rows="3"
+                  class="w-full resize-y min-h-[4.5rem] border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Текст (EN)</label
+                >
+                <textarea
+                  v-model="row.value.en"
+                  required
+                  rows="3"
+                  class="w-full resize-y min-h-[4.5rem] border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
             </div>
+            <p class="sm:col-span-2 mt-1 font-body text-xs text-mts-text-secondary">
+              Для адреса можно сделать перенос строки (Enter) в полях RU/EN — так он отобразится в футере и на странице «Контакты».
+            </p>
             <div class="sm:col-span-2">
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Ссылка (tel:, mailto: или пусто)</label
@@ -325,16 +401,29 @@ async function submit() {
             :key="i"
             class="grid gap-4 border border-mts-border p-4 bg-mts-bg/50 sm:grid-cols-2"
           >
-            <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Название отдела
-              </label>
-              <input
-                v-model="department.title"
-                type="text"
-                required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+            <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Название отдела (RU)
+                </label>
+                <input
+                  v-model="department.title.ru"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Название отдела (EN)
+                </label>
+                <input
+                  v-model="department.title.en"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
@@ -388,39 +477,78 @@ async function submit() {
             class="border border-mts-border p-4 space-y-4 bg-mts-bg/30"
           >
             <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Город</label
-                >
-                <input
-                  v-model="o.city"
-                  type="text"
-                  required
-                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                />
+              <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Город (RU)</label
+                  >
+                  <input
+                    v-model="o.city.ru"
+                    type="text"
+                    required
+                    class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Город (EN)</label
+                  >
+                  <input
+                    v-model="o.city.en"
+                    type="text"
+                    required
+                    class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                  >Страна</label
-                >
-                <input
-                  v-model="o.country"
-                  type="text"
-                  required
-                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-                />
+              <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Страна (RU)</label
+                  >
+                  <input
+                    v-model="o.country.ru"
+                    type="text"
+                    required
+                    class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                    >Страна (EN)</label
+                  >
+                  <input
+                    v-model="o.country.en"
+                    type="text"
+                    required
+                    class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
-                >Адрес</label
-              >
-              <input
-                v-model="o.address"
-                type="text"
-                required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
-              />
+            <div class="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Адрес (RU)</label
+                >
+                <input
+                  v-model="o.address.ru"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
+                  >Адрес (EN)</label
+                >
+                <input
+                  v-model="o.address.en"
+                  type="text"
+                  required
+                  class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                />
+              </div>
             </div>
             <div class="grid sm:grid-cols-2 gap-4">
               <div>

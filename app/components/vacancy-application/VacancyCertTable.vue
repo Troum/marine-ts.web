@@ -16,7 +16,7 @@ const { t } = useI18n()
 const minExtra = 1
 
 const fieldClass =
-  'w-full border border-border bg-white px-3 py-2 text-sm text-body placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
+  'w-full border border-border bg-mts-bg/40 px-3 py-2 text-sm text-body placeholder:text-muted/70 focus:border-primary focus:outline-none focus:ring-1 focus:ring-mts-accent/25'
 
 function addExtra() {
   extraRows.value.push(emptyCertRowExtra())
@@ -32,7 +32,7 @@ function removeExtra(index: number) {
 
 <template>
   <section class="card-tech overflow-hidden">
-    <header class="border-b border-border bg-gradient-to-r from-white to-white px-5 py-4">
+    <header class="border-b border-border bg-mts-navy/25 px-5 py-4">
       <h3 class="font-display text-lg leading-snug text-body">
         {{ title }}
       </h3>
@@ -72,7 +72,7 @@ function removeExtra(index: number) {
           <div
             v-for="(ex, j) in extraRows"
             :key="'extra-' + j"
-            class="rounded-xl border border-dashed border-border bg-white p-4 shadow-sm"
+            class="rounded-xl border border-dashed border-border bg-mts-bg/30 p-4 shadow-sm"
           >
             <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
               <span class="font-mono text-[10px] uppercase tracking-wide text-muted">

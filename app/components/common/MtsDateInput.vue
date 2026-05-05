@@ -400,7 +400,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
     >
       <div
         v-if="open"
-        class="absolute left-0 top-full z-50 mt-1 min-w-[280px] rounded-lg border border-border bg-bg-light p-3 shadow-tech-lg"
+        class="absolute left-0 top-full z-50 mt-1 min-w-[280px] rounded-lg border border-border bg-mts-surface p-3 shadow-tech-lg"
         role="dialog"
         aria-label="Calendar"
         @click.stop
@@ -408,7 +408,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
         <div class="mb-3 flex items-center justify-between gap-2">
           <button
             type="button"
-            class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
+            class="rounded border border-transparent p-1.5 text-mts-frost/60 hover:border-mts-border hover:bg-mts-navy/50 hover:text-mts-frost"
             :aria-label="prevButtonLabel"
             @click="prevPage"
           >
@@ -418,7 +418,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
           </button>
           <button
             type="button"
-            class="min-w-0 flex-1 rounded px-2 py-1 text-center font-body text-sm font-medium text-body hover:bg-white"
+            class="min-w-0 flex-1 rounded px-2 py-1 text-center font-body text-sm font-medium text-mts-frost hover:bg-mts-navy/40"
             :aria-label="headerTitleLabel"
             :title="headerTitleLabel"
             @click="cycleViewMode"
@@ -427,7 +427,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
           </button>
           <button
             type="button"
-            class="rounded border border-transparent p-1.5 text-muted hover:border-border hover:bg-white hover:text-body"
+            class="rounded border border-transparent p-1.5 text-mts-frost/60 hover:border-mts-border hover:bg-mts-navy/50 hover:text-mts-frost"
             :aria-label="nextButtonLabel"
             @click="nextPage"
           >
@@ -438,7 +438,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
         </div>
 
         <template v-if="viewMode === 'days'">
-          <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-muted">
+          <div class="mb-1 grid grid-cols-7 gap-0.5 text-center font-mono text-[10px] uppercase tracking-wide text-mts-frost/50">
             <span v-for="(w, i) in weekdayLabels" :key="i" class="py-1">{{ w }}</span>
           </div>
 
@@ -449,10 +449,10 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
               type="button"
               class="flex h-9 items-center justify-center rounded-md font-body text-sm transition-colors"
               :class="[
-                !cell.inMonth ? 'text-muted' : 'text-body',
+                !cell.inMonth ? 'text-mts-frost/35' : 'text-mts-frost',
                 cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : '',
                 !cell.isSelected && cell.isToday ? 'ring-1 ring-mts-accent/50' : '',
-                !cell.isSelected && !cell.isToday ? 'hover:bg-white' : '',
+                !cell.isSelected && !cell.isToday ? 'hover:bg-mts-navy/45' : '',
               ]"
               @click="pickDay(cell)"
             >
@@ -468,9 +468,9 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
             type="button"
             class="flex h-12 items-center justify-center rounded-md font-body text-sm capitalize transition-colors"
             :class="[
-              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-body',
+              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-mts-frost',
               !cell.isSelected && cell.isCurrent ? 'ring-1 ring-mts-accent/50' : '',
-              !cell.isSelected ? 'hover:bg-white' : '',
+              !cell.isSelected ? 'hover:bg-mts-navy/45' : '',
             ]"
             @click="pickMonthCell(cell)"
           >
@@ -485,9 +485,9 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
             type="button"
             class="flex h-12 items-center justify-center rounded-md font-body text-sm transition-colors"
             :class="[
-              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-body',
+              cell.isSelected ? 'bg-primary font-medium text-white hover:bg-primary-dark' : 'text-mts-frost',
               !cell.isSelected && cell.isCurrent ? 'ring-1 ring-mts-accent/50' : '',
-              !cell.isSelected ? 'hover:bg-white' : '',
+              !cell.isSelected ? 'hover:bg-mts-navy/45' : '',
             ]"
             @click="pickYearCell(cell)"
           >
@@ -495,7 +495,7 @@ const showCalendarIcon = computed(() => props.variant !== 'underline')
           </button>
         </div>
 
-        <div class="mt-3 flex items-center justify-between border-t border-border pt-2">
+        <div class="mt-3 flex items-center justify-between border-t border-mts-border pt-2">
           <button type="button" class="font-mono text-[11px] uppercase tracking-wide text-primary hover:text-primary-dark" @click="clearDate">
             {{ t('pages.common.datePickerClear') }}
           </button>
