@@ -27,12 +27,12 @@ export const TEXT_COLORS: ColorOption[] = [
   { value: '#b85e5f', label: 'Тема: Акцент тёмный' },
   { value: '#c14042', label: 'Тема: Красный #C14042' },
   { value: '#2ea3ff', label: 'Тема: Маркер' },
-  /* Golden Sepia / тёмная публичная тема (см. `mts-theme-scglobal` в main.css). */
+  /* Golden Sepia: золото на тёмном navy (`mts-theme-scglobal` в main.css). */
   { value: '#c69c6d', label: 'Golden Sepia: Акцент' },
   { value: '#d4b996', label: 'Golden Sepia: Акцент светлый' },
   { value: '#a07d53', label: 'Golden Sepia: Акцент тёмный' },
   { value: '#b88d5a', label: 'Golden Sepia: Медь' },
-  /* Тёмно-синие (контраст на светлых карточках, подписи на героях). */
+  /* Тёмно-синие (карточки / hero; публичный сайт — тёмная тема). */
   { value: '#0a1628', label: 'Тема: Navy' },
   { value: '#131f33', label: 'Тема: Navy глубокий' },
   { value: '#1b2940', label: 'Тема: Поверхность' },

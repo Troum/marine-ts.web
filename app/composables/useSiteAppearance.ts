@@ -2,7 +2,8 @@ import type { SiteAppearanceSettings, SiteSectionKey } from '~/types'
 import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 
 /**
- * Глобальная тема публичного сайта (Marin / Golden Sepia): загрузка и класс на `<body>` для SSR/CSR.
+ * Глобальная тема публичного сайта: Marin (тёмный navy + красные акценты) или Golden Sepia
+ * (та же база в CSS, золотые `--color-primary` / `mts-accent*`). Класс `mts-theme-scglobal` на `<body>`.
  * Также хранит `hiddenSections` — разделы, скрытые администратором (отдают 404).
  * Админка (`admin-shell` на body) не затрагивается.
  */

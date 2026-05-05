@@ -14,37 +14,37 @@
 
 @theme {
   /*
-   * Публичная тема теперь следует новому светлому дизайн-референсу.
-   * Прежние mts-* алиасы сохранены, чтобы CMS-страницы и компоненты
-   * продолжали работать без переписывания контракта данных.
+   * Публичный сайт (Marin / default): тёмный navy + красные акценты.
+   * Golden Sepia — те же фон/поверхности/типографика, только золото (`body.mts-theme-scglobal`).
+   * Референс фона: `scglobal-tailwind-theme.css` (Staff Centre / SC Global).
    */
   --color-primary: #c84b4b;
   --color-primary-dark: #b04040;
-  --color-navy-900: #0a1628;
-  --color-navy-800: #1a2a3a;
-  --color-navy-700: #2d4a6a;
+  --color-navy-900: #0d131f;
+  --color-navy-800: #131f33;
+  --color-navy-700: #1b2940;
   --color-dark: #2d2d2d;
-  --color-body: #333333;
-  --color-muted: #888888;
-  --color-border: #eeeeee;
-  --color-bg-light: #f5f5f5;
+  --color-body: #f5f5f5;
+  --color-muted: rgb(255 255 255 / 0.68);
+  --color-border: rgb(255 255 255 / 0.12);
+  --color-bg-light: #0d131f;
 
-  --color-mts-bg: #ffffff;
-  --color-mts-surface: #ffffff;
+  --color-mts-bg: #131f33;
+  --color-mts-surface: #1b2940;
   --color-mts-accent: #c84b4b;
   --color-mts-accent-light: #d76565;
   --color-mts-accent-dark: #b04040;
-  --color-mts-text: #333333;
-  --color-mts-text-secondary: #5f6670;
-  --color-mts-text-muted: #888888;
-  --color-mts-border: #eeeeee;
-  --color-mts-border-light: #f5f5f5;
-  --color-mts-grid: #eeeeee;
-  --color-mts-dark: #2d2d2d;
-  --color-mts-navy: #0a1628;
-  --color-mts-navy-deep: #07101d;
+  --color-mts-text: #fafafa;
+  --color-mts-text-secondary: rgb(255 255 255 / 0.88);
+  --color-mts-text-muted: rgb(255 255 255 / 0.65);
+  --color-mts-border: rgb(255 255 255 / 0.12);
+  --color-mts-border-light: rgb(255 255 255 / 0.08);
+  --color-mts-grid: rgb(255 255 255 / 0.1);
+  --color-mts-dark: #222222;
+  --color-mts-navy: #131f33;
+  --color-mts-navy-deep: #0d131f;
   --color-mts-frost: #ffffff;
-  --color-mts-slate-muted: rgba(255, 255, 255, 0.68);
+  --color-mts-slate-muted: rgb(255 255 255 / 0.72);
   --color-mts-marker: #c84b4b;
 
   --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -53,8 +53,8 @@
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --shadow-tech: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-tech-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-tech: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-tech-lg: 0 4px 16px rgba(0, 0, 0, 0.28);
   --shadow-accent: 0 4px 20px rgba(193, 64, 65, 0.25);
 }
 
@@ -65,13 +65,21 @@
     font-size: 16px;
   }
   body {
-    @apply bg-white text-body antialiased font-body;
+    @apply antialiased font-body;
     transition:
       background-color 200ms ease,
       color 200ms ease;
   }
 
+  body:not(.admin-shell) {
+    @apply bg-mts-bg text-mts-text;
+  }
+
   .admin-shell {
+    --color-body: #333333;
+    --color-muted: #888888;
+    --color-border: #dee2e6;
+    --color-bg-light: #f5f5f5;
     --color-mts-bg: #f8f9fa;
     --color-mts-surface: #ffffff;
     --color-mts-text: #1c1c1e;
@@ -116,77 +124,56 @@
   }
 
   /**
-   * Глобальная тёмная тема Golden Sepia (id в API — `scglobal`), переключатель → `appearance-settings`.
-   * Референс палитры: `sepia/scglobal-tailwind-theme.css` на машине разработчика.
+   * Golden Sepia (id в API — `scglobal`): та же тёмная база, что у Marin; отличаются только золотые акценты.
    */
   body:not(.admin-shell).mts-theme-scglobal {
     --color-primary: #c69c6d;
     --color-primary-dark: #b88d5a;
-    --color-body: #f5f5f5;
-    --color-muted: rgb(255 255 255 / 0.68);
-    --color-border: rgb(255 255 255 / 0.12);
-    --color-bg-light: #0d131f;
-
-    --color-mts-bg: #131f33;
-    --color-mts-surface: #1b2940;
     --color-mts-accent: #c69c6d;
     --color-mts-accent-light: #d4b996;
     --color-mts-accent-dark: #a07d53;
-    --color-mts-text: #fafafa;
-    --color-mts-text-secondary: rgb(255 255 255 / 0.88);
-    --color-mts-text-muted: rgb(255 255 255 / 0.65);
-    --color-mts-border: rgb(255 255 255 / 0.12);
-    --color-mts-border-light: rgb(255 255 255 / 0.08);
-    --color-mts-grid: rgb(255 255 255 / 0.1);
-    --color-mts-dark: #222222;
-    --color-mts-navy: #131f33;
-    --color-mts-navy-deep: #0d131f;
-    --color-mts-frost: #ffffff;
-    --color-mts-slate-muted: rgb(255 255 255 / 0.72);
     --color-mts-marker: #c69c6d;
-
-    background-color: #131f33;
-    color: var(--color-mts-text);
+    --shadow-accent: 0 4px 20px rgb(198 156 109 / 0.28);
   }
 
   /** Горизонтальный nav: позиция, прозрачность и glass при скролле — в `Navigation.vue` (без переопределений здесь). */
 
-  body:not(.admin-shell).mts-theme-scglobal .bg-white,
-  body:not(.admin-shell).mts-theme-scglobal .bg-bg-light {
+  body:not(.admin-shell) .bg-white,
+  body:not(.admin-shell) .bg-bg-light {
     background-color: #1b2940 !important;
   }
 
-  body:not(.admin-shell).mts-theme-scglobal .card-tech,
-  body:not(.admin-shell).mts-theme-scglobal .public-card,
-  body:not(.admin-shell).mts-theme-scglobal .public-card-interactive {
+  body:not(.admin-shell) .card-tech,
+  body:not(.admin-shell) .public-card,
+  body:not(.admin-shell) .public-card-interactive {
     background-color: #1b2940 !important;
     border-color: rgb(255 255 255 / 0.12) !important;
   }
 
   /**
-   * Карточки направлений (`.service-card`): убрать светлые «стеклянные» белые рамки в Golden Sepia.
+   * Карточки направлений (`.service-card`): без «светлых» белых рамок на тёмной базе.
    */
-  body:not(.admin-shell).mts-theme-scglobal .service-card {
+  body:not(.admin-shell) .service-card {
     border-color: rgb(255 255 255 / 0.14) !important;
     background-color: color-mix(in srgb, var(--color-mts-surface) 88%, transparent) !important;
     box-shadow:
       0 18px 48px -28px rgb(0 0 0 / 0.55),
       inset 0 1px 0 rgb(255 255 255 / 0.08) !important;
   }
-  body:not(.admin-shell).mts-theme-scglobal .service-card:hover {
+  body:not(.admin-shell) .service-card:hover {
     border-color: rgb(255 255 255 / 0.22) !important;
     background-color: color-mix(in srgb, var(--color-mts-surface) 93%, transparent) !important;
   }
 
   /** Поля форм: нижняя линия не серая «светлая полоса» на тёмном фоне. */
-  body:not(.admin-shell).mts-theme-scglobal .form-input {
+  body:not(.admin-shell) .form-input {
     border-bottom-color: rgb(255 255 255 / 0.22) !important;
   }
 
-  body:not(.admin-shell).mts-theme-scglobal .btn-secondary {
+  body:not(.admin-shell) .btn-secondary {
     @apply border-white/25 bg-white/10 text-mts-frost backdrop-blur-sm;
   }
-  body:not(.admin-shell).mts-theme-scglobal .btn-secondary:hover {
+  body:not(.admin-shell) .btn-secondary:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
     background-color: rgb(255 255 255 / 0.14);

@@ -81,7 +81,8 @@ async function save() {
 
     <main class="mx-auto max-w-[1600px] px-6 py-10 lg:px-12">
       <p class="mb-8 max-w-2xl font-body text-mts-text-secondary">
-        Тема публичного сайта: цвета фона, шапки и карточек. Админ-панель не меняется.
+        Обе темы публичного сайта — тёмный navy и светлый текст; у Golden Sepia золотые акценты вместо красных.
+        Админ-панель не меняется.
       </p>
 
       <div v-if="loading" class="flex justify-center py-20">
