@@ -317,7 +317,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                   leave-to-class="-translate-y-3 opacity-0"
                 >
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
-                    <div class="mts-hero-themed-copy space-y-5 text-[14px] font-body text-base leading-relaxed text-white/85 sm:text-2xl">
+                    <div class="mts-hero-themed-copy space-y-5 text-[14px] font-body text-base leading-relaxed text-white/85 md:text-2xl">
                       <ThemedContentString
                         :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
                       />
@@ -347,7 +347,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
           :class="heroDirectionRows.length ? 'bottom-24 md:bottom-28' : 'bottom-10'"
         >
           <div
-            class="w-full py-4"
+            class="w-full pb-4 pt-10 md:py-4"
             :style="{ paddingLeft: heroInsetLeft, paddingRight: heroInsetRight }"
           >
           <div class="flex flex-wrap items-center gap-5">
