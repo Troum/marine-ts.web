@@ -30,6 +30,8 @@ const fieldInputClass =
 const api = useMarineApi()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
+const { isSectionHidden } = useSiteAppearance()
+const vacanciesSectionHidden = computed(() => isSectionHidden('vacancies'))
 /** Связка label ↔ AdminSelect для семейного положения */
 const maritalSelectId = useId()
 
@@ -382,25 +384,30 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
     </div>
     <div v-else-if="showNotFound" class="mx-auto max-w-7xl px-6 py-24 text-center">
       <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundVacancy') }}</p>
-      <NuxtLink :to="localePath('/vacancies')" class="btn-primary inline-flex">{{ t('pages.common.toVacancies') }}</NuxtLink>
+      <NuxtLink
+        :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
+        class="btn-primary inline-flex"
+        >{{
+          vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancies')
+        }}</NuxtLink>
     </div>
     <div v-else-if="form" class="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-12">
       <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
         <NuxtLink
           v-if="variant === 'vacancy' && vacancySlug"
-          :to="localePath(`/vacancies/${vacancySlug}`)"
+          :to="localePath(vacanciesSectionHidden ? '/' : `/vacancies/${vacancySlug}`)"
           class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
-          {{ t('pages.common.toVacancy') }}
+          {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancy') }}
         </NuxtLink>
         <NuxtLink
           v-else
-          :to="localePath('/vacancies')"
+          :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
           class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
-          {{ t('pages.vacancyForm.backToVacanciesList') }}
+          {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.vacancyForm.backToVacanciesList') }}
         </NuxtLink>
         <span class="font-mono text-[10px] uppercase tracking-wide text-muted">
           {{ t('pages.vacancyForm.stepProgress', { n: step, total: totalSteps }) }}
@@ -437,13 +444,17 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           </p>
           <NuxtLink
             v-if="variant === 'vacancy' && vacancySlug"
-            :to="localePath(`/vacancies/${vacancySlug}`)"
+            :to="localePath(vacanciesSectionHidden ? '/' : `/vacancies/${vacancySlug}`)"
             class="btn-primary mt-8 inline-flex"
           >
-            {{ t('pages.vacancyForm.backToVacancy') }}
+            {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.vacancyForm.backToVacancy') }}
           </NuxtLink>
-          <NuxtLink v-else :to="localePath('/vacancies')" class="btn-primary mt-8 inline-flex">
-            {{ t('pages.common.toVacancies') }}
+          <NuxtLink
+            v-else
+            :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
+            class="btn-primary mt-8 inline-flex"
+          >
+            {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancies') }}
           </NuxtLink>
         </div>
 
@@ -467,9 +478,14 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           <!-- Step 1 -->
           <section v-show="step === 1" class="mt-8 space-y-4">
             <p class="font-body text-muted">
-              {{ t('pages.vacancyForm.step1p1') }}
-              <strong class="text-body">{{ form.positionApplyingFor || '—' }}</strong
-              >{{ t('pages.vacancyForm.step1p2') }}
+              <template v-if="variant === 'open' && vacanciesSectionHidden">
+                {{ t('pages.vacancyForm.step1OpenHiddenVacancies') }}
+              </template>
+              <template v-else>
+                {{ t('pages.vacancyForm.step1p1') }}
+                <strong class="text-body">{{ form.positionApplyingFor || '—' }}</strong
+                >{{ t('pages.vacancyForm.step1p2') }}
+              </template>
             </p>
             <ul class="mts-arrow-bullets list-none space-y-2 font-body text-sm text-muted">
               <li>{{ t('pages.vacancyForm.step1li1') }}</li>
