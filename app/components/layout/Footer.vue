@@ -172,7 +172,7 @@ function columnHeading(col: FooterNavColumn): string {
                 <div class="w-7 h-7 bg-mts-frost/10 flex items-center justify-center flex-shrink-0">
                   <component :is="contactQuickIcons[item.iconKey] ?? Phone" class="w-3.5 h-3.5" />
                 </div>
-                <span class="font-body text-xs leading-snug">{{ item.value }}</span>
+                <span class="font-body text-xs leading-snug whitespace-pre-line">{{ item.value }}</span>
               </component>
             </li>
             <li v-for="(department, idx) in footerDepartments" :key="`department-${department.title}-${idx}`">

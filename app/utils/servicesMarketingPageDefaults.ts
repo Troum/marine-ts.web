@@ -6,6 +6,7 @@ import type {
   MarineContentLocale,
   ServicesMarketingPageContent,
 } from '~/types'
+import { normalizeAboutRichCards } from '~/utils/aboutRichCardNormalize'
 import { themeTitleTriple } from '~/utils/themeFormattedTitle'
 
 /** Точки Mapbox для секции «Глобальный охват» (Rotterdam, Singapore, Dubai). */
@@ -34,22 +35,6 @@ export const SERVICES_V2_SECTION_ADMIN_LABELS: Record<ServicesMarketingV2Section
   guarantees: 'Гарантии качества',
   preForm: 'CTA перед формой',
   listing: 'Каталог услуг (карточки из админки)',
-}
-
-function normalizeRichCards(incoming: unknown, fallback: AboutRichCard[]): AboutRichCard[] {
-  if (!Array.isArray(incoming)) {
-    return fallback.map((c) => ({ ...c }))
-  }
-  if (incoming.length === 0) {
-    return []
-  }
-  return incoming.map((item, i) => {
-    const fb = fallback[i]
-    return {
-      title: typeof (item as { title?: unknown })?.title === 'string' ? (item as { title: string }).title : (fb?.title ?? ''),
-      text: typeof (item as { text?: unknown })?.text === 'string' ? (item as { text: string }).text : (fb?.text ?? ''),
-    }
-  })
 }
 
 const SERVICES_V2_RU: ServicesMarketingPageContent = {
@@ -253,11 +238,11 @@ export function mergeServicesMarketingContent(
     sec3Solutions: {
       title: typeof s3?.title === 'string' ? s3.title : base.sec3Solutions.title,
       body: typeof s3?.body === 'string' ? s3.body : base.sec3Solutions.body,
-      cards: normalizeRichCards(s3?.cards, base.sec3Solutions.cards),
+      cards: normalizeAboutRichCards(s3?.cards, base.sec3Solutions.cards),
     },
     sec4Advantages: {
       title: typeof s4?.title === 'string' ? s4.title : base.sec4Advantages.title,
-      cards: normalizeRichCards(s4?.cards, base.sec4Advantages.cards),
+      cards: normalizeAboutRichCards(s4?.cards, base.sec4Advantages.cards),
     },
     sec5Guarantees: {
       title: typeof s5?.title === 'string' ? s5.title : base.sec5Guarantees.title,

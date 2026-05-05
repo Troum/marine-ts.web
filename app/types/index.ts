@@ -631,6 +631,13 @@ export interface AboutWhy {
 export interface AboutRichCard {
   title: string
   text: string
+  /**
+   * Иконка Lucide / `mts:…` (см. marin-custom). Пусто/не задано — на сайте подставляется
+   * дефолт по номеру карточки для данного блока (как в макете).
+   */
+  icon?: string
+  /** Скрыть иконку на сайте (только заголовок и текст). */
+  hideIcon?: boolean
 }
 
 export interface AboutGeoLocation {

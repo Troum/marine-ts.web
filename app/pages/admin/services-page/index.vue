@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus } from 'lucide-vue-next'
+import { ArrowLeft, Loader2, Plus, Sparkles } from 'lucide-vue-next'
 import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
-import AdminSelect from '~/components/admin/AdminSelect.vue'
-import type { ListingPageData, ContentPage, MarineContentLocale, PageBreadcrumbTone } from '~/types'
+import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
+import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
+import type { AboutRichCard, ListingPageData, ContentPage, MarineContentLocale, PageBreadcrumbTone } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
 import {
@@ -21,8 +22,18 @@ import {
 } from '~/utils/servicesMarketingPageDefaults'
 import { themeTitleTriple } from '~/utils/themeFormattedTitle'
 import { HERO_BREADCRUMB_TONE_ADMIN_OPTIONS } from '~/utils/pageBreadcrumbTone'
+import { crewingIconSelectOptions } from '~/utils/crewingIcons'
+import { ABOUT_RICH_CARD_ICON_AUTO } from '~/utils/aboutRichCardNormalize'
 
 const SLUG = 'services-page'
+
+const richCardIconPrepend: AdminSelectOption[] = [
+  { value: ABOUT_RICH_CARD_ICON_AUTO, label: 'Авто (как на сайте)', icon: Sparkles },
+]
+
+function setRichCardIcon(card: AboutRichCard, v: string) {
+  card.icon = v === ABOUT_RICH_CARD_ICON_AUTO ? undefined : v
+}
 
 definePageMeta({ layout: 'admin', middleware: 'admin' })
 
@@ -512,6 +523,17 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   </button>
                 </div>
                 <div>
+                  <label :class="sectionLabel">Иконка</label>
+                  <AdminIconSelect
+                    :prepend-options="richCardIconPrepend"
+                    :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                    :hide-icon="card.hideIcon === true"
+                    :options="crewingIconSelectOptions"
+                    @update:icon="setRichCardIcon(card, $event)"
+                    @update:hide-icon="(v) => (card.hideIcon = v)"
+                  />
+                </div>
+                <div>
                   <label :class="sectionLabel">Название</label>
                   <AdminThemedTextField v-model="card.title" :multiline="false" />
                 </div>
@@ -564,6 +586,17 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                   >
                     Удалить
                   </button>
+                </div>
+                <div>
+                  <label :class="sectionLabel">Иконка</label>
+                  <AdminIconSelect
+                    :prepend-options="richCardIconPrepend"
+                    :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                    :hide-icon="card.hideIcon === true"
+                    :options="crewingIconSelectOptions"
+                    @update:icon="setRichCardIcon(card, $event)"
+                    @update:hide-icon="(v) => (card.hideIcon = v)"
+                  />
                 </div>
                 <div>
                   <label :class="sectionLabel">Название</label>

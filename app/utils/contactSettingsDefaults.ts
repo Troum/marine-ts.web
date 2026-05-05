@@ -5,7 +5,13 @@ export const contactSettingsDefaults: SiteContactSettings = {
   quick: [
     { iconKey: 'phone', label: 'Телефон', value: '8 (4012) 35-52-90', href: 'tel:84012355290', showInFooter: true },
     { iconKey: 'mail', label: 'Email', value: 'info@marine-ts.com', href: 'mailto:info@marine-ts.com', showInFooter: true },
-    { iconKey: 'map-pin', label: 'Адрес', value: 'г. Калининград, Россия', href: null, showInFooter: true },
+    {
+      iconKey: 'map-pin',
+      label: 'Адрес',
+      value: 'г. Калининград,\nМосковский пр-т, 40 Россия',
+      href: null,
+      showInFooter: true,
+    },
     { iconKey: 'clock', label: 'Режим работы', value: 'Пн-Пт: 9:00 - 18:00', href: null, showInFooter: false },
   ],
   socials: [

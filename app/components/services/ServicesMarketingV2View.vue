@@ -3,7 +3,7 @@ import { Check, Loader2 } from 'lucide-vue-next'
 import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import LineMarketingCustomSectionView from '~/components/line-marketing/LineMarketingCustomSectionView.vue'
-import type { LineMarketingCustomSection, ListingPageData, ServiceItem } from '~/types'
+import type { AboutRichCard, LineMarketingCustomSection, ListingPageData, ServiceItem } from '~/types'
 import { sanitizeRichContentHtml } from '~/composables/useMarkdownSafeHtml'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
@@ -55,6 +55,28 @@ function lineRichHtml(raw: string | undefined | null): string {
 /** Декоративные иконки для блока «решения» (совпадают с духом линейных страниц). */
 const solutionDecorIcons = ['Anchor', 'Zap', 'Ship', 'Cog'] as const
 const advantageDecorIcons = ['Microscope', 'Eye', 'Users', 'Package'] as const
+
+function resolveServicesV2SolutionIcon(c: AboutRichCard, i: number) {
+  if (c.hideIcon) {
+    return null
+  }
+  const key =
+    c.icon?.trim()
+      ? c.icon.trim()
+      : (solutionDecorIcons[Math.min(i, solutionDecorIcons.length - 1)] ?? 'Ship')
+  return resolveCrewingIcon(key)
+}
+
+function resolveServicesV2AdvantageIcon(c: AboutRichCard, i: number) {
+  if (c.hideIcon) {
+    return null
+  }
+  const key =
+    c.icon?.trim()
+      ? c.icon.trim()
+      : (advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'BadgeCheck')
+  return resolveCrewingIcon(key)
+}
 
 const visibleHeroButtons = computed(() =>
   (props.cms.heroButtons ?? [])
@@ -280,7 +302,8 @@ const heroBreadcrumbsOnDark = computed(() =>
                     {{ String(i + 1).padStart(2, '0') }}
                   </span>
                   <component
-                    :is="resolveCrewingIcon(solutionDecorIcons[Math.min(i, solutionDecorIcons.length - 1)] ?? 'Ship')"
+                    v-if="!c.hideIcon"
+                    :is="resolveServicesV2SolutionIcon(c, i)!"
                     class="h-7 w-7 shrink-0 text-mts-accent"
                   />
                 </div>
@@ -318,7 +341,8 @@ const heroBreadcrumbsOnDark = computed(() =>
                 class="service-card flex h-full gap-5 p-6"
               >
                 <component
-                  :is="resolveCrewingIcon(advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'BadgeCheck')"
+                  v-if="!c.hideIcon"
+                  :is="resolveServicesV2AdvantageIcon(c, i)!"
                   class="mt-0.5 h-8 w-8 shrink-0 text-mts-accent"
                 />
                 <div class="min-w-0">

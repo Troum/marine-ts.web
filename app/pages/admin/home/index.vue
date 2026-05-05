@@ -11,10 +11,10 @@ import {
   mergeHomePageData,
   syncHomeStructuralFields,
 } from '~/utils/pageDefaults'
-import { getAllLucideAdminIconOptions } from '~/utils/lucideIconRegistry'
+import { getAllLucideAndMarinAdminIconOptions } from '~/utils/marinCustomIcons'
 import { useConfirm } from '~/composables/useConfirmAction'
 
-const STAT_ICON_OPTIONS = getAllLucideAdminIconOptions()
+const STAT_ICON_OPTIONS = getAllLucideAndMarinAdminIconOptions()
 const OVERLAY_SOCIAL_ICON_OPTIONS = heroOverlaySocialIconOptions.map((o) => ({
   value: o.value,
   label: o.label,

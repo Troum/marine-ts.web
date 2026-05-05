@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowLeft, ArrowUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowDown, ArrowLeft, ArrowUp, Loader2, Plus, Sparkles, Trash2 } from 'lucide-vue-next'
 import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
 import type {
+  AboutRichCard,
   ContentPage,
   CrewingPageData,
   LnkPageContent,
@@ -28,6 +29,7 @@ import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
 import AdminThemedTextField from '~/components/admin/AdminThemedTextField.vue'
 import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import { crewingIconSelectOptions } from '~/utils/crewingIcons'
+import { ABOUT_RICH_CARD_ICON_AUTO } from '~/utils/aboutRichCardNormalize'
 import {
   isLineMarketingPageSlug,
   LINE_MARKETING_PAGE_ADMIN_LABELS,
@@ -177,6 +179,14 @@ const crewingStructureOptions: AdminSelectOption[] = [
   { value: 'v2', label: 'Новая структура (секции как на «О компании»)' },
   { value: 'legacy', label: 'Классическая (направления, чек-лист, принципы)' },
 ]
+
+const richCardIconPrepend: AdminSelectOption[] = [
+  { value: ABOUT_RICH_CARD_ICON_AUTO, label: 'Авто (как на сайте)', icon: Sparkles },
+]
+
+function setRichCardIcon(card: AboutRichCard, v: string) {
+  card.icon = v === ABOUT_RICH_CARD_ICON_AUTO ? undefined : v
+}
 
 function onCrewingStructureChange(mode: string) {
   if (!data.value) {
@@ -1712,6 +1722,17 @@ function directionPreviewPath(detailSlug: string) {
                 </div>
               </div>
               <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
+              </div>
+              <div>
                 <label :class="sectionLabel">Заголовок</label>
                 <AdminThemedTextField v-model="card.title" :multiline="false" />
               </div>
@@ -1865,6 +1886,17 @@ function directionPreviewPath(detailSlug: string) {
                 </div>
               </div>
               <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
+              </div>
+              <div>
                 <label :class="sectionLabel">Название</label>
                 <AdminThemedTextField v-model="card.title" :multiline="false" />
               </div>
@@ -1937,6 +1969,17 @@ function directionPreviewPath(detailSlug: string) {
                     Удалить
                   </button>
                 </div>
+              </div>
+              <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
               </div>
               <div>
                 <label :class="sectionLabel">Заголовок</label>
@@ -2045,6 +2088,17 @@ function directionPreviewPath(detailSlug: string) {
                 >
                   Удалить
                 </button>
+              </div>
+              <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
               </div>
               <div>
                 <label :class="sectionLabel">Заголовок</label>
@@ -2178,6 +2232,17 @@ function directionPreviewPath(detailSlug: string) {
                 </button>
               </div>
               <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
+              </div>
+              <div>
                 <label :class="sectionLabel">Название</label>
                 <AdminThemedTextField v-model="card.title" :multiline="false" />
               </div>
@@ -2228,6 +2293,17 @@ function directionPreviewPath(detailSlug: string) {
                 >
                   Удалить
                 </button>
+              </div>
+              <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :prepend-options="richCardIconPrepend"
+                  :icon="card.icon ?? ABOUT_RICH_CARD_ICON_AUTO"
+                  :hide-icon="card.hideIcon === true"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="setRichCardIcon(card, $event)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
               </div>
               <div>
                 <label :class="sectionLabel">Заголовок</label>

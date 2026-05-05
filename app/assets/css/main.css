@@ -447,14 +447,19 @@
     @apply size-4 shrink-0 cursor-pointer rounded border border-mts-border bg-mts-surface accent-mts-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mts-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-mts-bg disabled:cursor-not-allowed disabled:opacity-50;
   }
 
-  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) {
+  body:not(.admin-shell) main
+    :where(ul.list-disc, ul.mts-arrow-bullets, .mts-markdown ul):not([data-list-style='none']) {
     list-style: none;
   }
-  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) > li {
+  body:not(.admin-shell) main
+    :where(ul.list-disc, ul.mts-arrow-bullets, .mts-markdown ul):not([data-list-style='none'])
+    > li {
     position: relative;
     padding-left: 1.5rem;
   }
-  body:not(.admin-shell) main :where(ul.list-disc, .mts-markdown ul):not([data-list-style='none']) > li::before {
+  body:not(.admin-shell) main
+    :where(ul.list-disc, ul.mts-arrow-bullets, .mts-markdown ul):not([data-list-style='none'])
+    > li::before {
     content: '';
     position: absolute;
     left: 0;

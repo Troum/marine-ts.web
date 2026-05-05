@@ -10,12 +10,17 @@ import AdminSelect, { type AdminSelectOption } from './AdminSelect.vue'
  * Выбор «Без иконки» взводит флаг `hideIcon` и не трогает `icon` (значение
  * сохраняется на случай, если пользователь снимет «Без иконки» обратно).
  */
-const props = defineProps<{
-  icon: string
-  hideIcon?: boolean
-  options: AdminSelectOption[]
-  placeholder?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    icon: string
+    hideIcon?: boolean
+    options: AdminSelectOption[]
+    /** Вставляются после «Без иконки» (например «Авто» для карточек). */
+    prependOptions?: AdminSelectOption[]
+    placeholder?: string
+  }>(),
+  { prependOptions: () => [] },
+)
 
 const emit = defineEmits<{
   'update:icon': [value: string]
@@ -26,6 +31,7 @@ const NONE_VALUE = '__no-icon__'
 
 const optionsWithNone = computed<AdminSelectOption[]>(() => [
   { value: NONE_VALUE, label: 'Без иконки', icon: CircleSlash },
+  ...props.prependOptions,
   ...props.options,
 ])
 

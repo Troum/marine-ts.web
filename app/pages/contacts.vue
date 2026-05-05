@@ -151,7 +151,7 @@ async function submitFeedback() {
                 </div>
                 <div>
                   <p class="font-mono text-[10px] uppercase tracking-wide text-muted">{{ item.label }}</p>
-                  <p class="font-body text-sm text-body">{{ item.value }}</p>
+                  <p class="font-body text-sm text-body whitespace-pre-line">{{ item.value }}</p>
                 </div>
               </component>
             </div>

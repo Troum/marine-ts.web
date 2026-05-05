@@ -28,7 +28,7 @@
     "sectionSocials": "Social",
     "linkApplication": "Application form",
     "phone": "+7 (4012) 35-52-90",
-    "address": "Kaliningrad, Russia",
+    "address": "Kaliningrad,\n40 Moskovsky Prospekt, Russia",
     "vk": "vk.com/marine_ts",
     "copyright": "© {year} MARINE TECHNICAL SOLUTIONS. ALL RIGHTS RESERVED.",
     "privacy": "PRIVACY POLICY",
@@ -281,6 +281,7 @@
       "urgentLead": "Call us right now:",
       "noFormTitle": "Don't want to fill the form?",
       "noFormLead": "Write to our email, we usually answer within 2 hours:",
+      "noFormSecondaryEmail": "sblokhin{'@'}marin-ts.com",
       "vesselTypes": {
         "dry_cargo": "Dry cargo",
         "tanker": "Tanker",

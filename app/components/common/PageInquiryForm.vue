@@ -130,6 +130,19 @@ const emailContact = computed(() => {
     : null
 })
 
+/** Доп. адрес в колонке «Не хотите заполнять форму?» (например отдел судмена). */
+const noFormSecondaryEmail = computed(() => {
+  const raw = t('pages.pageInquiry.noFormSecondaryEmail').trim()
+  if (!raw || !SIMPLE_EMAIL_RE.test(raw)) {
+    return null
+  }
+  const primary = emailContact.value?.value.trim().toLowerCase() ?? ''
+  if (raw.toLowerCase() === primary) {
+    return null
+  }
+  return raw
+})
+
 function trimmedForm() {
   return {
     name: form.value.name.trim(),
@@ -564,7 +577,7 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
               role="alert"
             >
               <p class="font-semibold">{{ t('pages.pageInquiry.validation.title') }}</p>
-              <ul class="mt-2 list-disc space-y-1 pl-5">
+              <ul class="mts-arrow-bullets mt-2 list-none space-y-1">
                 <li v-for="err in validationErrors" :key="err">{{ err }}</li>
               </ul>
             </div>
@@ -635,14 +648,24 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
             <p class="mt-3 font-body text-sm text-muted">
               {{ t('pages.pageInquiry.noFormLead') }}
             </p>
-            <a
-              v-if="emailContact"
-              :href="emailContact.href ?? `mailto:${emailContact.value}`"
-              class="mt-2 inline-flex items-center gap-2 font-body text-base text-primary hover:underline"
-            >
-              <Mail class="h-4 w-4" />
-              {{ emailContact.value }}
-            </a>
+            <div v-if="emailContact || noFormSecondaryEmail" class="mt-2 flex flex-col gap-2">
+              <a
+                v-if="emailContact"
+                :href="emailContact.href ?? `mailto:${emailContact.value}`"
+                class="inline-flex items-center gap-2 font-body text-base text-primary hover:underline"
+              >
+                <Mail class="h-4 w-4 shrink-0" />
+                {{ emailContact.value }}
+              </a>
+              <a
+                v-if="noFormSecondaryEmail"
+                :href="`mailto:${noFormSecondaryEmail}`"
+                class="inline-flex items-center gap-2 font-body text-base text-primary hover:underline"
+              >
+                <Mail class="h-4 w-4 shrink-0" />
+                {{ noFormSecondaryEmail }}
+              </a>
+            </div>
           </div>
         </div>
       </div>

@@ -95,13 +95,13 @@ function vacancyContentHtml(text: string | null | undefined) {
 
         <div
           v-if="hasVacancyContent(vacancy.content)"
-          class="mt-10 font-body leading-relaxed text-body [&_a]:text-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4 [&_ul]:list-disc [&_ul]:pl-6"
+          class="mts-markdown mt-10 font-body leading-relaxed text-body [&_a]:text-primary [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-4"
           v-html="vacancyContentHtml(vacancy.content)"
         />
 
         <div v-if="vacancy.requirements?.length" class="card-tech corner-accent mt-12 p-8">
           <h2 class="font-display text-xl text-body mb-4">{{ t('pages.common.requirements') }}</h2>
-          <ul class="list-inside list-disc space-y-2 font-body text-sm text-muted">
+          <ul class="mts-arrow-bullets list-none space-y-2 font-body text-sm text-muted">
             <li v-for="(req, i) in vacancy.requirements" :key="i">{{ req }}</li>
           </ul>
         </div>

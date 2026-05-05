@@ -451,7 +451,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           <h1 class="font-display text-2xl text-body md:text-3xl">
             <span class="text-primary">{{ t('pages.vacancyForm.formHeading') }}</span>
             <template v-if="variant === 'vacancy' && vacancyTitle"> — {{ vacancyTitle }}</template>
-            <template v-else><span class="text-body"> — {{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
+            <template v-else><span class="text-body">&nbsp;{{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
           </h1>
           <p class="mt-2 font-body text-sm text-muted">
             {{ variant === 'open' ? t('pages.vacancyForm.openFormIntro') : t('pages.vacancyForm.formIntro') }}
@@ -471,7 +471,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
               <strong class="text-body">{{ form.positionApplyingFor || '—' }}</strong
               >{{ t('pages.vacancyForm.step1p2') }}
             </p>
-            <ul class="list-inside list-disc space-y-2 font-body text-sm text-muted">
+            <ul class="mts-arrow-bullets list-none space-y-2 font-body text-sm text-muted">
               <li>{{ t('pages.vacancyForm.step1li1') }}</li>
               <li>{{ t('pages.vacancyForm.step1li2') }}</li>
               <li>{{ t('pages.vacancyForm.step1li3') }}</li>

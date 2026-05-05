@@ -1,31 +1,10 @@
 import type { AboutRichCard, MarineContentLocale, ShipManagementPageContent } from '~/types'
+import { normalizeAboutRichCards } from '~/utils/aboutRichCardNormalize'
 
 /** Встроенные секции v2 после hero (без отдельного CTA — финальный блок в `sec5Closing`). */
 export const SHIP_MANAGEMENT_V2_SECTION_ORDER = ['approach', 'checklist', 'services', 'advantages', 'trust'] as const
 
 export type ShipManagementV2SectionId = (typeof SHIP_MANAGEMENT_V2_SECTION_ORDER)[number]
-
-function normalizeRichCards(incoming: unknown, fallback: AboutRichCard[]): AboutRichCard[] {
-  if (!Array.isArray(incoming)) {
-    return fallback.map((c) => ({ ...c }))
-  }
-  if (incoming.length === 0) {
-    return []
-  }
-  return incoming.map((item, i) => {
-    const fb = fallback[i]
-    return {
-      title:
-        typeof (item as { title?: unknown })?.title === 'string'
-          ? (item as { title: string }).title
-          : (fb?.title ?? ''),
-      text:
-        typeof (item as { text?: unknown })?.text === 'string'
-          ? (item as { text: string }).text
-          : (fb?.text ?? ''),
-    }
-  })
-}
 
 const SHIP_V2_RU: ShipManagementPageContent = {
   sec1Hero: {
@@ -245,16 +224,16 @@ export function mergeShipManagementContent(
       body: typeof s2?.body === 'string' ? s2.body : base.sec2Approach.body,
       cardsHeading:
         typeof s2?.cardsHeading === 'string' ? s2.cardsHeading : base.sec2Approach.cardsHeading,
-      cards: normalizeRichCards(s2?.cards, base.sec2Approach.cards),
+      cards: normalizeAboutRichCards(s2?.cards, base.sec2Approach.cards),
     },
     sec3Services: {
       title: typeof s3?.title === 'string' ? s3.title : base.sec3Services.title,
       body: typeof s3?.body === 'string' ? s3.body : base.sec3Services.body,
-      cards: normalizeRichCards(s3?.cards, base.sec3Services.cards),
+      cards: normalizeAboutRichCards(s3?.cards, base.sec3Services.cards),
     },
     sec4Advantages: {
       title: typeof s4?.title === 'string' ? s4.title : base.sec4Advantages.title,
-      cards: normalizeRichCards(s4?.cards, base.sec4Advantages.cards),
+      cards: normalizeAboutRichCards(s4?.cards, base.sec4Advantages.cards),
     },
     sec5Closing: {
       title: typeof s5?.title === 'string' ? s5.title : base.sec5Closing.title,

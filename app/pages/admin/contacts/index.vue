@@ -272,12 +272,15 @@ async function submit() {
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"
                 >Текст</label
               >
-              <input
+              <textarea
                 v-model="row.value"
-                type="text"
                 required
-                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                rows="3"
+                class="w-full resize-y min-h-[4.5rem] border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
               />
+              <p class="mt-1 font-body text-xs text-mts-text-secondary">
+                Для адреса можно сделать перенос строки (Enter) — так он отобразится в футере и на странице «Контакты».
+              </p>
             </div>
             <div class="sm:col-span-2">
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary"

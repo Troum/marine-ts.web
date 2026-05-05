@@ -10,28 +10,9 @@ import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { mergeAboutHero, themeFormattedTitleToHtml, themeTitleTriple } from '~/utils/themeFormattedTitle'
 import { normalizePageInquiryFormConfig } from '~/utils/pageInquiryFormOptions'
 
-const LEGACY_SECTION_IDS = new Set(['ecosystem', 'mission', 'why', 'stats'])
+import { normalizeAboutRichCards } from '~/utils/aboutRichCardNormalize'
 
-function normalizeRichCards(incoming: unknown, fallback: AboutRichCard[]): AboutRichCard[] {
-  /* Пустой массив из CMS — намеренно «без карточек»; только `undefined`/не-массив дают дефолты. */
-  if (!Array.isArray(incoming)) {
-    return fallback.map((c) => ({ ...c }))
-  }
-  if (incoming.length === 0) {
-    return []
-  }
-  return incoming.map((item, i) => {
-    const fb = fallback[i]
-    return {
-      title: typeof (item as { title?: unknown })?.title === 'string'
-        ? (item as { title: string }).title
-        : (fb?.title ?? ''),
-      text: typeof (item as { text?: unknown })?.text === 'string'
-        ? (item as { text: string }).text
-        : (fb?.text ?? ''),
-    }
-  })
-}
+const LEGACY_SECTION_IDS = new Set(['ecosystem', 'mission', 'why', 'stats'])
 
 function principleToRichCard(p: AboutPrinciple): AboutRichCard {
   const raw = p.text ?? ''
@@ -208,24 +189,24 @@ function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPa
     sec2History: {
       title: typeof s2?.title === 'string' ? s2.title : base.sec2History.title,
       body: typeof s2?.body === 'string' ? s2.body : base.sec2History.body,
-      cards: normalizeRichCards(s2?.cards, base.sec2History.cards),
+      cards: normalizeAboutRichCards(s2?.cards, base.sec2History.cards),
     },
     sec3Technical: {
       title: typeof s3?.title === 'string' ? s3.title : base.sec3Technical.title,
       lead: typeof s3?.lead === 'string' ? s3.lead : base.sec3Technical.lead,
       lead2: typeof s3?.lead2 === 'string' ? s3.lead2 : base.sec3Technical.lead2,
-      cards: normalizeRichCards(s3?.cards, base.sec3Technical.cards),
+      cards: normalizeAboutRichCards(s3?.cards, base.sec3Technical.cards),
     },
     sec4Crewing: {
       title: typeof s4?.title === 'string' ? s4.title : base.sec4Crewing.title,
       lead: typeof s4?.lead === 'string' ? s4.lead : base.sec4Crewing.lead,
       lead2: typeof s4?.lead2 === 'string' ? s4.lead2 : base.sec4Crewing.lead2,
-      cards: normalizeRichCards(s4?.cards, base.sec4Crewing.cards),
+      cards: normalizeAboutRichCards(s4?.cards, base.sec4Crewing.cards),
     },
     sec5Mission: {
       title: typeof s5?.title === 'string' ? s5.title : base.sec5Mission.title,
       body: typeof s5?.body === 'string' ? s5.body : base.sec5Mission.body,
-      cards: normalizeRichCards(s5?.cards, base.sec5Mission.cards),
+      cards: normalizeAboutRichCards(s5?.cards, base.sec5Mission.cards),
     },
     sec6Closing: {
       title: typeof s6?.title === 'string' ? s6.title : base.sec6Closing.title,

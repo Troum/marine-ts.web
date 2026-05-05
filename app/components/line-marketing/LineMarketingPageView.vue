@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Calculator, GraduationCap, Heart, Search, Shield } from 'lucide-vue-next'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
@@ -12,6 +11,7 @@ import LineSectionMediaBackdrop from '~/components/line-marketing/LineSectionMed
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
 import type {
+  AboutRichCard,
   CrewingManagementPageContent,
   CrewingDirectionItem,
   CrewingPageData,
@@ -43,13 +43,48 @@ type LineMarketingV2Payload =
   | { kind: 'ship'; data: ShipManagementPageContent }
   | { kind: 'lnk'; data: LnkPageContent }
 
-const approachIconLists = {
-  /** Лупа (отбор), сердце (loyalty), диплом (обучение). */
-  crewing: [Search, Heart, GraduationCap] as const,
-  ship: [Shield, Calculator, Search] as const,
+const approachIconKeyLists = {
+  crewing: ['Search', 'Heart', 'GraduationCap'] as const,
+  ship: ['Shield', 'Calculator', 'Search'] as const,
 }
 const serviceDecorIcons = ['ClipboardList', 'Plane', 'Users', 'PieChart', 'RefreshCw'] as const
 const advantageDecorIcons = ['Database', 'Scale', 'BadgeCheck'] as const
+
+function defaultApproachIconKey(idx: number): string {
+  const k = lineV2.value?.kind ?? 'crewing'
+  const list = k === 'ship' ? approachIconKeyLists.ship : approachIconKeyLists.crewing
+  return list[Math.min(idx, list.length - 1)]!
+}
+
+function resolveApproachCardIcon(c: AboutRichCard, idx: number) {
+  if (c.hideIcon) {
+    return null
+  }
+  const key = c.icon?.trim() ? c.icon.trim() : defaultApproachIconKey(idx)
+  return resolveCrewingIcon(key)
+}
+
+function resolveServicesCardIcon(c: AboutRichCard, idx: number) {
+  if (c.hideIcon) {
+    return null
+  }
+  const key =
+    c.icon?.trim()
+      ? c.icon.trim()
+      : (serviceDecorIcons[Math.min(idx, serviceDecorIcons.length - 1)] ?? 'Ship')
+  return resolveCrewingIcon(key)
+}
+
+function resolveAdvantageCardIcon(c: AboutRichCard, idx: number) {
+  if (c.hideIcon) {
+    return null
+  }
+  const key =
+    c.icon?.trim()
+      ? c.icon.trim()
+      : (advantageDecorIcons[Math.min(idx, advantageDecorIcons.length - 1)] ?? 'Ship')
+  return resolveCrewingIcon(key)
+}
 
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
@@ -132,12 +167,6 @@ function lineV2CardsGridItemClass(index: number, total: number): string {
     md = 'md:col-span-2'
   }
   return `min-w-0 ${md}`
-}
-
-function approachDecorIcon(idx: number) {
-  const k = lineV2.value?.kind ?? 'crewing'
-  const list = k === 'ship' ? approachIconLists.ship : approachIconLists.crewing
-  return list[Math.min(idx, list.length - 1)]!
 }
 
 const lineV2SectionOrder = computed(() => {
@@ -512,7 +541,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 :content-class="`h-full min-h-0 ${lineV2CardsGridItemClass(i, lineV2.data.sec2Approach.cards.length)}`"
               >
                 <div class="corner-accent service-card flex h-full min-h-0 min-w-0 flex-col p-6">
-                  <component :is="approachDecorIcon(i)" class="mb-4 h-9 w-9 shrink-0 text-primary" />
+                  <component
+                    v-if="!c.hideIcon"
+                    :is="resolveApproachCardIcon(c, i)!"
+                    class="mb-4 h-9 w-9 shrink-0 text-primary"
+                  />
                   <h3 class="font-display mb-3 shrink-0 text-lg text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
@@ -535,7 +568,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     lineV2CardsGridItemClass(i, lineV2.data.sec2Approach.cards.length),
                   ]"
                 >
-                  <component :is="approachDecorIcon(i)" class="mb-4 h-9 w-9 shrink-0 text-primary" />
+                  <component
+                    v-if="!c.hideIcon"
+                    :is="resolveApproachCardIcon(c, i)!"
+                    class="mb-4 h-9 w-9 shrink-0 text-primary"
+                  />
                   <h3 class="font-display mb-3 shrink-0 text-lg text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
@@ -572,7 +609,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   lineV2CardsGridItemClass(i, lineV2.data.sec2Approach.cards.length),
                 ]"
               >
-                <component :is="approachDecorIcon(i)" class="mb-4 h-9 w-9 shrink-0 text-primary" />
+                <component
+                  v-if="!c.hideIcon"
+                  :is="resolveApproachCardIcon(c, i)!"
+                  class="mb-4 h-9 w-9 shrink-0 text-primary"
+                />
                 <h3 class="font-display mb-3 shrink-0 text-lg text-body">
                   <ThemedContentString :content="c.title" />
                 </h3>
@@ -679,7 +720,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                       {{ String(i + 1).padStart(2, '0') }}
                     </span>
                     <component
-                      :is="resolveCrewingIcon(serviceDecorIcons[Math.min(i, serviceDecorIcons.length - 1)] ?? 'Ship')"
+                      v-if="!c.hideIcon"
+                      :is="resolveServicesCardIcon(c, i)!"
                       class="h-7 w-7 shrink-0 text-primary"
                     />
                   </div>
@@ -710,7 +752,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                       {{ String(i + 1).padStart(2, '0') }}
                     </span>
                     <component
-                      :is="resolveCrewingIcon(serviceDecorIcons[Math.min(i, serviceDecorIcons.length - 1)] ?? 'Ship')"
+                      v-if="!c.hideIcon"
+                      :is="resolveServicesCardIcon(c, i)!"
                       class="h-7 w-7 shrink-0 text-primary"
                     />
                   </div>
@@ -750,7 +793,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     {{ String(i + 1).padStart(2, '0') }}
                   </span>
                   <component
-                    :is="resolveCrewingIcon(serviceDecorIcons[Math.min(i, serviceDecorIcons.length - 1)] ?? 'Ship')"
+                    v-if="!c.hideIcon"
+                    :is="resolveServicesCardIcon(c, i)!"
                     class="h-7 w-7 shrink-0 text-primary"
                   />
                 </div>
@@ -796,7 +840,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   class="flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm"
                 >
                   <component
-                    :is="resolveCrewingIcon(advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'Ship')"
+                    v-if="!c.hideIcon"
+                    :is="resolveAdvantageCardIcon(c, i)!"
                     class="mt-1 h-10 w-10 shrink-0 text-primary"
                   />
                   <div class="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -824,7 +869,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   ]"
                 >
                   <component
-                    :is="resolveCrewingIcon(advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'Ship')"
+                    v-if="!c.hideIcon"
+                    :is="resolveAdvantageCardIcon(c, i)!"
                     class="mt-1 h-10 w-10 shrink-0 text-primary"
                   />
                   <div class="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -854,7 +900,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 ]"
               >
                 <component
-                  :is="resolveCrewingIcon(advantageDecorIcons[Math.min(i, advantageDecorIcons.length - 1)] ?? 'Ship')"
+                  v-if="!c.hideIcon"
+                  :is="resolveAdvantageCardIcon(c, i)!"
                   class="mt-1 h-10 w-10 shrink-0 text-primary"
                 />
                 <div class="flex min-h-0 min-w-0 flex-1 flex-col">
