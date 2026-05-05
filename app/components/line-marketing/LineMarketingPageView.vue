@@ -8,24 +8,27 @@ import { sanitizeRichContentHtml } from '~/composables/useMarkdownSafeHtml'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import LineMarketingCustomSectionView from '~/components/line-marketing/LineMarketingCustomSectionView.vue'
+import LineSectionMediaBackdrop from '~/components/line-marketing/LineSectionMediaBackdrop.vue'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
 import type {
   CrewingManagementPageContent,
   CrewingDirectionItem,
   CrewingPageData,
+  LnkPageContent,
   LineMarketingCustomSection,
   MarineContentLocale,
   ShipManagementPageContent,
 } from '~/types'
 import { CREWING_MANAGEMENT_V2_SECTION_ORDER } from '~/utils/crewingManagementPageDefaults'
+import { LNK_V2_SECTION_ORDER } from '~/utils/lnkManagementPageDefaults'
 import { SHIP_MANAGEMENT_V2_SECTION_ORDER } from '~/utils/shipManagementPageDefaults'
 import { buildCrewingChecklistRenderRows, countFilledCrewingChecklistPoints } from '~/utils/crewingChecklistDefaults'
 import { defaultLinePageData, mergeLinePageData } from '~/utils/pageDefaults'
 import { resolveHeroBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
 import { LINE_MARKETING_PAGE_LAYOUT, LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
-import { buildLineMarketingLayoutChunks } from '~/utils/lineMarketingSectionLayout'
+import { buildLineMarketingLayoutChunks, type LineMarketingLayoutChunk } from '~/utils/lineMarketingSectionLayout'
 import { resolveCrewingIcon } from '~/utils/crewingIcons'
 import { visibleOrderedSections } from '~/utils/sectionVisibility'
 
@@ -38,6 +41,7 @@ useSiteSeoMeta(props.slug)
 type LineMarketingV2Payload =
   | { kind: 'crewing'; data: CrewingManagementPageContent }
   | { kind: 'ship'; data: ShipManagementPageContent }
+  | { kind: 'lnk'; data: LnkPageContent }
 
 const approachIconLists = {
   /** Лупа (отбор), сердце (loyalty), диплом (обучение). */
@@ -96,6 +100,9 @@ const lineV2 = computed((): LineMarketingV2Payload | null => {
   if (props.slug === 'ship-management' && cms.value.shipPageLayout === 'v2' && cms.value.shipV2) {
     return { kind: 'ship', data: cms.value.shipV2 }
   }
+  if (props.slug === 'lnk' && cms.value.lnkV2) {
+    return { kind: 'lnk', data: cms.value.lnkV2 }
+  }
   return null
 })
 
@@ -136,6 +143,14 @@ function approachDecorIcon(idx: number) {
 const lineV2SectionOrder = computed(() => {
   if (!lineV2.value) {
     return []
+  }
+  if (lineV2.value.kind === 'lnk') {
+    return visibleOrderedSections(
+      cms.value.sectionOrder,
+      LNK_V2_SECTION_ORDER,
+      cms.value.customSections,
+      cms.value.sectionVisibility,
+    )
   }
   const def =
     lineV2.value.kind === 'crewing' ? CREWING_MANAGEMENT_V2_SECTION_ORDER : SHIP_MANAGEMENT_V2_SECTION_ORDER
@@ -244,6 +259,49 @@ const heroBreadcrumbsOnDark = computed(() =>
   resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, heroBreadcrumbAutoOnDark.value),
 )
 
+function sectionBgUrl(sectionKey: string): string {
+  return cms.value.sectionBackgroundImages?.[sectionKey]?.trim() ?? ''
+}
+
+function lineSecShell(sectionKey: string, paddingClass: string, opts?: { topBorder?: boolean }): string {
+  const u = sectionBgUrl(sectionKey)
+  const parts = ['relative', 'overflow-hidden', paddingClass]
+  if (opts?.topBorder) {
+    parts.push(u ? 'border-t border-white/15' : 'border-t border-border')
+  }
+  if (!u) {
+    parts.push('bg-white')
+  }
+  return parts.join(' ')
+}
+
+function legacyPairBg(left: string, right: string): string {
+  return sectionBgUrl(left) || sectionBgUrl(right)
+}
+
+function legacyPairShellClass(chunk: Extract<LineMarketingLayoutChunk, { kind: 'pair' }>): string {
+  const u = legacyPairBg(chunk.left, chunk.right)
+  const parts = ['relative', 'overflow-hidden', 'py-24']
+  if (!u) {
+    parts.push('bg-white')
+  }
+  return parts.join(' ')
+}
+
+const LNK_GRID_CLASS: Record<number, string> = {
+  1: 'grid grid-cols-1 gap-5 md:items-stretch md:gap-5',
+  2: 'grid grid-cols-1 gap-5 md:grid-cols-2 md:items-stretch md:gap-5',
+  3: 'grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 md:items-stretch md:gap-5',
+  4: 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 md:items-stretch md:gap-5',
+  5: 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 md:items-stretch md:gap-5',
+  6: 'grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 md:items-stretch md:gap-5',
+}
+
+function lnkSectionGridClass(columns: number | undefined): string {
+  const c = Math.min(6, Math.max(1, columns ?? 3))
+  return LNK_GRID_CLASS[c] ?? LNK_GRID_CLASS[3]!
+}
+
 </script>
 
 <template>
@@ -251,7 +309,7 @@ const heroBreadcrumbsOnDark = computed(() =>
     <section
       :class="[
         'relative flex items-center overflow-hidden',
-        props.slug === 'ship-management' || isLineV2 ? 'min-h-[100svh]' : 'min-h-[min(88vh,920px)]',
+        props.slug === 'ship-management' || props.slug === 'lnk' || isLineV2 ? 'min-h-[100svh]' : 'min-h-[min(88vh,920px)]',
       ]"
     >
       <div class="absolute top-0 left-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
@@ -348,10 +406,7 @@ const heroBreadcrumbsOnDark = computed(() =>
                 isLineV2 ? 'mts-hero-themed-copy text-white drop-shadow-md' : '',
               ]"
             >
-              <template v-if="lineV2">
-                <ThemedContentString :content="lineV2.data.sec1Hero.title" />
-              </template>
-              <ThemeFormattedTitle v-else :title="cms.hero.titleFormatted" />
+              <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
             </h1>
             <div
               :class="[
@@ -367,20 +422,8 @@ const heroBreadcrumbsOnDark = computed(() =>
                 isLineV2 ? 'mts-hero-themed-copy text-white/95 drop-shadow' : 'text-muted',
               ]"
             >
-              <ThemedContentString
-                v-if="lineV2"
-                :content="lineV2.data.sec1Hero.lead"
-              />
-              <ThemedContentString v-else :content="cms.hero.lead" />
+              <ThemedContentString :content="cms.hero.lead" />
             </p>
-            <div
-              v-if="lineV2 && lineV2.data.sec1Hero.body.trim()"
-              :class="[
-                'mts-hero-themed-copy mts-markdown mt-6 max-w-3xl text-base leading-relaxed text-white/90 [&_strong]:text-white',
-                heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-              v-html="lineRichHtml(lineV2.data.sec1Hero.body)"
-            />
             <div
               v-if="visibleHeroButtons.length > 0"
               :class="[
@@ -413,13 +456,14 @@ const heroBreadcrumbsOnDark = computed(() =>
       </div>
     </section>
 
-    <template v-if="lineV2">
+    <template v-if="lineV2 && lineV2.kind !== 'lnk'">
       <template v-for="sid in lineV2SectionOrder" :key="sid">
         <MarinReveal v-if="isLineV2 && sid.startsWith('custom:') && customSectionById(sid.slice(7))">
           <LineMarketingCustomSectionView
             :section="customSectionById(sid.slice(7))!"
             :slug="props.slug"
             :page-crumb-items="crumbItems"
+            :page-section-media-url="sectionBgUrl(sid)"
           />
         </MarinReveal>
         <LineMarketingCustomSectionView
@@ -427,12 +471,14 @@ const heroBreadcrumbsOnDark = computed(() =>
           :section="customSectionById(sid.slice(7))!"
           :slug="props.slug"
           :page-crumb-items="crumbItems"
+          :page-section-media-url="sectionBgUrl(sid)"
         />
 
         <section
           v-else-if="sid === 'approach'"
-          class="relative overflow-hidden bg-white py-24"
+          :class="lineSecShell('approach', 'py-24')"
         >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('approach')" />
           <AboutSectionContentParallax
             v-if="isLineV2"
             :max-shift="32"
@@ -542,8 +588,9 @@ const heroBreadcrumbsOnDark = computed(() =>
         <section
           v-else-if="sid === 'checklist' && checklistVisible"
           :aria-labelledby="checklistHeadingId"
-          class="border-t border-border bg-white py-16"
+          :class="lineSecShell('checklist', 'py-16', { topBorder: true })"
         >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('checklist')" />
           <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
             <MarinReveal>
               <h2
@@ -594,8 +641,9 @@ const heroBreadcrumbsOnDark = computed(() =>
 
         <section
           v-else-if="sid === 'services'"
-          :class="['relative overflow-hidden py-24', 'bg-white']"
+          :class="lineSecShell('services', 'py-24')"
         >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('services')" />
           <AboutSectionContentParallax
             v-if="isLineV2"
             :max-shift="32"
@@ -720,8 +768,9 @@ const heroBreadcrumbsOnDark = computed(() =>
 
         <section
           v-else-if="sid === 'advantages'"
-          class="relative overflow-hidden bg-white py-24"
+          :class="lineSecShell('advantages', 'py-24')"
         >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('advantages')" />
           <AboutSectionContentParallax
             v-if="isLineV2"
             :max-shift="32"
@@ -822,7 +871,8 @@ const heroBreadcrumbsOnDark = computed(() =>
           </div>
         </section>
 
-        <section v-else-if="sid === 'trust'" class="relative overflow-hidden bg-white py-20">
+        <section v-else-if="sid === 'trust'" :class="lineSecShell('trust', 'py-20')">
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('trust')" />
           <AboutSectionContentParallax
             v-if="isLineV2"
             :max-shift="32"
@@ -904,8 +954,9 @@ const heroBreadcrumbsOnDark = computed(() =>
 
         <section
           v-else-if="sid === 'cta' && lineV2.kind === 'crewing'"
-          class="relative overflow-hidden bg-white py-16"
+          :class="lineSecShell('cta', 'py-16')"
         >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('cta')" />
           <AboutSectionContentParallax
             :max-shift="32"
             :factor="0.085"
@@ -929,12 +980,146 @@ const heroBreadcrumbsOnDark = computed(() =>
       </template>
     </template>
 
+    <template v-else-if="lineV2 && lineV2.kind === 'lnk'">
+      <template v-for="sid in lineV2SectionOrder" :key="`lnk-${sid}`">
+        <MarinReveal v-if="isLineV2 && sid.startsWith('custom:') && customSectionById(sid.slice(7))">
+          <LineMarketingCustomSectionView
+            :section="customSectionById(sid.slice(7))!"
+            :slug="props.slug"
+            :page-crumb-items="crumbItems"
+            :page-section-media-url="sectionBgUrl(sid)"
+          />
+        </MarinReveal>
+        <LineMarketingCustomSectionView
+          v-else-if="sid.startsWith('custom:') && customSectionById(sid.slice(7))"
+          :section="customSectionById(sid.slice(7))!"
+          :slug="props.slug"
+          :page-crumb-items="crumbItems"
+          :page-section-media-url="sectionBgUrl(sid)"
+        />
+
+        <section
+          v-else-if="sid === 'competencies'"
+          :class="[lineSecShell('competencies', 'py-24'), 'flex min-h-[100svh] flex-col']"
+        >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('competencies')" />
+          <AboutSectionContentParallax
+            :max-shift="32"
+            :factor="0.085"
+            class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
+          >
+            <MarinReveal>
+              <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+                <ThemedContentString :content="lineV2.data.sec2Competencies.title" />
+              </h2>
+            </MarinReveal>
+            <div v-if="lineV2.data.sec2Competencies.cards.length" :class="lnkSectionGridClass(lineV2.data.sec2Competencies.columns)">
+              <MarinReveal
+                v-for="(c, i) in lineV2.data.sec2Competencies.cards"
+                :key="`lnk-co-${i}`"
+                :delay-ms="160 + i * 60"
+                class="h-full min-h-0"
+              >
+                <div
+                  class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                >
+                  <component
+                    :is="resolveCrewingIcon(c.icon)"
+                    v-if="!c.hideIcon"
+                    class="mb-4 h-9 w-9 shrink-0 text-primary"
+                  />
+                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                    <ThemedContentString :content="c.title" />
+                  </h3>
+                  <div
+                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    v-html="lineRichHtml(c.text)"
+                  />
+                </div>
+              </MarinReveal>
+            </div>
+          </AboutSectionContentParallax>
+        </section>
+
+        <section
+          v-else-if="sid === 'strategicAdvantages'"
+          :class="[lineSecShell('strategicAdvantages', 'py-24'), 'flex min-h-[100svh] flex-col']"
+        >
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('strategicAdvantages')" />
+          <AboutSectionContentParallax
+            :max-shift="32"
+            :factor="0.085"
+            class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
+          >
+            <MarinReveal>
+              <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+                <ThemedContentString :content="lineV2.data.sec3StrategicAdvantages.title" />
+              </h2>
+            </MarinReveal>
+            <div
+              v-if="lineV2.data.sec3StrategicAdvantages.cards.length"
+              :class="lnkSectionGridClass(lineV2.data.sec3StrategicAdvantages.columns)"
+            >
+              <MarinReveal
+                v-for="(c, i) in lineV2.data.sec3StrategicAdvantages.cards"
+                :key="`lnk-ad-${i}`"
+                :delay-ms="160 + i * 60"
+                class="h-full min-h-0"
+              >
+                <div
+                  class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                >
+                  <component
+                    :is="resolveCrewingIcon(c.icon)"
+                    v-if="!c.hideIcon"
+                    class="mb-4 h-9 w-9 shrink-0 text-primary"
+                  />
+                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                    <ThemedContentString :content="c.title" />
+                  </h3>
+                  <div
+                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    v-html="lineRichHtml(c.text)"
+                  />
+                </div>
+              </MarinReveal>
+            </div>
+          </AboutSectionContentParallax>
+        </section>
+
+        <section v-else-if="sid === 'techBase'" :class="lineSecShell('techBase', 'py-20')">
+          <LineSectionMediaBackdrop :image-url="sectionBgUrl('techBase')" />
+          <AboutSectionContentParallax
+            :max-shift="32"
+            :factor="0.085"
+            class="relative z-10 mts-content-wrap"
+          >
+            <div class="mx-auto max-w-3xl text-center">
+              <MarinReveal>
+                <div
+                  class="mts-markdown mb-8 font-display text-xl leading-snug text-body md:text-2xl [&_p:first-child]:mt-0"
+                  v-html="lineRichHtml(lineV2.data.sec4TechBase.titleHtml)"
+                />
+              </MarinReveal>
+              <MarinReveal :delay-ms="120">
+                <div
+                  class="mts-markdown font-body text-lg leading-relaxed text-muted [&_p:first-child]:mt-0"
+                  v-html="lineRichHtml(lineV2.data.sec4TechBase.bodyHtml)"
+                />
+              </MarinReveal>
+            </div>
+          </AboutSectionContentParallax>
+        </section>
+      </template>
+    </template>
+
     <template v-else>
     <template v-for="(chunk, ci) in layoutChunks" :key="ci">
       <section
         v-if="chunk.kind === 'directions' && cms.directions.length > 0"
-        class="relative overflow-hidden bg-white py-24"
+        :class="lineSecShell('directions', 'py-24')"
       >
+        <LineSectionMediaBackdrop :image-url="sectionBgUrl('directions')" />
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
           <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
             <ThemedContentString :content="cms.directionsSection.title" />
@@ -984,8 +1169,9 @@ const heroBreadcrumbsOnDark = computed(() =>
       <section
         v-else-if="chunk.kind === 'checklist' && checklistVisible"
         :aria-labelledby="checklistHeadingId"
-        class="border-t border-border bg-white py-16"
+        :class="lineSecShell('checklist', 'py-16', { topBorder: true })"
       >
+        <LineSectionMediaBackdrop :image-url="sectionBgUrl('checklist')" />
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
           <h2
             :id="checklistHeadingId"
@@ -1031,7 +1217,8 @@ const heroBreadcrumbsOnDark = computed(() =>
         </AboutSectionContentParallax>
       </section>
 
-      <section v-else-if="chunk.kind === 'pair'" class="relative overflow-hidden py-24">
+      <section v-else-if="chunk.kind === 'pair'" :class="legacyPairShellClass(chunk)">
+        <LineSectionMediaBackdrop :image-url="legacyPairBg(chunk.left, chunk.right)" />
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
           <div class="grid items-start gap-16 lg:grid-cols-2">
             <template v-for="col in [chunk.left, chunk.right]" :key="col">
@@ -1062,7 +1249,11 @@ const heroBreadcrumbsOnDark = computed(() =>
                 <p class="mb-8 font-body leading-relaxed text-muted">
                   <ThemedContentString :content="cms.audience.paragraph2" />
                 </p>
-                <ButtonLink :title="flattenEncodedOrPlain(cms.audience.ctaLabel)" :link="cms.audience.ctaHref" />
+                <ButtonLink
+                  v-if="flattenEncodedOrPlain(cms.audience.ctaLabel).trim()"
+                  :title="flattenEncodedOrPlain(cms.audience.ctaLabel)"
+                  :link="cms.audience.ctaHref"
+                />
               </div>
             </template>
           </div>
@@ -1074,9 +1265,11 @@ const heroBreadcrumbsOnDark = computed(() =>
         :section="customSectionById(chunk.customId)!"
         :slug="props.slug"
         :page-crumb-items="crumbItems"
+        :page-section-media-url="sectionBgUrl(`custom:${chunk.customId}`)"
       />
 
-      <section v-else-if="chunk.kind === 'single'" class="relative overflow-hidden py-24">
+      <section v-else-if="chunk.kind === 'single'" :class="lineSecShell(chunk.id, 'py-24')">
+        <LineSectionMediaBackdrop :image-url="sectionBgUrl(chunk.id)" />
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
           <div v-if="chunk.id === 'principles'" class="relative max-w-7xl">
             <div class="card-tech corner-accent p-8">
@@ -1105,7 +1298,11 @@ const heroBreadcrumbsOnDark = computed(() =>
             <p class="mb-8 font-body leading-relaxed text-muted">
               <ThemedContentString :content="cms.audience.paragraph2" />
             </p>
-            <ButtonLink :title="flattenEncodedOrPlain(cms.audience.ctaLabel)" :link="cms.audience.ctaHref" />
+            <ButtonLink
+              v-if="flattenEncodedOrPlain(cms.audience.ctaLabel).trim()"
+              :title="flattenEncodedOrPlain(cms.audience.ctaLabel)"
+              :link="cms.audience.ctaHref"
+            />
           </div>
         </AboutSectionContentParallax>
       </section>

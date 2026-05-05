@@ -19,9 +19,6 @@ const route = useRoute()
 const localePath = useLocalePath()
 const { locale } = useI18n()
 const api = useMarineApi()
-const { settings: siteAppearance } = useSiteAppearance()
-/** Публичная тема «Golden Sepia» (id в API — `scglobal`). */
-const isGoldenSepiaTheme = computed(() => siteAppearance.value.theme === 'scglobal')
 
 const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncData(
   'site-navigation',
@@ -47,6 +44,7 @@ const fallbackItems = computed<NavigationMenuItem[]>(() => [
   { path: '/projects', label: { ru: 'Проекты', en: 'Projects' } },
   { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
   { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crewing management' } },
+  { path: '/lnk', label: { ru: 'ЛНК', en: 'LNK' } },
   { path: '/vacancies', label: { ru: 'Вакансии', en: 'Vacancies' } },
   { path: '/contacts', label: { ru: 'Контакты', en: 'Contacts' } },
 ])
@@ -220,7 +218,7 @@ const navColorVars = computed(() => {
 /**
  * Определяет, прокрутил ли пользователь страницу вниз.
  * При прокрутке — тёмное стекло без светлой обводки; вверху — прозрачный фон.
- * Активный пункт меню: акцент `primary` (в Golden Sepia — золото), без белой border-top.
+ * Активный пункт и hover — `primary` (Marin — красный, Golden Sepia — золото).
  */
 const scrollY = ref(0)
 if (import.meta.client) {
@@ -236,10 +234,7 @@ const isScrolled = computed(() => scrollY.value > 40)
 const hasCustomHoverColor = computed(() => !!menu.value.menuItemHoverColor)
 
 const horizLinkClasses = computed(() => {
-  const tone =
-    !isScrolled.value && isGoldenSepiaTheme.value
-      ? 'text-white hover:text-primary'
-      : 'text-white/90 hover:text-white'
+  const tone = !isScrolled.value ? 'text-white hover:text-primary' : 'text-white/90 hover:text-white'
   return [
     horizSizeClass.value,
     horizWeightClass.value,
@@ -300,7 +295,7 @@ watch(
     >
       <div class="flex w-full items-center gap-4 px-6 py-4 lg:px-10">
         <NuxtLink :to="localePath('/')" class="group flex shrink-0 items-center gap-3">
-          <AppLogo img-class="h-12 w-auto max-w-[250px] object-contain object-left transition-opacity group-hover:opacity-90" />
+          <AppLogo img-class="h-14 w-auto max-w-[280px] object-contain object-left transition-opacity group-hover:opacity-90" />
         </NuxtLink>
 
         <!-- Горизонтальное меню (десктоп) -->
@@ -316,6 +311,7 @@ watch(
               class="group/nav relative shrink-0"
             >
               <button
+                :id="index === 0 ? 'nav-horiz-first-anchor' : undefined"
                 type="button"
                 :class="[
                   ...horizLinkClasses,
@@ -327,7 +323,7 @@ watch(
                 {{ labelForLocale(item) }}
                 <ChevronDown
                   class="h-3.5 w-3.5 opacity-70"
-                  :class="!isScrolled && isGoldenSepiaTheme ? 'text-primary' : ''"
+                  :class="!isScrolled ? 'text-primary' : ''"
                 />
               </button>
               <div
@@ -357,6 +353,7 @@ watch(
             </div>
             <a
               v-else-if="isExternalPath(item.path)"
+              :id="index === 0 ? 'nav-horiz-first-anchor' : undefined"
               :href="item.path"
               target="_blank"
               rel="noopener noreferrer"
@@ -370,6 +367,7 @@ watch(
             </a>
             <NuxtLink
               v-else
+              :id="index === 0 ? 'nav-horiz-first-anchor' : undefined"
               :to="localizedPath(item.path)"
               :class="[
                 ...horizLinkClasses,
@@ -383,8 +381,11 @@ watch(
           </template>
         </div>
 
-        <div class="ml-auto flex shrink-0 items-center gap-5">
-          <LayoutLanguageSwitch dark class="hidden sm:inline-flex" />
+        <div id="nav-header-trailing" class="ml-auto flex shrink-0 items-center gap-5">
+          <!-- Левый край для выравнивания hero: правый край текста совпадает с этой линией -->
+          <div id="nav-hero-lang-left" class="hidden shrink-0 sm:flex">
+            <LayoutLanguageSwitch dark class="inline-flex" />
+          </div>
           <button
             type="button"
             class="group flex items-center gap-2 rounded-full border-0 bg-transparent p-3 text-primary transition-opacity duration-200 hover:opacity-90"
@@ -413,7 +414,7 @@ watch(
       <div v-if="isMenuOpen" class="fixed inset-0 z-[100] overflow-y-auto bg-white">
         <div class="flex items-center justify-between px-6 py-4 lg:px-10">
           <NuxtLink :to="localePath('/')" class="flex items-center gap-3" @click="closeMenu">
-            <AppLogo img-class="h-12 w-auto max-w-[250px] object-contain object-left" />
+            <AppLogo img-class="h-14 w-auto max-w-[280px] object-contain object-left" />
           </NuxtLink>
 
           <button type="button" class="group flex items-center gap-3 text-body transition-colors hover:text-primary" @click="closeMenu">

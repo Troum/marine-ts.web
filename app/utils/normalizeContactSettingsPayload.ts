@@ -1,4 +1,4 @@
-import type { ContactQuickIconKey, SiteContactSettings } from '~/types'
+import type { ContactQuickIconKey, ContactSocialLink, SiteContactSettings } from '~/types'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 
 function unwrapContactSettingsPayload(json: unknown): Record<string, unknown> | null {
@@ -11,7 +11,7 @@ function unwrapContactSettingsPayload(json: unknown): Record<string, unknown> | 
       return null
     }
     const o = cur as Record<string, unknown>
-    if (Array.isArray(o.quick) || Array.isArray(o.offices) || Array.isArray(o.departments)) {
+    if (Array.isArray(o.quick) || Array.isArray(o.offices) || Array.isArray(o.departments) || Array.isArray(o.socials)) {
       return o
     }
     const next = o.data
@@ -116,7 +116,18 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
       }]
     })
 
+  const socialsRaw = Array.isArray(inner.socials) ? inner.socials : []
+  const socials: ContactSocialLink[] = socialsRaw.flatMap((raw) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return []
+    const row = raw as Record<string, unknown>
+    const iconKey = typeof row.iconKey === 'string' ? row.iconKey.trim() : ''
+    const url = typeof row.url === 'string' ? row.url.trim() : ''
+    if (!iconKey || !url) return []
+    return [{ iconKey, url }]
+  })
+
   return {
+    socials,
     quick: quick.length ? quick : structuredClone(def.quick),
     departments: departments.length ? departments : structuredClone(def.departments),
     offices: offices.length ? offices : structuredClone(def.offices),
@@ -125,6 +136,10 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
 
 export function serializeContactSettingsPayload(body: SiteContactSettings): Record<string, unknown> {
   return {
+    socials: (body.socials ?? []).map((s) => ({
+      iconKey: s.iconKey,
+      url: s.url.trim(),
+    })),
     quick: body.quick.map((row) => {
       const iconKey = normalizeIconKey(row.iconKey, 'phone')
       return {

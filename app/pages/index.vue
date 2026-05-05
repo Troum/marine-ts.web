@@ -58,6 +58,80 @@ watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
 const isVisible = ref(false)
 onMounted(() => { isVisible.value = true })
 
+/** Горизонтальные отступы hero: слева — начало «Главная», справа — левый край RU/EN (до бургера). */
+const publicHeroSectionRef = ref<HTMLElement | null>(null)
+const heroInsetLeft = ref('1.5rem')
+const heroInsetRight = ref('1.5rem')
+
+function syncHeroInsetsToNav() {
+  if (!import.meta.client) return
+  const section = publicHeroSectionRef.value
+  if (!section) return
+  const sRect = section.getBoundingClientRect()
+
+  const anchor = document.getElementById('nav-horiz-first-anchor')
+  if (!anchor) {
+    heroInsetLeft.value = '1.5rem'
+  }
+  else {
+    const cs = getComputedStyle(anchor)
+    if (cs.display === 'none' || anchor.getClientRects().length === 0) {
+      heroInsetLeft.value = '1.5rem'
+    }
+    else {
+      heroInsetLeft.value = `${Math.max(0, Math.round(anchor.getBoundingClientRect().left - sRect.left))}px`
+    }
+  }
+
+  /** Правый край hero-контента = левый край переключателя RU/EN (до бургера). */
+  const langLeftEl = document.getElementById('nav-hero-lang-left')
+  if (!langLeftEl) {
+    heroInsetRight.value = '1.5rem'
+  }
+  else {
+    const cl = getComputedStyle(langLeftEl)
+    if (cl.display === 'none' || langLeftEl.getClientRects().length === 0) {
+      heroInsetRight.value = '1.5rem'
+    }
+    else {
+      const langLeft = langLeftEl.getBoundingClientRect().left
+      heroInsetRight.value = `${Math.max(0, Math.round(sRect.right - langLeft))}px`
+    }
+  }
+}
+
+let heroInsetRaf = 0
+function scheduleHeroInsetSync() {
+  if (!import.meta.client) return
+  cancelAnimationFrame(heroInsetRaf)
+  heroInsetRaf = requestAnimationFrame(() => syncHeroInsetsToNav())
+}
+
+onMounted(() => {
+  scheduleHeroInsetSync()
+  window.addEventListener('resize', scheduleHeroInsetSync)
+  window.addEventListener('scroll', scheduleHeroInsetSync, { passive: true })
+  nextTick(scheduleHeroInsetSync)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', scheduleHeroInsetSync)
+  window.removeEventListener('scroll', scheduleHeroInsetSync)
+  cancelAnimationFrame(heroInsetRaf)
+})
+
+watch(locale, () => nextTick(scheduleHeroInsetSync))
+
+watch(homeCmsPending, (pending) => {
+  if (!pending) {
+    nextTick(() => {
+      scheduleHeroInsetSync()
+      requestAnimationFrame(scheduleHeroInsetSync)
+      setTimeout(scheduleHeroInsetSync, 120)
+    })
+  }
+})
+
 /**
  * Карточки для hero-полосы под первым экраном — без тех, что админ
  * пометил «не показывать в hero». Hover-индекс работает уже в этом списке,
@@ -167,7 +241,8 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
       />
     </div>
     <template v-else>
-    <section class="public-hero relative min-h-[100svh] overflow-x-hidden md:h-screen">
+    <section ref="publicHeroSectionRef" class="public-hero relative min-h-[100svh] overflow-x-hidden md:h-screen">
+      <!-- Фон -->
       <div class="absolute inset-0">
         <CommonParallaxHeroMedia
           v-if="activeHeroImage"
@@ -184,72 +259,128 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
         />
       </div>
 
-      <div class="relative z-10 flex min-h-[100svh] flex-col justify-between md:h-full">
-        <div class="pt-24 sm:pt-28 md:pt-32" />
+      <div class="relative z-10 flex min-h-[100svh] flex-col md:h-full">
+        <div class="pt-24 sm:pt-28 md:pt-32 shrink-0" />
 
-        <div class="flex flex-1 items-center justify-center px-4 pb-8 md:pb-0">
-          <div class="w-full max-w-4xl text-center">
-            <div
-              :class="[
-                'mb-5 flex items-center justify-center gap-3 transition-all duration-500',
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-            >
-              <div class="h-px w-8 bg-primary" />
-              <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
-                <ThemedContentString :content="d.hero.label" />
-              </span>
-              <div class="h-px w-8 bg-primary" />
-            </div>
-            <Transition
-              mode="out-in"
-              enter-active-class="transition-all duration-500 ease-out"
-              enter-from-class="translate-y-4 opacity-0"
-              enter-to-class="translate-y-0 opacity-100"
-              leave-active-class="transition-all duration-200 ease-in"
-              leave-from-class="translate-y-0 opacity-100"
-              leave-to-class="-translate-y-4 opacity-0"
-            >
+        <!-- Двухколоночный контент -->
+        <div class="flex flex-1 items-center">
+          <div
+            class="w-full py-12 md:py-0"
+            :style="{ paddingLeft: heroInsetLeft, paddingRight: heroInsetRight }"
+          >
+            <div class="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16 lg:gap-24 items-center">
+
+              <!-- Левая колонка: название + тэглайн + соцсети/ссылка -->
               <div
-                :key="activeHeroDirection ? `direction-${activeHeroDirectionIndex}` : 'default-hero'"
-                :class="isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"
+                :class="[
+                  'transition-all duration-700',
+                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
+                ]"
               >
-                <h1
-                  class="mts-hero-themed-copy mb-4 text-2xl font-bold leading-tight text-white drop-shadow-lg sm:text-3xl md:text-4xl lg:text-5xl"
-                >
-                  <ThemedContentString
-                    v-if="activeHeroDirection"
-                    :content="heroDirectionTitle(activeHeroDirection)"
-                  />
-                  <ThemeFormattedTitle v-else :title="d.hero.titleFormatted" />
+                <h1 class="mts-hero-themed-copy text-4xl font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
+                  <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                 </h1>
-                <p
-                  class="mts-hero-themed-copy mx-auto max-w-2xl text-base leading-relaxed text-white/90 drop-shadow sm:text-lg md:text-xl"
-                >
-                  <ThemedContentString
-                    :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
-                  />
+                <p class="mt-5 text-base font-semibold leading-snug text-white sm:text-lg lg:text-xl">
+                  <ThemedContentString :content="d.hero.label" />
                 </p>
               </div>
-            </Transition>
-            <div
-              v-if="!d.hero.hideCtaClient || !d.hero.hideCtaSeafarer"
-              :class="[
-                'mt-8 flex w-full flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4',
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-            >
-              <NuxtLink v-if="!d.hero.hideCtaClient" :to="localePath(d.hero.ctaClientHref)" class="btn-primary w-full sm:w-auto">
-                <ThemedContentString :content="d.hero.ctaClient" />
-              </NuxtLink>
-              <NuxtLink v-if="!d.hero.hideCtaSeafarer" :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass w-full sm:w-auto">
-                <ThemedContentString :content="d.hero.ctaSeafarer" />
-              </NuxtLink>
+
+              <!-- Правая колонка: маркетинговый текст -->
+              <div
+                :class="[
+                  'transition-all duration-700 delay-150',
+                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
+                ]"
+              >
+                <Transition
+                  mode="out-in"
+                  enter-active-class="transition-all duration-500 ease-out"
+                  enter-from-class="translate-y-3 opacity-0"
+                  enter-to-class="translate-y-0 opacity-100"
+                  leave-active-class="transition-all duration-200 ease-in"
+                  leave-from-class="translate-y-0 opacity-100"
+                  leave-to-class="-translate-y-3 opacity-0"
+                >
+                  <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
+                    <div class="mts-hero-themed-copy space-y-5 font-body text-base leading-relaxed text-white/85 sm:text-lg">
+                      <ThemedContentString
+                        :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
+                      />
+                    </div>
+                    <!-- CTA кнопки (опционально) -->
+                    <div
+                      v-if="!activeHeroDirection && (!d.hero.hideCtaClient || !d.hero.hideCtaSeafarer)"
+                      class="mt-8 flex flex-wrap gap-3"
+                    >
+                      <NuxtLink v-if="!d.hero.hideCtaClient" :to="localePath(d.hero.ctaClientHref)" class="btn-primary">
+                        <ThemedContentString :content="d.hero.ctaClient" />
+                      </NuxtLink>
+                      <NuxtLink v-if="!d.hero.hideCtaSeafarer" :to="localePath(d.hero.ctaSeafarerHref)" class="btn-secondary-glass">
+                        <ThemedContentString :content="d.hero.ctaSeafarer" />
+                      </NuxtLink>
+                    </div>
+                  </div>
+                </Transition>
+              </div>
+
             </div>
           </div>
         </div>
 
-        <div v-if="heroDirectionRows.length" class="relative z-20">
+        <!-- Соцсети + ссылка — absolute, нижний угол -->
+        <div
+          v-if="showHeroOverlayRow"
+          class="absolute left-0 right-0 z-20"
+          :class="heroDirectionRows.length ? 'bottom-24 md:bottom-28' : 'bottom-10'"
+        >
+          <div
+            class="w-full py-4"
+            :style="{ paddingLeft: heroInsetLeft, paddingRight: heroInsetRight }"
+          >
+          <div class="flex flex-wrap items-center gap-5">
+            <div v-if="overlayRow.socialLinks.length" class="flex items-center gap-4">
+              <a
+                v-for="(s, i) in overlayRow.socialLinks"
+                :key="`hero-soc-${i}`"
+                :href="s.href"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-white/75 transition-colors hover:text-primary"
+                :aria-label="s.iconKey"
+              >
+                <component
+                  :is="heroOverlaySocialIcons[s.iconKey] ?? heroOverlaySocialIcons.link"
+                  class="h-6 w-6 shrink-0"
+                />
+              </a>
+            </div>
+            <template v-for="(lnk, i) in overlayRow.links" :key="`hero-lnk-${i}`">
+              <NuxtLink
+                v-if="!isOverlayExternal(lnk.path)"
+                :to="localePath(lnk.path)"
+                class="group flex items-center gap-2 font-body text-sm text-white/80 transition-colors hover:text-primary"
+              >
+                {{ overlayLinkLabel(lnk) }}
+                <span class="transition-transform group-hover:translate-x-1">→</span>
+              </NuxtLink>
+              <a
+                v-else
+                :href="lnk.path"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="group flex items-center gap-2 font-body text-sm text-white/80 transition-colors hover:text-primary"
+              >
+                {{ overlayLinkLabel(lnk) }}
+                <span class="transition-transform group-hover:translate-x-1">→</span>
+              </a>
+            </template>
+            <LayoutLanguageSwitch v-if="overlayRow.showLanguageSwitch" dark class="shrink-0" />
+          </div>
+          </div>
+        </div>
+
+        <!-- Карточки направлений (нижняя полоса) -->
+        <div v-if="heroDirectionRows.length" class="relative z-20 shrink-0">
           <div class="flex flex-col md:flex-row">
             <NuxtLink
               v-for="(row, index) in heroDirectionRows"
@@ -270,58 +401,6 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
               </div>
               <div class="absolute bottom-0 left-0 right-0 h-1 bg-transparent transition-colors group-hover:bg-white" />
             </NuxtLink>
-          </div>
-        </div>
-
-        <div
-          v-if="showHeroOverlayRow"
-          class="absolute bottom-10 left-0 right-0 z-20"
-        >
-          <div class="mx-auto max-w-[70%] px-6 py-4 md:px-0">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div v-if="overlayRow.socialLinks.length" class="flex flex-wrap items-center gap-4">
-                <a
-                  v-for="(s, i) in overlayRow.socialLinks"
-                  :key="`hero-ov-soc-${i}-${s.href}`"
-                  :href="s.href"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-white/85 transition-colors hover:text-primary"
-                  :aria-label="s.iconKey"
-                >
-                  <component
-                    :is="heroOverlaySocialIcons[s.iconKey] ?? heroOverlaySocialIcons.link"
-                    class="h-6 w-6 shrink-0"
-                  />
-                </a>
-              </div>
-              <div
-                :class="[
-                  'flex flex-wrap items-center gap-x-6 gap-y-2 md:justify-end',
-                  overlayRow.socialLinks.length ? '' : 'md:ml-auto',
-                ]"
-              >
-                <template v-for="(lnk, i) in overlayRow.links" :key="`hero-ov-lnk-${i}-${lnk.path}`">
-                  <NuxtLink
-                    v-if="!isOverlayExternal(lnk.path)"
-                    :to="localePath(lnk.path)"
-                    class="font-body text-sm text-white/90 underline-offset-4 transition-colors hover:text-primary"
-                  >
-                    {{ overlayLinkLabel(lnk) }}
-                  </NuxtLink>
-                  <a
-                    v-else
-                    :href="lnk.path"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="font-body text-sm text-white/90 underline-offset-4 transition-colors hover:text-primary"
-                  >
-                    {{ overlayLinkLabel(lnk) }}
-                  </a>
-                </template>
-                <LayoutLanguageSwitch v-if="overlayRow.showLanguageSwitch" dark class="shrink-0" />
-              </div>
-            </div>
           </div>
         </div>
 

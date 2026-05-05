@@ -279,6 +279,7 @@ export function normalizeCustomPageSection(raw: unknown): CustomPageSection {
   return {
     id: pickString(r.id, '').trim() || newCustomPageBlockId(),
     title: pickString(r.title, ''),
+    sectionBackgroundImage: pickString(r.sectionBackgroundImage, ''),
     showTitle: pickBoolean(r.showTitle, true),
     contentPlacement: placement,
     breadcrumbTone: parseStoredPageBreadcrumbTone(r.breadcrumbTone),

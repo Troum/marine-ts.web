@@ -4,8 +4,8 @@ import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.
 import type { ContactsPageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import {
-  themeFormattedTitleToThemedHtml,
-  themedHtmlToThemeFormattedTitle,
+  richAdminHtmlToThemeFormattedTitle,
+  themeFormattedTitleToLeadStyleHtml,
 } from '~/utils/themedHtmlToThemeFormattedTitle'
 import {
   CONTACTS_SECTION_ADMIN_LABELS,
@@ -38,13 +38,13 @@ const data = ref<Record<MarineContentLocale, ContactsPageData>>({
 
 const d = computed(() => data.value[localeTab.value])
 
-/** Hero-заголовок TFT ↔ HTML того же TipTap, что и `AdminThemedTextField`. */
+/** Hero-заголовок TFT ↔ тот же TipTap, что «Лид» (цвета и подсветка в админке). */
 const heroTitleFormattedWire = computed({
   get() {
-    return themeFormattedTitleToThemedHtml(data.value[localeTab.value].hero.titleFormatted)
+    return themeFormattedTitleToLeadStyleHtml(data.value[localeTab.value].hero.titleFormatted)
   },
   set(html: string) {
-    data.value[localeTab.value].hero.titleFormatted = themedHtmlToThemeFormattedTitle(html)
+    data.value[localeTab.value].hero.titleFormatted = richAdminHtmlToThemeFormattedTitle(html)
   },
 })
 
@@ -221,7 +221,6 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 v-model="heroTitleFormattedWire"
                 :multiline="false"
                 :compact="false"
-                use-theme-tone-popover
               />
             </div>
             <div>

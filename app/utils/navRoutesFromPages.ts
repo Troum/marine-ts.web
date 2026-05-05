@@ -18,6 +18,7 @@ const ROUTE_LABELS_RU: Record<string, string> = {
   '/terms': 'Условия использования',
   '/ship-management': 'Судовой менеджмент',
   '/crewing-management': 'Крюинг-менеджмент',
+  '/lnk': 'ЛНК',
   '/application-form': 'Форма заявки',
 }
 

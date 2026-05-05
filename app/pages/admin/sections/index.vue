@@ -23,6 +23,7 @@ const SECTIONS: SectionDef[] = [
   { key: 'services', label: 'Судоремонт', desc: 'Каталог сервисов /services и дочерние страницы', path: '/services' },
   { key: 'ship_management', label: 'Судовой менеджмент', desc: 'Страница /ship-management и подразделы', path: '/ship-management' },
   { key: 'crewing_management', label: 'Крюинг-менеджмент', desc: 'Страница /crewing-management и подразделы', path: '/crewing-management' },
+  { key: 'lnk', label: 'ЛНК', desc: 'Страница /lnk и подразделы', path: '/lnk' },
   { key: 'contacts', label: 'Контакты', desc: 'Страница /contacts — офисы и форма обратной связи', path: '/contacts' },
   { key: 'gallery', label: 'Галерея', desc: 'Страница /gallery — фотографии', path: '/gallery' },
   { key: 'projects', label: 'Проекты', desc: 'Список /projects и страницы отдельных проектов', path: '/projects' },

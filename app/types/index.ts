@@ -409,6 +409,11 @@ export interface AdminRoleOption {
 export type ContactQuickIconKey = 'phone' | 'mail' | 'map-pin' | 'clock' | 'link' | 'linkedin' | 'vk' | 'max'
 
 /** Публичные контакты (страница «Контакты»), из API `/contact-settings`. */
+export interface ContactSocialLink {
+  iconKey: string
+  url: string
+}
+
 export interface SiteContactSettings {
   quick: {
     iconKey: ContactQuickIconKey
@@ -430,6 +435,8 @@ export interface SiteContactSettings {
     phone: string
     email: string
   }[]
+  /** Соцсети — выводятся в колонке «Соцсети» футера. */
+  socials?: ContactSocialLink[]
 }
 
 /** Пункт меню в шапке сайта (`/navigation-settings`). */
@@ -486,7 +493,7 @@ export interface NavigationMenuSettings {
   burgerContacts?: NavigationBurgerContacts
 }
 
-/** Публичная тема: `default` — Marin; `scglobal` — Golden Sepia (имя в админке). */
+/** Публичная тема: `default` — Marin; `scglobal` — Golden Sepia (та же тёмная база, золото вместо красного). */
 export type SitePublicThemeId = 'default' | 'scglobal'
 
 /** Ключи разделов публичного сайта, которые можно скрыть. */
@@ -495,6 +502,7 @@ export type SiteSectionKey =
   | 'services'
   | 'ship_management'
   | 'crewing_management'
+  | 'lnk'
   | 'contacts'
   | 'gallery'
   | 'projects'
@@ -555,6 +563,8 @@ export interface FooterNavLink {
 export interface FooterNavColumn {
   title: Record<MarineContentLocale, string>
   links: FooterNavLink[]
+  /** Скрыть колонку на публичном сайте (не удалять данные). */
+  hidden?: boolean
 }
 
 /** Три колонки ссылок + нижняя юридическая полоса (`/footer-navigation-settings`). */
@@ -976,11 +986,45 @@ export interface ContactsPageData {
   hideFooter?: boolean
 }
 
-/** Кнопка в hero маркетинговых страниц линий (крюинг / судовой менеджмент), не более двух. */
+/**
+ * Кнопка в hero маркетинговых страниц линий.
+ * В админке на крюинге/судовом менеджменте обычно до 2 кнопок; на ЛНК — больше.
+ */
 export interface LineMarketingHeroButton {
   label: string
   /** Внутренний путь (`/contacts`), якорь (`#page-inquiry`) или полный URL. */
   href: string
+}
+
+/** Карточка с иконкой в сетках страницы «ЛНК». */
+export interface LnkMarketingCard {
+  icon: string
+  hideIcon?: boolean
+  title: string
+  /** Описание (TipTap → HTML). */
+  text: string
+}
+
+/** Секция ЛНК: заголовок, сетка карточек, число колонок на широких экранах. */
+export interface LnkCardGridSection {
+  title: string
+  /** Колонок на широких экранах (1–6). По умолчанию 3. */
+  columns?: number
+  cards: LnkMarketingCard[]
+}
+
+/** Секция «Технологическая база»: заголовок и текст целиком из TipTap. */
+export interface LnkTechBaseSection {
+  titleHtml: string
+  bodyHtml: string
+}
+
+/** Контент маркетинговой страницы «ЛНК» (hero + три секции). */
+export interface LnkPageContent {
+  sec1Hero: { title: string; lead: string; body: string }
+  sec2Competencies: LnkCardGridSection
+  sec3StrategicAdvantages: LnkCardGridSection
+  sec4TechBase: LnkTechBaseSection
 }
 
 /** Контент страницы «Судовой менеджмент / технический менеджмент» (структура v2). */
@@ -1142,6 +1186,11 @@ export type PageBreadcrumbTone = 'auto' | 'on-dark' | 'on-light'
 export interface LineMarketingCustomSection {
   id: string
   title: string
+  /**
+   * Фон всей секции (cover + затемнение), URL изображения.
+   * Дублируется ключом `sectionBackgroundImages['custom:' + id]` в данных страницы, если задан там.
+   */
+  sectionBackgroundImage?: string
   /** Показывать заголовок секции над блоками. */
   showTitle: boolean
   /**
@@ -1195,6 +1244,7 @@ export type LineMarketingSectionId =
   | 'trust'
   | 'cta'
 
+export interface CrewingPageData {
   hero: {
     label: string
     titleFormatted: ThemeFormattedTitle
@@ -1204,6 +1254,13 @@ export type LineMarketingSectionId =
   shipPageLayout?: 'legacy' | 'v2'
   /** Секции v2 для ship-management при `shipPageLayout === 'v2'`. */
   shipV2?: ShipManagementPageContent
+  /**
+   * У страницы ЛНК одна актуальная структура (v2); ключ сохранён для уже записанного JSON.
+   * Историческое `legacy` при чтении приводится к новой схеме через merge.
+   */
+  lnkPageLayout?: 'legacy' | 'v2'
+  /** Контент страницы ЛНК (hero + компетенции + преимущества + технологическая база). */
+  lnkV2?: LnkPageContent
   /** `v2` — контент из `crewingV2`; `legacy` или отсутствие ключа — классическая вёрстка. */
   crewingPageLayout?: 'legacy' | 'v2'
   /** Секции v2 (только для crewing-management при `crewingPageLayout === 'v2'`). */
@@ -1245,6 +1302,12 @@ export type LineMarketingSectionId =
   hideInquiryFormCardHeading?: boolean
   /** Фон hero (URL); если пусто — только градиенты/фон страницы без фото. */
   heroBackgroundImage?: string
+  /**
+   * Фоновые изображения секций после hero (`background-size: cover`, полупрозрачное затемнение).
+   * Ключи совпадают с `sectionOrder`: `directions`, `checklist`, `approach`, `services`, …, `custom:<uuid>`.
+   * Для пары «принципы / аудитория» можно задать фон отдельно для `principles` и `audience` — используется первый непустой URL.
+   */
+  sectionBackgroundImages?: Record<string, string>
   /**
    * Стиль хлебных крошек в hero.
    * `auto` — светлый текст при v2 и непустом фоне hero.

@@ -1,9 +1,10 @@
-import type { CrewingPageData, LineMarketingSectionId, MarineContentLocale } from '~/types'
+import type { LineMarketingSectionId, MarineContentLocale } from '~/types'
 
 /** Маркетинговые страницы линий бизнеса (единая структура JSON, как у крюинга). */
 export const LINE_MARKETING_PAGE_SLUGS = [
   'crewing-management',
   'ship-management',
+  'lnk',
 ] as const
 
 export type LineMarketingPageSlug = (typeof LINE_MARKETING_PAGE_SLUGS)[number]
@@ -27,6 +28,11 @@ export const LINE_MARKETING_PAGE_LAYOUT: Record<
     navI18nKey: 'nav.shipManagement',
     heroEyebrowI18nKey: 'pages.lineMarketing.shipHeroEyebrow',
   },
+  lnk: {
+    heroBg: '',
+    navI18nKey: 'nav.lnk',
+    heroEyebrowI18nKey: 'pages.lineMarketing.lnkHeroEyebrow',
+  },
 }
 
 /** Заголовки страницы в переводах content_pages (админка). */
@@ -36,12 +42,14 @@ export const LINE_MARKETING_PAGE_CONTENT_TITLES: Record<
 > = {
   'crewing-management': { ru: 'Крюинг-менеджмент', en: 'Crew management' },
   'ship-management': { ru: 'Судовой менеджмент', en: 'Ship management' },
+  lnk: { ru: 'ЛНК — неразрушающий контроль', en: 'NDT laboratory (LNK)' },
 }
 
 /** Человекочитаемые названия для шапки админки. */
 export const LINE_MARKETING_PAGE_ADMIN_LABELS: Record<LineMarketingPageSlug, string> = {
   'crewing-management': 'Крюинг-менеджмент',
   'ship-management': 'Судовой менеджмент',
+  lnk: 'ЛНК — неразрушающий контроль',
 }
 
 /** Порядок секций по умолчанию (после hero). */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Eye, EyeOff, Loader2, Plus, Trash2 } from 'lucide-vue-next'
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type { FooterMenuSettings, FooterNavLink } from '~/types'
 import { MARINE_CONTENT_LOCALES } from '~/utils/marineLocales'
@@ -19,7 +19,32 @@ const loading = ref(true)
 const saving = ref(false)
 const form = ref<FooterMenuSettings>(emptyFooterMenuSettings())
 
-const columnLabels = ['Компания / первая колонка', 'Судоремонт / вторая колонка', 'Кандидатам / третья колонка']
+function columnLabel(ci: number): string {
+  return `Колонка ${ci + 1}`
+}
+
+function addColumn() {
+  form.value.columns.push({
+    title: { ru: '', en: '' },
+    links: [],
+    hidden: false,
+  })
+}
+
+async function removeColumn(ci: number) {
+  const ok = await confirm({
+    message: 'Удалить эту колонку со всеми ссылками?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) return
+  form.value.columns.splice(ci, 1)
+}
+
+function toggleColumnHidden(ci: number) {
+  const col = form.value.columns[ci]
+  if (col) col.hidden = !col.hidden
+}
 
 const footerVisibilityRoutes = [
   { path: '/', label: 'Главная' },
@@ -33,6 +58,7 @@ const footerVisibilityRoutes = [
   { path: '/application-form', label: 'Анкета' },
   { path: '/ship-management', label: 'Судовой менеджмент' },
   { path: '/crewing-management', label: 'Крюинг' },
+  { path: '/lnk', label: 'ЛНК' },
 ] as const
 
 function isFooterPathHidden(path: string): boolean {
@@ -67,6 +93,7 @@ function trimFooterPayload(data: FooterMenuSettings): FooterMenuSettings {
         path: l.path.trim() || '/',
         label: { ru: l.label.ru.trim(), en: l.label.en.trim() },
       })),
+      hidden: col.hidden === true,
     })),
     legal: data.legal.map((l) => ({
       path: l.path.trim() || '/',
@@ -133,18 +160,19 @@ async function submit() {
   saving.value = true
   try {
     const payload = trimFooterPayload(form.value)
+    const visibleColumns = payload.columns.filter((c) => !c.hidden)
     for (const loc of MARINE_CONTENT_LOCALES) {
-      for (const c of payload.columns) {
+      for (const c of visibleColumns) {
         if (!c.title[loc]?.trim()) {
           await showAdminAlert({
-            message: `Заполните заголовки колонок (${loc.toUpperCase()}).`,
+            message: `Заполните заголовки видимых колонок (${loc.toUpperCase()}).`,
             variant: 'error',
           })
           saving.value = false
           return
         }
       }
-      const labels = payload.columns.flatMap((c) => c.links.map((l) => l.label[loc]))
+      const labels = visibleColumns.flatMap((c) => c.links.map((l) => l.label[loc]))
       const legalLabels = payload.legal.map((l) => l.label[loc])
       if ([...labels, ...legalLabels].some((s) => !s?.trim())) {
         await showAdminAlert({
@@ -188,7 +216,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
         <CommonAccentCorners />
 
         <p class="font-body text-sm text-mts-text-secondary">
-          Три колонки ссылок (как на сайте) и нижняя полоса документов. Подменю нет — только плоский список. Колонка
+          Колонки ссылок (как на сайте) и нижняя полоса документов. Подменю нет — только плоский список. Колонка
           «Контакты» с телефоном и почтой по-прежнему задаётся на странице
           <NuxtLink to="/admin/contacts" class="text-mts-accent underline">контактов</NuxtLink>.
         </p>
@@ -222,16 +250,50 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           </div>
         </section>
 
-        <section v-for="(col, ci) in form.columns" :key="ci" class="border border-mts-border p-6 bg-mts-bg/40">
-          <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary mb-4">{{ columnLabels[ci] }}</h2>
+        <section
+          v-for="(col, ci) in form.columns"
+          :key="ci"
+          class="border p-6 bg-mts-bg/40 transition-opacity"
+          :class="col.hidden ? 'border-mts-border/50 opacity-60' : 'border-mts-border'"
+        >
+          <div class="flex items-center justify-between mb-4 gap-3">
+            <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary">
+              {{ columnLabel(ci) }}
+              <span v-if="col.hidden" class="ml-2 text-mts-text-secondary/60 normal-case tracking-normal">(скрыта)</span>
+            </h2>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 border transition-colors"
+                :class="col.hidden
+                  ? 'border-mts-accent text-mts-accent hover:bg-mts-accent hover:text-white'
+                  : 'border-mts-border text-mts-text-secondary hover:border-mts-accent hover:text-mts-accent'"
+                :title="col.hidden ? 'Показать колонку на сайте' : 'Скрыть колонку на сайте'"
+                @click="toggleColumnHidden(ci)"
+              >
+                <EyeOff v-if="!col.hidden" class="h-3.5 w-3.5" />
+                <Eye v-else class="h-3.5 w-3.5" />
+                {{ col.hidden ? 'Показать' : 'Скрыть' }}
+              </button>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 border border-mts-border text-mts-text-secondary hover:border-red-500 hover:text-red-600 transition-colors"
+                title="Удалить колонку"
+                @click="removeColumn(ci)"
+              >
+                <Trash2 class="h-3.5 w-3.5" />
+                Удалить
+              </button>
+            </div>
+          </div>
           <div class="grid gap-4 sm:grid-cols-2 mb-6">
             <div>
               <label :class="sectionLabel">Заголовок колонки (RU)</label>
-              <AdminThemedTextField v-model="col.title.ru" :multiline="false" />
+              <input v-model="col.title.ru" type="text" :class="sectionInput" placeholder="Компания" />
             </div>
             <div>
               <label :class="sectionLabel">Заголовок колонки (EN)</label>
-              <AdminThemedTextField v-model="col.title.en" :multiline="false" />
+              <input v-model="col.title.en" type="text" :class="sectionInput" placeholder="Company" />
             </div>
           </div>
           <div class="space-y-4">
@@ -253,11 +315,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label :class="sectionLabel">Подпись (RU)</label>
-                  <AdminThemedTextField v-model="link.label.ru" :multiline="false" />
+                  <input v-model="link.label.ru" type="text" :class="sectionInput" placeholder="О компании" />
                 </div>
                 <div>
                   <label :class="sectionLabel">Подпись (EN)</label>
-                  <AdminThemedTextField v-model="link.label.en" :multiline="false" />
+                  <input v-model="link.label.en" type="text" :class="sectionInput" placeholder="About" />
                 </div>
               </div>
               <AdminNavPathPick v-model="link.path" :path-options="pathOptions" />
@@ -268,6 +330,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             </button>
           </div>
         </section>
+
+        <button type="button" class="btn-secondary inline-flex items-center gap-2 text-sm" @click="addColumn">
+          <Plus class="h-4 w-4" />
+          Добавить колонку
+        </button>
 
         <section class="border border-mts-border p-6 bg-mts-bg/40">
           <h2 class="font-mono text-xs uppercase tracking-widest text-mts-text-secondary mb-4">Нижняя полоса (юридические ссылки)</h2>
@@ -284,11 +351,11 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <div class="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label :class="sectionLabel">Подпись (RU)</label>
-                  <AdminThemedTextField v-model="link.label.ru" :multiline="false" />
+                  <input v-model="link.label.ru" type="text" :class="sectionInput" placeholder="Политика конфиденциальности" />
                 </div>
                 <div>
                   <label :class="sectionLabel">Подпись (EN)</label>
-                  <AdminThemedTextField v-model="link.label.en" :multiline="false" />
+                  <input v-model="link.label.en" type="text" :class="sectionInput" placeholder="Privacy Policy" />
                 </div>
               </div>
               <AdminNavPathPick v-model="link.path" :path-options="pathOptions" />

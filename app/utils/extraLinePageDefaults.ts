@@ -41,5 +41,6 @@ export function emptyLineMarketingLegacyPageData(_locale: MarineContentLocale): 
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
     heroBackgroundImage: '',
+    sectionBackgroundImages: {},
   }
 }

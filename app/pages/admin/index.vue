@@ -22,6 +22,7 @@ import {
   X,
   Compass,
   Ship,
+  Anchor,
   Camera,
   Mail,
   Inbox,
@@ -85,6 +86,13 @@ const sectionOptions = [
     label: 'Крюинг-менеджмент',
     to: '/admin/line-pages/crewing-management',
     icon: Users,
+    desc: 'Hero, направления, чек-лист, принципы, аудитория',
+    permission: canManageContentPages,
+  },
+  {
+    label: 'ЛНК',
+    to: '/admin/line-pages/lnk',
+    icon: Anchor,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
     permission: canManageContentPages,
   },
@@ -591,7 +599,7 @@ const statCards = computed(() =>
             </div>
             <div class="p-6">
               <p class="font-body text-sm text-mts-text-secondary mb-4">
-                Глобальная тема публичного сайта: стандартная палитра Marin или Golden Sepia.
+                Глобальная тема: Marin или Golden Sepia — одна тёмная база; у Sepia золотые акценты вместо красных.
               </p>
               <NuxtLink
                 to="/admin/appearance"

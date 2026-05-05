@@ -4,6 +4,7 @@ import type { SiteContactSettings } from '~/types'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 import { contactQuickIconOptions } from '~/utils/contactQuickIcons'
+import { heroOverlaySocialIcons, heroOverlaySocialIconOptions } from '~/utils/heroOverlaySocialIcons'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
@@ -35,6 +36,21 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function addSocial() {
+  if (!form.value.socials) form.value.socials = []
+  form.value.socials.push({ iconKey: 'vk', url: '' })
+}
+
+async function removeSocial(i: number) {
+  const ok = await confirm({
+    message: 'Удалить эту соцсеть?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) return
+  form.value.socials?.splice(i, 1)
+}
 
 function addQuick() {
   form.value.quick.push({
@@ -114,6 +130,10 @@ async function submit() {
   saving.value = true
   try {
     const payload: SiteContactSettings = {
+      socials: (form.value.socials ?? []).map((s) => ({
+        iconKey: s.iconKey,
+        url: s.url.trim(),
+      })).filter((s) => s.url !== ''),
       quick: form.value.quick.map((r) => ({
         ...r,
         href: r.href?.trim() ? r.href.trim() : null,
@@ -155,7 +175,74 @@ async function submit() {
 
         <p class="font-body text-sm text-mts-text-secondary mb-8">
           Данные отображаются на странице «Контакты»: блок «Контактная информация» и карточки офисов.
+          Соцсети из раздела ниже автоматически попадают в колонку «Соцсети» футера.
         </p>
+
+        <!-- ── Соцсети ─────────────────────────────────────────────── -->
+        <h2 class="font-display text-lg text-mts-text mb-2">Соцсети</h2>
+        <p class="mb-4 font-body text-sm text-mts-text-secondary">
+          Отображаются в колонке «Соцсети» в подвале сайта и могут использоваться в других блоках.
+          Только иконка и ссылка — порядок можно менять стрелками.
+        </p>
+        <div class="space-y-3 mb-6">
+          <div
+            v-for="(social, i) in (form.socials ?? [])"
+            :key="i"
+            class="flex items-center gap-3 border border-mts-border bg-mts-bg/50 p-3"
+          >
+            <!-- Превью иконки -->
+            <div class="w-9 h-9 border border-mts-border bg-white flex items-center justify-center text-mts-text shrink-0">
+              <component :is="heroOverlaySocialIcons[social.iconKey]" class="w-5 h-5" />
+            </div>
+
+            <!-- Выбор иконки -->
+            <div class="w-36 shrink-0">
+              <AdminSelect
+                v-model="social.iconKey"
+                :options="heroOverlaySocialIconOptions"
+              />
+            </div>
+
+            <!-- URL -->
+            <input
+              v-model="social.url"
+              type="url"
+              placeholder="https://vk.com/..."
+              class="flex-1 border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none min-w-0"
+            />
+
+            <!-- Стрелки + удалить -->
+            <div class="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                :disabled="i === 0"
+                class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                @click="form.socials!.splice(i - 1, 0, form.socials!.splice(i, 1)[0]!)"
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                :disabled="i === (form.socials?.length ?? 0) - 1"
+                class="p-1.5 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                @click="form.socials!.splice(i + 1, 0, form.socials!.splice(i, 1)[0]!)"
+              >
+                ↓
+              </button>
+              <button
+                type="button"
+                class="p-1.5 text-mts-text-secondary hover:text-red-600"
+                @click="removeSocial(i)"
+              >
+                <Trash2 class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn-secondary inline-flex items-center gap-2" @click="addSocial">
+            <Plus class="h-4 w-4" />
+            Добавить соцсеть
+          </button>
+        </div>
 
         <h2 class="font-display text-lg text-mts-text mb-4">Контактная информация (список с иконками)</h2>
         <div class="space-y-6 mb-10">

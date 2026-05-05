@@ -7,13 +7,9 @@ export const contactSettingsDefaults: SiteContactSettings = {
     { iconKey: 'mail', label: 'Email', value: 'info@marine-ts.com', href: 'mailto:info@marine-ts.com', showInFooter: true },
     { iconKey: 'map-pin', label: 'Адрес', value: 'г. Калининград, Россия', href: null, showInFooter: true },
     { iconKey: 'clock', label: 'Режим работы', value: 'Пн-Пт: 9:00 - 18:00', href: null, showInFooter: false },
-    {
-      iconKey: 'link',
-      label: 'Соцсеть',
-      value: 'vk.com/marine_ts',
-      href: 'https://vk.com/marine_ts',
-      showInFooter: false,
-    },
+  ],
+  socials: [
+    { iconKey: 'vk', url: 'https://vk.com/marine_ts' },
   ],
   departments: [
     {

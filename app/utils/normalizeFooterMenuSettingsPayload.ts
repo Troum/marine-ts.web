@@ -23,9 +23,10 @@ function normLink(raw: unknown): { path: string; label: Record<MarineContentLoca
   }
 }
 
-function normColumn(raw: unknown, fallback: FooterMenuSettings['columns'][0]): FooterMenuSettings['columns'][0] {
+function normColumn(raw: unknown, fallback?: FooterMenuSettings['columns'][0]): FooterMenuSettings['columns'][0] {
+  const fb = fallback ?? { title: { ru: '', en: '' }, links: [] }
   if (!raw || typeof raw !== 'object') {
-    return { ...fallback, links: [...fallback.links] }
+    return { ...fb, links: [...fb.links] }
   }
   const o = raw as Record<string, unknown>
   const title = normLabel(o.title)
@@ -37,8 +38,9 @@ function normColumn(raw: unknown, fallback: FooterMenuSettings['columns'][0]): F
     }
   }
   return {
-    title: { ru: title.ru || fallback.title.ru, en: title.en || fallback.title.en },
-    links: links.length > 0 ? links : [...fallback.links],
+    title: { ru: title.ru || fb.title.ru, en: title.en || fb.title.en },
+    links: links.length > 0 ? links : [...fb.links],
+    hidden: o.hidden === true,
   }
 }
 
@@ -79,9 +81,9 @@ export function normalizeFooterMenuSettingsPayload(json: unknown): FooterMenuSet
 
   const columnsRaw = inner.columns
   const columns: FooterMenuSettings['columns'] = []
-  if (Array.isArray(columnsRaw)) {
-    for (let i = 0; i < 3; i++) {
-      columns.push(normColumn(columnsRaw[i], def.columns[i]!))
+  if (Array.isArray(columnsRaw) && columnsRaw.length > 0) {
+    for (let i = 0; i < columnsRaw.length; i++) {
+      columns.push(normColumn(columnsRaw[i], def.columns[i]))
     }
   } else {
     return def

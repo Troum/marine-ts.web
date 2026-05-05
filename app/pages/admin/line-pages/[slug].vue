@@ -4,11 +4,13 @@ import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.
 import type {
   ContentPage,
   CrewingPageData,
+  LnkPageContent,
   LineMarketingContentBlock,
   LineMarketingCustomSection,
   LineMarketingSectionId,
   MarineContentLocale,
   PageBreadcrumbTone,
+  ShipManagementPageContent,
 } from '~/types'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import { plainMetaString } from '~/utils/adminThemedTextCodec'
@@ -23,7 +25,7 @@ import AdminIconSelect from '~/components/admin/AdminIconSelect.vue'
 import AdminImageListField from '~/components/admin/AdminImageListField.vue'
 import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import AdminPlusLink from '~/components/admin/AdminPlusLink.vue'
-import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
+import AdminThemedTextField from '~/components/admin/AdminThemedTextField.vue'
 import AdminSelect, { type AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import { crewingIconSelectOptions } from '~/utils/crewingIcons'
 import {
@@ -39,9 +41,17 @@ import {
   SHIP_MANAGEMENT_V2_SECTION_ORDER,
 } from '~/utils/shipManagementPageDefaults'
 import {
+  LNK_V2_SECTION_ADMIN_LABELS,
+  LNK_V2_SECTION_ORDER,
+} from '~/utils/lnkManagementPageDefaults'
+import {
   CUSTOM_SECTION_BREADCRUMB_TONE_ADMIN_OPTIONS,
   HERO_BREADCRUMB_TONE_ADMIN_OPTIONS,
 } from '~/utils/pageBreadcrumbTone'
+import {
+  richAdminHtmlToThemeFormattedTitle,
+  themeFormattedTitleToLeadStyleHtml,
+} from '~/utils/themedHtmlToThemeFormattedTitle'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
@@ -82,11 +92,42 @@ const isShipV2 = computed(
   () => slug.value === 'ship-management' && d.value?.shipPageLayout === 'v2' && !!d.value?.shipV2,
 )
 
+const isLnkPage = computed(() => slug.value === 'lnk' && !!d.value?.lnkV2)
+
+const shipLikeV2Content = computed((): ShipManagementPageContent | null => {
+  if (isShipV2.value && d.value?.shipV2) {
+    return d.value.shipV2
+  }
+  return null
+})
+
+const isShipLikeV2 = computed(() => shipLikeV2Content.value !== null)
+
+const maxHeroButtons = computed(() => (slug.value === 'lnk' ? 12 : 2))
+
 const isCrewingV2 = computed(
   () => slug.value === 'crewing-management' && d.value?.crewingPageLayout === 'v2' && !!d.value?.crewingV2,
 )
 
-const showLegacyLineSections = computed(() => !isCrewingV2.value && !isShipV2.value)
+const showLegacyLineSections = computed(() => !isCrewingV2.value && !isShipLikeV2.value && !isLnkPage.value)
+
+/** Hero «Заголовок»: тот же AdminThemedTextField и палитра, что «Лид»; в JSON — ThemeFormattedTitle. */
+const heroTitleHtml = computed({
+  get(): string {
+    const cur = d.value
+    if (!cur) {
+      return '<p></p>'
+    }
+    return themeFormattedTitleToLeadStyleHtml(cur.hero.titleFormatted)
+  },
+  set(html: string) {
+    const cur = d.value
+    if (!cur) {
+      return
+    }
+    cur.hero.titleFormatted = richAdminHtmlToThemeFormattedTitle(html)
+  },
+})
 
 watch(
   () => d.value,
@@ -97,10 +138,10 @@ watch(
     if (!Array.isArray(cur.heroButtons)) {
       cur.heroButtons = []
     }
-    if (cur.heroButtons.length > 2) {
-      cur.heroButtons.splice(2)
+    if (cur.heroButtons.length > maxHeroButtons.value) {
+      cur.heroButtons.splice(maxHeroButtons.value)
     }
-    if (cur.crewingPageLayout === 'v2' || cur.shipPageLayout === 'v2') {
+    if (cur.crewingPageLayout === 'v2' || cur.shipPageLayout === 'v2' || (slug.value === 'lnk' && cur.lnkV2)) {
       return
     }
     if (!cur.hero.titleFormatted?.spans?.length) {
@@ -126,6 +167,10 @@ const collapsed = ref<Record<string, boolean>>({
   shipV2services: true,
   shipV2advantages: true,
   shipV2closing: true,
+  lnkCompetencies: true,
+  lnkAdvantages: true,
+  lnkTech: true,
+  sectionBackgrounds: true,
 })
 
 const crewingStructureOptions: AdminSelectOption[] = [
@@ -291,11 +336,7 @@ function onShipStructureChange(mode: string) {
   }
 }
 
-function normalizeShipV2Payload(page: CrewingPageData) {
-  if (page.shipPageLayout !== 'v2' || !page.shipV2) {
-    return
-  }
-  const v = page.shipV2
+function normalizeShipManagementShapeFields(v: ShipManagementPageContent) {
   const n = normCmsHtml
   v.sec1Hero.title = n(v.sec1Hero.title)
   v.sec1Hero.lead = n(v.sec1Hero.lead)
@@ -323,12 +364,43 @@ function normalizeShipV2Payload(page: CrewingPageData) {
   v.sec5Closing.paragraph2 = n(v.sec5Closing.paragraph2)
 }
 
+function normalizeShipV2Payload(page: CrewingPageData) {
+  if (page.shipPageLayout === 'v2' && page.shipV2) {
+    normalizeShipManagementShapeFields(page.shipV2)
+  }
+}
+
+function normalizeLnkPageContent(v: LnkPageContent) {
+  const n = normCmsHtml
+  v.sec1Hero.title = n(v.sec1Hero.title)
+  v.sec1Hero.lead = n(v.sec1Hero.lead)
+  v.sec1Hero.body = n(v.sec1Hero.body)
+  v.sec2Competencies.title = n(v.sec2Competencies.title)
+  v.sec2Competencies.cards.forEach((c) => {
+    c.title = n(c.title)
+    c.text = n(c.text)
+  })
+  v.sec3StrategicAdvantages.title = n(v.sec3StrategicAdvantages.title)
+  v.sec3StrategicAdvantages.cards.forEach((c) => {
+    c.title = n(c.title)
+    c.text = n(c.text)
+  })
+  v.sec4TechBase.titleHtml = n(v.sec4TechBase.titleHtml)
+  v.sec4TechBase.bodyHtml = n(v.sec4TechBase.bodyHtml)
+}
+
+function normalizeLnkV2Payload(page: CrewingPageData) {
+  if (page.lnkV2) {
+    normalizeLnkPageContent(page.lnkV2)
+  }
+}
+
 function addShipV2Card(sec: 'approach' | 'services' | 'advantages') {
-  if (!d.value?.shipV2) {
+  const v = shipLikeV2Content.value
+  if (!v) {
     return
   }
-  const v = d.value.shipV2
-  const max = sec === 'services' ? 5 : 3
+  const max = sec === 'services' ? 5 : sec === 'advantages' ? 3 : 3
   if (sec === 'approach' && v.sec2Approach.cards.length >= max) {
     return
   }
@@ -349,11 +421,11 @@ function addShipV2Card(sec: 'approach' | 'services' | 'advantages') {
 }
 
 async function removeShipV2Card(sec: 'approach' | 'services' | 'advantages', index: number) {
-  if (!d.value?.shipV2) {
+  const v = shipLikeV2Content.value
+  if (!v) {
     return
   }
   const min = 1
-  const v = d.value.shipV2
   const ok = await confirm({
     message: 'Удалить эту карточку?',
     confirmLabel: 'Удалить',
@@ -378,6 +450,51 @@ async function removeShipV2Card(sec: 'approach' | 'services' | 'advantages', ind
     }
     v.sec4Advantages.cards.splice(index, 1)
   }
+}
+
+type LnkGridSectionKey = 'sec2Competencies' | 'sec3StrategicAdvantages'
+
+const LNK_GRID_MAX_CARDS = 16
+
+function addLnkGridCard(sec: LnkGridSectionKey) {
+  if (!d.value?.lnkV2) {
+    return
+  }
+  const grid = d.value.lnkV2[sec]
+  if (grid.cards.length >= LNK_GRID_MAX_CARDS) {
+    return
+  }
+  grid.cards.push({ icon: 'ClipboardList', hideIcon: false, title: '', text: '<p></p>' })
+}
+
+async function removeLnkGridCard(sec: LnkGridSectionKey, index: number) {
+  const grid = d.value?.lnkV2?.[sec]
+  if (!grid || grid.cards.length <= 1) {
+    return
+  }
+  const ok = await confirm({
+    message: 'Удалить эту карточку?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  grid.cards.splice(index, 1)
+}
+
+function moveLnkGridCard(sec: LnkGridSectionKey, index: number, delta: number) {
+  const cards = d.value?.lnkV2?.[sec].cards
+  if (!cards) {
+    return
+  }
+  const j = index + delta
+  if (j < 0 || j >= cards.length) {
+    return
+  }
+  const t = cards[index]!
+  cards[index] = cards[j]!
+  cards[j] = t
 }
 
 function toggle(s: string) {
@@ -479,7 +596,7 @@ async function removeDirection(i: number) {
 }
 
 function addHeroButton() {
-  if (!d.value || d.value.heroButtons.length >= 2) {
+  if (!d.value || d.value.heroButtons.length >= maxHeroButtons.value) {
     return
   }
   d.value.heroButtons.push({ label: '', href: '' })
@@ -538,6 +655,12 @@ function sectionOrderRowLabel(sid: string): string {
     const sec = d.value?.customSections.find((s) => s.id === id)
     return sec?.title?.trim() ? sec.title : 'Пользовательская секция'
   }
+  if (slug.value === 'lnk' && d.value?.lnkV2) {
+    const lnkLab = LNK_V2_SECTION_ADMIN_LABELS[sid as keyof typeof LNK_V2_SECTION_ADMIN_LABELS]
+    if (lnkLab) {
+      return lnkLab
+    }
+  }
   if (slug.value === 'ship-management' && d.value?.shipPageLayout === 'v2') {
     const shipLab = SHIP_MANAGEMENT_V2_SECTION_ADMIN_LABELS[sid as keyof typeof SHIP_MANAGEMENT_V2_SECTION_ADMIN_LABELS]
     if (shipLab) {
@@ -573,6 +696,38 @@ function moveSection(sid: string, delta: number) {
   moveSectionOrder(idx, delta)
 }
 
+function setDSectionBg(key: string, value: string) {
+  if (!d.value) {
+    return
+  }
+  if (!d.value.sectionBackgroundImages) {
+    d.value.sectionBackgroundImages = {}
+  }
+  d.value.sectionBackgroundImages[key] = value
+}
+
+const sectionBackgroundEditorKeys = computed(() => {
+  if (!d.value || !slug.value) {
+    return [] as string[]
+  }
+  const keys: string[] = []
+  if (isCrewingV2.value) {
+    keys.push(...CREWING_MANAGEMENT_V2_SECTION_ORDER)
+  } else if (slug.value === 'lnk') {
+    keys.push(...LNK_V2_SECTION_ORDER)
+  } else if (isShipLikeV2.value) {
+    keys.push(...SHIP_MANAGEMENT_V2_SECTION_ORDER)
+  } else {
+    keys.push('directions', 'checklist', 'principles', 'audience')
+  }
+  for (const s of d.value.sectionOrder) {
+    if (s.startsWith('custom:')) {
+      keys.push(s)
+    }
+  }
+  return [...new Set(keys)]
+})
+
 function getCustomSectionById(id: string): LineMarketingCustomSection | undefined {
   return d.value?.customSections.find((s) => s.id === id)
 }
@@ -587,6 +742,7 @@ function addCustomSection() {
     data.value[loc].customSections.push({
       id,
       title: '',
+      sectionBackgroundImage: '',
       showTitle: true,
       blocks: [],
     })
@@ -614,6 +770,9 @@ async function removeCustomSection(id: string) {
     const vis = { ...data.value[loc].sectionVisibility }
     delete vis[key]
     data.value[loc].sectionVisibility = vis
+    const bgMap = { ...(data.value[loc].sectionBackgroundImages ?? {}) }
+    delete bgMap[key]
+    data.value[loc].sectionBackgroundImages = Object.keys(bgMap).length ? bgMap : {}
   }
 }
 
@@ -865,6 +1024,7 @@ async function submit() {
   const hideInquiryCardHeading = data.value[localeTab.value].hideInquiryFormCardHeading
   const hideInquiryIntro = data.value[localeTab.value].hideInquiryFormIntro
   const heroBg = data.value[localeTab.value].heroBackgroundImage
+  const sectionBackgroundImages = data.value[localeTab.value].sectionBackgroundImages
   const sectionOrder = data.value[localeTab.value].sectionOrder
   const sectionVisibility = data.value[localeTab.value].sectionVisibility
   const hideFooter = data.value[localeTab.value].hideFooter
@@ -881,6 +1041,9 @@ async function submit() {
     data.value[loc].hideInquiryFormCardHeading = hideInquiryCardHeading
     data.value[loc].hideInquiryFormIntro = hideInquiryIntro
     data.value[loc].heroBackgroundImage = heroBg
+    data.value[loc].sectionBackgroundImages = sectionBackgroundImages
+      ? { ...sectionBackgroundImages }
+      : {}
     data.value[loc].sectionOrder = [...sectionOrder]
     data.value[loc].sectionVisibility = { ...sectionVisibility }
     data.value[loc].hideFooter = hideFooter
@@ -895,6 +1058,7 @@ async function submit() {
       const page = data.value[loc]
       normalizeCrewingV2Payload(page)
       normalizeShipV2Payload(page)
+      normalizeLnkV2Payload(page)
       if (page.crewingPageLayout === 'v2' && page.crewingV2) {
         page.hero.lead = page.crewingV2.sec1Hero.lead
         page.hero.titleFormatted = themeTitleTriple(page.crewingV2.sec1Hero.title, '', '')
@@ -902,6 +1066,10 @@ async function submit() {
       if (page.shipPageLayout === 'v2' && page.shipV2) {
         page.hero.lead = page.shipV2.sec1Hero.lead
         page.hero.titleFormatted = themeTitleTriple(page.shipV2.sec1Hero.title, '', '')
+      }
+      if (page.lnkV2) {
+        page.hero.lead = page.lnkV2.sec1Hero.lead
+        page.hero.titleFormatted = themeTitleTriple(page.lnkV2.sec1Hero.title, '', '')
       }
       const titles = LINE_MARKETING_PAGE_CONTENT_TITLES[s]
       translations[loc] = {
@@ -1050,7 +1218,29 @@ function directionPreviewPath(detailSlug: string) {
               <AdminRichTextEditor v-model="d.crewingV2.sec1Hero.body" />
             </div>
           </template>
-          <template v-else-if="isShipV2 && d.shipV2">
+          <template v-else-if="d && isLnkPage && d.lnkV2">
+            <div>
+              <label :class="sectionLabel">Подпись над заголовком (как в макете)</label>
+              <AdminThemedTextField
+                :key="`lnk-hero-label-${slug}-${localeTab}-${editorRevision}`"
+                v-model="d.hero.label"
+                :multiline="false"
+              />
+            </div>
+            <div>
+              <label :class="sectionLabel">Заголовок (H1)</label>
+              <AdminThemedTextField v-model="d.lnkV2.sec1Hero.title" :multiline="false" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Лид</label>
+              <AdminThemedTextField v-model="d.lnkV2.sec1Hero.lead" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Текст под лидом (TipTap)</label>
+              <AdminRichTextEditor v-model="d.lnkV2.sec1Hero.body" />
+            </div>
+          </template>
+          <template v-else-if="isShipLikeV2 && shipLikeV2Content">
             <div>
               <label :class="sectionLabel">Подпись над заголовком (как в макете)</label>
               <AdminThemedTextField
@@ -1061,15 +1251,15 @@ function directionPreviewPath(detailSlug: string) {
             </div>
             <div>
               <label :class="sectionLabel">Заголовок (H1)</label>
-              <AdminThemedTextField v-model="d.shipV2.sec1Hero.title" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec1Hero.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Лид</label>
-              <AdminThemedTextField v-model="d.shipV2.sec1Hero.lead" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec1Hero.lead" />
             </div>
             <div>
               <label :class="sectionLabel">Текст под лидом (TipTap)</label>
-              <AdminRichTextEditor v-model="d.shipV2.sec1Hero.body" />
+              <AdminRichTextEditor v-model="shipLikeV2Content.sec1Hero.body" />
             </div>
           </template>
           <template v-else>
@@ -1083,9 +1273,9 @@ function directionPreviewPath(detailSlug: string) {
             </div>
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <AdminThemeTitleEditor
+              <AdminThemedTextField
                 :key="`hero-title-${slug}-${localeTab}-${editorRevision}`"
-                v-model="d.hero.titleFormatted"
+                v-model="heroTitleHtml"
               />
             </div>
             <div>
@@ -1097,7 +1287,9 @@ function directionPreviewPath(detailSlug: string) {
             </div>
           </template>
           <div class="space-y-4 border-t border-mts-border pt-4">
-            <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Кнопки в hero (до 2)</p>
+            <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+              Кнопки в hero (макс. {{ maxHeroButtons }})
+            </p>
             <p class="font-body text-xs text-mts-text-secondary">
               Внутренние страницы: <code class="font-mono text-[11px]">/contacts</code>,
               <code class="font-mono text-[11px]">/services</code> и т.д.; форма внизу этой страницы:
@@ -1133,7 +1325,7 @@ function directionPreviewPath(detailSlug: string) {
               </div>
             </div>
             <button
-              v-if="d.heroButtons.length < 2"
+              v-if="d.heroButtons.length < maxHeroButtons"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
               @click="addHeroButton"
@@ -1153,6 +1345,33 @@ function directionPreviewPath(detailSlug: string) {
             <p class="mt-2 font-body text-xs text-mts-text-secondary">
               «Авто» — светлый текст при структуре v2 и непустом фоне hero.
             </p>
+          </div>
+        </AdminCollapsibleSection>
+
+        <AdminCollapsibleSection
+          title="Фоны секций (после hero)"
+          :collapsed="collapsed.sectionBackgrounds"
+          @update:collapsed="(v) => (collapsed.sectionBackgrounds = v)"
+        >
+          <p class="mb-4 font-body text-xs text-mts-text-secondary">
+            Опционально: изображение на весь фон секции (cover), поверх — затемнение ~45%. Те же ключи, что в порядке
+            секций. Если в классической вёрстке «Принципы» и «Кому подходит» стоят рядом одной секцией, на сайте
+            используется первое непустое фото из ключей
+            <code class="font-mono text-[11px]">principles</code>
+            или
+            <code class="font-mono text-[11px]">audience</code>
+            . Для пользовательских блоков фон можно задать здесь (
+            <code class="font-mono text-[11px]">custom:…</code>
+            ) или в карточке секции — в карточке значение имеет приоритет при показе.
+          </p>
+          <div class="space-y-5">
+            <AdminHeroImageField
+              v-for="bgKey in sectionBackgroundEditorKeys"
+              :key="`sec-bg-${bgKey}`"
+              :model-value="d.sectionBackgroundImages?.[bgKey] ?? ''"
+              :label="`Фон: ${sectionOrderRowLabel(bgKey)}`"
+              @update:model-value="(v) => setDSectionBg(bgKey, v)"
+            />
           </div>
         </AdminCollapsibleSection>
 
@@ -1786,7 +2005,7 @@ function directionPreviewPath(detailSlug: string) {
           </AdminCollapsibleSection>
         </template>
 
-        <template v-if="isShipV2 && d.shipV2">
+        <template v-if="isShipLikeV2 && shipLikeV2Content">
           <AdminCollapsibleSection
             :title="`${indexInOrder('approach') + 2}. ${sectionOrderRowLabel('approach')}`"
             :collapsed="collapsed.shipV2approach"
@@ -1800,26 +2019,26 @@ function directionPreviewPath(detailSlug: string) {
           >
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <AdminThemedTextField v-model="d.shipV2.sec2Approach.title" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec2Approach.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Вводный текст</label>
-              <AdminRichTextEditor v-model="d.shipV2.sec2Approach.body" />
+              <AdminRichTextEditor v-model="shipLikeV2Content.sec2Approach.body" />
             </div>
             <div>
               <label :class="sectionLabel">Микро-заголовок над карточками</label>
-              <AdminThemedTextField v-model="d.shipV2.sec2Approach.cardsHeading" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec2Approach.cardsHeading" :multiline="false" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">Приоритеты — до 3 карточек.</p>
             <div
-              v-for="(card, ci) in d.shipV2.sec2Approach.cards"
+              v-for="(card, ci) in shipLikeV2Content.sec2Approach.cards"
               :key="`s2-${ci}`"
               class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
             >
               <div class="flex items-start justify-between gap-2">
                 <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
                 <button
-                  v-if="d.shipV2.sec2Approach.cards.length > 1"
+                  v-if="shipLikeV2Content.sec2Approach.cards.length > 1"
                   type="button"
                   class="btn-secondary px-2 py-1 text-xs text-red-700"
                   @click="removeShipV2Card('approach', ci)"
@@ -1837,7 +2056,7 @@ function directionPreviewPath(detailSlug: string) {
               </div>
             </div>
             <button
-              v-if="d.shipV2.sec2Approach.cards.length < 3"
+              v-if="shipLikeV2Content.sec2Approach.cards.length < 3"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
               @click="addShipV2Card('approach')"
@@ -1935,22 +2154,22 @@ function directionPreviewPath(detailSlug: string) {
           >
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <AdminThemedTextField v-model="d.shipV2.sec3Services.title" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec3Services.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Вводный текст</label>
-              <AdminRichTextEditor v-model="d.shipV2.sec3Services.body" />
+              <AdminRichTextEditor v-model="shipLikeV2Content.sec3Services.body" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">Услуги в пакете — до 5 карточек.</p>
             <div
-              v-for="(card, ci) in d.shipV2.sec3Services.cards"
+              v-for="(card, ci) in shipLikeV2Content.sec3Services.cards"
               :key="`s3-${ci}`"
               class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
             >
               <div class="flex items-start justify-between gap-2">
                 <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Услуга {{ ci + 1 }}</p>
                 <button
-                  v-if="d.shipV2.sec3Services.cards.length > 1"
+                  v-if="shipLikeV2Content.sec3Services.cards.length > 1"
                   type="button"
                   class="btn-secondary px-2 py-1 text-xs text-red-700"
                   @click="removeShipV2Card('services', ci)"
@@ -1968,7 +2187,7 @@ function directionPreviewPath(detailSlug: string) {
               </div>
             </div>
             <button
-              v-if="d.shipV2.sec3Services.cards.length < 5"
+              v-if="shipLikeV2Content.sec3Services.cards.length < 5"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
               @click="addShipV2Card('services')"
@@ -1991,18 +2210,18 @@ function directionPreviewPath(detailSlug: string) {
           >
             <div>
               <label :class="sectionLabel">Заголовок секции</label>
-              <AdminThemedTextField v-model="d.shipV2.sec4Advantages.title" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec4Advantages.title" :multiline="false" />
             </div>
             <p class="font-body text-xs text-mts-text-secondary">Преимущества — до 3 карточек.</p>
             <div
-              v-for="(card, ci) in d.shipV2.sec4Advantages.cards"
+              v-for="(card, ci) in shipLikeV2Content.sec4Advantages.cards"
               :key="`s4-${ci}`"
               class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
             >
               <div class="flex items-start justify-between gap-2">
                 <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Преимущество {{ ci + 1 }}</p>
                 <button
-                  v-if="d.shipV2.sec4Advantages.cards.length > 1"
+                  v-if="shipLikeV2Content.sec4Advantages.cards.length > 1"
                   type="button"
                   class="btn-secondary px-2 py-1 text-xs text-red-700"
                   @click="removeShipV2Card('advantages', ci)"
@@ -2020,7 +2239,7 @@ function directionPreviewPath(detailSlug: string) {
               </div>
             </div>
             <button
-              v-if="d.shipV2.sec4Advantages.cards.length < 3"
+              v-if="shipLikeV2Content.sec4Advantages.cards.length < 3"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
               @click="addShipV2Card('advantages')"
@@ -2043,15 +2262,230 @@ function directionPreviewPath(detailSlug: string) {
           >
             <div>
               <label :class="sectionLabel">Заголовок</label>
-              <AdminThemedTextField v-model="d.shipV2.sec5Closing.title" :multiline="false" />
+              <AdminThemedTextField v-model="shipLikeV2Content.sec5Closing.title" :multiline="false" />
             </div>
             <div>
               <label :class="sectionLabel">Абзац 1</label>
-              <AdminRichTextEditor v-model="d.shipV2.sec5Closing.paragraph1" />
+              <AdminRichTextEditor v-model="shipLikeV2Content.sec5Closing.paragraph1" />
             </div>
             <div>
               <label :class="sectionLabel">Абзац 2</label>
-              <AdminRichTextEditor v-model="d.shipV2.sec5Closing.paragraph2" />
+              <AdminRichTextEditor v-model="shipLikeV2Content.sec5Closing.paragraph2" />
+            </div>
+          </AdminCollapsibleSection>
+        </template>
+
+        <template v-if="d && isLnkPage && d.lnkV2">
+          <AdminCollapsibleSection
+            :title="`${indexInOrder('competencies') + 2}. ${sectionOrderRowLabel('competencies')}`"
+            :collapsed="collapsed.lnkCompetencies"
+            :visible="sectionVisible('competencies')"
+            :can-move-up="canMove('competencies', -1)"
+            :can-move-down="canMove('competencies', 1)"
+            @update:collapsed="(v) => (collapsed.lnkCompetencies = v)"
+            @update:visible="(v) => setSectionVisible('competencies', v)"
+            @move-up="moveSection('competencies', -1)"
+            @move-down="moveSection('competencies', 1)"
+          >
+            <div>
+              <label :class="sectionLabel">Заголовок секции</label>
+              <AdminThemedTextField v-model="d.lnkV2.sec2Competencies.title" :multiline="false" />
+            </div>
+            <div class="max-w-xs">
+              <label :class="sectionLabel">Колонок в ряду на широком экране (1–6)</label>
+              <AdminInputNumberStepper
+                :model-value="d.lnkV2.sec2Competencies.columns ?? 3"
+                :min="1"
+                :max="6"
+                @update:model-value="(v) => (d.lnkV2!.sec2Competencies.columns = v)"
+              />
+            </div>
+            <p class="font-body text-xs text-mts-text-secondary">
+              Фон секции задаётся в блоке «Фоны секций» с ключом
+              <code class="font-mono text-[11px]">competencies</code>.
+            </p>
+            <div
+              v-for="(card, ci) in d.lnkV2.sec2Competencies.cards"
+              :key="`lnk-co-${ci}`"
+              class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                <div class="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                    :disabled="ci === 0"
+                    aria-label="Выше"
+                    @click="moveLnkGridCard('sec2Competencies', ci, -1)"
+                  >
+                    <ArrowUp class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                    :disabled="ci >= d.lnkV2.sec2Competencies.cards.length - 1"
+                    aria-label="Ниже"
+                    @click="moveLnkGridCard('sec2Competencies', ci, 1)"
+                  >
+                    <ArrowDown class="h-4 w-4" />
+                  </button>
+                  <button
+                    v-if="d.lnkV2.sec2Competencies.cards.length > 1"
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs text-red-700"
+                    @click="removeLnkGridCard('sec2Competencies', ci)"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :icon="card.icon"
+                  :hide-icon="card.hideIcon"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="(v) => (card.icon = v)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
+              </div>
+              <div>
+                <label :class="sectionLabel">Заголовок</label>
+                <AdminThemedTextField v-model="card.title" :multiline="false" />
+              </div>
+              <div>
+                <label :class="sectionLabel">Текст (TipTap)</label>
+                <AdminRichTextEditor v-model="card.text" />
+              </div>
+            </div>
+            <button
+              v-if="d.lnkV2.sec2Competencies.cards.length < LNK_GRID_MAX_CARDS"
+              type="button"
+              class="btn-secondary inline-flex items-center gap-2"
+              @click="addLnkGridCard('sec2Competencies')"
+            >
+              <Plus class="h-4 w-4" />
+              Добавить карточку
+            </button>
+          </AdminCollapsibleSection>
+
+          <AdminCollapsibleSection
+            :title="`${indexInOrder('strategicAdvantages') + 2}. ${sectionOrderRowLabel('strategicAdvantages')}`"
+            :collapsed="collapsed.lnkAdvantages"
+            :visible="sectionVisible('strategicAdvantages')"
+            :can-move-up="canMove('strategicAdvantages', -1)"
+            :can-move-down="canMove('strategicAdvantages', 1)"
+            @update:collapsed="(v) => (collapsed.lnkAdvantages = v)"
+            @update:visible="(v) => setSectionVisible('strategicAdvantages', v)"
+            @move-up="moveSection('strategicAdvantages', -1)"
+            @move-down="moveSection('strategicAdvantages', 1)"
+          >
+            <div>
+              <label :class="sectionLabel">Заголовок секции</label>
+              <AdminThemedTextField v-model="d.lnkV2.sec3StrategicAdvantages.title" :multiline="false" />
+            </div>
+            <div class="max-w-xs">
+              <label :class="sectionLabel">Колонок в ряду на широком экране (1–6)</label>
+              <AdminInputNumberStepper
+                :model-value="d.lnkV2.sec3StrategicAdvantages.columns ?? 3"
+                :min="1"
+                :max="6"
+                @update:model-value="(v) => (d.lnkV2!.sec3StrategicAdvantages.columns = v)"
+              />
+            </div>
+            <p class="font-body text-xs text-mts-text-secondary">
+              Фон — ключ
+              <code class="font-mono text-[11px]">strategicAdvantages</code>
+              в «Фонах секций».
+            </p>
+            <div
+              v-for="(card, ci) in d.lnkV2.sec3StrategicAdvantages.cards"
+              :key="`lnk-ad-${ci}`"
+              class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                <div class="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                    :disabled="ci === 0"
+                    aria-label="Выше"
+                    @click="moveLnkGridCard('sec3StrategicAdvantages', ci, -1)"
+                  >
+                    <ArrowUp class="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                    :disabled="ci >= d.lnkV2.sec3StrategicAdvantages.cards.length - 1"
+                    aria-label="Ниже"
+                    @click="moveLnkGridCard('sec3StrategicAdvantages', ci, 1)"
+                  >
+                    <ArrowDown class="h-4 w-4" />
+                  </button>
+                  <button
+                    v-if="d.lnkV2.sec3StrategicAdvantages.cards.length > 1"
+                    type="button"
+                    class="btn-secondary px-2 py-1 text-xs text-red-700"
+                    @click="removeLnkGridCard('sec3StrategicAdvantages', ci)"
+                  >
+                    Удалить
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label :class="sectionLabel">Иконка</label>
+                <AdminIconSelect
+                  :icon="card.icon"
+                  :hide-icon="card.hideIcon"
+                  :options="crewingIconSelectOptions"
+                  @update:icon="(v) => (card.icon = v)"
+                  @update:hide-icon="(v) => (card.hideIcon = v)"
+                />
+              </div>
+              <div>
+                <label :class="sectionLabel">Заголовок</label>
+                <AdminThemedTextField v-model="card.title" :multiline="false" />
+              </div>
+              <div>
+                <label :class="sectionLabel">Текст (TipTap)</label>
+                <AdminRichTextEditor v-model="card.text" />
+              </div>
+            </div>
+            <button
+              v-if="d.lnkV2.sec3StrategicAdvantages.cards.length < LNK_GRID_MAX_CARDS"
+              type="button"
+              class="btn-secondary inline-flex items-center gap-2"
+              @click="addLnkGridCard('sec3StrategicAdvantages')"
+            >
+              <Plus class="h-4 w-4" />
+              Добавить карточку
+            </button>
+          </AdminCollapsibleSection>
+
+          <AdminCollapsibleSection
+            :title="`${indexInOrder('techBase') + 2}. ${sectionOrderRowLabel('techBase')}`"
+            :collapsed="collapsed.lnkTech"
+            :visible="sectionVisible('techBase')"
+            :can-move-up="canMove('techBase', -1)"
+            :can-move-down="canMove('techBase', 1)"
+            @update:collapsed="(v) => (collapsed.lnkTech = v)"
+            @update:visible="(v) => setSectionVisible('techBase', v)"
+            @move-up="moveSection('techBase', -1)"
+            @move-down="moveSection('techBase', 1)"
+          >
+            <p class="font-body text-xs text-mts-text-secondary">
+              Фон — ключ <code class="font-mono text-[11px]">techBase</code> в «Фонах секций».
+            </p>
+            <div>
+              <label :class="sectionLabel">Заголовок (TipTap)</label>
+              <AdminRichTextEditor v-model="d.lnkV2.sec4TechBase.titleHtml" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Контент (TipTap)</label>
+              <AdminRichTextEditor v-model="d.lnkV2.sec4TechBase.bodyHtml" />
             </div>
           </AdminCollapsibleSection>
         </template>
@@ -2128,6 +2562,14 @@ function directionPreviewPath(detailSlug: string) {
                     Отображаются над первым блоком «Баннер / изображение» в этой секции (те же пункты, что в hero
                     страницы).
                   </p>
+                </div>
+                <div class="md:col-span-2">
+                  <AdminHeroImageField
+                    :model-value="getCustomSectionById(sid.slice(7))!.sectionBackgroundImage ?? ''"
+                    label="Фон всей секции (под блоками)"
+                    hint="Имеет приоритет над полем с тем же ключом в блоке «Фоны секций», если задано здесь."
+                    @update:model-value="(v) => (getCustomSectionById(sid.slice(7))!.sectionBackgroundImage = v)"
+                  />
                 </div>
               </div>
 

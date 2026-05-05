@@ -32,7 +32,7 @@ function normTheme(raw: unknown): SitePublicThemeId {
 }
 
 const VALID_SECTION_KEYS = new Set<string>([
-  'about', 'services', 'ship_management', 'crewing_management',
+  'about', 'services', 'ship_management', 'crewing_management', 'lnk',
   'contacts', 'gallery', 'projects', 'news', 'vacancies',
 ])
 

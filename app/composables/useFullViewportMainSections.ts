@@ -22,6 +22,12 @@ export function isFullViewportSectionsPath(path: string): boolean {
   ) {
     return true
   }
+  if (
+    normalized.startsWith('/lnk')
+    || normalized.startsWith('/en/lnk')
+  ) {
+    return true
+  }
   return false
 }
 

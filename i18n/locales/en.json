@@ -11,6 +11,7 @@
     "moreAria": "More sections",
     "shipManagement": "Ship management",
     "crewing": "Crewing",
+    "lnk": "LNK",
     "vacancies": "Careers"
   },
   "header": {
@@ -24,6 +25,7 @@
     "sectionCandidates": "Candidates",
     "sectionDocs": "Legal",
     "sectionContacts": "Contacts",
+    "sectionSocials": "Social",
     "linkApplication": "Application form",
     "phone": "+7 (4012) 35-52-90",
     "address": "Kaliningrad, Russia",
@@ -374,6 +376,7 @@
     "lineMarketing": {
       "shipHeroEyebrow": "Operations & maintenance",
       "crewingHeroEyebrow": "Manning & crew support",
+      "lnkHeroEyebrow": "Non-destructive testing laboratory",
       "heroInquiryCta": "To the request form",
       "checklistSection": "Checklist criteria"
     },

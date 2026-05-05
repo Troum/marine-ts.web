@@ -39,6 +39,7 @@ function defaultMenuItems(): NavigationMenuItem[] {
     { path: '/projects', label: { ru: 'Проекты', en: 'Projects' } },
     { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
     { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crewing management' } },
+    { path: '/lnk', label: { ru: 'ЛНК', en: 'LNK' } },
     { path: '/vacancies', label: { ru: 'Вакансии', en: 'Vacancies' } },
     { path: '/contacts', label: { ru: 'Контакты', en: 'Contacts' } },
   ]

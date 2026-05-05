@@ -28,6 +28,11 @@ import {
   mergeCrewingManagementContent,
 } from '~/utils/crewingManagementPageDefaults'
 import {
+  defaultLnkManagementContent,
+  LNK_V2_SECTION_ORDER,
+  mergeLnkManagementContent,
+} from '~/utils/lnkManagementPageDefaults'
+import {
   defaultShipManagementContent,
   mergeShipManagementContent,
   SHIP_MANAGEMENT_V2_SECTION_ORDER,
@@ -1017,14 +1022,38 @@ function mergeSectionVisibility(raw: unknown, allKeys: string[]): Record<string,
   return base
 }
 
+function mergeSectionBackgroundImages(
+  raw: unknown,
+  base: Record<string, string> | undefined,
+): Record<string, string> {
+  const b =
+    base && typeof base === 'object' ? { ...(base as Record<string, string>) } : ({} as Record<string, string>)
+  if (!raw || typeof raw !== 'object') {
+    return b
+  }
+  const p = raw as Record<string, unknown>
+  const out = { ...b }
+  for (const [k, v] of Object.entries(p)) {
+    if (v === null || v === undefined) {
+      delete out[k]
+      continue
+    }
+    if (typeof v === 'string') {
+      out[k] = v
+    }
+  }
+  return out
+}
+
 function mergeLineMarketingHeroButtons(
   locale: MarineContentLocale,
   base: LineMarketingHeroButton[],
   raw: unknown,
   legacyShowInquiry: boolean | undefined,
   hadHeroButtonsKey: boolean,
+  maxButtons: number,
 ): LineMarketingHeroButton[] {
-  const MAX = 2
+  const MAX = Math.max(1, Math.floor(maxButtons))
   const legacyDefault = (): LineMarketingHeroButton[] =>
     legacyShowInquiry === false
       ? []
@@ -1044,8 +1073,14 @@ function mergeLineMarketingHeroButtons(
   if (raw.length === 0) {
     return []
   }
+  let n: number
+  if (MAX <= 2) {
+    n = MAX
+  } else {
+    n = Math.min(MAX, raw.length)
+  }
   const out: LineMarketingHeroButton[] = []
-  for (let i = 0; i < MAX; i++) {
+  for (let i = 0; i < n; i++) {
     const b = base[i] ?? { label: '', href: '' }
     const r = raw[i]
     if (r === undefined || r === null) {
@@ -1103,6 +1138,7 @@ function emptyShipPageData(locale: MarineContentLocale): CrewingPageData {
     hideInquiryFormCardHeading: false,
     inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroBackgroundImage: '',
+    sectionBackgroundImages: {},
   }
 }
 
@@ -1145,6 +1181,47 @@ function emptyCrewingPageData(locale: MarineContentLocale): CrewingPageData {
     hideInquiryFormCardHeading: false,
     inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroBackgroundImage: '',
+    sectionBackgroundImages: {},
+  }
+}
+
+function emptyLnkPageData(locale: MarineContentLocale): CrewingPageData {
+  const lnkV2 = defaultLnkManagementContent(locale)
+  const titleFormatted = themeTitleTriple(lnkV2.sec1Hero.title, '', '')
+  return {
+    hero: { label: '', titleFormatted, lead: lnkV2.sec1Hero.lead },
+    heroButtons: [
+      {
+        label: locale === 'en' ? 'Leave a request' : 'Оставить запрос',
+        href: '#page-inquiry',
+      },
+    ],
+    lnkPageLayout: 'v2',
+    lnkV2,
+    sectionOrder: [...LNK_V2_SECTION_ORDER],
+    sectionVisibility: {
+      competencies: true,
+      strategicAdvantages: true,
+      techBase: true,
+    },
+    customSections: [],
+    directionsSection: { title: '', lead: '' },
+    directions: [],
+    principles: { title: '', items: [] },
+    audience: {
+      title: '',
+      paragraph1: '',
+      paragraph2: '',
+      ctaLabel: '',
+      ctaHref: '/contacts',
+    },
+    checklist: { sectionTitle: '', intro: '', sections: [] },
+    showInquiryForm: true,
+    hideInquiryFormIntro: false,
+    hideInquiryFormCardHeading: false,
+    inquiryForm: normalizePageInquiryFormConfig(undefined),
+    heroBackgroundImage: '',
+    sectionBackgroundImages: {},
   }
 }
 
@@ -1158,9 +1235,15 @@ const SHIP_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
   en: emptyShipPageData('en'),
 }
 
+const LNK_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
+  ru: emptyLnkPageData('ru'),
+  en: emptyLnkPageData('en'),
+}
+
 const LINE_PAGE_DATA: Record<LineMarketingPageSlug, Record<MarineContentLocale, CrewingPageData>> = {
   'crewing-management': CREWING_DEFAULTS,
   'ship-management': SHIP_DEFAULTS,
+  lnk: LNK_DEFAULTS,
 }
 
 export function defaultLinePageData(slug: LineMarketingPageSlug, locale: MarineContentLocale): CrewingPageData {
@@ -1196,7 +1279,9 @@ export function mergeLinePageData(
       ? CREWING_MANAGEMENT_V2_SECTION_ORDER
       : slug === 'ship-management' && shipLayout === 'v2'
         ? SHIP_MANAGEMENT_V2_SECTION_ORDER
-        : LINE_MARKETING_SECTION_DEFAULT_ORDER
+        : slug === 'lnk'
+          ? LNK_V2_SECTION_ORDER
+          : LINE_MARKETING_SECTION_DEFAULT_ORDER
   const dirs = mergeCrewingDirections(mergeBase.directions, p.directions)
   const checklist = mergeCrewingChecklistBlock(mergeBase.checklist, p.checklist)
   const hadHeroButtonsKey = typeof raw === 'object' && raw !== null && 'heroButtons' in raw
@@ -1225,6 +1310,9 @@ export function mergeLinePageData(
       ? mergeShipManagementContent(p.shipV2, defaultShipManagementContent(locale))
       : undefined
 
+  const lnkV2Merged =
+    slug === 'lnk' ? mergeLnkManagementContent(p.lnkV2, defaultLnkManagementContent(locale)) : undefined
+
   const heroMerged = mergeCrewingHero(p.hero, mergeBase.hero)
   const hero =
     slug === 'crewing-management' && crewingLayout === 'v2' && crewingV2Merged
@@ -1239,7 +1327,13 @@ export function mergeLinePageData(
             lead: shipV2Merged.sec1Hero.lead,
             titleFormatted: themeTitleTriple(shipV2Merged.sec1Hero.title, '', ''),
           }
-        : heroMerged
+        : slug === 'lnk' && lnkV2Merged
+          ? {
+              ...heroMerged,
+              lead: lnkV2Merged.sec1Hero.lead,
+              titleFormatted: themeTitleTriple(lnkV2Merged.sec1Hero.title, '', ''),
+            }
+          : heroMerged
 
   return {
     hero,
@@ -1249,11 +1343,13 @@ export function mergeLinePageData(
       p.heroButtons,
       p.showInquiryForm,
       hadHeroButtonsKey,
+      slug === 'lnk' ? 12 : 2,
     ),
     ...(slug === 'crewing-management'
       ? { crewingPageLayout: crewingLayout, crewingV2: crewingV2Merged }
       : {}),
     ...(slug === 'ship-management' ? { shipPageLayout: shipLayout, shipV2: shipV2Merged } : {}),
+    ...(slug === 'lnk' ? { lnkPageLayout: 'v2' as const, lnkV2: lnkV2Merged } : {}),
     sectionOrder,
     sectionVisibility,
     customSections,
@@ -1291,6 +1387,10 @@ export function mergeLinePageData(
       p.heroBackgroundImage !== undefined && p.heroBackgroundImage !== null
         ? p.heroBackgroundImage
         : mergeBase.heroBackgroundImage,
+    sectionBackgroundImages: mergeSectionBackgroundImages(
+      p.sectionBackgroundImages,
+      mergeBase.sectionBackgroundImages,
+    ),
     heroBreadcrumbTone: parseStoredPageBreadcrumbTone(p.heroBreadcrumbTone) ?? mergeBase.heroBreadcrumbTone,
     hideFooter: typeof p.hideFooter === 'boolean' ? p.hideFooter : (mergeBase.hideFooter ?? false),
   }

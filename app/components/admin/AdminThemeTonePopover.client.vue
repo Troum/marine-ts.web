@@ -2,7 +2,7 @@
 import type { Editor } from '@tiptap/vue-3'
 import { onClickOutside } from '@vueuse/core'
 import { Bold, ChevronDown, Palette } from 'lucide-vue-next'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { ThemeTitleFontWeight, ThemeTitleTone } from '~/types'
 import {
   THEME_TITLE_FONT_WEIGHT_LABELS,
@@ -108,12 +108,11 @@ function applyFontWeight(fw: ThemeTitleFontWeight | null) {
 function toggleOpen() {
   if (!canToggle.value) return
   open.value = !open.value
-  if (open.value) {
-    nextTick(() => {
-      const first = popoverRef.value?.querySelector<HTMLButtonElement>('[data-tone-swatch]')
-      first?.focus()
-    })
-  }
+  /*
+   * Не переводим фокус на первый swatch при открытии: иначе ProseMirror теряет
+   * выделение, и setMark в applyTone/applyFontWeight не окрашивает выбранный фрагмент.
+   * Навигация по swatch с клавиатуры — после Tab из кнопки-триггера.
+   */
 }
 
 function close() {
@@ -200,6 +199,7 @@ onBeforeUnmount(() => {
             :class="{ 'mts-tone-row--active': activeTone === tone }"
             :title="THEME_TITLE_TONE_LABELS[tone]"
             :aria-pressed="activeTone === tone"
+            @mousedown.prevent
             @click="applyTone(tone)"
           >
             <span
@@ -221,6 +221,7 @@ onBeforeUnmount(() => {
             :class="{ 'mts-weight-row--active': activeFontWeight === null }"
             title="Наследуется от стиля заголовка на сайте"
             :aria-pressed="activeFontWeight === null"
+            @mousedown.prevent
             @click="applyFontWeight(null)"
           >
             <span class="h-4 w-4 shrink-0 rounded border border-dashed border-mts-border/80" aria-hidden="true" />
@@ -235,6 +236,7 @@ onBeforeUnmount(() => {
             :class="{ 'mts-weight-row--active': activeFontWeight === fw }"
             :title="THEME_TITLE_FONT_WEIGHT_LABELS[fw]"
             :aria-pressed="activeFontWeight === fw"
+            @mousedown.prevent
             @click="applyFontWeight(fw)"
           >
             <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded border border-mts-border/60 bg-mts-bg font-mono text-[9px] font-semibold leading-none text-mts-text">

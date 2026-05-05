@@ -41,6 +41,7 @@ const SOURCE_PAGE_LABELS: Record<string, string> = {
   services: 'Судоремонт',
   'ship-management': 'Судовой менеджмент',
   'crewing-management': 'Крюинг-менеджмент',
+  lnk: 'ЛНК',
   contacts: 'Контакты',
   gallery: 'Галерея',
   projects: 'Проекты',

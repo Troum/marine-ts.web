@@ -2,6 +2,7 @@
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import CustomPageBlockRender from '~/components/common/CustomPageBlockRender.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import LineSectionMediaBackdrop from '~/components/line-marketing/LineSectionMediaBackdrop.vue'
 import type { BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
 import type { CustomPageBlock, LineMarketingCustomSection, PageBreadcrumbTone } from '~/types'
 import { customSectionBlockRuns, isHeroImageBlockActive } from '~/utils/customPageSections'
@@ -13,8 +14,23 @@ const props = withDefaults(
     slug: string
     /** Те же пункты, что в hero страницы — для крошек над баннером в секции. */
     pageCrumbItems?: BreadcrumbItem[]
+    /**
+     * Фон секции из `sectionBackgroundImages['custom:' + id]` страницы.
+     * Если задан `section.sectionBackgroundImage`, он имеет приоритет.
+     */
+    pageSectionMediaUrl?: string
   }>(),
-  { pageCrumbItems: undefined },
+  { pageCrumbItems: undefined, pageSectionMediaUrl: '' },
+)
+
+const sectionBackdropUrl = computed(() => {
+  const fromSection = props.section.sectionBackgroundImage?.trim() ?? ''
+  const fromPage = props.pageSectionMediaUrl?.trim() ?? ''
+  return fromSection || fromPage
+})
+
+const sectionSurfaceClass = computed(() =>
+  sectionBackdropUrl.value ? 'relative border-t border-transparent py-16' : 'relative border-t border-border bg-white py-16',
 )
 
 const localePath = useLocalePath()
@@ -41,7 +57,8 @@ function heroBreadcrumbToneFor(block: CustomPageBlock): PageBreadcrumbTone | nul
 </script>
 
 <template>
-  <section class="relative border-t border-border bg-white py-16">
+  <section :class="sectionSurfaceClass">
+    <LineSectionMediaBackdrop :image-url="sectionBackdropUrl" />
     <AboutSectionContentParallax
       v-if="section.showTitle && section.title.trim()"
       :max-shift="32"

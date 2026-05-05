@@ -11,6 +11,7 @@
     "moreAria": "Дополнительные разделы",
     "shipManagement": "Судовой менеджмент",
     "crewing": "Крюинг",
+    "lnk": "ЛНК",
     "vacancies": "Вакансии"
   },
   "header": {
@@ -24,6 +25,7 @@
     "sectionCandidates": "Кандидатам",
     "sectionDocs": "Документы",
     "sectionContacts": "Контакты",
+    "sectionSocials": "Соцсети",
     "linkApplication": "Анкета",
     "phone": "8 (4012) 35-52-90",
     "address": "г. Калининград, Россия",
@@ -374,6 +376,7 @@
     "lineMarketing": {
       "shipHeroEyebrow": "Эксплуатация и ТОиР",
       "crewingHeroEyebrow": "Подбор и сопровождение экипажей",
+      "lnkHeroEyebrow": "Лаборатория неразрушающего контроля",
       "heroInquiryCta": "К форме заявки",
       "checklistSection": "Чек-лист критериев"
     },
