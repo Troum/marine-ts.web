@@ -220,7 +220,7 @@ const navColorVars = computed(() => {
  * как у мобильного (< lg) — всегда режим верха страницы.
  */
 const scrollY = ref(0)
-/** Совпадает с Tailwind `lg:` (горизонтальное меню скрыто ниже 1024px). */
+/** Совпадает с Tailwind `xl:` (горизонтальное меню скрыто ниже 1280px). */
 const isMobileNavViewport = ref(false)
 if (import.meta.client) {
   onMounted(() => {
@@ -228,7 +228,7 @@ if (import.meta.client) {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
 
-    const mq = window.matchMedia('(max-width: 1023px)')
+    const mq = window.matchMedia('(max-width: 1279px)')
     const onMq = () => { isMobileNavViewport.value = mq.matches }
     onMq()
     mq.addEventListener('change', onMq)
@@ -322,7 +322,7 @@ watch(
         <!-- Горизонтальное меню (десктоп) -->
         <div
           :class="[
-            'hidden min-w-0 mx-auto w-full max-w-7xl flex-nowrap items-center gap-x-3 overflow-x-auto px-2 lg:flex xl:gap-x-6 2xl:gap-x-8',
+            'hidden min-w-0 mx-auto w-full max-w-7xl flex-nowrap items-center gap-x-3 overflow-x-auto px-2 xl:flex xl:gap-x-6 2xl:gap-x-8',
             horizJustifyClass,
           ]"
         >
