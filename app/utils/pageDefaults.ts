@@ -148,7 +148,7 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
     hideInquiryFormCardHeading: false,
     inquiryForm: normalizePageInquiryFormConfig(undefined),
     heroImage: '',
-    sectionOrder: [...HOME_SECTION_DEFAULT_ORDER],
+    heroVideo: '',
     sectionVisibility,
     heroOverlayRow: { ...HOME_HERO_OVERLAY_DEFAULT },
   }
@@ -226,7 +226,7 @@ export function mergeHomePageData(locale: MarineContentLocale, parsed: Partial<H
         : def.hideInquiryFormCardHeading,
     inquiryForm: normalizePageInquiryFormConfig(parsed.inquiryForm),
     heroImage: parsed.heroImage !== undefined ? parsed.heroImage : def.heroImage,
-    customSections,
+    heroVideo: parsed.heroVideo !== undefined ? parsed.heroVideo : def.heroVideo,
     sectionOrder,
     sectionVisibility,
     heroOverlayRow: mergeHomeHeroOverlayRow(parsed.heroOverlayRow, HOME_HERO_OVERLAY_DEFAULT),
@@ -327,6 +327,7 @@ export function syncHomeStructuralFields(
     d.showStatsCard = src.showStatsCard
     d.showProcess = src.showProcess
     d.heroImage = src.heroImage
+    d.heroVideo = src.heroVideo
     while (d.directions.rows.length < src.directions.rows.length) {
       d.directions.rows.push({ title: '', description: '', cta: '', href: '', hoverTitle: '', hoverDescription: '', heroImage: '' })
     }

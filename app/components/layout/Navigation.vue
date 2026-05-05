@@ -216,20 +216,41 @@ const navColorVars = computed(() => {
 })
 
 /**
- * Определяет, прокрутил ли пользователь страницу вниз.
- * При прокрутке — тёмное стекло без светлой обводки; вверху — прозрачный фон.
- * Активный пункт и hover — `primary` (Marin — красный, Golden Sepia — золото).
+ * Прокрутка: компактное «стекло» (scrollY > 40). Исключение: главная + viewport
+ * как у мобильного (< lg) — всегда режим верха страницы.
  */
 const scrollY = ref(0)
+/** Совпадает с Tailwind `lg:` (горизонтальное меню скрыто ниже 1024px). */
+const isMobileNavViewport = ref(false)
 if (import.meta.client) {
   onMounted(() => {
     const onScroll = () => { scrollY.value = window.scrollY }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    onUnmounted(() => window.removeEventListener('scroll', onScroll))
+
+    const mq = window.matchMedia('(max-width: 1023px)')
+    const onMq = () => { isMobileNavViewport.value = mq.matches }
+    onMq()
+    mq.addEventListener('change', onMq)
+    onUnmounted(() => {
+      window.removeEventListener('scroll', onScroll)
+      mq.removeEventListener('change', onMq)
+    })
   })
 }
-const isScrolled = computed(() => scrollY.value > 40)
+
+const isHomeRoute = computed(() => {
+  const current = stripLocalePrefix(route.path).replace(/\/$/, '') || '/'
+  return current === '/'
+})
+
+/** На главной в мобильной вёрстке шапка остаётся полноширинной/прозрачной, без «стекла» после scroll. */
+const isScrolled = computed(() => {
+  if (isHomeRoute.value && isMobileNavViewport.value) {
+    return false
+  }
+  return scrollY.value > 40
+})
 
 const hasCustomHoverColor = computed(() => !!menu.value.menuItemHoverColor)
 

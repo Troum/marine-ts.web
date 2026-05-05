@@ -12,6 +12,8 @@ const props = withDefaults(
     hint?: string
     /** Доп. класс для поля URL */
     inputClass?: string
+    /** `image` — только картинки; `video` — загрузка и медиатека фильтруются под видео (mp4, webm, mov). */
+    mediaMode?: 'image' | 'video'
   }>(),
   {
     modelValue: '',
@@ -19,6 +21,7 @@ const props = withDefaults(
     hint: 'Необязательно. Укажите URL или загрузите файл — в поле подставится адрес из хранилища.',
     inputClass:
       'box-border h-11 w-full min-w-0 border border-mts-border bg-mts-bg px-4 font-body text-sm focus:border-mts-accent focus:outline-none',
+    mediaMode: 'image',
   },
 )
 
@@ -36,8 +39,12 @@ const mediaLoading = ref(false)
 const mediaItems = ref<MediaLibraryItem[]>([])
 const mediaLoaded = ref(false)
 
-const imageMediaItems = computed(() =>
-  mediaItems.value.filter((item) => /\.(avif|jpe?g|png|webp|gif|svg)$/i.test(item.filename || item.url)),
+const VIDEO_EXT = /\.(mp4|webm|mov)$/i
+
+const pickerMediaItems = computed(() =>
+  props.mediaMode === 'video'
+    ? mediaItems.value.filter((item) => VIDEO_EXT.test(item.filename || item.url))
+    : mediaItems.value.filter((item) => /\.(avif|jpe?g|png|webp|gif|svg)$/i.test(item.filename || item.url)),
 )
 
 const urlProxy = computed({
@@ -59,7 +66,7 @@ async function onFileChange(e: Event) {
   try {
     const res = await api.media.upload(file)
     emit('update:modelValue', res.url)
-    adminToast.success('Изображение загружено')
+    adminToast.success(props.mediaMode === 'video' ? 'Видео загружено' : 'Изображение загружено')
   } catch {
     adminToast.show({ title: 'Ошибка', message: 'Не удалось загрузить файл' })
   } finally {
@@ -104,7 +111,7 @@ function closeMediaLibrary() {
 
 function selectFromLibrary(url: string) {
   emit('update:modelValue', url)
-  adminToast.success('Изображение выбрано из медиатеки')
+  adminToast.success(props.mediaMode === 'video' ? 'Видео выбрано из медиатеки' : 'Изображение выбрано из медиатеки')
   closeMediaLibrary()
 }
 
@@ -172,13 +179,21 @@ onBeforeUnmount(() => {
     <input
       ref="fileInput"
       type="file"
-      accept="image/jpeg,image/png,image/webp"
+      :accept="mediaMode === 'video' ? 'video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov' : 'image/jpeg,image/png,image/webp'"
       class="sr-only"
       tabindex="-1"
       @change="onFileChange"
     />
     <div v-if="modelValue" class="mt-2 overflow-hidden rounded border border-mts-border bg-mts-bg">
-      <img :src="modelValue" alt="" class="max-h-40 w-full object-cover object-center" loading="lazy" />
+      <video
+        v-if="mediaMode === 'video' || VIDEO_EXT.test(modelValue)"
+        :src="modelValue"
+        muted
+        playsinline
+        controls
+        class="max-h-48 w-full object-contain object-center bg-black"
+      />
+      <img v-else :src="modelValue" alt="" class="max-h-40 w-full object-cover object-center" loading="lazy" />
     </div>
 
     <Teleport to="body">
@@ -206,7 +221,7 @@ onBeforeUnmount(() => {
               <div class="min-w-0">
                 <h2 class="font-display text-lg text-mts-text">Медиатека</h2>
                 <p class="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-mts-text-secondary">
-                  {{ imageMediaItems.length }} файлов
+                  {{ pickerMediaItems.length }} файлов
                 </p>
               </div>
               <div class="flex items-center gap-2">
@@ -234,10 +249,10 @@ onBeforeUnmount(() => {
                 <Loader2 class="h-5 w-5 animate-spin" />
               </div>
               <div
-                v-else-if="imageMediaItems.length === 0"
+                v-else-if="pickerMediaItems.length === 0"
                 class="flex items-center justify-center rounded border border-dashed border-mts-border bg-mts-bg/40 px-3 py-12 font-body text-sm text-mts-text-secondary"
               >
-                В медиатеке пока нет изображений.
+                В медиатеке пока нет {{ mediaMode === 'video' ? 'видео' : 'изображений' }}.
               </div>
               <div
                 v-else
@@ -245,14 +260,28 @@ onBeforeUnmount(() => {
                 style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr))"
               >
                 <button
-                  v-for="item in imageMediaItems"
+                  v-for="item in pickerMediaItems"
                   :key="item.url"
                   type="button"
                   class="group overflow-hidden border border-mts-border bg-white text-left transition-colors hover:border-mts-accent"
                   @click="selectFromLibrary(item.url)"
                 >
                   <div class="aspect-[4/3] overflow-hidden bg-mts-bg">
-                    <img :src="item.url" alt="" class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" loading="lazy" decoding="async" />
+                    <video
+                      v-if="VIDEO_EXT.test(item.filename || item.url)"
+                      :src="item.url"
+                      muted
+                      playsinline
+                      class="h-full w-full object-cover"
+                    />
+                    <img
+                      v-else
+                      :src="item.url"
+                      alt=""
+                      class="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   </div>
                   <div class="border-t border-mts-border p-2">
                     <p class="truncate font-body text-xs text-mts-text" :title="item.filename">{{ item.filename }}</p>

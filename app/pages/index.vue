@@ -168,7 +168,25 @@ function heroDirectionDescription(row: { description: string; hoverDescription?:
   return row.hoverDescription?.trim() || row.description
 }
 
-const activeHeroImage = computed(() => activeHeroDirection.value?.heroImage?.trim() || d.value.heroImage?.trim() || '')
+const activeHeroVideo = computed(() => {
+  if (activeHeroDirection.value?.heroImage?.trim()) {
+    return ''
+  }
+  return d.value.heroVideo?.trim() || ''
+})
+
+/** Картинка для постера / статичного фона (без видео для строки с heroImage берётся её картинка). */
+const activeHeroPoster = computed(() => {
+  const rowImg = activeHeroDirection.value?.heroImage?.trim() || ''
+  if (rowImg) {
+    return rowImg
+  }
+  return d.value.heroImage?.trim() || ''
+})
+
+const activeHeroImageOnly = computed(() => (activeHeroVideo.value ? '' : activeHeroPoster.value))
+
+const hasHeroBackdrop = computed(() => !!(activeHeroVideo.value || activeHeroImageOnly.value))
 
 const directionsGridClass = computed(() => {
   const count = cardsBlockRows.value.length
@@ -245,15 +263,16 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
       <!-- Фон -->
       <div class="absolute inset-0">
         <CommonParallaxHeroMedia
-          v-if="activeHeroImage"
-          :key="activeHeroImage"
-          :image="activeHeroImage"
+          v-if="hasHeroBackdrop"
+          :key="`${activeHeroVideo}|${activeHeroPoster}`"
+          :image="activeHeroPoster"
+          :video="activeHeroVideo"
           :active="isVisible"
           bg-class="hero-bg"
         />
         <div v-else class="absolute inset-0 bg-navy-900" aria-hidden="true" />
         <div
-          v-if="activeHeroImage"
+          v-if="hasHeroBackdrop"
           class="pointer-events-none absolute inset-0 z-[1] mts-line-marketing-hero-veil"
           aria-hidden="true"
         />
@@ -261,16 +280,12 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
 
       <div class="relative z-10 flex min-h-[100svh] flex-col md:h-full">
         <div class="pt-24 sm:pt-28 md:pt-32 shrink-0" />
-
-        <!-- Двухколоночный контент -->
         <div class="flex flex-1 items-center">
           <div
             class="w-full py-12 md:py-0"
             :style="{ paddingLeft: heroInsetLeft, paddingRight: heroInsetRight }"
           >
             <div class="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-16 lg:gap-24 items-center">
-
-              <!-- Левая колонка: название + тэглайн + соцсети/ссылка -->
               <div
                 :class="[
                   'transition-all duration-700',
@@ -280,7 +295,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                 <h1 class="mts-hero-themed-copy text-4xl font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
                   <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                 </h1>
-                <p class="mt-5 text-base font-semibold leading-snug text-white sm:text-lg lg:text-xl">
+                <p class="mt-5 text-base font-semibold leading-snug text-white sm:text-lg lg:text-2xl">
                   <ThemedContentString :content="d.hero.label" />
                 </p>
               </div>
@@ -302,7 +317,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                   leave-to-class="-translate-y-3 opacity-0"
                 >
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
-                    <div class="mts-hero-themed-copy space-y-5 font-body text-base leading-relaxed text-white/85 sm:text-lg">
+                    <div class="mts-hero-themed-copy space-y-5 text-[14px] font-body text-base leading-relaxed text-white/85 sm:text-2xl">
                       <ThemedContentString
                         :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
                       />
@@ -326,8 +341,6 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
             </div>
           </div>
         </div>
-
-        <!-- Соцсети + ссылка — absolute, нижний угол -->
         <div
           v-if="showHeroOverlayRow"
           class="absolute left-0 right-0 z-20"
@@ -378,8 +391,6 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
           </div>
           </div>
         </div>
-
-        <!-- Карточки направлений (нижняя полоса) -->
         <div v-if="heroDirectionRows.length" class="relative z-20 shrink-0">
           <div class="flex flex-col md:flex-row">
             <NuxtLink
@@ -406,14 +417,6 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
 
       </div>
     </section>
-
-    <!--
-      Секция «Чем мы занимаемся» (без админ-формы контента) фиксирована сразу
-      после hero. Видимостью управляет `directions.showCardsBlock`, а внутри
-      грида — фильтр `hideInCardsBlock` на каждой карточке. Ниже идут только
-      пользовательские секции, которые админ добавил через редактор кастомных
-      секций.
-    -->
     <section
       v-if="showDirectionsCardsBlock"
       id="directions-section"

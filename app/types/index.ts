@@ -870,8 +870,10 @@ export interface HomeHeroOverlayRow {
 
 export interface HomePageData {
   hero: HomeHero
-  /** Опциональный фон первого экрана (URL); если пусто — без фонового фото. */
+  /** Опциональный фон первого экрана (URL); если пусто и нет heroVideo — без фонового фото. */
   heroImage?: string
+  /** Опциональное фоновое видео hero (URL, например mp4). Постер — `heroImage`. При наведении на карточку с своим heroImage видео скрывается. */
+  heroVideo?: string
   statsCard: HomeStatsCard
   /** Показывать карточку «В цифрах» внутри Hero. */
   showStatsCard?: boolean

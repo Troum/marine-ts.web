@@ -292,8 +292,14 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <AdminHeroImageField
               v-model="d.heroImage"
-              label="Фон первого экрана"
-              hint="Необязательно. Если не задано, на главной показывается сплошной фон без фото."
+              label="Фон первого экрана (изображение / постер к видео)"
+              hint="Необязательно. Статичный фон, если видео нет; иначе кадр до загрузки и постер для видео."
+            />
+            <AdminHeroImageField
+              v-model="d.heroVideo"
+              media-mode="video"
+              label="Видео первого экрана (необязательно)"
+              hint="MP4, WebM или MOV через загрузку или URL. Рекомендуется короткий ролик без звука; на сайте воспроизводится в цикле без звука. При prefers-reduced-motion показывается только картинка выше."
             />
             <div>
               <label :class="sectionLabel">Метка (label)</label>
