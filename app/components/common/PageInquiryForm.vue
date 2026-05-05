@@ -25,6 +25,11 @@ const props = withDefaults(
     hideFormCardHeading?: boolean
     /** Конфиг состава чекбоксов (админка страницы). */
     config?: PageInquiryFormConfig | null
+    /**
+     * Доп. email в колонке «Не хотите заполнять форму?» (только где передано, напр. судовой менеджмент).
+     * Не показывается, если совпадает с основным контактным email.
+     */
+    noFormSecondaryEmail?: string
   }>(),
   { hideIntro: false, hideFormCardHeading: false, config: null },
 )
@@ -130,9 +135,9 @@ const emailContact = computed(() => {
     : null
 })
 
-/** Доп. адрес в колонке «Не хотите заполнять форму?» (например отдел судмена). */
+/** Доп. адрес в колонке «Не хотите заполнять форму?». */
 const noFormSecondaryEmail = computed(() => {
-  const raw = t('pages.pageInquiry.noFormSecondaryEmail').trim()
+  const raw = props.noFormSecondaryEmail?.trim() ?? ''
   if (!raw || !SIMPLE_EMAIL_RE.test(raw)) {
     return null
   }

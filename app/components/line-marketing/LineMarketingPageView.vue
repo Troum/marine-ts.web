@@ -1362,6 +1362,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
       :hide-intro="cms.hideInquiryFormIntro === true"
       :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
       :config="cms.inquiryForm"
+      :no-form-secondary-email="props.slug === 'ship-management' ? 'sblokhin@marin-ts.com' : undefined"
     />
   </div>
 </template>

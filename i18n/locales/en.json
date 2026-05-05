@@ -281,7 +281,6 @@
       "urgentLead": "Call us right now:",
       "noFormTitle": "Don't want to fill the form?",
       "noFormLead": "Write to our email, we usually answer within 2 hours:",
-      "noFormSecondaryEmail": "sblokhin{'@'}marin-ts.com",
       "vesselTypes": {
         "dry_cargo": "Dry cargo",
         "tanker": "Tanker",
