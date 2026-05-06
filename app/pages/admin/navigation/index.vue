@@ -144,12 +144,12 @@ function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSet
   const offices: NavigationBurgerOffice[] =
     bc?.offices?.length
       ? bc.offices.map(o => ({
-          title: o.title ?? '',
-          address: o.address ?? '',
+          title: parseBilingual(o.title),
+          address: parseBilingual(o.address),
         }))
       : bc?.officeAddress?.trim()
-        ? [{ title: '', address: bc.officeAddress.trim() }]
-        : [{ title: '', address: '' }]
+        ? [{ title: { ru: '', en: '' }, address: parseBilingual(bc.officeAddress.trim()) }]
+        : [{ title: { ru: '', en: '' }, address: { ru: '', en: '' } }]
   const officesColumnTitlePair = burgerEditorLocalized('officesColumnTitle', 'offices_column_title')
   const burgerContacts = {
     phonesTitle: burgerEditorLocalized('phonesTitle', 'phones_title') ?? { ru: '', en: '' },
@@ -355,7 +355,7 @@ function addOffice() {
   form.value.burgerContacts.emailTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.officesColumnTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.offices ??= []
-  form.value.burgerContacts.offices.push({ title: '', address: '' })
+  form.value.burgerContacts.offices.push({ title: { ru: '', en: '' }, address: { ru: '', en: '' } })
 }
 
 function removeOffice(i: number) {
@@ -379,9 +379,9 @@ async function submit() {
         const bc = form.value.burgerContacts
         if (!bc) return undefined
         return {
-          phonesTitle: burgerContactPayloadLocalized(bc.phonesTitle),
+          phonesTitle: burgerContactPayloadString(parseBilingual(bc.phonesTitle).ru),
           phones: bc.phones?.filter(p => p.trim()) ?? undefined,
-          emailTitle: burgerContactPayloadLocalized(bc.emailTitle),
+          emailTitle: burgerContactPayloadString(parseBilingual(bc.emailTitle).ru),
           emails: bc.emails?.map(e => e.trim()).filter(Boolean) ?? undefined,
           socials: bc.socials
             ?.map(s => ({
@@ -389,13 +389,13 @@ async function submit() {
               label: (s.label.trim() || s.url.trim()),
             }))
             .filter(s => s.url) ?? undefined,
-          officesColumnTitle: burgerContactPayloadLocalized(bc.officesColumnTitle),
+          officesColumnTitle: burgerContactPayloadString(parseBilingual(bc.officesColumnTitle).ru),
           offices: bc.offices
             ?.map(o => ({
-              title: o.title?.trim() || undefined,
-              address: o.address.trim(),
+              title: burgerContactPayloadLocalized(o.title),
+              address: burgerContactPayloadLocalized(o.address),
             }))
-            .filter(o => o.address) ?? undefined,
+            .filter(o => o.address !== undefined) ?? undefined,
         }
       })(),
     }
@@ -916,23 +916,50 @@ async function submit() {
                       Удалить
                     </button>
                   </div>
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                    Подзаголовок (необязательно)
-                  </label>
-                  <AdminThemedTextField
-                    v-model="of.title"
-                    :multiline="false"
-                    class="mb-3"
-                    placeholder="Например: Представительство в ОАЭ"
-                  />
-                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                    Адрес
-                  </label>
-                  <AdminThemedTextField
-                    v-model="of.address"
-                    :multiline="true"
-                    placeholder="Улица, город…"
-                  />
+                  <div class="mb-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                        Подзаголовок RU (необязательно)
+                      </label>
+                      <AdminThemedTextField
+                        v-model="of.title!.ru"
+                        :multiline="false"
+                        placeholder="Например: Калининград"
+                      />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                        Подзаголовок EN (необязательно)
+                      </label>
+                      <AdminThemedTextField
+                        v-model="of.title!.en"
+                        :multiline="false"
+                        placeholder="For example: Kaliningrad"
+                      />
+                    </div>
+                  </div>
+                  <div class="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                        Адрес RU
+                      </label>
+                      <AdminThemedTextField
+                        v-model="of.address.ru"
+                        :multiline="true"
+                        placeholder="Улица, город…"
+                      />
+                    </div>
+                    <div>
+                      <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                        Адрес EN
+                      </label>
+                      <AdminThemedTextField
+                        v-model="of.address.en"
+                        :multiline="true"
+                        placeholder="Street, city…"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
               <button type="button" class="btn-secondary mt-3 inline-flex items-center gap-2" @click="addOffice">

@@ -135,7 +135,7 @@ const burgerOverlayOfficesHeading = computed(() => {
 const burgerOverlayOffices = computed((): NavigationBurgerOffice[] => {
   const c = bcOverlay.value
   if (c?.offices?.length) {
-    return c.offices.filter(o => o.address.trim())
+    return c.offices.filter(o => burgerLinePlain(o.address))
   }
   if (c?.officeAddress?.trim()) {
     return [{ address: c.officeAddress.trim() }]
@@ -566,7 +566,7 @@ watch(
               <div class="space-y-6">
                 <div v-for="(office, oi) in burgerOverlayOffices" :key="`of-${oi}`">
                   <div
-                    v-if="office.title?.trim()"
+                    v-if="burgerLinePlain(office.title)"
                     class="mb-1 text-xs font-semibold uppercase tracking-wide text-body/90"
                     v-html="burgerContactRichHtml(office.title)"
                   />
