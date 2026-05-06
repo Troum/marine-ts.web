@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, FileText, LayoutGrid, Loader2, Newspaper, Briefcase, Wrench } from 'lucide-vue-next'
+import { ArrowLeft, FileText, LayoutGrid, Loader2, Newspaper, Briefcase, Ship, Wrench } from 'lucide-vue-next'
 import type { SiteSeoPage } from '~/types'
 
 definePageMeta({
@@ -109,7 +109,7 @@ watch([sort, order], () => {
 
         <section>
           <h2 class="font-display mb-4 text-lg text-mts-text">Материалы</h2>
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <NuxtLink
               to="/admin/seo/news"
               class="flex items-center gap-3 border border-mts-border bg-white p-5 transition-colors hover:border-mts-accent/40"
@@ -131,13 +131,23 @@ watch([sort, order], () => {
               </div>
             </NuxtLink>
             <NuxtLink
+              to="/admin/seo/page/services"
+              class="flex items-center gap-3 border border-mts-border bg-white p-5 transition-colors hover:border-mts-accent/40"
+            >
+              <Ship class="h-8 w-8 text-mts-accent" />
+              <div>
+                <p class="font-body font-medium text-mts-text">Судоремонт</p>
+                <p class="font-mono text-[10px] text-mts-text-secondary">Страница /services</p>
+              </div>
+            </NuxtLink>
+            <NuxtLink
               to="/admin/seo/services"
               class="flex items-center gap-3 border border-mts-border bg-white p-5 transition-colors hover:border-mts-accent/40"
             >
               <Wrench class="h-8 w-8 text-mts-accent" />
               <div>
-                <p class="font-body font-medium text-mts-text">Судоремонт</p>
-                <p class="font-mono text-[10px] text-mts-text-secondary">SEO карточек</p>
+                <p class="font-body font-medium text-mts-text">Карточки сервисов</p>
+                <p class="font-mono text-[10px] text-mts-text-secondary">SEO карточек каталога</p>
               </div>
             </NuxtLink>
           </div>
