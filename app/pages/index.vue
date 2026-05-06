@@ -292,7 +292,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
                 ]"
               >
-                <h1 class="mts-hero-themed-copy text-4xl font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
+                <h1 class="mts-hero-themed-copy text-[27px] font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
                   <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                 </h1>
                 <p class="mt-5 text-base font-semibold leading-snug text-white sm:text-lg lg:text-2xl">
@@ -317,7 +317,7 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                   leave-to-class="-translate-y-3 opacity-0"
                 >
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
-                    <div class="mts-hero-themed-copy space-y-5 text-[14px] font-body text-base leading-relaxed text-white/85 md:text-2xl">
+                    <div class="mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl">
                       <ThemedContentString
                         :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
                       />

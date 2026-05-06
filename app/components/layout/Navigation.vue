@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { ArrowRight, ChevronDown, ExternalLink } from 'lucide-vue-next'
 import type {
+  LocalizedLine,
   MainNavMenuFontSize,
   MainNavMenuFontWeight,
   MainNavMenuJustify,
   MainNavMenuTextCase,
+  MarineContentLocale,
   NavigationBurgerOffice,
   NavigationBurgerSocial,
   NavigationMenuItem,
 } from '~/types'
 import { stripHtmlToPlain } from '~/utils/adminHtmlField'
+import { pickLocalized } from '~/utils/bilingualField'
 import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 import { sanitizeRichContentHtml } from '~/composables/useMarkdownSafeHtml'
@@ -18,6 +21,7 @@ import { stripLocalePrefix } from '~/utils/stripLocalePrefix'
 const route = useRoute()
 const localePath = useLocalePath()
 const { locale } = useI18n()
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 const api = useMarineApi()
 
 const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncData(
@@ -30,6 +34,10 @@ const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncDat
     }
   },
 )
+
+watch(locale, () => {
+  refreshNavigation()
+})
 
 onMounted(async () => {
   if (navigationRemote.value == null) {
@@ -51,9 +59,13 @@ const fallbackItems = computed<NavigationMenuItem[]>(() => [
 
 const menu = computed(() => navigationRemote.value ?? emptyNavigationSettings())
 
+function burgerLinePlain(raw: LocalizedLine | undefined | null): string {
+  return pickLocalized(raw ?? '', loc.value, '').trim()
+}
+
 /** HTML из админки (TipTap / вставка тегов): безопасный вывод в v-html. */
-function burgerContactRichHtml(raw: string | undefined | null): string {
-  const t = raw?.trim()
+function burgerContactRichHtml(raw: LocalizedLine | undefined | null): string {
+  const t = burgerLinePlain(raw)
   if (!t) {
     return ''
   }
@@ -61,8 +73,9 @@ function burgerContactRichHtml(raw: string | undefined | null): string {
 }
 
 /** Для `tel:` / `mailto:`: берём видимый текст из HTML TipTap. */
-function burgerContactPlainOneLine(raw: string): string {
-  return stripHtmlToPlain(raw).replace(/\s+/g, ' ').trim()
+function burgerContactPlainOneLine(raw: LocalizedLine | undefined | null): string {
+  const html = burgerContactRichHtml(raw)
+  return stripHtmlToPlain(html).replace(/\s+/g, ' ').trim()
 }
 
 function burgerContactTelHref(phoneHtml: string): string {
@@ -109,11 +122,12 @@ const burgerOverlaySocials = computed((): NavigationBurgerSocial[] => {
 
 const burgerOverlayOfficesHeading = computed(() => {
   const c = bcOverlay.value
-  if (c?.officesColumnTitle?.trim()) {
-    return c.officesColumnTitle.trim()
+  const fromCol = burgerLinePlain(c?.officesColumnTitle)
+  if (fromCol) {
+    return fromCol
   }
-  if (c?.officeTitle?.trim() && !c?.offices?.length) {
-    return c.officeTitle.trim()
+  if (burgerLinePlain(c?.officeTitle) && !c?.offices?.length) {
+    return burgerLinePlain(c?.officeTitle)
   }
   return ''
 })
@@ -131,7 +145,7 @@ const burgerOverlayOffices = computed((): NavigationBurgerOffice[] => {
 
 const burgerPhoneColVisible = computed(() => {
   const c = bcOverlay.value
-  return burgerOverlayPhones.value.length > 0 || !!c?.phonesTitle?.trim()
+  return burgerOverlayPhones.value.length > 0 || !!burgerLinePlain(c?.phonesTitle)
 })
 
 const burgerEmailColVisible = computed(() => {
@@ -139,7 +153,7 @@ const burgerEmailColVisible = computed(() => {
   return (
     burgerOverlayEmails.value.length > 0 ||
     burgerOverlaySocials.value.length > 0 ||
-    !!c?.emailTitle?.trim()
+    !!burgerLinePlain(c?.emailTitle)
   )
 })
 

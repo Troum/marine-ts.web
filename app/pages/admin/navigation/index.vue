@@ -2,6 +2,7 @@
 import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, Trash2 } from 'lucide-vue-next'
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import type {
+  LocalizedLine,
   MainNavMenuFontSize,
   MainNavMenuFontWeight,
   MainNavMenuJustify,
@@ -13,6 +14,7 @@ import type {
   NavigationMenuSettings,
 } from '~/types'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
+import { parseBilingual, serializeBilingual } from '~/utils/bilingualField'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
@@ -72,6 +74,21 @@ function burgerContactPayloadString(s: string | undefined): string | undefined {
   return t !== '' ? t : undefined
 }
 
+function burgerContactPayloadLocalized(v: LocalizedLine | undefined): LocalizedLine | undefined {
+  if (v == null) {
+    return undefined
+  }
+  const p = parseBilingual(v)
+  const s = serializeBilingual(p.ru, p.en)
+  if (typeof s === 'string') {
+    return burgerContactPayloadString(s) !== undefined ? s : undefined
+  }
+  if (!s.ru.trim() && !s.en.trim()) {
+    return undefined
+  }
+  return s
+}
+
 function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSettings {
   const style: Pick<
     NavigationMenuSettings,
@@ -89,6 +106,20 @@ function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSet
   const horizItems = settings.horizItems?.length ? settings.horizItems.map(serializeNavItem) : undefined
   const bcRaw = settings.burgerContacts ?? {}
   const bcRec = bcRaw as Record<string, unknown>
+  function burgerEditorLocalized(camel: string, snake: string): { ru: string; en: string } {
+    for (const k of [camel, snake]) {
+      const v = bcRec[k]
+      if (v == null) {
+        continue
+      }
+      const p = parseBilingual(v)
+      if (p.ru.trim() || p.en.trim()) {
+        return p
+      }
+    }
+    return { ru: '', en: '' }
+  }
+
   /** Значения из API: camelCase или snake_case (после DTO на бэке). */
   function burgerEditorStr(camel: string, snake: string): string {
     for (const k of [camel, snake]) {
@@ -119,19 +150,18 @@ function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSet
       : bc?.officeAddress?.trim()
         ? [{ title: '', address: bc.officeAddress.trim() }]
         : [{ title: '', address: '' }]
-  const officesColumnTitle =
-    burgerEditorStr('officesColumnTitle', 'offices_column_title') ||
-    (!bc?.offices?.length && burgerEditorStr('officeAddress', 'office_address') !== ''
-      ? burgerEditorStr('officeTitle', 'office_title')
-      : '')
-
   const burgerContacts = {
-    phonesTitle: burgerEditorStr('phonesTitle', 'phones_title'),
+    phonesTitle: burgerEditorLocalized('phonesTitle', 'phones_title') ?? { ru: '', en: '' },
     phones: bc?.phones?.length ? [...bc.phones] : ['', ''],
-    emailTitle: burgerEditorStr('emailTitle', 'email_title'),
+    emailTitle: burgerEditorLocalized('emailTitle', 'email_title') ?? { ru: '', en: '' },
     emails,
     socials,
-    officesColumnTitle,
+    officesColumnTitle:
+      officesColumnTitlePair.ru.trim() || officesColumnTitlePair.en.trim()
+        ? officesColumnTitlePair
+        : (!bc?.offices?.length && burgerEditorStr('officeAddress', 'office_address') !== ''
+            ? burgerEditorLocalized('officeTitle', 'office_title') ?? { ru: '', en: '' }
+            : { ru: '', en: '' }),
     offices,
   }
   return {
@@ -281,6 +311,9 @@ function moveHorizItem(i: number, dir: -1 | 1) {
 
 function addPhone() {
   form.value.burgerContacts ??= {}
+  form.value.burgerContacts.phonesTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.emailTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.officesColumnTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.phones ??= []
   form.value.burgerContacts.phones.push('')
 }
@@ -291,6 +324,9 @@ function removePhone(i: number) {
 
 function addEmail() {
   form.value.burgerContacts ??= {}
+  form.value.burgerContacts.phonesTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.emailTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.officesColumnTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.emails ??= []
   form.value.burgerContacts.emails.push('')
 }
@@ -301,6 +337,9 @@ function removeEmail(i: number) {
 
 function addSocial() {
   form.value.burgerContacts ??= {}
+  form.value.burgerContacts.phonesTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.emailTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.officesColumnTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.socials ??= []
   form.value.burgerContacts.socials.push({ url: '', label: '' })
 }
@@ -311,6 +350,9 @@ function removeSocial(i: number) {
 
 function addOffice() {
   form.value.burgerContacts ??= {}
+  form.value.burgerContacts.phonesTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.emailTitle ??= { ru: '', en: '' }
+  form.value.burgerContacts.officesColumnTitle ??= { ru: '', en: '' }
   form.value.burgerContacts.offices ??= []
   form.value.burgerContacts.offices.push({ title: '', address: '' })
 }
@@ -336,9 +378,9 @@ async function submit() {
         const bc = form.value.burgerContacts
         if (!bc) return undefined
         return {
-          phonesTitle: burgerContactPayloadString(bc.phonesTitle),
+          phonesTitle: burgerContactPayloadLocalized(bc.phonesTitle),
           phones: bc.phones?.filter(p => p.trim()) ?? undefined,
-          emailTitle: burgerContactPayloadString(bc.emailTitle),
+          emailTitle: burgerContactPayloadLocalized(bc.emailTitle),
           emails: bc.emails?.map(e => e.trim()).filter(Boolean) ?? undefined,
           socials: bc.socials
             ?.map(s => ({
@@ -346,7 +388,7 @@ async function submit() {
               label: (s.label.trim() || s.url.trim()),
             }))
             .filter(s => s.url) ?? undefined,
-          officesColumnTitle: burgerContactPayloadString(bc.officesColumnTitle),
+          officesColumnTitle: burgerContactPayloadLocalized(bc.officesColumnTitle),
           offices: bc.offices
             ?.map(o => ({
               title: o.title?.trim() || undefined,
@@ -676,16 +718,27 @@ async function submit() {
 
           <!-- Телефоны -->
           <div class="mb-6">
-            <div class="mb-3 flex items-center gap-4">
-              <label class="w-40 shrink-0 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Заголовок колонки
-              </label>
-              <AdminThemedTextField
-                v-model="form.burgerContacts!.phonesTitle"
-                :multiline="false"
-                class="flex-1"
-                placeholder="Телефоны"
-              />
+            <div class="mb-3 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Заголовок колонки (RU)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.phonesTitle!.ru"
+                  :multiline="false"
+                  placeholder="Связь"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Заголовок колонки (EN)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.phonesTitle!.en"
+                  :multiline="false"
+                  placeholder="Contact"
+                />
+              </div>
             </div>
             <div class="space-y-2">
               <div
@@ -723,15 +776,27 @@ async function submit() {
 
           <!-- Email и соцсети -->
           <div class="mb-6 grid gap-4 border-t border-mts-border pt-6 sm:grid-cols-2">
-            <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Заголовок колонки (email и соцсети)
-              </label>
-              <AdminThemedTextField
-                v-model="form.burgerContacts!.emailTitle"
-                :multiline="false"
-                placeholder="Email"
-              />
+            <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Заголовок колонки (RU)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.emailTitle!.ru"
+                  :multiline="false"
+                  placeholder="Мы в сети"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Заголовок колонки (EN)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.emailTitle!.en"
+                  :multiline="false"
+                  placeholder="Online"
+                />
+              </div>
             </div>
 
             <div class="sm:col-span-2">
@@ -809,15 +874,27 @@ async function submit() {
 
           <!-- Офисы -->
           <div class="grid gap-4 border-t border-mts-border pt-6 sm:grid-cols-2">
-            <div class="sm:col-span-2">
-              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Общий заголовок колонки офисов
-              </label>
-              <AdminThemedTextField
-                v-model="form.burgerContacts!.officesColumnTitle"
-                :multiline="false"
-                placeholder="Office in U.A.E."
-              />
+            <div class="sm:col-span-2 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Общий заголовок колонки офисов (RU)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.officesColumnTitle!.ru"
+                  :multiline="false"
+                  placeholder="Офисы"
+                />
+              </div>
+              <div>
+                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                  Общий заголовок колонки офисов (EN)
+                </label>
+                <AdminThemedTextField
+                  v-model="form.burgerContacts!.officesColumnTitle!.en"
+                  :multiline="false"
+                  placeholder="Offices"
+                />
+              </div>
             </div>
             <div class="sm:col-span-2">
               <p class="mb-2 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">Офисы</p>

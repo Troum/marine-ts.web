@@ -1,4 +1,5 @@
-import type { PageInquiryFormConfig, PageInquiryServiceId, PageInquiryVesselType } from '~/types'
+import type { LocalizedLine, PageInquiryFormConfig, PageInquiryServiceId, PageInquiryVesselType } from '~/types'
+import { parseBilingual } from '~/utils/bilingualField'
 
 export const DEFAULT_PAGE_INQUIRY_VESSEL_TYPES: readonly PageInquiryVesselType[] = [
   'dry_cargo',
@@ -41,22 +42,22 @@ function normalizeStringList(
   return out.length > 0 ? out : [...fallback]
 }
 
-function normalizeLabelsMap(value: unknown): Record<string, string> {
+function normalizeLabelsMap(value: unknown): Record<string, LocalizedLine> {
   if (!value || typeof value !== 'object') {
     return {}
   }
   const raw = value as Record<string, unknown>
-  const out: Record<string, string> = {}
+  const out: Record<string, LocalizedLine> = {}
   for (const [key, val] of Object.entries(raw)) {
     const id = key.trim()
-    if (!id || typeof val !== 'string') {
+    if (!id || val == null) {
       continue
     }
-    const label = val.trim()
-    if (!label) {
+    const p = parseBilingual(val)
+    if (!p.ru.trim() && !p.en.trim()) {
       continue
     }
-    out[id] = label
+    out[id] = typeof val === 'string' ? val.trim() : p
   }
   return out
 }
@@ -72,8 +73,8 @@ export function normalizePageInquiryFormConfig(
   )
   const rawVesselLabels = normalizeLabelsMap(cfg.vesselTypeLabels)
   const rawServiceLabels = normalizeLabelsMap(cfg.requiredServiceLabels)
-  const vesselTypeLabels: Record<string, string> = {}
-  const requiredServiceLabels: Record<string, string> = {}
+  const vesselTypeLabels: Record<string, LocalizedLine> = {}
+  const requiredServiceLabels: Record<string, LocalizedLine> = {}
 
   for (const id of vesselTypes) {
     if (rawVesselLabels[id]) {

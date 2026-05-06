@@ -1,5 +1,18 @@
-import type { ContactQuickIconKey, ContactSocialLink, SiteContactSettings } from '~/types'
+import type { ContactQuickIconKey, ContactSocialLink, LocalizedLine, SiteContactSettings } from '~/types'
+import { parseBilingual } from '~/utils/bilingualField'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+
+function normLocalized(raw: unknown, fallback: LocalizedLine): LocalizedLine {
+  const fb = parseBilingual(fallback)
+  return parseBilingual(raw, fb.ru, fb.en)
+}
+
+function serializeLocalized(value: LocalizedLine): string | { ru: string; en: string } {
+  if (typeof value === 'string') {
+    return value
+  }
+  return { ru: value.ru ?? '', en: value.en ?? '' }
+}
 
 function unwrapContactSettingsPayload(json: unknown): Record<string, unknown> | null {
   if (!json || typeof json !== 'object' || Array.isArray(json)) {
@@ -76,8 +89,8 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
       const fallback = def.quick[index] ?? defaultQuick
       return [{
         iconKey: normalizeIconKey(row.iconKey ?? row.icon_key ?? row.icon, fallback.iconKey),
-        label: asString(row.label, fallback.label),
-        value: asString(row.value, fallback.value),
+        label: normLocalized(row.label, fallback.label),
+        value: normLocalized(row.value, fallback.value),
         href: asTrimmedNullable(row.href ?? row.link),
         showInFooter: asBool(row.showInFooter ?? row.show_in_footer, fallback.showInFooter ?? true),
       }]
@@ -92,7 +105,7 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
       const row = raw as Record<string, unknown>
       const fallback = def.departments[index] ?? defaultDepartment
       return [{
-        title: asString(row.title, fallback.title),
+        title: normLocalized(row.title, fallback.title),
         phone: asString(row.phone, fallback.phone),
         email: asString(row.email, fallback.email),
         showInFooter: asBool(row.showInFooter ?? row.show_in_footer, fallback.showInFooter ?? false),
@@ -108,9 +121,9 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
       const row = raw as Record<string, unknown>
       const fallback = def.offices[index] ?? defaultOffice
       return [{
-        city: asString(row.city, fallback.city),
-        country: asString(row.country, fallback.country),
-        address: asString(row.address, fallback.address),
+        city: normLocalized(row.city, fallback.city),
+        country: normLocalized(row.country, fallback.country),
+        address: normLocalized(row.address, fallback.address),
         phone: asString(row.phone, fallback.phone),
         email: asString(row.email, fallback.email),
       }]
@@ -146,24 +159,24 @@ export function serializeContactSettingsPayload(body: SiteContactSettings): Reco
         iconKey,
         icon_key: iconKey,
         icon: iconKey,
-        label: String(row.label ?? ''),
-        value: String(row.value ?? ''),
+        label: serializeLocalized(row.label),
+        value: serializeLocalized(row.value),
         href: row.href?.trim() ? row.href.trim() : null,
         showInFooter: row.showInFooter === true,
         show_in_footer: row.showInFooter === true,
       }
     }),
     departments: body.departments.map((department) => ({
-      title: String(department.title ?? ''),
+      title: serializeLocalized(department.title),
       phone: String(department.phone ?? ''),
       email: String(department.email ?? ''),
       showInFooter: department.showInFooter === true,
       show_in_footer: department.showInFooter === true,
     })),
     offices: body.offices.map((office) => ({
-      city: String(office.city ?? ''),
-      country: String(office.country ?? ''),
-      address: String(office.address ?? ''),
+      city: serializeLocalized(office.city),
+      country: serializeLocalized(office.country),
+      address: serializeLocalized(office.address),
       phone: String(office.phone ?? ''),
       email: String(office.email ?? ''),
     })),

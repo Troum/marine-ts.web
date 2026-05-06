@@ -581,16 +581,25 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                 <input v-model="form.placeOfBirth" type="text" :class="fieldInputClass" />
               </div>
               <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.photo')
-                }}</label>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  :lang="locale"
-                  class="w-full border-0 bg-white p-2 font-body text-sm file:mr-3 file:border file:border-border file:bg-bg-light file:px-3 file:py-1.5 file:font-mono file:text-xs"
-                  @change="onPhotoChange"
-                />
+                <label
+                  class="block cursor-pointer rounded-md border border-border bg-mts-bg/30 px-3 py-2 font-body text-sm text-body transition-colors hover:border-primary/40"
+                >
+                  <span class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
+                    t('pages.vacancyForm.fields.photo')
+                  }}</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    class="sr-only"
+                    @change="onPhotoChange"
+                  />
+                  <span class="inline-flex flex-wrap items-center gap-2">
+                    <span
+                      class="inline-flex rounded border border-border bg-mts-navy/35 px-3 py-1.5 font-mono text-xs text-body"
+                    >{{ t('pages.vacancyForm.fileInputChoose') }}</span>
+                    <span class="text-muted">{{ form.photoFileName || t('pages.vacancyForm.fileInputNone') }}</span>
+                  </span>
+                </label>
                 <div v-if="photoPreview" class="mt-2 flex items-start gap-3">
                   <img
                     :src="photoPreview"

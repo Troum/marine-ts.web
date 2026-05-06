@@ -30,7 +30,7 @@ function removeRow(index: number) {
 
 <template>
   <section class="card-tech overflow-hidden">
-    <header class="border-b border-border bg-gradient-to-r from-white to-white px-5 py-4">
+    <header class="border-b border-border bg-mts-navy/25 px-5 py-4">
       <h3 class="font-display text-lg text-body">{{ t('pages.eduTable.title') }}</h3>
       <p class="mt-1 text-sm text-muted">{{ t('pages.eduTable.lead') }}</p>
     </header>

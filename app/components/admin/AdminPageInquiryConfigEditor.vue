@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Trash2 } from 'lucide-vue-next'
 import type { PageInquiryFormConfig } from '~/types'
+import { parseBilingual, serializeBilingual } from '~/utils/bilingualField'
 import {
   DEFAULT_PAGE_INQUIRY_REQUIRED_SERVICES,
   DEFAULT_PAGE_INQUIRY_VESSEL_TYPES,
@@ -70,9 +71,8 @@ function removeCustomItem(key: 'vesselTypes' | 'requiredServices', id: string) {
   const listKey = key
   const mapKey = key === 'vesselTypes' ? 'vesselTypeLabels' : 'requiredServiceLabels'
   const source = listKey === 'vesselTypes' ? cur.vesselTypes ?? [] : cur.requiredServices ?? []
-  const labelMap = { ...(mapKey === 'vesselTypeLabels' ? (cur.vesselTypeLabels ?? {}) : (cur.requiredServiceLabels ?? {})) }
+  const labelMap = { ...(mapKey === 'vesselTypes' ? (cur.vesselTypeLabels ?? {}) : (cur.requiredServiceLabels ?? {})) }
   delete labelMap[id]
-  // Single atomic update — both list and label map change together
   model.value = { ...cur, [listKey]: source.filter((row) => row !== id), [mapKey]: labelMap }
 }
 
@@ -93,7 +93,6 @@ function addCustomItem(key: 'vesselTypes' | 'requiredServices', labelInput: stri
   const source = listKey === 'vesselTypes' ? cur.vesselTypes ?? [] : cur.requiredServices ?? []
   const currentLabels = mapKey === 'vesselTypeLabels' ? (cur.vesselTypeLabels ?? {}) : (cur.requiredServiceLabels ?? {})
 
-  // Single atomic update — prevents the second write from clobbering the first
   model.value = {
     ...cur,
     [listKey]: [...source, id],
@@ -123,11 +122,44 @@ function isDefaultService(id: string): boolean {
   return (DEFAULT_PAGE_INQUIRY_REQUIRED_SERVICES as readonly string[]).includes(id)
 }
 
-function vesselLabel(id: string): string {
-  return normalized.value.vesselTypeLabels?.[id] ?? BUILT_IN_VESSEL_TYPE_LABELS[id] ?? id
+function vesselLabelPair(id: string): { ru: string; en: string } {
+  const custom = normalized.value.vesselTypeLabels?.[id]
+  if (custom) {
+    return parseBilingual(custom)
+  }
+  const def = BUILT_IN_VESSEL_TYPE_LABELS[id]
+  return parseBilingual(def ?? id)
 }
-function serviceLabel(id: string): string {
-  return normalized.value.requiredServiceLabels?.[id] ?? BUILT_IN_REQUIRED_SERVICE_LABELS[id] ?? id
+
+function serviceLabelPair(id: string): { ru: string; en: string } {
+  const custom = normalized.value.requiredServiceLabels?.[id]
+  if (custom) {
+    return parseBilingual(custom)
+  }
+  const def = BUILT_IN_REQUIRED_SERVICE_LABELS[id]
+  return parseBilingual(def ?? id)
+}
+
+function updateVesselLabels(id: string, ru: string, en: string) {
+  const cur = getCurrent()
+  model.value = {
+    ...cur,
+    vesselTypeLabels: {
+      ...(cur.vesselTypeLabels ?? {}),
+      [id]: serializeBilingual(ru, en),
+    },
+  }
+}
+
+function updateServiceLabels(id: string, ru: string, en: string) {
+  const cur = getCurrent()
+  model.value = {
+    ...cur,
+    requiredServiceLabels: {
+      ...(cur.requiredServiceLabels ?? {}),
+      [id]: serializeBilingual(ru, en),
+    },
+  }
 }
 
 function resetDefaults() {
@@ -153,36 +185,70 @@ function resetDefaults() {
     <!-- Тип судна -->
     <div class="space-y-3">
       <p class="font-body text-sm font-semibold text-mts-text">Тип судна (чекбоксы)</p>
-      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <label
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div
           v-for="id in vesselTypeAvailableOptions"
           :key="id"
-          class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text"
+          class="rounded border border-mts-border bg-mts-bg/40 p-3"
         >
-          <input
-            type="checkbox"
-            class="mts-checkbox"
-            :checked="(normalized.vesselTypes ?? []).includes(id)"
-            @change="(e) => toggleItem('vesselTypes', id, (e.target as HTMLInputElement).checked)"
-          />
-          <span class="flex-1">{{ vesselLabel(id) }}</span>
-          <button
-            v-if="!isDefaultVessel(id)"
-            type="button"
-            class="ml-1 shrink-0 p-0.5 text-mts-text-secondary opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
-            title="Удалить"
-            @click.prevent="removeCustomItem('vesselTypes', id)"
-          >
-            <Trash2 class="h-3.5 w-3.5" />
-          </button>
-        </label>
+          <label class="flex cursor-pointer items-start gap-2 font-body text-sm text-mts-text">
+            <input
+              type="checkbox"
+              class="mts-checkbox mt-0.5"
+              :checked="(normalized.vesselTypes ?? []).includes(id)"
+              @change="(e) => toggleItem('vesselTypes', id, (e.target as HTMLInputElement).checked)"
+            />
+            <span class="flex-1 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{ id }}</span>
+            <button
+              v-if="!isDefaultVessel(id)"
+              type="button"
+              class="shrink-0 p-0.5 text-mts-text-secondary hover:text-red-500"
+              title="Удалить"
+              @click.prevent="removeCustomItem('vesselTypes', id)"
+            >
+              <Trash2 class="h-3.5 w-3.5" />
+            </button>
+          </label>
+          <div class="mt-3 grid gap-2">
+            <div>
+              <label class="mb-1 block font-mono text-[10px] uppercase text-mts-text-secondary">Подпись RU</label>
+              <input
+                type="text"
+                class="w-full border border-mts-border bg-white px-2 py-1.5 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
+                :value="vesselLabelPair(id).ru"
+                @input="
+                  updateVesselLabels(
+                    id,
+                    ($event.target as HTMLInputElement).value,
+                    vesselLabelPair(id).en,
+                  )
+                "
+              />
+            </div>
+            <div>
+              <label class="mb-1 block font-mono text-[10px] uppercase text-mts-text-secondary">Подпись EN</label>
+              <input
+                type="text"
+                class="w-full border border-mts-border bg-white px-2 py-1.5 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
+                :value="vesselLabelPair(id).en"
+                @input="
+                  updateVesselLabels(
+                    id,
+                    vesselLabelPair(id).ru,
+                    ($event.target as HTMLInputElement).value,
+                  )
+                "
+              />
+            </div>
+          </div>
+        </div>
       </div>
       <div class="flex gap-2">
         <input
           v-model="newVesselLabel"
           type="text"
           class="min-w-0 flex-1 border border-mts-border bg-white px-3 py-2 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
-          placeholder="Название нового варианта"
+          placeholder="Название нового варианта (RU)"
           @keydown.enter.prevent="addVesselOption"
         />
         <button type="button" class="btn-secondary shrink-0 inline-flex items-center gap-1.5" @click="addVesselOption">
@@ -195,36 +261,70 @@ function resetDefaults() {
     <!-- Требуемые услуги -->
     <div class="space-y-3">
       <p class="font-body text-sm font-semibold text-mts-text">Требуемые услуги (чекбоксы)</p>
-      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <label
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div
           v-for="id in requiredServiceAvailableOptions"
           :key="id"
-          class="flex cursor-pointer items-center gap-2 font-body text-sm text-mts-text"
+          class="rounded border border-mts-border bg-mts-bg/40 p-3"
         >
-          <input
-            type="checkbox"
-            class="mts-checkbox"
-            :checked="(normalized.requiredServices ?? []).includes(id)"
-            @change="(e) => toggleItem('requiredServices', id, (e.target as HTMLInputElement).checked)"
-          />
-          <span class="flex-1">{{ serviceLabel(id) }}</span>
-          <button
-            v-if="!isDefaultService(id)"
-            type="button"
-            class="ml-1 shrink-0 p-0.5 text-mts-text-secondary opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100"
-            title="Удалить"
-            @click.prevent="removeCustomItem('requiredServices', id)"
-          >
-            <Trash2 class="h-3.5 w-3.5" />
-          </button>
-        </label>
+          <label class="flex cursor-pointer items-start gap-2 font-body text-sm text-mts-text">
+            <input
+              type="checkbox"
+              class="mts-checkbox mt-0.5"
+              :checked="(normalized.requiredServices ?? []).includes(id)"
+              @change="(e) => toggleItem('requiredServices', id, (e.target as HTMLInputElement).checked)"
+            />
+            <span class="flex-1 font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">{{ id }}</span>
+            <button
+              v-if="!isDefaultService(id)"
+              type="button"
+              class="shrink-0 p-0.5 text-mts-text-secondary hover:text-red-500"
+              title="Удалить"
+              @click.prevent="removeCustomItem('requiredServices', id)"
+            >
+              <Trash2 class="h-3.5 w-3.5" />
+            </button>
+          </label>
+          <div class="mt-3 grid gap-2">
+            <div>
+              <label class="mb-1 block font-mono text-[10px] uppercase text-mts-text-secondary">Подпись RU</label>
+              <input
+                type="text"
+                class="w-full border border-mts-border bg-white px-2 py-1.5 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
+                :value="serviceLabelPair(id).ru"
+                @input="
+                  updateServiceLabels(
+                    id,
+                    ($event.target as HTMLInputElement).value,
+                    serviceLabelPair(id).en,
+                  )
+                "
+              />
+            </div>
+            <div>
+              <label class="mb-1 block font-mono text-[10px] uppercase text-mts-text-secondary">Подпись EN</label>
+              <input
+                type="text"
+                class="w-full border border-mts-border bg-white px-2 py-1.5 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
+                :value="serviceLabelPair(id).en"
+                @input="
+                  updateServiceLabels(
+                    id,
+                    serviceLabelPair(id).ru,
+                    ($event.target as HTMLInputElement).value,
+                  )
+                "
+              />
+            </div>
+          </div>
+        </div>
       </div>
       <div class="flex gap-2">
         <input
           v-model="newServiceLabel"
           type="text"
           class="min-w-0 flex-1 border border-mts-border bg-white px-3 py-2 font-body text-sm text-mts-text outline-none focus:border-mts-accent"
-          placeholder="Название нового варианта"
+          placeholder="Название нового варианта (RU)"
           @keydown.enter.prevent="addServiceOption"
         />
         <button type="button" class="btn-secondary shrink-0 inline-flex items-center gap-1.5" @click="addServiceOption">

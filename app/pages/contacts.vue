@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useSectionGuard('contacts')
 import { Phone, Send, Loader2 } from 'lucide-vue-next'
-import type { ContactsPageData, MarineContentLocale } from '~/types'
+import type { ContactsPageData, LocalizedLine, MarineContentLocale } from '~/types'
 import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
@@ -9,6 +9,7 @@ import { contactQuickIcons } from '~/utils/contactQuickIcons'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { CONTACTS_SECTION_DEFAULT_ORDER, defaultContactsData, mergeContactsPageData } from '~/utils/pageDefaults'
+import { pickLocalized } from '~/utils/bilingualField'
 import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
 
 useSiteSeoMeta('contacts')
@@ -19,9 +20,13 @@ const api = useMarineApi()
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 
-const { data: cmsPage } = await useAsyncData('contacts-page-cms', async () => {
-  try { return await api.contentPages.getPublicBySlug('contacts-page') } catch { return null }
-}, { server: true })
+const { data: cmsPage } = await useAsyncData(
+  () => `contacts-page-cms-${locale.value}`,
+  async () => {
+    try { return await api.contentPages.getPublicBySlug('contacts-page') } catch { return null }
+  },
+  { server: true, watch: [locale] },
+)
 
 const cms = computed<ContactsPageData>(() => {
   const body = cmsPage.value?.body
@@ -46,7 +51,7 @@ const crumbItems = computed(() =>
 )
 
 const { data: contactSettings, pending: contactsPending } = await useAsyncData(
-  'contact-settings',
+  () => `contact-settings-${locale.value}`,
   async () => {
     try {
       return await api.contactSettings.get()
@@ -57,6 +62,7 @@ const { data: contactSettings, pending: contactsPending } = await useAsyncData(
   {
     default: () => null,
     server: true,
+    watch: [locale],
   },
 )
 
@@ -85,6 +91,10 @@ const sectionOrderEffective = computed(() =>
 
 function sectionShown(id: string): boolean {
   return isSectionVisible(cms.value.sectionVisibility, id)
+}
+
+function lineForLocale(v: LocalizedLine | undefined, fallback = ''): string {
+  return pickLocalized(v ?? '', loc.value, fallback)
 }
 
 async function submitFeedback() {
@@ -150,8 +160,8 @@ async function submitFeedback() {
                   <component :is="contactQuickIcons[item.iconKey] ?? Phone" class="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p class="font-mono text-[10px] uppercase tracking-wide text-muted">{{ item.label }}</p>
-                  <p class="font-body text-sm text-body whitespace-pre-line">{{ item.value }}</p>
+                  <p class="font-mono text-[10px] uppercase tracking-wide text-muted">{{ lineForLocale(item.label) }}</p>
+                  <p class="font-body text-sm text-body whitespace-pre-line">{{ lineForLocale(item.value) }}</p>
                 </div>
               </component>
             </div>
@@ -164,7 +174,7 @@ async function submitFeedback() {
                   :key="`${department.title}-${idx}`"
                   class="public-card p-5"
                 >
-                  <h4 class="font-display text-base text-body">{{ department.title }}</h4>
+                  <h4 class="font-display text-base text-body">{{ lineForLocale(department.title) }}</h4>
                   <p class="mt-3 font-body text-sm text-muted">{{ department.phone }}</p>
                   <a
                     :href="`mailto:${department.email}`"
@@ -257,9 +267,9 @@ async function submitFeedback() {
               :key="`${o.city}-${o.country}-${oi}`"
               class="card-tech p-6"
             >
-              <p class="font-mono text-xs text-primary mb-1">{{ o.country }}</p>
-              <h3 class="font-display text-lg text-body mb-2">{{ o.city }}</h3>
-              <p class="font-body text-sm text-muted mb-4">{{ o.address }}</p>
+              <p class="font-mono text-xs text-primary mb-1">{{ lineForLocale(o.country) }}</p>
+              <h3 class="font-display text-lg text-body mb-2">{{ lineForLocale(o.city) }}</h3>
+              <p class="font-body text-sm text-muted mb-4">{{ lineForLocale(o.address) }}</p>
               <p class="font-body text-sm">{{ o.phone }}</p>
               <p class="font-mono text-xs text-primary mt-2">{{ o.email }}</p>
             </div>

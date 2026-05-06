@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Check, ChevronDown, Loader2, Mail, Phone, Search, X } from 'lucide-vue-next'
-import type { PageInquiryFormConfig, SiteContactSettings } from '~/types'
+import type { LocalizedLine, MarineContentLocale, PageInquiryFormConfig, SiteContactSettings } from '~/types'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { pickLocalized } from '~/utils/bilingualField'
 import { normalizePageInquiryFormConfig } from '~/utils/pageInquiryFormOptions'
 import 'flag-icons/css/flag-icons.min.css'
 
@@ -35,6 +36,7 @@ const props = withDefaults(
 )
 
 const { t, te, locale } = useI18n()
+const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 const api = useMarineApi()
 
 const normalizedConfig = computed(() => normalizePageInquiryFormConfig(props.config))
@@ -113,12 +115,20 @@ onMounted(async () => {
   }
 })
 
+watch(locale, async () => {
+  try {
+    contacts.value = await api.contactSettings.get()
+  } catch {
+    /* keep previous */
+  }
+})
+
 const phoneContact = computed(() =>
   contacts.value.quick.find((q) => q.iconKey === 'phone') ?? null,
 )
 const emailContact = computed(() => {
   const fromQuick = contacts.value.quick.find((q) => {
-    const value = q.value.trim()
+    const value = pickLocalized(q.value, loc.value, '').trim()
     const href = q.href?.trim() ?? ''
     return (
       q.iconKey === 'mail' ||
@@ -211,6 +221,20 @@ function validateForm(): ReturnType<typeof trimmedForm> | null {
   return errors.length === 0 ? payload : null
 }
 
+function labelMapForSubmit(map: Record<string, LocalizedLine> | undefined): Record<string, string> | undefined {
+  if (!map || Object.keys(map).length === 0) {
+    return undefined
+  }
+  const out: Record<string, string> = {}
+  for (const [id, val] of Object.entries(map)) {
+    const s = pickLocalized(val, loc.value, '').trim()
+    if (s !== '') {
+      out[id] = s
+    }
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
 async function onSubmit() {
   formError.value = null
   validationErrors.value = []
@@ -230,12 +254,12 @@ async function onSubmit() {
       phone: payload.phone,
       email: payload.email,
       vesselTypes: payload.vesselTypes,
-      vesselTypeLabels: normalizedConfig.value.vesselTypeLabels ?? undefined,
+      vesselTypeLabels: labelMapForSubmit(normalizedConfig.value.vesselTypeLabels),
       vesselsCount: payload.vesselsCount!,
       vesselFlag: payload.vesselFlag,
       mainPorts: payload.mainPorts || null,
       requiredServices: payload.requiredServices,
-      requiredServiceLabels: normalizedConfig.value.requiredServiceLabels ?? undefined,
+      requiredServiceLabels: labelMapForSubmit(normalizedConfig.value.requiredServiceLabels),
       message: payload.message || null,
       sourcePage: payload.sourcePage,
       consent: payload.consent,
@@ -257,7 +281,7 @@ function humanizeOptionId(value: string): string {
 function vesselTypeLabel(id: string): string {
   const custom = vesselTypeLabelMap.value[id]
   if (custom) {
-    return custom
+    return pickLocalized(custom, loc.value, '')
   }
   const key = `pages.pageInquiry.vesselTypes.${id}`
   return te(key) ? t(key) : humanizeOptionId(id)
@@ -265,7 +289,7 @@ function vesselTypeLabel(id: string): string {
 function requiredServiceLabel(id: string): string {
   const custom = requiredServiceLabelMap.value[id]
   if (custom) {
-    return custom
+    return pickLocalized(custom, loc.value, '')
   }
   const key = `pages.pageInquiry.requiredServices.${id}`
   return te(key) ? t(key) : humanizeOptionId(id)

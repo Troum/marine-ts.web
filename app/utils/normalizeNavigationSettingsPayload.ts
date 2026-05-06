@@ -1,4 +1,5 @@
 import type {
+  LocalizedLine,
   MainNavMenuFontSize,
   MainNavMenuFontWeight,
   MainNavMenuJustify,
@@ -8,6 +9,7 @@ import type {
   NavigationMenuItem,
   NavigationMenuSettings,
 } from '~/types'
+import { parseBilingual } from '~/utils/bilingualField'
 
 function normMenuVariant(raw: unknown): MainNavMenuVariant {
   const v = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
@@ -98,6 +100,20 @@ function normHorizItems(raw: unknown): NavigationMenuItem[] | undefined {
   return out.length > 0 ? out : undefined
 }
 
+function pickBurgerLocalized(o: Record<string, unknown>, camel: string, snake: string): LocalizedLine | undefined {
+  for (const k of [camel, snake]) {
+    const v = o[k]
+    if (v == null) {
+      continue
+    }
+    const p = parseBilingual(v)
+    if (p.ru.trim() || p.en.trim()) {
+      return typeof v === 'string' ? v.trim() : p
+    }
+  }
+  return undefined
+}
+
 function pickBurgerStr(o: Record<string, unknown>, camel: string, snake: string): string | undefined {
   for (const k of [camel, snake]) {
     const v = o[k]
@@ -114,7 +130,7 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
   }
   const o = raw as Record<string, unknown>
   const out: NavigationBurgerContacts = {}
-  const phonesTitle = pickBurgerStr(o, 'phonesTitle', 'phones_title')
+  const phonesTitle = pickBurgerLocalized(o, 'phonesTitle', 'phones_title')
   if (phonesTitle) {
     out.phonesTitle = phonesTitle
   }
@@ -126,7 +142,7 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
       out.phones = phones
     }
   }
-  const emailTitle = pickBurgerStr(o, 'emailTitle', 'email_title')
+  const emailTitle = pickBurgerLocalized(o, 'emailTitle', 'email_title')
   if (emailTitle) {
     out.emailTitle = emailTitle
   }
@@ -172,7 +188,7 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
     out.socials = socials
   }
 
-  const oct = pickBurgerStr(o, 'officesColumnTitle', 'offices_column_title')
+  const oct = pickBurgerLocalized(o, 'officesColumnTitle', 'offices_column_title')
   if (oct) {
     out.officesColumnTitle = oct
   }
@@ -201,7 +217,7 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
     if (oa) {
       offices = [{ address: oa }]
       if (!out.officesColumnTitle) {
-        const ot = pickBurgerStr(o, 'officeTitle', 'office_title')
+        const ot = pickBurgerLocalized(o, 'officeTitle', 'office_title')
         if (ot) {
           out.officesColumnTitle = ot
         }
