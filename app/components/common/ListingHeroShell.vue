@@ -11,7 +11,7 @@ const props = withDefaults(
     heroVeil?: boolean
     /** Прозрачность затемнения hero (0..1). Если не задано — используется дефолтный градиент. */
     heroVeilOpacity?: number | null
-    /** Полная высота первого экрана (viewport), как маркетинговый hero на линии. */
+    /** Высота первого экрана (`mts-hero-min-h`), а не компактный листинг. */
     fullViewport?: boolean
     /**
      * Видимость фонового слоя после mount (fade-in), как CommonParallaxHeroMedia на маркетинговых страницах.
@@ -62,10 +62,10 @@ const resolvedHeroImage = computed(() => {
       'relative overflow-hidden',
       resolvedHeroImage
         ? props.fullViewport
-          ? 'min-h-[100svh] pb-16 pt-36 lg:pb-20 lg:pt-44'
+          ? 'mts-hero-min-h pb-16 pt-36 lg:pb-20 lg:pt-44'
           : 'min-h-[52vh] pb-16 pt-36 lg:pb-20 lg:pt-44'
         : props.fullViewport
-          ? 'min-h-[100svh] bg-white py-28 pt-32 text-body lg:py-36'
+          ? 'mts-hero-min-h bg-white py-28 pt-32 text-body lg:py-36'
           : 'bg-white py-28 pt-32 text-body lg:py-36',
     ]"
   >

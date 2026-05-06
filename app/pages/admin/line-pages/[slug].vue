@@ -1062,7 +1062,7 @@ async function submit() {
   try {
     const translations = {} as Record<
       MarineContentLocale,
-      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }
+      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string; seoImage: string }
     >
     for (const loc of MARINE_CONTENT_LOCALES) {
       const page = data.value[loc]
@@ -1089,6 +1089,7 @@ async function submit() {
         seoTitle: '',
         seoDescription: '',
         seoKeywords: '',
+        seoImage: '',
       }
     }
     if (existingId.value) {

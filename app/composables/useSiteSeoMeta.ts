@@ -23,10 +23,26 @@ export function useSiteSeoMeta(slug: string) {
       if (!page) {
         return
       }
-      useSeoMeta({
-        title: page.seoTitle || undefined,
-        description: page.seoDescription || undefined,
+      const servicesTitleFallback = locale.value === 'en'
+        ? 'Ship Repair — vessel repair and technical maintenance | Marine Technical Solutions'
+        : 'Судоремонт — ремонт и техническое обслуживание судов | Marine Technical Solutions'
+      const servicesDescriptionFallback = locale.value === 'en'
+        ? 'Ship repair of any complexity: dry-docking, emergency repairs, engines, automation and vessel systems worldwide.'
+        : 'Судоремонт любой сложности: докование, аварийный ремонт, ремонт двигателей, автоматики и судовых систем в портах по всему миру.'
+      const title = page.seoTitle || undefined
+      const description = page.seoDescription || undefined
+      const shouldBoostServices = slug === 'services'
+      const boostedTitle = shouldBoostServices && (!title || /^сервисы\b/i.test(title) || /^services\b/i.test(title))
+        ? servicesTitleFallback
+        : title
+      const boostedDescription = shouldBoostServices && !description
+        ? servicesDescriptionFallback
+        : description
+      usePublicSeoMeta({
+        title: boostedTitle,
+        description: boostedDescription,
         keywords: page.seoKeywords || undefined,
+        image: page.seoImage || undefined,
       })
     },
     { immediate: true },

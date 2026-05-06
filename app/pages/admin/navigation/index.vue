@@ -15,6 +15,7 @@ import type {
 } from '~/types'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 import { parseBilingual, serializeBilingual } from '~/utils/bilingualField'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 import { useConfirm } from '~/composables/useConfirmAction'
 
 definePageMeta({
@@ -71,6 +72,14 @@ function burgerContactPayloadString(s: string | undefined): string | undefined {
     return undefined
   }
   const t = typeof s === 'string' ? s.trim() : String(s).trim()
+  return t !== '' ? t : undefined
+}
+
+function burgerContactPayloadUrl(s: string | undefined): string | undefined {
+  if (s == null) {
+    return undefined
+  }
+  const t = stripHtmlToPlain(String(s)).replace(/\s+/g, ' ').trim()
   return t !== '' ? t : undefined
 }
 
@@ -384,11 +393,16 @@ async function submit() {
           emailTitle: burgerContactPayloadLocalized(bc.emailTitle),
           emails: bc.emails?.map(e => e.trim()).filter(Boolean) ?? undefined,
           socials: bc.socials
-            ?.map(s => ({
-              url: s.url.trim(),
-              label: (s.label.trim() || s.url.trim()),
-            }))
-            .filter(s => s.url) ?? undefined,
+            ?.flatMap((s) => {
+              const url = burgerContactPayloadUrl(s.url)
+              if (!url) {
+                return []
+              }
+              return [{
+                url,
+                label: s.label.trim() || url,
+              }]
+            }) ?? undefined,
           officesColumnTitle: burgerContactPayloadLocalized(bc.officesColumnTitle),
           offices: bc.offices
             ?.map(o => ({
@@ -856,7 +870,12 @@ async function submit() {
                     <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
                       URL
                     </label>
-                    <AdminThemedTextField v-model="soc.url" :multiline="false" placeholder="https://…" />
+                    <input
+                      v-model="soc.url"
+                      type="url"
+                      class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+                      placeholder="https://…"
+                    />
                   </div>
                   <div>
                     <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">

@@ -1,5 +1,5 @@
 /**
- * Секции на всю высоту viewport (см. `mts-main--full-viewport-sections` в main.css):
+ * Секции на высоту первого экрана (`mts-hero-min-h` / `mts-main--full-viewport-sections` в main.css):
  * главная, «О компании», маркетинг крюинга и судового менеджмента (включая дочерние slug).
  */
 export function isFullViewportSectionsPath(path: string): boolean {

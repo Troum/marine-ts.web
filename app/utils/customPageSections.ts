@@ -38,7 +38,7 @@ export const CUSTOM_BLOCK_TYPE_LABELS: Record<CustomPageBlockType, string> = {
   cards: 'Карточки',
   text: 'Текст',
   split: 'Текст + изображение / слайдер',
-  heroImage: 'Hero / баннер (на сайте: на всю ширину окна, высота 50%)',
+  heroImage: 'Hero / баннер (ширина 100%, высота 30–100vh)',
   gallery: 'Галерея',
   accordion: 'Аккордеон',
   htmlMarkdown: 'Произвольный текст (Markdown)',
@@ -80,6 +80,7 @@ export function defaultBlock(type: CustomPageBlockType): CustomPageBlock {
         showHero: true,
         imageUrl: '',
         height: 'medium',
+        viewportHeightVh: 50,
         title: '',
         caption: '',
         overlayOpacity: 30,
@@ -119,6 +120,11 @@ function pickNumber(v: unknown, fallback: number): number {
 
 function clampInt(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.round(v)))
+}
+
+/** Высота hero-баннера в vh (30–100). */
+export function clampHeroViewportHeightVh(v: unknown): number {
+  return clampInt(pickNumber(v, 50), 30, 100)
 }
 
 function pickStringArray(v: unknown): string[] {
@@ -198,6 +204,7 @@ function normalizeHeroImageBlock(raw: Record<string, unknown>): LineMarketingHer
     showHero: pickBoolean(raw.showHero, true),
     imageUrl: pickString(raw.imageUrl, '').trim(),
     height: h,
+    viewportHeightVh: clampHeroViewportHeightVh(raw.viewportHeightVh),
     title: pickString(raw.title, ''),
     caption: pickString(raw.caption, ''),
     overlayOpacity: clampInt(pickNumber(raw.overlayOpacity, 30), 0, 100),

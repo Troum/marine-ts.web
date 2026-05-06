@@ -270,7 +270,7 @@ const heroMarketingSlidesForSlider = computed(() => {
       />
     </div>
     <template v-else>
-    <section ref="publicHeroSectionRef" class="public-hero relative min-h-[100svh] overflow-x-hidden md:h-screen">
+    <section ref="publicHeroSectionRef" class="public-hero relative flex flex-col overflow-x-hidden mts-hero-min-h">
       <!-- Фон -->
       <div class="absolute inset-0">
         <CommonParallaxHeroMedia
@@ -289,7 +289,7 @@ const heroMarketingSlidesForSlider = computed(() => {
         />
       </div>
 
-      <div class="relative z-10 flex min-h-[100svh] flex-col md:h-full">
+      <div class="relative z-10 flex min-h-0 flex-1 flex-col">
         <div class="pt-24 sm:pt-28 md:pt-32 shrink-0" />
         <div class="flex flex-1 items-center">
           <div

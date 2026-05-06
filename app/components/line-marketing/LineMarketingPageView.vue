@@ -335,12 +335,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
 
 <template>
   <div class="relative mts-line-marketing-root bg-white">
-    <section
-      :class="[
-        'relative flex items-center overflow-hidden',
-        props.slug === 'ship-management' || props.slug === 'lnk' || isLineV2 ? 'min-h-[100svh]' : 'min-h-[min(88vh,920px)]',
-      ]"
-    >
+    <section class="relative flex items-center overflow-hidden mts-hero-min-h">
       <div class="absolute top-0 left-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
       <div class="absolute top-0 right-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
 
@@ -1047,7 +1042,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
 
         <section
           v-else-if="sid === 'competencies'"
-          :class="[lineSecShell('competencies', 'py-24'), 'flex min-h-[100svh] flex-col']"
+          :class="[lineSecShell('competencies', 'py-24'), 'flex mts-section-immersive-min-h flex-col']"
         >
           <LineSectionMediaBackdrop :image-url="sectionBgUrl('competencies')" />
           <AboutSectionContentParallax
@@ -1090,7 +1085,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
 
         <section
           v-else-if="sid === 'strategicAdvantages'"
-          :class="[lineSecShell('strategicAdvantages', 'py-24'), 'flex min-h-[100svh] flex-col']"
+          :class="[lineSecShell('strategicAdvantages', 'py-24'), 'flex mts-section-immersive-min-h flex-col']"
         >
           <LineSectionMediaBackdrop :image-url="sectionBgUrl('strategicAdvantages')" />
           <AboutSectionContentParallax

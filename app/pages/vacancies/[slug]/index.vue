@@ -38,10 +38,12 @@ watchEffect(() => {
   if (!v) {
     return
   }
-  useSeoMeta({
+  usePublicSeoMeta({
     title: plainMetaString(v.seoTitle) || plainMetaString(v.title) || slug.value,
     description: plainMetaString(v.seoDescription) || plainMetaString(v.excerpt) || undefined,
     keywords: plainMetaString(v.seoKeywords) || undefined,
+    image: v.seoImage || undefined,
+    type: 'article',
   })
 })
 

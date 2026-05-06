@@ -78,15 +78,48 @@ function onVisibility() {
   }
 }
 
+/** Высота области текста = max по всем слайдам, чтобы индикаторы не прыгали. */
+const measureRoot = ref<HTMLElement | null>(null)
+const slideAreaMinHeight = ref(0)
+
+function commitSlideAreaMinHeight() {
+  if (!import.meta.client) {
+    return
+  }
+  const el = measureRoot.value
+  if (!el) {
+    return
+  }
+  const h = Math.ceil(el.getBoundingClientRect().height)
+  if (h > 0) {
+    slideAreaMinHeight.value = h
+  }
+}
+
+let measureRo: ResizeObserver | null = null
+
 onMounted(() => {
   reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   document.addEventListener('visibilitychange', onVisibility)
   scheduleAutoplay()
+
+  measureRo = new ResizeObserver(() => {
+    commitSlideAreaMinHeight()
+  })
+  nextTick(() => {
+    const el = measureRoot.value
+    if (el && measureRo) {
+      measureRo.observe(el)
+    }
+    commitSlideAreaMinHeight()
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', onVisibility)
   clearAutoplay()
+  measureRo?.disconnect()
+  measureRo = null
 })
 
 watch([() => props.autoplayMs, slideIndex, reducedMotion, normalized, hoverPaused], () => {
@@ -104,6 +137,17 @@ function onSliderPointerLeave() {
 }
 
 const currentContent = computed(() => normalized.value[slideIndex.value] ?? '')
+
+watch(
+  normalized,
+  () => {
+    nextTick(() => commitSlideAreaMinHeight())
+  },
+  { deep: true },
+)
+
+const slideCopyClass =
+  'mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl'
 </script>
 
 <template>
@@ -115,14 +159,31 @@ const currentContent = computed(() => normalized.value[slideIndex.value] ?? '')
     @mouseenter="onSliderPointerEnter"
     @mouseleave="onSliderPointerLeave"
   >
+    <div class="relative w-full">
+      <div
+        ref="measureRoot"
+        class="slider-measure-stack pointer-events-none absolute left-0 right-0 top-0 -z-10 w-full opacity-0"
+        aria-hidden="true"
+      >
+        <div
+          v-for="(s, i) in normalized"
+          :key="`measure-${i}-${s.slice(0, 24)}`"
+          :class="['min-w-0', slideCopyClass]"
+        >
+          <ThemedContentString :content="s" />
+        </div>
+      </div>
+
       <Transition mode="out-in" name="home-hero-fade">
         <div
           :key="`${slideIndex}-${currentContent.slice(0, 40)}`"
-          class="mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl"
+          :class="['min-w-0', slideCopyClass]"
+          :style="slideAreaMinHeight > 0 ? { minHeight: `${slideAreaMinHeight}px` } : undefined"
         >
           <ThemedContentString :content="currentContent" />
         </div>
       </Transition>
+    </div>
 
       <div
         v-if="showNav"
@@ -169,6 +230,17 @@ const currentContent = computed(() => normalized.value[slideIndex.value] ?? '')
 </template>
 
 <style scoped>
+.slider-measure-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.slider-measure-stack > * {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
 .home-hero-fade-enter-active,
 .home-hero-fade-leave-active {
   transition: opacity 0.45s ease;

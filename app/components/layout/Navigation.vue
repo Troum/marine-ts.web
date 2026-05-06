@@ -110,10 +110,15 @@ const burgerOverlayEmails = computed(() => {
 const burgerOverlaySocials = computed((): NavigationBurgerSocial[] => {
   const c = bcOverlay.value
   if (c?.socials?.length) {
-    return c.socials.filter(s => s.url.trim())
+    return c.socials
+      .map(s => ({
+        ...s,
+        url: stripHtmlToPlain(s.url).replace(/\s+/g, ' ').trim(),
+      }))
+      .filter(s => s.url)
   }
   if (c?.socialUrl?.trim()) {
-    const url = c.socialUrl.trim()
+    const url = stripHtmlToPlain(c.socialUrl).replace(/\s+/g, ' ').trim()
     const label = c.socialLabel?.trim() || url
     return [{ url, label }]
   }
@@ -229,53 +234,29 @@ const navColorVars = computed(() => {
   return { '--mts-nav-item-hover-color': hover }
 })
 
-/**
- * Прокрутка: компактное «стекло» (scrollY > 40). Исключение: главная + viewport
- * как у мобильного (< lg) — всегда режим верха страницы.
- */
+const hasCustomHoverColor = computed(() => !!menu.value.menuItemHoverColor)
+
 const scrollY = ref(0)
-/** Совпадает с Tailwind `xl:` (горизонтальное меню скрыто ниже 1280px). */
-const isMobileNavViewport = ref(false)
 if (import.meta.client) {
   onMounted(() => {
     const onScroll = () => { scrollY.value = window.scrollY }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-
-    const mq = window.matchMedia('(max-width: 1279px)')
-    const onMq = () => { isMobileNavViewport.value = mq.matches }
-    onMq()
-    mq.addEventListener('change', onMq)
     onUnmounted(() => {
       window.removeEventListener('scroll', onScroll)
-      mq.removeEventListener('change', onMq)
     })
   })
 }
 
-const isHomeRoute = computed(() => {
-  const current = stripLocalePrefix(route.path).replace(/\/$/, '') || '/'
-  return current === '/'
-})
-
-/** На главной в мобильной вёрстке шапка остаётся полноширинной/прозрачной, без «стекла» после scroll. */
-const isScrolled = computed(() => {
-  if (isHomeRoute.value && isMobileNavViewport.value) {
-    return false
-  }
-  return scrollY.value > 40
-})
-
-const hasCustomHoverColor = computed(() => !!menu.value.menuItemHoverColor)
+const isScrolled = computed(() => scrollY.value > 40)
 
 const horizLinkClasses = computed(() => {
-  const tone = !isScrolled.value ? 'text-white hover:text-primary' : 'text-white/90 hover:text-white'
   return [
     horizSizeClass.value,
     horizWeightClass.value,
     horizCaseClass.value,
     'tracking-tight transition-colors',
-    tone,
+    'text-white/90 hover:text-white',
     hasCustomHoverColor.value ? 'mts-nav-hover-custom' : '',
   ].filter(Boolean)
 })
@@ -322,10 +303,10 @@ watch(
   <header :style="navColorVars">
     <nav
       :class="[
-        'fixed z-50 transition-[left,right,top,border-radius,background-color,box-shadow,backdrop-filter,-webkit-backdrop-filter] duration-500 ease-out',
+        'fixed left-0 right-0 top-0 z-50 border-transparent transition-[background-color,box-shadow,backdrop-filter,-webkit-backdrop-filter] duration-500 ease-out',
         isScrolled
-          ? 'left-12 right-12 top-3 rounded-2xl bg-[color-mix(in_srgb,var(--color-mts-navy)_88%,transparent)] shadow-[0_4px_24px_rgb(0_0_0/0.25)] backdrop-blur-xl backdrop-saturate-150'
-          : 'left-0 right-0 top-0 border-transparent bg-transparent shadow-none',
+          ? 'bg-[color-mix(in_srgb,var(--color-mts-navy)_72%,transparent)] shadow-[0_4px_24px_rgb(0_0_0/0.18)] backdrop-blur-xl backdrop-saturate-150'
+          : 'bg-transparent shadow-none backdrop-blur-0',
       ]"
     >
       <div class="flex w-full min-w-0 items-center gap-4 px-6 py-4 lg:px-10">
@@ -358,7 +339,6 @@ watch(
                 {{ labelForLocale(item) }}
                 <ChevronDown
                   class="h-3.5 w-3.5 opacity-70"
-                  :class="!isScrolled ? 'text-primary' : ''"
                 />
               </button>
               <div

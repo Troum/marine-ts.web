@@ -18,6 +18,7 @@ export function emptyNewsTranslation(): NewsTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 
@@ -32,6 +33,7 @@ export function emptyVacancyTranslation(): VacancyTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 
@@ -43,6 +45,7 @@ export function emptyServiceTranslation(): ServiceTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 
@@ -56,6 +59,7 @@ export function emptyProjectTranslation(): ProjectTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 
@@ -67,6 +71,7 @@ export function emptyContentPageTranslation(): ContentPageTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 
@@ -76,6 +81,7 @@ export function emptySiteSeoTranslation(): SiteSeoTranslationPayload {
     seoTitle: '',
     seoDescription: '',
     seoKeywords: '',
+    seoImage: '',
   }
 }
 

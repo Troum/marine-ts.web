@@ -275,7 +275,7 @@ async function submit() {
   }
   saving.value = true
   try {
-    const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }>
+    const translations = {} as Record<MarineContentLocale, { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string; seoImage: string }>
     for (const loc of MARINE_CONTENT_LOCALES) {
       const page = data.value[loc]
       normalizeServicesV2Payload(page)
@@ -286,7 +286,7 @@ async function submit() {
       translations[loc] = {
         title: loc === 'ru' ? 'Судоремонт' : 'Ship Repair',
         excerpt: '', body: JSON.stringify(page),
-        seoTitle: '', seoDescription: '', seoKeywords: '',
+        seoTitle: '', seoDescription: '', seoKeywords: '', seoImage: '',
       }
     }
     if (existingId.value) {

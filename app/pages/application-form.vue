@@ -3,7 +3,7 @@ import ApplicationFormWizard from '~/components/vacancy-application/ApplicationF
 
 const { t } = useI18n()
 
-useSeoMeta({
+usePublicSeoMeta({
   title: t('pages.vacancyForm.seoTitleOpen'),
   robots: 'noindex, nofollow',
 })

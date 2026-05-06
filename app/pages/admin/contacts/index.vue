@@ -7,6 +7,7 @@ import { parseBilingual, serializeBilingual } from '~/utils/bilingualField'
 import { contactQuickIconOptions } from '~/utils/contactQuickIcons'
 import { heroOverlaySocialIcons, heroOverlaySocialIconOptions } from '~/utils/heroOverlaySocialIcons'
 import { useConfirm } from '~/composables/useConfirmAction'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 
 definePageMeta({
   layout: 'admin',
@@ -22,6 +23,10 @@ const { confirm } = useConfirm()
 const loading = ref(true)
 const saving = ref(false)
 const form = ref<SiteContactSettings>(structuredClone(contactSettingsDefaults))
+
+function plainUrl(raw: string): string {
+  return stripHtmlToPlain(raw).replace(/\s+/g, ' ').trim()
+}
 
 function normalizeEditorContacts(src: SiteContactSettings): SiteContactSettings {
   return {
@@ -155,7 +160,7 @@ async function submit() {
     const payload: SiteContactSettings = {
       socials: (form.value.socials ?? []).map((s) => ({
         iconKey: s.iconKey,
-        url: s.url.trim(),
+        url: plainUrl(s.url),
       })).filter((s) => s.url !== ''),
       quick: form.value.quick.map((r) => ({
         iconKey: r.iconKey,

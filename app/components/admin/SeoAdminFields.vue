@@ -44,5 +44,11 @@ function patch<K extends keyof SeoFields>(key: K, value: SeoFields[K]) {
         @input="patch('seoKeywords', ($event.target as HTMLInputElement).value)"
       />
     </div>
+    <AdminHeroImageField
+      :model-value="modelValue.seoImage"
+      label="OG image / Social preview image"
+      hint="Картинка для превью в соцсетях. Рекомендуемый формат: 1200x630."
+      @update:model-value="patch('seoImage', $event)"
+    />
   </div>
 </template>

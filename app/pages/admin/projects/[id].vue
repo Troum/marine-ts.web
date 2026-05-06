@@ -53,6 +53,7 @@ const seoForTab = computed<SeoFields>({
       seoTitle: t.seoTitle,
       seoDescription: t.seoDescription,
       seoKeywords: t.seoKeywords,
+      seoImage: t.seoImage,
     }
   },
   set(v: SeoFields) {
@@ -60,6 +61,7 @@ const seoForTab = computed<SeoFields>({
     t.seoTitle = v.seoTitle
     t.seoDescription = v.seoDescription
     t.seoKeywords = v.seoKeywords
+    t.seoImage = v.seoImage
   },
 })
 

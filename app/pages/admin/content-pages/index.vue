@@ -202,6 +202,7 @@ async function handleDuplicate(row: ContentPage) {
           seoTitle: '',
           seoDescription: '',
           seoKeywords: '',
+          seoImage: '',
         }
         continue
       }
@@ -212,6 +213,7 @@ async function handleDuplicate(row: ContentPage) {
         seoTitle: t?.seoTitle ?? '',
         seoDescription: t?.seoDescription ?? '',
         seoKeywords: t?.seoKeywords ?? '',
+        seoImage: t?.seoImage ?? '',
       }
     }
     await api.contentPages.create({
