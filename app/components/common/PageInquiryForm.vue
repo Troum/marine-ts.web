@@ -126,6 +126,21 @@ watch(locale, async () => {
 const phoneContact = computed(() =>
   contacts.value.quick.find((q) => q.iconKey === 'phone') ?? null,
 )
+
+function quickContactValue(contact: SiteContactSettings['quick'][number] | null | undefined): string {
+  return contact ? pickLocalized(contact.value, loc.value, '').trim() : ''
+}
+
+const phoneContactValue = computed(() => quickContactValue(phoneContact.value))
+const phoneContactHref = computed(() => {
+  const explicit = phoneContact.value?.href?.trim()
+  if (explicit) {
+    return explicit
+  }
+  const digits = phoneContactValue.value.replace(/[^+\d]/g, '')
+  return digits ? `tel:${digits}` : ''
+})
+
 const emailContact = computed(() => {
   const fromQuick = contacts.value.quick.find((q) => {
     const value = pickLocalized(q.value, loc.value, '').trim()
@@ -151,11 +166,20 @@ const noFormSecondaryEmail = computed(() => {
   if (!raw || !SIMPLE_EMAIL_RE.test(raw)) {
     return null
   }
-  const primary = emailContact.value?.value.trim().toLowerCase() ?? ''
+  const primary = quickContactValue(emailContact.value).toLowerCase()
   if (raw.toLowerCase() === primary) {
     return null
   }
   return raw
+})
+
+const emailContactValue = computed(() => quickContactValue(emailContact.value))
+const emailContactHref = computed(() => {
+  const explicit = emailContact.value?.href?.trim()
+  if (explicit) {
+    return explicit
+  }
+  return emailContactValue.value ? `mailto:${emailContactValue.value}` : ''
 })
 
 function trimmedForm() {
@@ -663,12 +687,12 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
               {{ t('pages.pageInquiry.urgentLead') }}
             </p>
             <a
-              v-if="phoneContact"
-              :href="phoneContact.href ?? `tel:${phoneContact.value.replace(/[^+\d]/g, '')}`"
+              v-if="phoneContactValue"
+              :href="phoneContactHref"
               class="mt-2 inline-flex items-center gap-2 font-display text-lg text-primary hover:underline"
             >
               <Phone class="h-4 w-4" />
-              {{ phoneContact.value }}
+              {{ phoneContactValue }}
             </a>
 
             <h4 class="mt-8 font-display text-xl text-body">
@@ -677,14 +701,14 @@ const FIELD_GROUP_LABEL_CLASS = 'mb-3 block font-body text-sm text-body'
             <p class="mt-3 font-body text-sm text-muted">
               {{ t('pages.pageInquiry.noFormLead') }}
             </p>
-            <div v-if="emailContact || noFormSecondaryEmail" class="mt-2 flex flex-col gap-2">
+            <div v-if="emailContactValue || noFormSecondaryEmail" class="mt-2 flex flex-col gap-2">
               <a
-                v-if="emailContact"
-                :href="emailContact.href ?? `mailto:${emailContact.value}`"
+                v-if="emailContactValue"
+                :href="emailContactHref"
                 class="inline-flex items-center gap-2 font-body text-base text-primary hover:underline"
               >
                 <Mail class="h-4 w-4 shrink-0" />
-                {{ emailContact.value }}
+                {{ emailContactValue }}
               </a>
               <a
                 v-if="noFormSecondaryEmail"

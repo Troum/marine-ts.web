@@ -106,7 +106,7 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
       const fallback = def.departments[index] ?? defaultDepartment
       return [{
         title: normLocalized(row.title, fallback.title),
-        phone: asString(row.phone, fallback.phone),
+        phone: normLocalized(row.phone, fallback.phone),
         email: asString(row.email, fallback.email),
         showInFooter: asBool(row.showInFooter ?? row.show_in_footer, fallback.showInFooter ?? false),
       }]
@@ -168,7 +168,7 @@ export function serializeContactSettingsPayload(body: SiteContactSettings): Reco
     }),
     departments: body.departments.map((department) => ({
       title: serializeLocalized(department.title),
-      phone: String(department.phone ?? ''),
+      phone: serializeLocalized(department.phone),
       email: String(department.email ?? ''),
       showInFooter: department.showInFooter === true,
       show_in_footer: department.showInFooter === true,

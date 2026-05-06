@@ -108,6 +108,14 @@
       "titleAccent": "urgent repairs?",
       "text": "Contact our technical team. We respond within two hours and prepare a commercial proposal.",
       "button": "Request a consultation"
+    },
+    "marketingSlider": {
+      "ariaRole": "Marketing text carousel",
+      "ariaLabel": "Hero marketing text slides",
+      "prev": "Previous slide",
+      "next": "Next slide",
+      "dotsLabel": "Slide index",
+      "goTo": "Go to slide {n}"
     }
   },
   "pages": {

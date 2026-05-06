@@ -338,10 +338,20 @@ export function mergeHomeHero(parsed: Partial<HomeHero> | undefined, base: HomeH
           typeof h.titleAccent === 'string' ? h.titleAccent : '',
           typeof h.titleSuffix === 'string' ? h.titleSuffix : '',
         )
+  const marketingSlidesRaw = h.marketingSlides
+  const marketingSlides = Array.isArray(marketingSlidesRaw)
+    ? marketingSlidesRaw.filter((x): x is string => typeof x === 'string')
+    : base.marketingSlides
+  const marketingAutoplayMs =
+    typeof h.marketingAutoplayMs === 'number' && Number.isFinite(h.marketingAutoplayMs)
+      ? Math.max(0, Math.min(Math.floor(h.marketingAutoplayMs), 120_000))
+      : (base.marketingAutoplayMs ?? 0)
   return {
     label: typeof h.label === 'string' ? h.label : base.label,
     titleFormatted,
     lead: typeof h.lead === 'string' ? h.lead : base.lead,
+    marketingSlides,
+    marketingAutoplayMs,
     ctaClient: typeof h.ctaClient === 'string' ? h.ctaClient : (h.ctaConsult as string) ?? base.ctaClient,
     /* href — URL: ранее ввод шёл через AdminThemedTextField и мог содержать HTML.
        Срезаем теги к плейн-строке перед отдачей в форму. */

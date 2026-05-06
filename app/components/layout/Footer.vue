@@ -193,7 +193,7 @@ function columnHeading(col: FooterNavColumn): string {
                 </div>
                 <span class="font-body text-xs leading-snug">
                   <span class="block text-mts-frost/85">{{ contactLine(department.title) }}</span>
-                  <span class="block">{{ department.phone }}</span>
+                  <span class="block">{{ contactLine(department.phone) }}</span>
                   <span class="block font-mono text-[10px]">{{ department.email }}</span>
                 </span>
               </a>

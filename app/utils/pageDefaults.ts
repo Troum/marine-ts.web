@@ -109,6 +109,8 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
       label: '',
       titleFormatted: migrateHomeHeroLegacy('', '', ''),
       lead: '',
+      marketingSlides: [],
+      marketingAutoplayMs: 0,
       ctaClient: '',
       ctaClientHref: '/request',
       ctaSeafarer: '',

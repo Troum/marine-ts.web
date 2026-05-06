@@ -328,7 +328,7 @@ watch(
           : 'left-0 right-0 top-0 border-transparent bg-transparent shadow-none',
       ]"
     >
-      <div class="flex w-full items-center gap-4 px-6 py-4 lg:px-10">
+      <div class="flex w-full min-w-0 items-center gap-4 px-6 py-4 lg:px-10">
         <NuxtLink :to="localePath('/')" class="group flex shrink-0 items-center gap-3">
           <AppLogo img-class="h-14 w-auto max-w-[280px] object-contain object-left transition-opacity group-hover:opacity-90" />
         </NuxtLink>
@@ -336,7 +336,7 @@ watch(
         <!-- Горизонтальное меню (десктоп) -->
         <div
           :class="[
-            'hidden min-w-0 mx-auto w-full max-w-7xl flex-nowrap items-center gap-x-3 overflow-x-auto px-2 xl:flex xl:gap-x-6 2xl:gap-x-8',
+            'hidden min-w-0 mx-auto w-full max-w-7xl flex-wrap items-center gap-x-3 gap-y-2 px-2 xl:flex xl:gap-x-6 xl:gap-y-2 2xl:gap-x-8',
             horizJustifyClass,
           ]"
         >
@@ -417,6 +417,9 @@ watch(
         </div>
 
         <div id="nav-header-trailing" class="ml-auto flex shrink-0 items-center gap-5">
+          <div class="flex shrink-0 sm:hidden">
+            <LayoutLanguageSwitch dark class="inline-flex" />
+          </div>
           <!-- Левый край для выравнивания hero: правый край текста совпадает с этой линией -->
           <div id="nav-hero-lang-left" class="hidden shrink-0 sm:flex">
             <LayoutLanguageSwitch dark class="inline-flex" />
@@ -507,7 +510,7 @@ watch(
             <!-- Телефоны -->
             <div v-if="burgerPhoneColVisible">
               <div
-                v-if="menu.burgerContacts?.phonesTitle?.trim()"
+                v-if="burgerLinePlain(menu.burgerContacts?.phonesTitle)"
                 class="mb-4 text-xs uppercase tracking-widest text-muted"
                 v-html="burgerContactRichHtml(menu.burgerContacts.phonesTitle)"
               />
@@ -525,7 +528,7 @@ watch(
             <!-- Email / соцсети -->
             <div v-if="burgerEmailColVisible">
               <div
-                v-if="menu.burgerContacts?.emailTitle?.trim()"
+                v-if="burgerLinePlain(menu.burgerContacts?.emailTitle)"
                 class="mb-4 text-xs uppercase tracking-widest text-muted"
                 v-html="burgerContactRichHtml(menu.burgerContacts.emailTitle)"
               />

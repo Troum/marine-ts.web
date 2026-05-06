@@ -60,8 +60,8 @@ const crumbItems = computed(() =>
 )
 
 const { data: services, pending, error } = await useAsyncData(
-  () => `marine-services-${locale.value}`,
-  () => api.services.getAll(),
+  () => `marine-services-${loc.value}`,
+  () => api.services.getAll({ locale: loc.value }),
   { watch: [locale], default: () => [] as ServiceItem[] },
 )
 
