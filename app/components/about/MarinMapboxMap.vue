@@ -2,7 +2,7 @@
 /**
  * Нативные слои Mapbox (без HTML overlay):
  * - точки: circle layer
- * - подписи: symbol layer (справа от точки, на том же уровне)
+ * - подписи: symbol layer (справа от точки) — опционально (`showPointLabels`)
  *
  * Базовые подписи карты НЕ скрываем.
  */
@@ -13,10 +13,15 @@ import type { AboutGeoLocation } from '~/types'
 
 type Loc = AboutGeoLocation & { lng: number, lat: number }
 
-const props = defineProps<{
-  locations: AboutGeoLocation[]
-  accessToken: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    locations: AboutGeoLocation[]
+    accessToken: string
+    /** Подписи рядом с точками (название из `name`). Базовые подписи карты не трогаем. */
+    showPointLabels?: boolean
+  }>(),
+  { showPointLabels: true },
+)
 
 const mapEl = ref<HTMLDivElement | null>(null)
 
@@ -261,25 +266,29 @@ function ensureSourceAndLayers() {
       },
     })
   }
-  if (!map.getLayer(LABEL_LAYER_ID)) {
-    map.addLayer({
-      id: LABEL_LAYER_ID,
-      type: 'symbol',
-      source: SOURCE_ID,
-      filter: ['>', ['length', ['get', 'name']], 0],
-      layout: {
-        'text-field': ['get', 'name'],
-        'text-size': 11,
-        'text-anchor': 'left',
-        'text-offset': [0.9, 0],
-        'text-allow-overlap': true,
-      },
-      paint: {
-        'text-color': '#e6edf2',
-        'text-halo-color': 'rgba(5, 13, 18, 0.85)',
-        'text-halo-width': 2,
-      },
-    })
+  if (props.showPointLabels) {
+    if (!map.getLayer(LABEL_LAYER_ID)) {
+      map.addLayer({
+        id: LABEL_LAYER_ID,
+        type: 'symbol',
+        source: SOURCE_ID,
+        filter: ['>', ['length', ['get', 'name']], 0],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-size': 11,
+          'text-anchor': 'left',
+          'text-offset': [0.9, 0],
+          'text-allow-overlap': true,
+        },
+        paint: {
+          'text-color': '#e6edf2',
+          'text-halo-color': 'rgba(5, 13, 18, 0.85)',
+          'text-halo-width': 2,
+        },
+      })
+    }
+  } else if (map.getLayer(LABEL_LAYER_ID)) {
+    map.removeLayer(LABEL_LAYER_ID)
   }
   applyThemeToPointLayers()
   if (reduceMotion) {
@@ -372,6 +381,14 @@ watch(
     scheduleSync()
   },
   { deep: true },
+)
+
+watch(
+  () => props.showPointLabels,
+  () => {
+    ensureSourceAndLayers()
+    applyThemeToPointLayers()
+  },
 )
 
 onBeforeUnmount(() => {

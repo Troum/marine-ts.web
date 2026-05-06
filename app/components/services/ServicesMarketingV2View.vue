@@ -224,6 +224,7 @@ const heroBreadcrumbsOnDark = computed(() =>
                 v-if="mapboxToken"
                 :locations="SERVICES_REACH_MAP_LOCATIONS"
                 :access-token="mapboxToken"
+                :show-point-labels="false"
               />
               <div
                 v-else
