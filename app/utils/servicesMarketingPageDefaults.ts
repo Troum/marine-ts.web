@@ -9,11 +9,20 @@ import type {
 import { normalizeAboutRichCards } from '~/utils/aboutRichCardNormalize'
 import { themeTitleTriple } from '~/utils/themeFormattedTitle'
 
-/** Точки Mapbox для секции «Глобальный охват» (Rotterdam, Singapore, Dubai). */
+/** Точки Mapbox для секции «Глобальный охват» (порты/хабы сети MTS). */
 export const SERVICES_REACH_MAP_LOCATIONS: AboutGeoLocation[] = [
   { lng: 4.4777, lat: 51.9244, labelOnRight: true, name: 'Rotterdam' },
   { lng: 103.8198, lat: 1.3521, labelOnRight: false, name: 'Singapore' },
   { lng: 55.2708, lat: 25.2048, labelOnRight: true, name: 'Dubai' },
+  { lng: 20.5069, lat: 54.7104, labelOnRight: false, name: 'Kaliningrad' },
+  { lng: 21.1443, lat: 55.7033, labelOnRight: true, name: 'Klaipeda' },
+  { lng: -0.3367, lat: 53.7457, labelOnRight: false, name: 'Hull' },
+  { lng: 6.1549, lat: 62.4722, labelOnRight: true, name: 'Ålesund' },
+  { lng: -15.4363, lat: 28.1235, labelOnRight: false, name: 'Las Palmas' },
+  { lng: 29.9187, lat: 31.2001, labelOnRight: true, name: 'Alexandria' },
+  { lng: -68.9335, lat: 12.1084, labelOnRight: false, name: 'Curaçao' },
+  { lng: -79.5199, lat: 8.9824, labelOnRight: true, name: 'Panama City' },
+  { lng: 18.0686, lat: 59.3293, labelOnRight: false, name: 'Stockholm' },
 ]
 
 /** Порядок секций v2 листинга «Судоремонт» (после hero). */

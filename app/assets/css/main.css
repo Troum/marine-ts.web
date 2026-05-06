@@ -103,12 +103,28 @@
   }
 
   /**
+   * Маркетинговый hero: высота первого экрана (`svh` — с учётом мобильных панелей; `vh` — fallback).
+   */
+  .mts-hero-min-h {
+    min-height: 100vh;
+    min-height: 100svh;
+  }
+
+  /**
+   * Высокие контентные секции с фоном (не главный hero): без полного экрана, чтобы не дублировать масштаб 100vh.
+   */
+  .mts-section-immersive-min-h {
+    min-height: min(88vh, 920px);
+  }
+
+  /**
    * Только выбранные разделы (класс на `<main>` из default layout):
-   * верхнеуровневые секции на всю высоту `100svh` + вертикальное центрирование.
+   * верхнеуровневые секции на высоту первого экрана + вертикальное центрирование.
    * Вложенные `<section>` и админка не затрагиваются.
    */
   body:not(.admin-shell) main.mts-main--full-viewport-sections > section,
   body:not(.admin-shell) main.mts-main--full-viewport-sections > div > section {
+    min-height: 100vh;
     min-height: 100svh;
     display: flex;
     flex-direction: column;

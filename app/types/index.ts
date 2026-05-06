@@ -2,6 +2,7 @@ export interface SeoFields {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 /** Локали динамического контента (совпадают с config marine.locales в API). */
@@ -43,6 +44,7 @@ export interface NewsTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface VacancyTranslationPayload {
@@ -55,6 +57,7 @@ export interface VacancyTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface ServiceTranslationPayload {
@@ -64,6 +67,7 @@ export interface ServiceTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface ProjectTranslationPayload {
@@ -75,6 +79,7 @@ export interface ProjectTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface ContentPageTranslationPayload {
@@ -84,6 +89,7 @@ export interface ContentPageTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface SiteSeoTranslationPayload {
@@ -91,6 +97,7 @@ export interface SiteSeoTranslationPayload {
   seoTitle: string
   seoDescription: string
   seoKeywords: string
+  seoImage: string
 }
 
 export interface SiteSeoPage {
@@ -99,6 +106,7 @@ export interface SiteSeoPage {
   seoTitle: string | null
   seoDescription: string | null
   seoKeywords: string | null
+  seoImage: string | null
   /** В ответах manage API — полный набор переводов. */
   translations?: Partial<Record<MarineContentLocale, SiteSeoTranslationPayload>>
 }
@@ -117,6 +125,7 @@ export interface NewsItem {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  seoImage?: string | null
   translations?: Partial<Record<MarineContentLocale, NewsTranslationPayload>>
 }
 
@@ -156,6 +165,7 @@ export interface Project {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  seoImage?: string | null
   contentPage?: LinkedContentPageRef | null
   translations?: Partial<Record<MarineContentLocale, ProjectTranslationPayload>>
 }
@@ -193,6 +203,7 @@ export interface VacancyItem {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  seoImage?: string | null
   /** Подсчёт анкет (только в ответах manage API). */
   applicationFormsCount?: number
   translations?: Partial<Record<MarineContentLocale, VacancyTranslationPayload>>
@@ -256,6 +267,7 @@ export interface ServiceItem {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  seoImage?: string | null
   contentPage?: LinkedContentPageRef | null
   translations?: Partial<Record<MarineContentLocale, ServiceTranslationPayload>>
 }
@@ -287,6 +299,7 @@ export interface ContentPage extends ContentPageSummary {
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
+  seoImage?: string | null
   /** Краткое имя типа карточки, если страница привязана к сервису или проекту. */
   contentableType?: ContentPageContentableType | null
   contentableId?: number | null
@@ -1137,10 +1150,12 @@ export interface LineMarketingHeroImageBlock {
   /** URL картинки (обязательное поле — иначе блок не показывается). */
   imageUrl: string
   /**
-   * Устаревшие пресеты высоты; на сайте баннер фиксирован **50vh** на всю ширину окна.
+   * Устаревшие пресеты высоты (до появления `viewportHeightVh`).
    * Поле остаётся в типе для обратной совместимости с уже сохранёнными страницами.
    */
   height: 'small' | 'medium' | 'large'
+  /** Высота баннера в единицах vh (30–100), по умолчанию 50. */
+  viewportHeightVh: number
   /** Опциональный заголовок над картинкой (визуально — поверх затемнения). */
   title: string
   /** Опциональная подпись/подзаголовок. */

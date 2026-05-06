@@ -535,7 +535,7 @@ function blockTypeLabel(b: CustomPageBlock): string {
                     }
                   "
                 />
-                Показывать баннер на сайте (на всю ширину окна, высота половины экрана)
+                Показывать баннер на сайте (на всю ширину окна, высота — настройка ниже)
               </label>
               <p
                 v-if="block.showHero === false"
@@ -546,9 +546,13 @@ function blockTypeLabel(b: CustomPageBlock): string {
               <AdminHeroImageField
                 v-model="block.imageUrl"
                 label="Изображение баннера"
-                hint="Укажите URL (например /images/…) или нажмите «Загрузить файл» — в поле подставится адрес из медиахранилища. На сайте блок тянется на 100% ширины окна и 50% высоты окна (50vh)."
+                hint="Укажите URL (например /images/…) или нажмите «Загрузить файл» — в поле подставится адрес из медиахранилища. Ширина на сайте — 100% окна; высота задаётся полем ниже (vh)."
                 :input-class="`${sectionInput} box-border min-h-[2.75rem]`"
               />
+              <div>
+                <label :class="sectionLabel">Высота баннера, vh</label>
+                <AdminInputNumberStepper v-model="block.viewportHeightVh" :min="30" :max="100" :step="5" />
+              </div>
               <div>
                 <label :class="sectionLabel">Прозрачность затемнения поверх фото, %</label>
                 <AdminInputNumberStepper v-model="block.overlayOpacity" :min="0" :max="100" :step="5" />

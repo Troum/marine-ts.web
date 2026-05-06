@@ -6,6 +6,7 @@ import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
 import { contactQuickIcons } from '~/utils/contactQuickIcons'
 import { heroOverlaySocialIcons } from '~/utils/heroOverlaySocialIcons'
 import { pickLocalized } from '~/utils/bilingualField'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 
 const currentYear = new Date().getFullYear()
 const route = useRoute()
@@ -34,7 +35,14 @@ const resolvedContacts = computed(() => contactSettings.value ?? contactSettings
 const footerContactItems = computed(() =>
   resolvedContacts.value.quick.filter((item) => item.showInFooter !== false),
 )
-const footerSocialItems = computed(() => resolvedContacts.value.socials ?? [])
+const footerSocialItems = computed(() =>
+  (resolvedContacts.value.socials ?? [])
+    .map(item => ({
+      ...item,
+      url: stripHtmlToPlain(item.url).replace(/\s+/g, ' ').trim(),
+    }))
+    .filter(item => item.url),
+)
 const footerDepartments = computed(() =>
   resolvedContacts.value.departments.filter((department) => department.showInFooter === true),
 )

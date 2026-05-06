@@ -72,6 +72,7 @@ export default defineNuxtConfig({
     public: {
       apiBase:
         import.meta.env.NUXT_PUBLIC_API_BASE ?? (isDev ? '/api' : `${defaultApiOrigin}/api`),
+      siteUrl: import.meta.env.NUXT_PUBLIC_SITE_URL ?? '',
       analyticsGtagId: import.meta.env.NUXT_PUBLIC_ANALYTICS_GTAG_ID ?? '',
       analyticsPlausibleDomain: import.meta.env.NUXT_PUBLIC_ANALYTICS_PLAUSIBLE_DOMAIN ?? '',
       mapboxToken:

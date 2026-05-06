@@ -10,6 +10,7 @@ import type {
   NavigationMenuSettings,
 } from '~/types'
 import { parseBilingual } from '~/utils/bilingualField'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 
 function normMenuVariant(raw: unknown): MainNavMenuVariant {
   const v = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
@@ -124,6 +125,10 @@ function pickBurgerStr(o: Record<string, unknown>, camel: string, snake: string)
   return undefined
 }
 
+function plainBurgerUrl(raw: string): string {
+  return stripHtmlToPlain(raw).replace(/\s+/g, ' ').trim()
+}
+
 function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined {
   if (!raw || typeof raw !== 'object') {
     return undefined
@@ -168,7 +173,7 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
         continue
       }
       const s = row as Record<string, unknown>
-      const url = typeof s.url === 'string' ? s.url.trim() : ''
+      const url = typeof s.url === 'string' ? plainBurgerUrl(s.url) : ''
       if (!url) {
         continue
       }
@@ -179,7 +184,8 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
       socials = list
     }
   }
-  const legUrl = pickBurgerStr(o, 'socialUrl', 'social_url')
+  const legUrlRaw = pickBurgerStr(o, 'socialUrl', 'social_url')
+  const legUrl = legUrlRaw ? plainBurgerUrl(legUrlRaw) : undefined
   if (!socials && legUrl) {
     const legLabel = pickBurgerStr(o, 'socialLabel', 'social_label') ?? legUrl
     socials = [{ url: legUrl, label: legLabel }]

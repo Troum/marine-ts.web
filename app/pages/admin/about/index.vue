@@ -272,7 +272,7 @@ async function submit() {
   try {
     const translations = {} as Record<
       MarineContentLocale,
-      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string }
+      { title: string; excerpt: string; body: string; seoTitle: string; seoDescription: string; seoKeywords: string; seoImage: string }
     >
     for (const loc of MARINE_CONTENT_LOCALES) {
       translations[loc] = {
@@ -282,6 +282,7 @@ async function submit() {
         seoTitle: '',
         seoDescription: '',
         seoKeywords: '',
+        seoImage: '',
       }
     }
 

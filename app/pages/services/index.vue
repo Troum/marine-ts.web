@@ -17,8 +17,42 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { breadcrumbs } = usePageBreadcrumbs()
 const api = useMarineApi()
+const requestUrl = useRequestURL()
+const runtimeConfig = useRuntimeConfig()
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
+const siteOrigin = computed(() => {
+  const configured = String(runtimeConfig.public.siteUrl || '').replace(/\/+$/, '')
+  return configured || requestUrl.origin
+})
+const servicesPageUrl = computed(() => new URL(localePath('/services'), `${siteOrigin.value}/`).toString())
+
+useHead(() => ({
+  script: [
+    {
+      key: 'services-json-ld',
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: loc.value === 'en'
+          ? 'Ship repair by Marine Technical Solutions'
+          : 'Судоремонт от Marine Technical Solutions',
+        serviceType: loc.value === 'en' ? 'Ship repair' : 'Судоремонт',
+        url: servicesPageUrl.value,
+        provider: {
+          '@type': 'Organization',
+          name: 'Marine Technical Solutions',
+          url: siteOrigin.value,
+        },
+        areaServed: loc.value === 'en' ? 'Worldwide' : 'По всему миру',
+        description: loc.value === 'en'
+          ? 'Ship repair, dry-docking, emergency repair, engine, automation and vessel system maintenance worldwide.'
+          : 'Судоремонт любой сложности: докование, аварийный ремонт, ремонт двигателей, автоматики и судовых систем в портах по всему миру.',
+      }),
+    },
+  ],
+}))
 
 const { data: cmsPage } = await useAsyncData(
   () => `services-page-cms-${locale.value}`,

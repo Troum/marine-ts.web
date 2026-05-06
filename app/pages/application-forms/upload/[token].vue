@@ -21,7 +21,7 @@ const uploading = ref(false)
 const uploadError = ref<string | null>(null)
 const uploadDone = ref(false)
 
-useSeoMeta({
+usePublicSeoMeta({
   title: t('pages.upload.title'),
   robots: 'noindex, nofollow',
 })

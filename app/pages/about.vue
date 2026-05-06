@@ -131,7 +131,7 @@ function hasImage(src?: string | null): boolean {
     <template v-else>
     <!-- Секция 1. Hero -->
     <section
-      class="relative flex min-h-[100svh] items-end overflow-hidden lg:items-center"
+      class="relative flex mts-hero-min-h items-end overflow-hidden lg:items-center"
       :class="{ 'mts-about-light': !hasImage(d.heroImage) }"
     >
       <div class="absolute inset-0">

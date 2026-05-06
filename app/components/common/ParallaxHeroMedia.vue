@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    /** Параллакс-фон как CSS background-image (без видео). */
+    /** URL фонового изображения (рендер в `<img>` с `object-fit: cover`, без искажения пропорций). */
     image?: string | null
     /** Фоновое видео (URL). Постер — `image`, если указан. Не играет при prefers-reduced-motion. */
     video?: string | null
@@ -28,13 +28,11 @@ const imageUrl = computed(() => props.image?.trim() || '')
 const videoUrl = computed(() => props.video?.trim() || '')
 const useVideo = computed(() => videoUrl.value.length > 0 && !reducedMotion.value)
 
-const mediaStyle = computed(() => ({
-  transform: `translate3d(0, ${offset.value}px, 0) scale(1.22)`,
-}))
+/** Чуть больше 1 — запас для параллакса без чёрных кромок; меньше старого 1.22, чтобы кадр не «перезумливался». */
+const PARALLAX_SLACK_SCALE = 1.1
 
-const bgStyle = computed(() => ({
-  backgroundImage: imageUrl.value ? `url(${imageUrl.value})` : undefined,
-  transform: mediaStyle.value.transform,
+const mediaStyle = computed(() => ({
+  transform: `translate3d(0, ${offset.value}px, 0) scale(${PARALLAX_SLACK_SCALE})`,
 }))
 
 function clamp(n: number, min: number, max: number) {
@@ -114,21 +112,25 @@ watch(
       playsinline
       autoplay
       :class="[
-        'absolute -inset-y-[22%] inset-x-0 w-full object-cover transition-opacity duration-700 will-change-transform',
+        'absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 will-change-transform',
         active ? 'opacity-100' : 'opacity-0',
         bgClass,
       ]"
       :style="mediaStyle"
     />
-    <div
+    <img
       v-else-if="imageUrl"
       :key="imageUrl"
+      :src="imageUrl"
+      alt=""
+      :loading="eager ? 'eager' : 'lazy'"
+      :fetchpriority="eager ? 'high' : 'auto'"
       :class="[
-        'absolute -inset-y-[22%] inset-x-0 bg-cover bg-center transition-opacity duration-700 will-change-transform',
+        'absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 will-change-transform',
         active ? 'opacity-100' : 'opacity-0',
         bgClass,
       ]"
-      :style="bgStyle"
+      :style="mediaStyle"
     />
     <slot v-else />
   </div>

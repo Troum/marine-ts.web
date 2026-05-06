@@ -8,7 +8,7 @@ import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
 import type { CustomPageBlock, PageBreadcrumbTone } from '~/types'
 import type { AboutCarouselSlide } from '~/utils/aboutCarouselSlides'
 import { resolveCrewingIcon } from '~/utils/crewingIcons'
-import { isHeroImageBlockActive } from '~/utils/customPageSections'
+import { clampHeroViewportHeightVh, isHeroImageBlockActive } from '~/utils/customPageSections'
 import { resolveHeroImageBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 const props = defineProps<{
@@ -79,6 +79,18 @@ const heroBannerCrumbsOnDark = computed(() => {
     return false
   }
   return resolveHeroImageBreadcrumbOnDark(props.heroImageBreadcrumbTone, b.overlayOpacity)
+})
+
+const heroImageShellStyle = computed(() => {
+  if (props.block.type !== 'heroImage') {
+    return undefined
+  }
+  const vh = clampHeroViewportHeightVh(props.block.viewportHeightVh)
+  return {
+    height: `${vh}vh`,
+    minHeight: `${vh}vh`,
+    maxHeight: `${vh}vh`,
+  }
 })
 
 const galleryGridClass = computed(() => {
@@ -235,10 +247,11 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
     </div>
   </div>
 
-  <!-- Hero image: высота 50vh, на всю ширину секции; крошки и заголовки в одной колонке `mts-content-wrap`, слева. -->
+  <!-- Hero image: высота из CMS (viewportHeightVh), на всю ширину секции; крошки и заголовки в одной колонке `mts-content-wrap`, слева. -->
   <div
     v-else-if="isHeroImageBlockActive(block)"
-    class="relative h-[50vh] max-h-[50vh] min-h-[50vh] w-full overflow-hidden"
+    class="relative w-full overflow-hidden"
+    :style="heroImageShellStyle"
   >
     <CommonParallaxHeroMedia :image="block.imageUrl.trim()" />
     <div

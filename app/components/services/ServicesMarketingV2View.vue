@@ -128,7 +128,7 @@ const heroBreadcrumbsOnDark = computed(() =>
 
 <template>
   <div class="bg-white">
-    <section class="relative flex min-h-[100svh] items-center overflow-hidden">
+    <section class="relative flex mts-hero-min-h items-center overflow-hidden">
       <div class="absolute top-0 left-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
       <div class="absolute top-0 right-1/4 h-full w-px bg-linear-to-b from-transparent via-mts-border to-transparent" />
 

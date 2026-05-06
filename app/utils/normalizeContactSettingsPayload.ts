@@ -1,6 +1,7 @@
 import type { ContactQuickIconKey, ContactSocialLink, LocalizedLine, SiteContactSettings } from '~/types'
 import { parseBilingual } from '~/utils/bilingualField'
 import { contactSettingsDefaults } from '~/utils/contactSettingsDefaults'
+import { stripHtmlToPlain } from '~/utils/adminHtmlField'
 
 function normLocalized(raw: unknown, fallback: LocalizedLine): LocalizedLine {
   const fb = parseBilingual(fallback)
@@ -55,6 +56,10 @@ function normalizeIconKey(raw: unknown, fallback: ContactQuickIconKey): ContactQ
 
 function asString(raw: unknown, fallback = ''): string {
   return typeof raw === 'string' ? raw : fallback
+}
+
+function plainUrl(raw: string): string {
+  return stripHtmlToPlain(raw).replace(/\s+/g, ' ').trim()
 }
 
 function asTrimmedNullable(raw: unknown): string | null {
@@ -134,7 +139,7 @@ export function normalizeContactSettingsPayload(json: unknown): SiteContactSetti
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return []
     const row = raw as Record<string, unknown>
     const iconKey = typeof row.iconKey === 'string' ? row.iconKey.trim() : ''
-    const url = typeof row.url === 'string' ? row.url.trim() : ''
+    const url = typeof row.url === 'string' ? plainUrl(row.url) : ''
     if (!iconKey || !url) return []
     return [{ iconKey, url }]
   })
@@ -151,7 +156,7 @@ export function serializeContactSettingsPayload(body: SiteContactSettings): Reco
   return {
     socials: (body.socials ?? []).map((s) => ({
       iconKey: s.iconKey,
-      url: s.url.trim(),
+      url: plainUrl(s.url),
     })),
     quick: body.quick.map((row) => {
       const iconKey = normalizeIconKey(row.iconKey, 'phone')
