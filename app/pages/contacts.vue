@@ -175,7 +175,7 @@ async function submitFeedback() {
                   class="public-card p-5"
                 >
                   <h4 class="font-display text-base text-body">{{ lineForLocale(department.title) }}</h4>
-                  <p class="mt-3 font-body text-sm text-muted">{{ department.phone }}</p>
+                  <p class="mt-3 font-body text-sm text-muted">{{ lineForLocale(department.phone) }}</p>
                   <a
                     :href="`mailto:${department.email}`"
                     class="mt-2 inline-flex font-mono text-xs text-primary hover:underline"

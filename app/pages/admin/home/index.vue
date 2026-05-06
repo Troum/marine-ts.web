@@ -2,6 +2,7 @@
 import { ArrowLeft, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import AdminNavPathPick from '~/components/admin/AdminNavPathPick.vue'
 import AdminCollapsibleSection from '~/components/admin/AdminCollapsibleSection.vue'
+import AdminInputNumberStepper from '~/components/admin/AdminInputNumberStepper.vue'
 import type { HomePageData, ContentPage, MarineContentLocale } from '~/types'
 import { MARINE_CONTENT_LOCALES, defaultMarineLocale } from '~/utils/marineLocales'
 import AdminThemeTitleEditor from '~/components/admin/AdminThemeTitleEditor.vue'
@@ -39,6 +40,13 @@ const data = ref<Record<MarineContentLocale, HomePageData>>({
 })
 
 const d = computed(() => data.value[localeTab.value])
+
+const heroMarketingAutoplayMs = computed({
+  get: () => d.value.hero.marketingAutoplayMs ?? 0,
+  set: (value: number) => {
+    d.value.hero.marketingAutoplayMs = value
+  },
+})
 
 const collapsed = ref<Record<string, boolean>>({
   hero: false,
@@ -129,6 +137,44 @@ async function removeDirectionRow(i: number) {
   for (const loc of MARINE_CONTENT_LOCALES) {
     data.value[loc].directions.rows.splice(i, 1)
   }
+}
+
+function addMarketingSlide() {
+  const h = data.value[localeTab.value].hero
+  if (!h.marketingSlides) {
+    h.marketingSlides = []
+  }
+  h.marketingSlides.push('')
+}
+
+async function removeMarketingSlide(i: number) {
+  const ok = await confirm({
+    message: 'Удалить этот текстовый слайд?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  const arr = data.value[localeTab.value].hero.marketingSlides
+  if (arr) {
+    arr.splice(i, 1)
+  }
+}
+
+function moveMarketingSlide(i: number, dir: -1 | 1) {
+  const arr = data.value[localeTab.value].hero.marketingSlides
+  if (!arr) {
+    return
+  }
+  const j = i + dir
+  if (j < 0 || j >= arr.length) {
+    return
+  }
+  const a = arr[i]!
+  const b = arr[j]!
+  arr[i] = b
+  arr[j] = a
 }
 
 function addHeroOverlaySocial() {
@@ -310,6 +356,75 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
               <AdminThemeTitleEditor v-model="d.hero.titleFormatted" />
             </div>
             <div><label :class="sectionLabel">Описание (lead)</label><AdminThemedTextField v-model="d.hero.lead" /></div>
+
+            <div class="space-y-3 rounded border border-mts-border bg-mts-bg/30 p-4">
+              <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p :class="sectionLabel">Слайды справа в hero (необязательно)</p>
+                  <p class="mt-1 font-body text-xs text-mts-text-secondary max-w-xl">
+                    Если список пуст, на сайте показывается только «Описание (lead)».
+                    Добавьте один или несколько слайдов — тот же формат текста, что и у lead; появятся стрелки, точки и опциональная автопрокрутка.
+                  </p>
+                </div>
+                <button type="button" class="btn-secondary px-3 py-2 text-sm" @click="addMarketingSlide">+ Слайд</button>
+              </div>
+              <div v-if="(d.hero.marketingSlides?.length ?? 0) > 0" class="space-y-4">
+                <div
+                  v-for="(_s, si) in d.hero.marketingSlides"
+                  :key="`mkt-slide-${si}`"
+                  class="border border-mts-border bg-mts-bg/40 p-3 space-y-2"
+                >
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="font-mono text-[10px] uppercase text-mts-text-secondary">Слайд {{ si + 1 }}</span>
+                    <div class="flex gap-1">
+                      <button
+                        type="button"
+                        class="p-2 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                        :disabled="si === 0"
+                        aria-label="Выше"
+                        @click="moveMarketingSlide(si, -1)"
+                      >
+                        <ChevronUp class="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-2 text-mts-text-secondary hover:text-mts-accent disabled:opacity-30"
+                        :disabled="si === (d.hero.marketingSlides!.length - 1)"
+                        aria-label="Ниже"
+                        @click="moveMarketingSlide(si, 1)"
+                      >
+                        <ChevronDown class="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        class="p-2 text-red-600/80 hover:text-red-600"
+                        aria-label="Удалить слайд"
+                        @click="removeMarketingSlide(si)"
+                      >
+                        <Trash2 class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <AdminThemedTextField v-model="d.hero.marketingSlides![si]" />
+                </div>
+              </div>
+              <div>
+                <label :class="sectionLabel">Автопрокрутка слайдов (мс, 0 = только вручную)</label>
+                <AdminInputNumberStepper
+                  v-model="heroMarketingAutoplayMs"
+                  :min="0"
+                  :max="120000"
+                  :step="500"
+                  variant="full"
+                  decrement-label="Уменьшить интервал автопрокрутки"
+                  increment-label="Увеличить интервал автопрокрутки"
+                />
+                <p class="mt-1 font-body text-xs text-mts-text-secondary">
+                  Например 6000 — смена каждые 6 с. Значения ниже 1500 на сайте не запускают таймер (защита от случайно малого интервала). Учитывается пауза при наведении и настройка «меньше анимации» в системе.
+                </p>
+              </div>
+            </div>
+
             <div class="grid md:grid-cols-2 gap-4">
               <div><label :class="sectionLabel">CTA клиент (заявка)</label><AdminThemedTextField v-model="d.hero.ctaClient" :multiline="false" /></div>
               <div><label :class="sectionLabel">CTA моряк (анкета)</label><AdminThemedTextField v-model="d.hero.ctaSeafarer" :multiline="false" /></div>

@@ -428,7 +428,7 @@ export interface SiteContactSettings {
   }[]
   departments: {
     title: LocalizedLine
-    phone: string
+    phone: LocalizedLine
     email: string
     showInFooter?: boolean
   }[]
@@ -724,6 +724,13 @@ export interface HomeHero {
   label: string
   titleFormatted: ThemeFormattedTitle
   lead: string
+  /**
+   * Дополнительные текстовые слайды правой колонки hero (TipTap / HTML как у `lead`).
+   * Если массив непустой — показывается карусель; иначе один блок `lead`.
+   */
+  marketingSlides?: string[]
+  /** Интервал автопрокрутки слайдов в мс; 0 — только стрелки и точки. */
+  marketingAutoplayMs?: number
   /** Клиент: заявка */
   ctaClient: string
   ctaClientHref: string

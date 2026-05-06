@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html {{ HTML_ATTRS }}>
+  <head {{ HEAD_ATTRS }}>
+    {{ HEAD }}
+    <style>
+      #mts-initial-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        background: rgb(13 19 31 / 0.88);
+        color: rgb(255 255 255 / 0.85);
+        backdrop-filter: blur(4px);
+        transition: opacity 0.2s ease;
+      }
+
+      #mts-initial-loader.mts-initial-loader--hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .mts-initial-loader__spinner {
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 2px solid rgb(200 75 75 / 0.25);
+        border-top-color: #c84b4b;
+        border-radius: 9999px;
+        animation: mts-initial-loader-spin 0.8s linear infinite;
+      }
+
+      .mts-initial-loader__label {
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.75rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      @keyframes mts-initial-loader-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body {{ BODY_ATTRS }}>
+    <div id="mts-initial-loader" role="status" aria-live="polite" aria-busy="true">
+      <div class="mts-initial-loader__spinner" aria-hidden="true"></div>
+      <div class="mts-initial-loader__label">Загрузка...</div>
+    </div>
+    {{ APP }}
+  </body>
+</html>

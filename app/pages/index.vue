@@ -2,6 +2,7 @@
 import type { HomeHeroOverlayNavLink, HomePageData, MarineContentLocale } from '~/types'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
+import HomeHeroMarketingSlider from '~/components/home/HomeHeroMarketingSlider.vue'
 import { mergeHomePageData, HOME_HERO_OVERLAY_DEFAULT } from '~/utils/pageDefaults'
 import { heroOverlaySocialIcons } from '~/utils/heroOverlaySocialIcons'
 import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
@@ -247,6 +248,16 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
   const raw = row.label[loc] || row.label.ru || row.label.en || ''
   return flattenEncodedOrPlain(raw)
 }
+
+/** Слайды правой колонки: непустые `marketingSlides` или один блок `lead`. */
+const heroMarketingSlidesForSlider = computed(() => {
+  const ms = d.value.hero.marketingSlides
+  const valid = (ms ?? []).filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+  if (valid.length > 0) {
+    return valid
+  }
+  return [d.value.hero.lead]
+})
 </script>
 
 <template>
@@ -317,11 +328,17 @@ function overlayLinkLabel(row: HomeHeroOverlayNavLink) {
                   leave-to-class="-translate-y-3 opacity-0"
                 >
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
-                    <div class="mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl">
-                      <ThemedContentString
-                        :content="activeHeroDirection ? heroDirectionDescription(activeHeroDirection) : d.hero.lead"
-                      />
+                    <div
+                      v-if="activeHeroDirection"
+                      class="mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl"
+                    >
+                      <ThemedContentString :content="heroDirectionDescription(activeHeroDirection)" />
                     </div>
+                    <HomeHeroMarketingSlider
+                      v-else
+                      :slides="heroMarketingSlidesForSlider"
+                      :autoplay-ms="d.hero.marketingAutoplayMs ?? 0"
+                    />
                     <!-- CTA кнопки (опционально) -->
                     <div
                       v-if="!activeHeroDirection && (!d.hero.hideCtaClient || !d.hero.hideCtaSeafarer)"

@@ -52,25 +52,37 @@ export function useMarineApi() {
    * Laravel (`SetApiLocale` + `MarineLocale::resolve`) выбирает перевод по `?locale=` или `Accept-Language`.
    * Без этого заголовка бэкенд остаётся на дефолтной локали (часто ru), даже на маршруте `/en/...`.
    */
-  function publicApiHeaders(extra?: Record<string, string>): Record<string, string> {
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...extra,
-    }
-    let lang = 'ru'
+  function currentPublicLocale(): MarineContentLocale {
+    let lang: MarineContentLocale = 'ru'
     try {
       const { locale } = useI18n()
       const primary = String(locale.value ?? 'ru')
         .split('-')[0]
         ?.toLowerCase() ?? 'ru'
       if ((MARINE_CONTENT_LOCALES as readonly string[]).includes(primary)) {
-        lang = primary
+        lang = primary as MarineContentLocale
       }
     } catch {
       /* вне Vue / без i18n */
     }
-    headers['Accept-Language'] = lang
+    return lang
+  }
+
+  function publicApiHeaders(extra?: Record<string, string>): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...extra,
+    }
+    headers['Accept-Language'] = currentPublicLocale()
     return headers
+  }
+
+  function withPublicLocaleQuery(path: string): string {
+    const locale = currentPublicLocale()
+    if (/[?&]locale=/.test(path)) {
+      return path
+    }
+    return `${path}${path.includes('?') ? '&' : '?'}locale=${encodeURIComponent(locale)}`
   }
 
   const resolveApiBase = (): string => {
@@ -96,7 +108,8 @@ export function useMarineApi() {
 
   async function fetchPublic<T>(path: string): Promise<T> {
     const base = resolveApiBase()
-    const pathNorm = path.startsWith('/') ? path : `/${path}`
+    const localizedPath = withPublicLocaleQuery(path)
+    const pathNorm = localizedPath.startsWith('/') ? localizedPath : `/${localizedPath}`
     const url = `${String(base).replace(/\/$/, '')}${pathNorm}`
     const opts = { headers: publicApiHeaders() }
     /**
@@ -387,6 +400,7 @@ export function useMarineApi() {
         order?: 'asc' | 'desc'
         per_page?: number
         page?: number
+        locale?: MarineContentLocale
       }) => {
         const q = buildListQuery({
           per_page: params?.per_page ?? 500,
@@ -394,6 +408,7 @@ export function useMarineApi() {
           search: params?.search,
           sort: params?.sort,
           order: params?.order,
+          locale: params?.locale,
         })
         const res = await fetchPublic<{ data: ServiceItem[] }>(`/services?${q}`)
         return res.data

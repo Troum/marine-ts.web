@@ -34,6 +34,7 @@ function normalizeEditorContacts(src: SiteContactSettings): SiteContactSettings 
     departments: src.departments.map((d) => ({
       ...d,
       title: parseBilingual(d.title),
+      phone: parseBilingual(d.phone),
     })),
     offices: src.offices.map((o) => ({
       ...o,
@@ -53,7 +54,7 @@ onMounted(async () => {
     form.value = normalizeEditorContacts(await api.contactSettings.get())
   } catch {
     await showAdminAlert({ message: 'Не удалось загрузить контакты', variant: 'error' })
-    form.value = structuredClone(contactSettingsDefaults)
+    form.value = normalizeEditorContacts(structuredClone(contactSettingsDefaults))
   } finally {
     loading.value = false
   }
@@ -127,7 +128,7 @@ async function removeOffice(i: number) {
 function addDepartment() {
   form.value.departments.push({
     title: { ru: '', en: '' },
-    phone: '',
+    phone: { ru: '', en: '' },
     email: '',
     showInFooter: false,
   })
@@ -174,7 +175,10 @@ async function submit() {
           parseBilingual(d.title).ru,
           parseBilingual(d.title).en,
         ),
-        phone: d.phone,
+        phone: serializeBilingual(
+          parseBilingual(d.phone).ru,
+          parseBilingual(d.phone).en,
+        ),
         email: d.email,
         showInFooter: d.showInFooter === true,
       })),
@@ -428,16 +432,27 @@ async function submit() {
             </div>
             <div>
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
-                Телефон
+                Телефон (RU)
               </label>
               <input
-                v-model="department.phone"
+                v-model="department.phone.ru"
                 type="text"
                 required
                 class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
               />
             </div>
             <div>
+              <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
+                Телефон (EN)
+              </label>
+              <input
+                v-model="department.phone.en"
+                type="text"
+                required
+                class="w-full border border-mts-border bg-white px-4 py-3 font-body text-sm focus:border-mts-accent focus:outline-none"
+              />
+            </div>
+            <div class="sm:col-span-2">
               <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary">
                 Email
               </label>
