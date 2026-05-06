@@ -150,6 +150,7 @@ function normalizeForEditor(settings: NavigationMenuSettings): NavigationMenuSet
       : bc?.officeAddress?.trim()
         ? [{ title: '', address: bc.officeAddress.trim() }]
         : [{ title: '', address: '' }]
+  const officesColumnTitlePair = burgerEditorLocalized('officesColumnTitle', 'offices_column_title')
   const burgerContacts = {
     phonesTitle: burgerEditorLocalized('phonesTitle', 'phones_title') ?? { ru: '', en: '' },
     phones: bc?.phones?.length ? [...bc.phones] : ['', ''],
