@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, FileText, LayoutGrid, Loader2, Newspaper, Briefcase, Wrench } from 'lucide-vue-next'
+import { ArrowLeft, FileText, LayoutGrid, Loader2, Newspaper, Briefcase, ScanSearch, Wrench } from 'lucide-vue-next'
 import type { SiteSeoPage } from '~/types'
 
 definePageMeta({
@@ -109,7 +109,7 @@ watch([sort, order], () => {
 
         <section>
           <h2 class="font-display mb-4 text-lg text-mts-text">Материалы</h2>
-          <div class="grid gap-4 md:grid-cols-3">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <NuxtLink
               to="/admin/seo/news"
               class="flex items-center gap-3 border border-mts-border bg-white p-5 transition-colors hover:border-mts-accent/40"
@@ -128,6 +128,16 @@ watch([sort, order], () => {
               <div>
                 <p class="font-body font-medium text-mts-text">Проекты</p>
                 <p class="font-mono text-[10px] text-mts-text-secondary">SEO записей</p>
+              </div>
+            </NuxtLink>
+            <NuxtLink
+              to="/admin/seo/page/lnk"
+              class="flex items-center gap-3 border border-mts-border bg-white p-5 transition-colors hover:border-mts-accent/40"
+            >
+              <ScanSearch class="h-8 w-8 text-mts-accent" />
+              <div>
+                <p class="font-body font-medium text-mts-text">ЛНК</p>
+                <p class="font-mono text-[10px] text-mts-text-secondary">Страница /lnk</p>
               </div>
             </NuxtLink>
             <NuxtLink
