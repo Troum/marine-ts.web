@@ -528,9 +528,9 @@ export interface NavigationBurgerSocial {
 /** Блок офиса в колонке контактов бургер-меню. */
 export interface NavigationBurgerOffice {
   /** Подзаголовок (напр. город или страна). */
-  title?: string
+  title?: LocalizedLine
   /** Адрес; допускаются переносы строк. */
-  address: string
+  address: LocalizedLine
 }
 
 export interface NavigationBurgerContacts {

@@ -201,12 +201,16 @@ function normBurgerContacts(raw: unknown): NavigationBurgerContacts | undefined 
         continue
       }
       const x = row as Record<string, unknown>
-      const address = typeof x.address === 'string' ? x.address.trim() : ''
-      if (!address) {
+      const addressPair = parseBilingual(x.address)
+      const hasAddress = addressPair.ru.trim() !== '' || addressPair.en.trim() !== ''
+      if (!hasAddress) {
         continue
       }
-      const title = typeof x.title === 'string' && x.title.trim() !== '' ? x.title.trim() : undefined
-      list.push(title ? { title, address } : { address })
+      const titlePair = parseBilingual(x.title)
+      const hasTitle = titlePair.ru.trim() !== '' || titlePair.en.trim() !== ''
+      const address = typeof x.address === 'string' ? x.address.trim() : addressPair
+      const title = typeof x.title === 'string' ? x.title.trim() : titlePair
+      list.push(hasTitle ? { title, address } : { address })
     }
     if (list.length > 0) {
       offices = list
