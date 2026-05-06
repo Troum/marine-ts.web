@@ -227,10 +227,15 @@ function labelMapForSubmit(map: Record<string, LocalizedLine> | undefined): Reco
   }
   const out: Record<string, string> = {}
   for (const [id, val] of Object.entries(map)) {
-    out[id] = pickLocalized(val, loc.value, '')
+    const s = pickLocalized(val, loc.value, '').trim()
+    if (s !== '') {
+      out[id] = s
+    }
   }
-  return out
+  return Object.keys(out).length > 0 ? out : undefined
 }
+
+async function onSubmit() {
   formError.value = null
   validationErrors.value = []
   formSuccess.value = false

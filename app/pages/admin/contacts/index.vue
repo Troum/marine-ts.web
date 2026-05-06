@@ -195,7 +195,8 @@ async function submit() {
         email: o.email,
       })),
     }
-    form.value = normalizeEditorContacts(await api.contactSettings.get())
+    const updated = await api.contactSettings.update(payload)
+    form.value = normalizeEditorContacts(updated)
     adminToast.success('Контактные данные сохранены')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить', variant: 'error' })

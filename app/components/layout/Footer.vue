@@ -91,6 +91,8 @@ function isExternalPath(p: string) {
 function contactLine(v: LocalizedLine | undefined): string {
   return pickLocalized(v ?? '', loc.value, '')
 }
+
+function stripHtml(s: string): string {
   return s.replace(/<[^>]*>/g, '').trim()
 }
 
