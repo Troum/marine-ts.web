@@ -379,9 +379,9 @@ async function submit() {
         const bc = form.value.burgerContacts
         if (!bc) return undefined
         return {
-          phonesTitle: burgerContactPayloadString(parseBilingual(bc.phonesTitle).ru),
+          phonesTitle: burgerContactPayloadLocalized(bc.phonesTitle),
           phones: bc.phones?.filter(p => p.trim()) ?? undefined,
-          emailTitle: burgerContactPayloadString(parseBilingual(bc.emailTitle).ru),
+          emailTitle: burgerContactPayloadLocalized(bc.emailTitle),
           emails: bc.emails?.map(e => e.trim()).filter(Boolean) ?? undefined,
           socials: bc.socials
             ?.map(s => ({
@@ -389,7 +389,7 @@ async function submit() {
               label: (s.label.trim() || s.url.trim()),
             }))
             .filter(s => s.url) ?? undefined,
-          officesColumnTitle: burgerContactPayloadString(parseBilingual(bc.officesColumnTitle).ru),
+          officesColumnTitle: burgerContactPayloadLocalized(bc.officesColumnTitle),
           offices: bc.offices
             ?.map(o => ({
               title: burgerContactPayloadLocalized(o.title),
