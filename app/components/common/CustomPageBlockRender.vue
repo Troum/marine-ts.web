@@ -264,7 +264,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
       class="relative z-10 flex h-full min-h-0 w-full flex-col"
     >
       <div
-        class="mts-content-wrap flex min-h-0 flex-1 flex-col justify-end pt-20 pb-14 md:pt-24 md:pb-16 lg:pb-[4.5rem]"
+        class="mts-content-wrap flex min-h-0 flex-1 flex-col justify-center pt-28 pb-20 md:pt-32 md:pb-24 lg:pt-36 lg:pb-28"
       >
         <Breadcrumbs
           v-if="showHeroBannerCrumbs"
