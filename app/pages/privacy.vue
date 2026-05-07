@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
 
 useSiteSeoMeta('privacy')
@@ -31,14 +31,16 @@ const items = computed(() =>
   <div class="bg-white pt-24 pb-16">
     <div class="mts-content-wrap">
       <div class="max-w-7xl mx-auto">
-      <Breadcrumbs :items="items" />
-      <h1 class="font-display text-2xl text-body mb-6">
-        {{ page?.title || t('pages.legal.privacyTitle') }}
-      </h1>
-      <div v-if="bodyHtml" class="mts-markdown" v-html="bodyHtml" />
-      <p v-else class="font-body text-muted leading-relaxed">
-        {{ t('pages.legal.privacyLead') }}
-      </p>
+      <div class="mts-figma-hero-stack">
+        <HeroBreadcrumbsRow :items="items" />
+        <h1 class="mts-figma-hero-h1 text-body">
+          {{ page?.title || t('pages.legal.privacyTitle') }}
+        </h1>
+        <div v-if="bodyHtml" class="mts-markdown" v-html="bodyHtml" />
+        <p v-else class="mts-figma-hero-lead text-muted">
+          {{ t('pages.legal.privacyLead') }}
+        </p>
+      </div>
       </div>
     </div>
   </div>

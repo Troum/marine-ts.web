@@ -1,10 +1,10 @@
 <script setup lang="ts">
-useSectionGuard('about')
-import { ChevronDown, FileDown, Loader2 } from 'lucide-vue-next'
+import { FileDown, Loader2 } from 'lucide-vue-next'
 import type { AboutGeoLocation, AboutPageData, MarineContentLocale } from '~/types'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import AboutServiceGeographyMap from '~/components/about/ServiceGeographyMap.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
+import HeroEyebrowRow from '~/components/common/HeroEyebrowRow.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { ABOUT_SECTION_DEFAULT_ORDER, defaultAboutData, mergeAboutPageData } from '~/utils/aboutPageDefaults'
 import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
@@ -14,27 +14,12 @@ import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility
 useSiteSeoMeta('about')
 
 const { t, locale } = useI18n()
-const localePath = useLocalePath()
 const { breadcrumbs } = usePageBreadcrumbs()
 const api = useMarineApi()
 
 const customSectionCrumbItems = computed(() =>
   breadcrumbs({ label: t('nav.about'), to: '/about' }),
 )
-
-/** Бейджи как на главной (ISO / IACS / опыт). */
-const aboutHeroBadges = computed(() => [
-  { k: 'ISO', v: t('home.hero.badgeIso') },
-  { k: 'IACS', v: t('home.hero.badgeIacs') },
-  { k: '14+', v: t('home.hero.badgeYears') },
-])
-
-function scrollToSec2() {
-  if (!isSectionVisible(d.value.sectionVisibility, 'sec2History')) {
-    return
-  }
-  document.getElementById('about-sec-history')?.scrollIntoView({ behavior: 'smooth' })
-}
 
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 
@@ -73,6 +58,12 @@ const cms = computed<AboutPageData | null>(() => {
 })
 
 const d = computed<AboutPageData>(() => cms.value ?? defaultAboutData(loc.value))
+
+/** Подпись у линии (Figma): из CMS или строка «Профиль компании» / Company profile. */
+const aboutSec1Kicker = computed(() => {
+  const raw = d.value.sec1Hero.label?.trim()
+  return raw || t('pages.about.heroEyebrow')
+})
 
 const { setHidden: setFooterHidden } = usePageFooterHidden()
 watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
@@ -129,19 +120,21 @@ function hasImage(src?: string | null): boolean {
       <Loader2 class="h-10 w-10 animate-spin text-primary" role="status" aria-live="polite" />
     </div>
     <template v-else>
-    <!-- Секция 1. Hero -->
-    <section
-      class="relative flex mts-hero-min-h items-end overflow-hidden lg:items-center"
-      :class="{ 'mts-about-light': !hasImage(d.heroImage) }"
-    >
+    <!-- Секция 1. Hero (структура и типографика как в макете Figma) -->
+    <section class="relative flex mts-hero-min-h items-end overflow-hidden lg:items-center">
       <div class="absolute inset-0">
         <CommonParallaxHeroMedia
           v-if="hasImage(d.heroImage)"
           :image="d.heroImage ?? ''"
         />
-        <div v-else class="absolute inset-0 bg-white" aria-hidden="true" />
-        <div v-if="hasImage(d.heroImage)" class="absolute inset-0 mts-about-hero-veil-r" aria-hidden="true" />
-        <div v-if="hasImage(d.heroImage)" class="absolute inset-0 mts-about-hero-veil-t" aria-hidden="true" />
+        <div v-else class="absolute inset-0 bg-[#575757]" aria-hidden="true" />
+        <div
+          v-if="hasImage(d.heroImage)"
+          class="pointer-events-none absolute inset-0 z-[1] bg-[rgba(11,31,42,0.5)]"
+          aria-hidden="true"
+        />
+        <div v-if="hasImage(d.heroImage)" class="absolute inset-0 z-[2] mts-about-hero-veil-r" aria-hidden="true" />
+        <div v-if="hasImage(d.heroImage)" class="absolute inset-0 z-[2] mts-about-hero-veil-t" aria-hidden="true" />
       </div>
 
       <AboutSectionContentParallax
@@ -149,61 +142,33 @@ function hasImage(src?: string | null): boolean {
         :factor="0.085"
         class="relative z-10 mts-content-wrap w-full pb-24 pt-28 lg:pb-28 lg:pt-36"
       >
-        <div class="max-w-7xl">
-          <div class="mb-6 flex items-center gap-3">
-            <div class="h-px w-8 shrink-0 bg-primary" aria-hidden="true" />
-            <span class="section-label text-mts-frost/75">{{ t('pages.about.heroEyebrow') }}</span>
-          </div>
+        <div class="max-w-[798px] text-mts-frost">
+          <HeroEyebrowRow>
+            <ThemedContentString :content="aboutSec1Kicker" />
+          </HeroEyebrowRow>
 
-          <h1
-            class="mb-6 max-w-[720px] font-black text-3xl leading-[1.1] text-mts-frost sm:text-4xl lg:text-5xl"
-          >
-            <ThemedContentString :content="d.sec1Hero.title" />
-          </h1>
-
-          <div class="mb-10 max-w-3xl font-body text-lg leading-relaxed text-mts-frost/85">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec1Hero.body)" />
-          </div>
-
-          <div
-            v-if="d.hideHeroPrimaryButton !== true || d.hideHeroSecondaryButton !== true"
-            class="mb-10 flex flex-wrap items-center gap-4"
-          >
-            <NuxtLink
-              v-if="d.hideHeroPrimaryButton !== true"
-              :to="localePath('/request')"
-              class="btn-primary inline-flex items-center justify-center"
+          <!-- Типографика Figma 14:351 -->
+          <div class="mts-figma-hero-stack">
+            <div class="mts-figma-hero-title-pair">
+              <h1
+                class="mts-figma-hero-h1 max-w-4xl text-mts-frost"
+              >
+                <ThemedContentString :content="d.sec1Hero.title" />
+              </h1>
+              <p
+                v-if="d.sec1Hero.subtitle?.trim()"
+                class="mts-figma-hero-lead max-w-[653px] text-mts-frost"
+              >
+                <ThemedContentString :content="d.sec1Hero.subtitle" />
+              </p>
+            </div>
+            <div
+              class="mts-figma-hero-body mts-markdown max-w-[798px] text-mts-frost/95"
             >
-              {{ t('header.ctaContact') }}
-            </NuxtLink>
-            <NuxtLink
-              v-if="d.hideHeroSecondaryButton !== true"
-              :to="localePath('/application-form')"
-              class="btn-secondary-glass inline-flex items-center justify-center"
-            >
-              {{ t('pages.vacancies.openApplicationButton') }}
-            </NuxtLink>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-8">
-            <div v-for="(badge, bi) in aboutHeroBadges" :key="bi" class="flex items-center gap-2">
-              <div class="h-1.5 w-1.5 shrink-0 bg-primary" aria-hidden="true" />
-              <div>
-                <span class="font-mono text-sm font-medium text-mts-frost">{{ badge.k }}</span>
-                <span class="ml-1 font-mono text-xs text-mts-frost/70">{{ badge.v }}</span>
-              </div>
+              <div v-html="aboutRichFieldHtml(d.sec1Hero.body)" />
             </div>
           </div>
         </div>
-
-        <button
-          type="button"
-          class="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-mts-frost/70 transition-colors hover:text-primary"
-          @click="scrollToSec2"
-        >
-          <span class="font-mono text-xs uppercase tracking-wide">{{ t('home.hero.scroll') }}</span>
-          <ChevronDown class="h-4 w-4 animate-bounce" aria-hidden="true" />
-        </button>
       </AboutSectionContentParallax>
     </section>
 
@@ -229,16 +194,15 @@ function hasImage(src?: string | null): boolean {
 
       <AboutSectionContentParallax class="relative z-10 mts-content-wrap">
         <MarinReveal>
-          <h2 class="max-w-[900px] font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight">
+          <h2 class="mts-figma-section-h2 max-w-[900px] text-mts-frost">
             <ThemedContentString :content="d.sec2History.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
           <div
-            class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl"
-          >
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec2History.body)" />
-          </div>
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec2History.body)"
+          />
         </MarinReveal>
         <MarinReveal v-if="d.sec2History.cards.length" :delay-ms="200">
           <div
@@ -250,11 +214,11 @@ function hasImage(src?: string | null): boolean {
               :key="`h-${i}`"
               class="service-card corner-accent min-w-0 p-8"
             >
-              <h3 class="font-display text-lg text-body break-words [text-wrap:pretty]">
+              <h3 class="mts-figma-card-title text-body break-words [text-wrap:pretty]">
                 <ThemedContentString :content="c.title" />
               </h3>
               <div
-                class="mts-markdown mt-3 font-body text-sm leading-relaxed text-muted"
+                class="mts-figma-card-body mts-markdown mt-3 text-muted"
                 v-html="aboutRichFieldHtml(c.text)"
               />
             </div>
@@ -285,19 +249,21 @@ function hasImage(src?: string | null): boolean {
 
       <AboutSectionContentParallax class="relative z-10 mts-content-wrap">
         <MarinReveal>
-          <h2 class="font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight">
+          <h2 class="mts-figma-section-h2 text-mts-frost">
             <ThemedContentString :content="d.sec3Technical.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
-          <div class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec3Technical.lead)" />
-          </div>
+          <div
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec3Technical.lead)"
+          />
         </MarinReveal>
         <MarinReveal :delay-ms="180">
-          <div class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec3Technical.lead2)" />
-          </div>
+          <div
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec3Technical.lead2)"
+          />
         </MarinReveal>
         <MarinReveal v-if="d.sec3Technical.cards.length" :delay-ms="220">
           <div
@@ -310,11 +276,11 @@ function hasImage(src?: string | null): boolean {
               class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6"
             >
               <div class="relative z-10 flex min-h-0 flex-1 flex-col">
-                <h3 class="font-display text-base leading-snug text-body break-words [text-wrap:pretty] md:text-lg lg:text-xl">
+                <h3 class="mts-figma-card-title text-body break-words [text-wrap:pretty]">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown mt-3 flex-1 font-body text-sm leading-relaxed text-muted"
+                  class="mts-figma-card-body mts-markdown mt-3 flex-1 text-muted"
                   v-html="aboutRichFieldHtml(c.text)"
                 />
               </div>
@@ -345,19 +311,21 @@ function hasImage(src?: string | null): boolean {
 
       <AboutSectionContentParallax class="relative z-10 mts-content-wrap">
         <MarinReveal>
-          <h2 class="max-w-[900px] font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight text-primary">
+          <h2 class="mts-figma-section-h2 max-w-[900px] text-mts-frost">
             <ThemedContentString :content="d.sec4Crewing.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
-          <div class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec4Crewing.lead)" />
-          </div>
+          <div
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec4Crewing.lead)"
+          />
         </MarinReveal>
         <MarinReveal :delay-ms="180">
-          <div class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec4Crewing.lead2)" />
-          </div>
+          <div
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec4Crewing.lead2)"
+          />
         </MarinReveal>
         <MarinReveal v-if="d.sec4Crewing.cards.length" :delay-ms="220">
           <div
@@ -370,11 +338,11 @@ function hasImage(src?: string | null): boolean {
               class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6"
             >
               <div class="relative z-10 flex min-h-0 flex-1 flex-col">
-                <h3 class="font-display text-base leading-snug text-body break-words [text-wrap:pretty] md:text-lg lg:text-xl">
+                <h3 class="mts-figma-card-title text-body break-words [text-wrap:pretty]">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown mt-3 flex-1 font-body text-sm leading-relaxed text-muted"
+                  class="mts-figma-card-body mts-markdown mt-3 flex-1 text-muted"
                   v-html="aboutRichFieldHtml(c.text)"
                 />
               </div>
@@ -405,14 +373,15 @@ function hasImage(src?: string | null): boolean {
 
       <AboutSectionContentParallax class="relative z-10 mts-content-wrap">
         <MarinReveal>
-          <h2 class="max-w-[900px] font-display text-[clamp(1.75rem,3vw,2.5rem)] font-bold leading-tight text-primary">
+          <h2 class="mts-figma-section-h2 max-w-[900px] text-mts-frost">
             <ThemedContentString :content="d.sec5Mission.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
-          <div class="mt-6 max-w-[820px] font-body text-xl leading-[34px] text-mts-frost lg:text-2xl">
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec5Mission.body)" />
-          </div>
+          <div
+            class="mt-[2.375rem] max-w-[820px] mts-figma-section-body mts-markdown text-mts-frost"
+            v-html="aboutRichFieldHtml(d.sec5Mission.body)"
+          />
         </MarinReveal>
         <MarinReveal v-if="d.sec5Mission.cards.length" :delay-ms="200">
           <div
@@ -425,11 +394,11 @@ function hasImage(src?: string | null): boolean {
               class="service-card corner-accent group relative isolate flex h-full min-h-0 min-w-0 flex-col p-5 sm:p-6"
             >
               <div class="relative z-10 flex min-h-0 flex-1 flex-col">
-                <h3 class="font-display text-base leading-snug text-body break-words [text-wrap:pretty] md:text-lg lg:text-xl">
+                <h3 class="mts-figma-card-title text-body break-words [text-wrap:pretty]">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown mt-3 flex-1 font-body text-sm leading-relaxed text-muted"
+                  class="mts-figma-card-body mts-markdown mt-3 flex-1 text-muted"
                   v-html="aboutRichFieldHtml(c.text)"
                 />
               </div>
@@ -450,18 +419,15 @@ function hasImage(src?: string | null): boolean {
         class="relative z-10 mts-content-wrap"
       >
         <MarinReveal>
-          <h2
-            class="font-display text-2xl font-bold text-primary lg:text-[34px] lg:leading-[30px]"
-          >
+          <h2 class="mts-figma-section-h2 text-body">
             <ThemedContentString :content="d.sec6Closing.title" />
           </h2>
         </MarinReveal>
         <MarinReveal :delay-ms="120">
           <div
-            class="mt-8 max-w-[956px] font-body text-lg font-normal leading-[34px] text-mts-frost lg:mt-[1.625rem] lg:text-2xl"
-          >
-            <div class="mts-markdown" v-html="aboutRichFieldHtml(d.sec6Closing.body)" />
-          </div>
+            class="mt-[2.375rem] max-w-[956px] mts-figma-section-body mts-markdown text-body"
+            v-html="aboutRichFieldHtml(d.sec6Closing.body)"
+          />
         </MarinReveal>
       </AboutSectionContentParallax>
     </section>
@@ -489,7 +455,7 @@ function hasImage(src?: string | null): boolean {
       >
         <AboutSectionContentParallax class="mts-content-wrap" :max-shift="32" :factor="0.075">
           <MarinReveal>
-            <h2 class="text-center font-display text-2xl font-bold text-primary lg:text-3xl">
+            <h2 class="mts-figma-section-h2 text-center text-primary">
               <ThemedContentString :content="d.certificates.title" />
             </h2>
           </MarinReveal>
@@ -501,7 +467,7 @@ function hasImage(src?: string | null): boolean {
             >
               <div class="service-card p-6 text-center">
                 <p class="font-mono text-sm text-primary"><ThemedContentString :content="c.name" /></p>
-                <p class="mt-2 font-body text-sm text-muted"><ThemedContentString :content="c.desc" /></p>
+                <p class="mts-figma-card-body mt-2 text-muted"><ThemedContentString :content="c.desc" /></p>
                 <a
                   v-if="c.fileUrl"
                   :href="c.fileUrl"

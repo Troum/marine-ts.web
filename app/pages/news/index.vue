@@ -1,14 +1,14 @@
 <script setup lang="ts">
-useSectionGuard('news')
 import { Calendar, User, Loader2, MoveRight } from 'lucide-vue-next'
 import type { NewsItem, ListingPageData, MarineContentLocale } from '~/types'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { defaultListingData, listingDefaultOrder, mergeListingPageData } from '~/utils/pageDefaults'
 import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
+import { resolveHeroBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 useSiteSeoMeta('news')
 
@@ -43,6 +43,11 @@ watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
 
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.news'), to: '/news' }),
+)
+
+const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
+const heroBreadcrumbsOnDark = computed(() =>
+  resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, hasHeroPhoto.value),
 )
 
 const news = ref<NewsItem[]>([])
@@ -81,20 +86,34 @@ function sectionShown(id: string): boolean {
 
 <template>
   <div class="bg-white">
-    <ListingHeroShell :hero-image="cms.heroImage">
+    <ListingHeroShell :hero-image="cms.heroImage" :hero-veil="hasHeroPhoto">
       <div class="max-w-7xl">
-        <Breadcrumbs :items="crumbItems" />
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-primary" />
-          <span class="section-label">{{ t('pages.news.heroEyebrow') }}</span>
+        <HeroBreadcrumbsRow
+          :items="crumbItems"
+          :on-dark-hero="heroBreadcrumbsOnDark"
+        />
+        <div class="mts-figma-hero-stack">
+          <h1
+            :class="[
+              'mts-figma-hero-h1 max-w-[1055px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white drop-shadow-md'
+                : 'text-body',
+            ]"
+          >
+            <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+          </h1>
+          <p
+            :class="[
+              'mts-figma-hero-lead max-w-[895px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white/95 drop-shadow'
+                : 'text-muted',
+            ]"
+          >
+            <ThemedContentString :content="cms.hero.lead" />
+          </p>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
-          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-        </h1>
-        <div class="mb-6 h-0.5 w-12 bg-primary" />
-        <p class="font-body text-lg leading-relaxed text-muted">
-          <ThemedContentString :content="cms.hero.lead" />
-        </p>
       </div>
     </ListingHeroShell>
 
@@ -122,7 +141,7 @@ function sectionShown(id: string): boolean {
                     {{ t('pages.common.featured') }}
                   </span>
                 </div>
-                <h2 class="font-display text-2xl lg:text-3xl text-body mb-4">
+                <h2 class="mts-figma-section-h2 text-body mb-4">
                   <ThemedContentString :content="featuredNews.title" />
                 </h2>
                 <p class="font-body text-muted mb-6 max-w-7xl">
@@ -157,7 +176,7 @@ function sectionShown(id: string): boolean {
                   <span class="font-mono text-xs uppercase tracking-wide text-primary mb-3 inline-block">
                     {{ categoryLabel(item.category) }}
                   </span>
-                  <h3 class="font-display text-xl text-body mb-3">
+                  <h3 class="mts-figma-card-title text-body mb-3">
                     <NuxtLink :to="localePath(`/news/${item.slug}`)" class="hover:text-primary transition-colors">
                       <ThemedContentString :content="item.title" />
                     </NuxtLink>

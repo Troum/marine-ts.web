@@ -47,6 +47,7 @@ import {
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
 import { LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
 import {
+  emptyThemeTitle,
   mergeContactsHero,
   mergeCrewingHero,
   mergeFunnelCrewing,
@@ -612,13 +613,13 @@ export function mergeListingPageData(slug: string, locale: MarineContentLocale, 
 const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
   ru: {
     hero: {
-      titleFormatted: themeTitlePair('', ''),
+      titleFormatted: emptyThemeTitle(),
       lead: '',
     },
     infoTitle: '',
     formTitle: '',
     formLead: '',
-    officesTitle: 'Офисы',
+    officesTitle: '',
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
@@ -627,13 +628,13 @@ const CONTACTS_DEFAULTS: Record<MarineContentLocale, ContactsPageData> = {
   },
   en: {
     hero: {
-      titleFormatted: themeTitlePair('', ''),
+      titleFormatted: emptyThemeTitle(),
       lead: '',
     },
     infoTitle: '',
     formTitle: '',
     formLead: '',
-    officesTitle: 'Offices',
+    officesTitle: '',
     showInquiryForm: false,
     hideInquiryFormIntro: false,
     hideInquiryFormCardHeading: false,
@@ -685,6 +686,7 @@ export function mergeContactsPageData(locale: MarineContentLocale, raw: unknown)
       typeof p.hideInquiryFormCardHeading === 'boolean'
         ? p.hideInquiryFormCardHeading
         : base.hideInquiryFormCardHeading,
+    heroBreadcrumbTone: parseStoredPageBreadcrumbTone(p.heroBreadcrumbTone) ?? base.heroBreadcrumbTone,
     heroImage: p.heroImage !== undefined ? p.heroImage : base.heroImage,
     customSections: normalizeCustomPageSections(p.customSections),
     sectionOrder: p.sectionOrder ?? base.sectionOrder,

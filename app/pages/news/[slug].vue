@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Calendar, User, Loader2 } from 'lucide-vue-next'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { newsCategoryLabel } from '~/utils/contentLabels'
 import { plainMetaString } from '~/utils/adminThemedTextCodec'
@@ -70,7 +70,7 @@ const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category
     <article v-else class="relative overflow-hidden pb-24">
       <div class="relative z-10 mts-content-wrap">
         <div class="mx-auto max-w-7xl">
-          <Breadcrumbs class="mb-8" :items="crumbItems" />
+          <HeroBreadcrumbsRow :items="crumbItems" />
 
         <div class="mb-6 flex flex-wrap items-center gap-3">
           <span class="inline-block bg-primary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-primary">
@@ -84,7 +84,7 @@ const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category
           </span>
         </div>
 
-        <h1 class="font-display text-2xl leading-tight text-body lg:text-3xl">
+        <h1 class="mts-figma-hero-h1 text-body">
           <ThemedContentString :content="article.title" />
         </h1>
 
@@ -99,7 +99,7 @@ const categoryDisplay = computed(() => newsCategoryLabel(article.value?.category
           </span>
         </div>
 
-        <p class="mt-10 border-l-2 border-primary pl-6 font-body text-lg leading-relaxed text-muted">
+        <p class="mts-figma-hero-lead mt-10 border-l-2 border-primary pl-6 text-muted">
           <ThemedContentString :content="article.excerpt" />
         </p>
 

@@ -1,16 +1,24 @@
 <script setup lang="ts">
-import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-vue-next'
+import { ArrowLeft, ArrowRight, AlertCircle, Check, Loader2 } from 'lucide-vue-next'
 import VacancyCertTable from '~/components/vacancy-application/VacancyCertTable.vue'
 import VacancyEducationTable from '~/components/vacancy-application/VacancyEducationTable.vue'
 import VacancySeaServiceTable from '~/components/vacancy-application/VacancySeaServiceTable.vue'
 import MarinePhoneField from '~/components/vacancy-application/MarinePhoneField.vue'
 import MtsDateInput from '~/components/common/MtsDateInput.vue'
+import MtsDecorativeAccentLine from '~/components/common/MtsDecorativeAccentLine.vue'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
+import AdminMultiSelect from '~/components/admin/AdminMultiSelect.vue'
 import type { AdminSelectOption } from '~/components/admin/AdminSelect.vue'
 import type { VacancyApplicationForm } from '~/types/applicationForm'
 import { createVacancyApplicationForm } from '~/composables/useVacancyApplicationForm'
 import { isVacancyPhoneValid } from '~/utils/vacancyPhone'
 import { normalizeVacancyDob, vacancyDobToIso, isVacancyDobComplete } from '~/utils/vacancyDob'
+import {
+  APPLICATION_FORM_PHOTO_MAX_BYTES,
+  APPLICATION_FORM_PHOTO_MAX_KB,
+  isApplicationFormPhotoMime,
+} from '~/utils/applicationFormPhoto'
+import { applicationFormSubmitErrorMessages } from '~/utils/mapApplicationFormApiErrors'
 
 const props = withDefaults(
   defineProps<{
@@ -30,10 +38,58 @@ const fieldInputClass =
 const api = useMarineApi()
 const { t, locale } = useI18n()
 const localePath = useLocalePath()
-const { isSectionHidden } = useSiteAppearance()
-const vacanciesSectionHidden = computed(() => isSectionHidden('vacancies'))
+const { settings: appearanceSettings } = useSiteAppearance()
+
+/** Раздел «Вакансии» скрыт в настройках сайта — страницы /vacancies* для гостей недоступны. */
+const vacanciesSectionHidden = computed(
+  () => appearanceSettings.value.hiddenSections.vacancies === true,
+)
+
+/** Куда вести вместо списка вакансий (открытая анкета, 404 по вакансии и т.д.). */
+const vacanciesListingPath = computed(() =>
+  vacanciesSectionHidden.value ? localePath('/') : localePath('/vacancies'),
+)
+
+const vacanciesListingLinkLabel = computed(() =>
+  vacanciesSectionHidden.value
+    ? t('pages.vacancyForm.backToHome')
+    : t('pages.vacancyForm.backToVacanciesList'),
+)
+
+/** «Назад к вакансии» или на главную, если раздел вакансий скрыт. */
+const vacancyDetailPath = computed(() => {
+  if (!props.vacancySlug) {
+    return vacanciesListingPath.value
+  }
+  if (vacanciesSectionHidden.value) {
+    return localePath('/')
+  }
+  return localePath(`/vacancies/${props.vacancySlug}`)
+})
+
+const vacancyDetailLinkLabel = computed(() =>
+  vacanciesSectionHidden.value
+    ? t('pages.vacancyForm.backToHome')
+    : t('pages.common.toVacancy'),
+)
+
+const openFormSuccessCtaLabel = computed(() =>
+  vacanciesSectionHidden.value
+    ? t('pages.vacancyForm.backToHome')
+    : t('pages.common.toVacancies'),
+)
+
+const vacancySuccessCtaLabel = computed(() =>
+  vacanciesSectionHidden.value
+    ? t('pages.vacancyForm.backToHome')
+    : t('pages.vacancyForm.backToVacancy'),
+)
+
 /** Связка label ↔ AdminSelect для семейного положения */
 const maritalSelectId = useId()
+const positionListSelectId = useId()
+
+const PHOTO_MAX_MB = APPLICATION_FORM_PHOTO_MAX_KB / 1024
 
 const form = ref<VacancyApplicationForm | null>(null)
 /**
@@ -41,6 +97,8 @@ const form = ref<VacancyApplicationForm | null>(null)
  * и не должен попадать в localStorage-копию payload).
  */
 const photoFile = ref<File | null>(null)
+/** Ошибка по файлу фото (размер / тип), показываем сразу при выборе и на валидации шага 2. */
+const photoFileError = ref<string | null>(null)
 /** Превью выбранного фото (data URL), чтобы пользователь сразу видел, что прикрепил. */
 const photoPreview = ref<string | null>(null)
 
@@ -50,6 +108,7 @@ const photoPreview = ref<string | null>(null)
  */
 type RequiredField =
   | 'positionApplyingFor'
+  | 'desiredVesselTypes'
   | 'lastName'
   | 'firstName'
   | 'dateOfBirth'
@@ -67,6 +126,13 @@ type RequiredField =
  */
 const fieldErrors = ref<Partial<Record<RequiredField, string>>>({})
 const touched = ref<Set<RequiredField>>(new Set())
+
+const step = ref(1)
+const totalSteps = 10
+const submitted = ref(false)
+const stepError = ref<string | null>(null)
+const submitting = ref(false)
+const submitErrorMessages = ref<string[]>([])
 
 const dateOfBirthIso = computed({
   get: () => {
@@ -88,12 +154,14 @@ watch(
     [props.variant, props.vacancySlug, props.vacancyTitle, props.pending, props.vacancyMissing] as const,
   () => {
     photoFile.value = null
+    photoFileError.value = null
     if (photoPreview.value) {
       URL.revokeObjectURL(photoPreview.value)
       photoPreview.value = null
     }
     fieldErrors.value = {}
     touched.value = new Set()
+    submitErrorMessages.value = []
     if (props.variant === 'open') {
       form.value = createVacancyApplicationForm('open', '')
       return
@@ -106,13 +174,6 @@ watch(
   },
   { immediate: true },
 )
-
-const step = ref(1)
-const totalSteps = 10
-const submitted = ref(false)
-const stepError = ref<string | null>(null)
-const submitting = ref(false)
-const submitError = ref<string | null>(null)
 
 const stepsMeta = computed(() => [
   { n: 1, title: t('pages.vacancyForm.s1') },
@@ -142,11 +203,54 @@ const maritalOptions = computed<AdminSelectOption[]>(() => [
   { value: t('pages.vacancyForm.maritalOptions.divorced'), label: t('pages.vacancyForm.maritalOptions.divorced') },
 ])
 
+const formListOptions = ref<{ positionOptions: string[]; vesselTypeOptions: string[] } | null>(null)
+
+onMounted(async () => {
+  try {
+    formListOptions.value = await api.applicationForms.getFormListsPublic()
+  } catch {
+    formListOptions.value = { positionOptions: [], vesselTypeOptions: [] }
+  }
+})
+
+const positionSelectOptions = computed<AdminSelectOption[]>(() => {
+  const raw = formListOptions.value?.positionOptions ?? []
+  return raw.map((p) => ({ value: p, label: p }))
+})
+
+const positionMultiOptions = computed<AdminSelectOption[]>(() => {
+  const base = positionSelectOptions.value
+  if (props.variant === 'vacancy' && props.vacancyTitle?.trim()) {
+    const title = props.vacancyTitle.trim()
+    if (!base.some((o) => o.value === title)) {
+      return [{ value: title, label: title }, ...base]
+    }
+  }
+  return base
+})
+
+const vesselTypeOptionList = computed(() => formListOptions.value?.vesselTypeOptions ?? [])
+
+const vesselTypeSelectOptions = computed<AdminSelectOption[]>(() =>
+  vesselTypeOptionList.value.map((v) => ({ value: v, label: v })),
+)
+
+const hasPositionList = computed(() => (formListOptions.value?.positionOptions?.length ?? 0) > 0)
+
+const positionOpenText = computed({
+  get: () => form.value?.positionApplyingFor?.[0] ?? '',
+  set: (v: string) => {
+    const f = form.value
+    if (!f) {
+      return
+    }
+    const trimmed = v.trim()
+    f.positionApplyingFor = trimmed ? [trimmed] : []
+  },
+})
+
 const requiredByStep = computed<Record<number, RequiredField[]>>(() => ({
-  2:
-    props.variant === 'open'
-      ? ['positionApplyingFor', 'lastName', 'firstName', 'dateOfBirth']
-      : ['lastName', 'firstName', 'dateOfBirth'],
+  2: ['positionApplyingFor', 'desiredVesselTypes', 'lastName', 'firstName', 'dateOfBirth'],
   3: ['email', 'mobilePhone'],
   10: ['consentRuAccuracy', 'consentRuPd', 'consentEnAccuracy', 'consentEnPd'],
 }))
@@ -160,11 +264,25 @@ function validateField(field: RequiredField): string | null {
   }
   let err: string | null = null
   switch (field) {
-    case 'positionApplyingFor':
-      if (props.variant === 'open' && !f.positionApplyingFor?.trim()) {
-        err = t('pages.vacancyForm.errPositionOpen')
+    case 'positionApplyingFor': {
+      const nonempty = (f.positionApplyingFor ?? []).map((s) => s.trim()).filter(Boolean)
+      if (nonempty.length < 1) {
+        err =
+          props.variant === 'open'
+            ? t('pages.vacancyForm.errPositionOpen')
+            : t('pages.vacancyForm.errFieldRequired')
+      } else if (nonempty.length > 3) {
+        err = t('pages.vacancyForm.errPositionApplyingForRange')
       }
       break
+    }
+    case 'desiredVesselTypes': {
+      const n = f.desiredVesselTypes?.length ?? 0
+      if (n < 1 || n > 3) {
+        err = t('pages.vacancyForm.errDesiredVesselTypes')
+      }
+      break
+    }
     case 'lastName':
     case 'firstName':
       if (!f[field]?.trim()) {
@@ -209,6 +327,26 @@ function validateField(field: RequiredField): string | null {
   return err
 }
 
+function validatePhotoAttachment(): string | null {
+  const file = photoFile.value
+  if (!file) {
+    photoFileError.value = null
+    return null
+  }
+  if (file.size > APPLICATION_FORM_PHOTO_MAX_BYTES) {
+    const msg = t('pages.vacancyForm.errPhotoTooLarge', { mb: PHOTO_MAX_MB })
+    photoFileError.value = msg
+    return msg
+  }
+  if (!isApplicationFormPhotoMime(file.type)) {
+    const msg = t('pages.vacancyForm.errPhotoType')
+    photoFileError.value = msg
+    return msg
+  }
+  photoFileError.value = null
+  return null
+}
+
 function markTouched(field: RequiredField) {
   if (!touched.value.has(field)) {
     const s = new Set(touched.value)
@@ -250,6 +388,9 @@ function validateStep(s: number): string | null {
       hasError = true
     }
   }
+  if (s === 2 && validatePhotoAttachment() !== null) {
+    hasError = true
+  }
   touched.value = newTouched
   return hasError ? t('pages.vacancyForm.errCheckFields') : null
 }
@@ -276,6 +417,7 @@ function nextStep() {
   if (stepError.value) {
     return
   }
+  submitErrorMessages.value = []
   if (step.value < totalSteps) {
     step.value += 1
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -284,6 +426,7 @@ function nextStep() {
 
 function prevStep() {
   stepError.value = null
+  submitErrorMessages.value = []
   if (step.value > 1) {
     step.value -= 1
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -293,13 +436,34 @@ function prevStep() {
 function onPhotoChange(e: Event) {
   const input = e.target as HTMLInputElement
   const file = input.files?.[0] ?? null
-  photoFile.value = file
-  if (form.value) {
-    form.value.photoFileName = file?.name ?? null
-  }
+  photoFileError.value = null
   if (photoPreview.value) {
     URL.revokeObjectURL(photoPreview.value)
     photoPreview.value = null
+  }
+  if (file) {
+    if (file.size > APPLICATION_FORM_PHOTO_MAX_BYTES) {
+      photoFileError.value = t('pages.vacancyForm.errPhotoTooLarge', { mb: PHOTO_MAX_MB })
+      photoFile.value = null
+      if (form.value) {
+        form.value.photoFileName = null
+      }
+      input.value = ''
+      return
+    }
+    if (!isApplicationFormPhotoMime(file.type)) {
+      photoFileError.value = t('pages.vacancyForm.errPhotoType')
+      photoFile.value = null
+      if (form.value) {
+        form.value.photoFileName = null
+      }
+      input.value = ''
+      return
+    }
+  }
+  photoFile.value = file
+  if (form.value) {
+    form.value.photoFileName = file?.name ?? null
   }
   if (file && import.meta.client) {
     photoPreview.value = URL.createObjectURL(file)
@@ -333,7 +497,7 @@ async function submitForm() {
   }
   stepError.value = null
   submitting.value = true
-  submitError.value = null
+  submitErrorMessages.value = []
   try {
     syncSurnameName()
     const payload: VacancyApplicationForm = {
@@ -359,8 +523,8 @@ async function submitForm() {
     }
     submitted.value = true
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  } catch {
-    submitError.value = t('pages.vacancyForm.submitErr')
+  } catch (e: unknown) {
+    submitErrorMessages.value = applicationFormSubmitErrorMessages(e, t, PHOTO_MAX_MB)
   } finally {
     submitting.value = false
   }
@@ -374,7 +538,6 @@ function syncSurnameName() {
   f.surnameAndName = [f.lastName, f.firstName].filter(Boolean).join(' ')
 }
 
-const positionReadonly = computed(() => props.variant === 'vacancy')
 </script>
 
 <template>
@@ -385,29 +548,27 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
     <div v-else-if="showNotFound" class="mx-auto max-w-7xl px-6 py-24 text-center">
       <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundVacancy') }}</p>
       <NuxtLink
-        :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
+        :to="vacanciesListingPath"
         class="btn-primary inline-flex"
-        >{{
-          vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancies')
-        }}</NuxtLink>
+      >{{ vacanciesListingLinkLabel }}</NuxtLink>
     </div>
     <div v-else-if="form" class="relative mx-auto max-w-7xl px-6 pb-24 pt-8 lg:px-12">
       <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
         <NuxtLink
           v-if="variant === 'vacancy' && vacancySlug"
-          :to="localePath(vacanciesSectionHidden ? '/' : `/vacancies/${vacancySlug}`)"
+          :to="vacancyDetailPath"
           class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
-          {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancy') }}
+          {{ vacancyDetailLinkLabel }}
         </NuxtLink>
         <NuxtLink
           v-else
-          :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
+          :to="vacanciesListingPath"
           class="inline-flex items-center gap-2 font-mono text-xs uppercase text-muted transition-colors hover:text-primary"
         >
           <ArrowLeft class="h-4 w-4" />
-          {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.vacancyForm.backToVacanciesList') }}
+          {{ vacanciesListingLinkLabel }}
         </NuxtLink>
         <span class="font-mono text-[10px] uppercase tracking-wide text-muted">
           {{ t('pages.vacancyForm.stepProgress', { n: step, total: totalSteps }) }}
@@ -444,49 +605,69 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           </p>
           <NuxtLink
             v-if="variant === 'vacancy' && vacancySlug"
-            :to="localePath(vacanciesSectionHidden ? '/' : `/vacancies/${vacancySlug}`)"
+            :to="vacancyDetailPath"
             class="btn-primary mt-8 inline-flex"
           >
-            {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.vacancyForm.backToVacancy') }}
+            {{ vacancySuccessCtaLabel }}
           </NuxtLink>
           <NuxtLink
             v-else
-            :to="localePath(vacanciesSectionHidden ? '/' : '/vacancies')"
+            :to="vacanciesListingPath"
             class="btn-primary mt-8 inline-flex"
           >
-            {{ vacanciesSectionHidden ? t('pages.vacancyForm.backToHome') : t('pages.common.toVacancies') }}
+            {{ openFormSuccessCtaLabel }}
           </NuxtLink>
         </div>
 
         <template v-else>
-          <h1 class="font-display text-2xl text-body md:text-3xl">
-            <span class="text-primary">{{ t('pages.vacancyForm.formHeading') }}</span>
-            <template v-if="variant === 'vacancy' && vacancyTitle"> — {{ vacancyTitle }}</template>
-            <template v-else><span class="text-body">&nbsp;{{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
-          </h1>
+          <div class="flex flex-col gap-3">
+            <MtsDecorativeAccentLine />
+            <h1 class="font-display text-2xl text-body md:text-3xl">
+              <span class="text-primary">{{ t('pages.vacancyForm.formHeading') }}</span>
+              <template v-if="variant === 'vacancy' && vacancyTitle"> — {{ vacancyTitle }}</template>
+              <template v-else><span class="text-body">&nbsp;{{ t('pages.vacancyForm.openFormSubtitle') }}</span></template>
+            </h1>
+          </div>
           <p class="mt-2 font-body text-sm text-muted">
             {{ variant === 'open' ? t('pages.vacancyForm.openFormIntro') : t('pages.vacancyForm.formIntro') }}
           </p>
+          <p v-if="variant === 'open'" class="mt-2 font-body text-sm text-muted">
+            {{ t('pages.vacancyForm.openFormEnglishNote') }}
+          </p>
 
-          <p v-if="stepError" class="mt-6 border border-red-200 bg-red-50 px-4 py-2 font-body text-sm text-red-800">
-            {{ stepError }}
-          </p>
-          <p v-if="submitError" class="mt-4 border border-red-200 bg-red-50 px-4 py-2 font-body text-sm text-red-800">
-            {{ submitError }}
-          </p>
+          <div
+            v-if="stepError"
+            class="mt-6 flex gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3"
+            role="alert"
+          >
+            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <div class="min-w-0">
+              <p class="font-display text-sm font-semibold text-body">
+                {{ t('pages.vacancyForm.clientValidationTitle') }}
+              </p>
+              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-700">
+                <li>{{ stepError }}</li>
+              </ul>
+            </div>
+          </div>
+          <div
+            v-if="submitErrorMessages.length"
+            class="mt-4 flex gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3"
+            role="alert"
+          >
+            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <div class="min-w-0">
+              <p class="font-display text-sm font-semibold text-body">
+                {{ t('pages.vacancyForm.serverErrorTitle') }}
+              </p>
+              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-700">
+                <li v-for="(line, idx) in submitErrorMessages" :key="idx">{{ line }}</li>
+              </ul>
+            </div>
+          </div>
 
           <!-- Step 1 -->
           <section v-show="step === 1" class="mt-8 space-y-4">
-            <p class="font-body text-muted">
-              <template v-if="variant === 'open' && vacanciesSectionHidden">
-                {{ t('pages.vacancyForm.step1OpenHiddenVacancies') }}
-              </template>
-              <template v-else>
-                {{ t('pages.vacancyForm.step1p1') }}
-                <strong class="text-body">{{ form.positionApplyingFor || '—' }}</strong
-                >{{ t('pages.vacancyForm.step1p2') }}
-              </template>
-            </p>
             <ul class="mts-arrow-bullets list-none space-y-2 font-body text-sm text-muted">
               <li>{{ t('pages.vacancyForm.step1li1') }}</li>
               <li>{{ t('pages.vacancyForm.step1li2') }}</li>
@@ -498,24 +679,80 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
           <section v-show="step === 2" class="mt-8 space-y-4">
             <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.step2title') }}</h2>
             <div class="grid gap-4 md:grid-cols-2">
-              <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">
-                  {{ t('pages.vacancyForm.fields.positionApplyingFor') }}<span v-if="variant === 'open'" class="text-red-700"> *</span>
+              <div class="min-w-0">
+                <label
+                  class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted"
+                  :for="hasPositionList ? positionListSelectId : variant === 'open' && !hasPositionList ? positionListSelectId : undefined"
+                >
+                  {{ t('pages.vacancyForm.fields.positionApplyingFor') }}<span class="text-red-700"> *</span>
                 </label>
-                <input
-                  v-model="form.positionApplyingFor"
-                  type="text"
-                  :readonly="positionReadonly"
-                  :aria-invalid="!!errorOf('positionApplyingFor') || undefined"
-                  :class="[
-                    fieldInputClass,
-                    positionReadonly ? 'cursor-not-allowed opacity-90' : '',
-                    inputErrClass('positionApplyingFor'),
-                  ]"
-                  :placeholder="variant === 'open' ? t('pages.vacancyForm.positionPlaceholderOpen') : undefined"
-                  @blur="variant === 'open' ? markTouched('positionApplyingFor') : undefined"
-                />
+                <p v-if="hasPositionList" class="mb-2 font-body text-xs text-muted">
+                  {{ t('pages.vacancyForm.desiredVesselTypesHint') }}
+                </p>
+                <template v-if="hasPositionList">
+                  <div
+                    class="rounded-sm"
+                    :class="errorOf('positionApplyingFor') ? 'ring-1 ring-red-500/90 ring-offset-1 ring-offset-mts-bg' : ''"
+                  >
+                    <AdminMultiSelect
+                      :id="positionListSelectId"
+                      v-model="form.positionApplyingFor"
+                      variant="underline"
+                      :options="positionMultiOptions"
+                      :placeholder="t('pages.vacancyForm.positionSelectPlaceholder')"
+                      :searchable="true"
+                      :max-selections="3"
+                      @update:model-value="markTouched('positionApplyingFor')"
+                    />
+                  </div>
+                </template>
+                <template v-else-if="variant === 'open'">
+                  <input
+                    :id="positionListSelectId"
+                    v-model="positionOpenText"
+                    type="text"
+                    :aria-invalid="!!errorOf('positionApplyingFor') || undefined"
+                    :class="[fieldInputClass, inputErrClass('positionApplyingFor')]"
+                    :placeholder="t('pages.vacancyForm.positionPlaceholderOpen')"
+                    @blur="markTouched('positionApplyingFor')"
+                  />
+                  <p class="mt-1 font-body text-xs text-muted">{{ t('pages.vacancyForm.positionListFallbackHint') }}</p>
+                </template>
+                <template v-else>
+                  <input
+                    type="text"
+                    readonly
+                    :value="(form.positionApplyingFor ?? []).filter(Boolean).join(', ')"
+                    :class="[fieldInputClass, 'cursor-not-allowed opacity-90']"
+                  />
+                </template>
                 <p v-if="errorOf('positionApplyingFor')" :class="fieldErrorClass">{{ errorOf('positionApplyingFor') }}</p>
+              </div>
+              <div class="min-w-0">
+                <p class="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted">
+                  {{ t('pages.vacancyForm.fields.desiredVesselTypes') }}<span class="text-red-700"> *</span>
+                </p>
+                <p class="mb-2 font-body text-xs text-muted">{{ t('pages.vacancyForm.desiredVesselTypesHint') }}</p>
+                <p v-if="vesselTypeOptionList.length === 0" class="font-body text-xs text-amber-800">
+                  {{ t('pages.vacancyForm.desiredVesselTypesEmptyList') }}
+                </p>
+                <template v-else>
+                  <div
+                    class="rounded-sm"
+                    :class="errorOf('desiredVesselTypes') ? 'ring-1 ring-red-500/90 ring-offset-1 ring-offset-mts-bg' : ''"
+                  >
+                    <AdminMultiSelect
+                      v-model="form.desiredVesselTypes"
+                      variant="underline"
+                      :options="vesselTypeSelectOptions"
+                      :placeholder="t('pages.vacancyForm.vesselTypesPlaceholder')"
+                      :searchable="true"
+                      :max-selections="3"
+                      @update:model-value="markTouched('desiredVesselTypes')"
+                    />
+                  </div>
+                </template>
+                <p v-if="errorOf('desiredVesselTypes')" :class="fieldErrorClass">{{ errorOf('desiredVesselTypes') }}</p>
               </div>
               <div>
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
@@ -600,6 +837,8 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                     <span class="text-muted">{{ form.photoFileName || t('pages.vacancyForm.fileInputNone') }}</span>
                   </span>
                 </label>
+                <p class="mt-1 font-body text-xs text-muted">{{ t('pages.vacancyForm.photoHint', { mb: PHOTO_MAX_MB }) }}</p>
+                <p v-if="photoFileError" :class="fieldErrorClass">{{ photoFileError }}</p>
                 <div v-if="photoPreview" class="mt-2 flex items-start gap-3">
                   <img
                     :src="photoPreview"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 
 useSiteSeoMeta('request')
 
@@ -16,19 +16,17 @@ const crumbItems = computed(() =>
     <section class="relative py-16 lg:py-20 overflow-hidden">
       <div class="mts-content-wrap relative z-10">
         <div class="max-w-7xl">
-          <Breadcrumbs :items="crumbItems" />
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-6 h-px bg-primary" />
-            <span class="section-label">{{ t('pages.request.heroEyebrow') }}</span>
+          <HeroBreadcrumbsRow :items="crumbItems" />
+          <div class="mts-figma-hero-stack">
+            <h1 class="mts-figma-hero-h1 text-body">
+              {{ t('pages.request.title') }}<span class="text-primary">{{ t('pages.request.titleAccent') }}</span
+              >{{ t('pages.request.titleEnd') }}
+            </h1>
+            <div class="h-0.5 w-12 shrink-0 self-start bg-primary" aria-hidden="true" />
+            <p class="mts-figma-hero-lead text-muted">
+              {{ t('pages.request.lead') }}
+            </p>
           </div>
-          <h1 class="font-display text-3xl lg:text-4xl text-body leading-tight mb-6">
-            {{ t('pages.request.title') }}<span class="text-primary">{{ t('pages.request.titleAccent') }}</span
-            >{{ t('pages.request.titleEnd') }}
-          </h1>
-          <div class="w-12 h-0.5 bg-primary mb-6" />
-          <p class="font-body text-lg text-muted leading-relaxed">
-            {{ t('pages.request.lead') }}
-          </p>
         </div>
       </div>
     </section>

@@ -15,9 +15,10 @@ function mapLabels(labels: readonly string[]): { label: string; data: CertTableR
 export function createVacancyApplicationForm(vacancySlug: string, positionTitle: string): VacancyApplicationForm {
   const sea: SeaServiceRow[] = Array.from({ length: 4 }, () => emptySeaServiceRow())
 
+  const title = positionTitle.trim()
   return {
     vacancySlug,
-    positionApplyingFor: positionTitle,
+    positionApplyingFor: title ? [title] : [],
 
     surnameAndName: '',
     dateOfBirth: '',
@@ -67,5 +68,7 @@ export function createVacancyApplicationForm(vacancySlug: string, positionTitle:
     consentRuPd: false,
     consentEnAccuracy: false,
     consentEnPd: false,
+
+    desiredVesselTypes: [],
   }
 }

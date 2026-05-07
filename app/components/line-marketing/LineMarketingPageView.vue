@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
@@ -10,6 +9,7 @@ import LineMarketingCustomSectionView from '~/components/line-marketing/LineMark
 import LineSectionMediaBackdrop from '~/components/line-marketing/LineSectionMediaBackdrop.vue'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import type {
   AboutRichCard,
   CrewingManagementPageContent,
@@ -204,8 +204,6 @@ const checklistVisible = computed(
 
 const checklistRows = computed(() => buildCrewingChecklistRenderRows(cms.value.checklist))
 
-const heroEyebrow = computed(() => cms.value.hero.label?.trim() || t(layout.value.heroEyebrowI18nKey))
-
 const heroBgUrl = computed(() => {
   const fromCms = cms.value.heroBackgroundImage?.trim()
   const fromLayout = layout.value.heroBg?.trim()
@@ -353,32 +351,29 @@ function lnkSectionGridClass(columns: number | undefined): string {
           <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="w-full max-w-none">
             <div class="w-full max-w-7xl">
               <MarinReveal>
-                <Breadcrumbs :items="crumbItems" :on-dark-hero="heroBreadcrumbsOnDark" />
-                <div class="mb-4 flex items-center gap-3">
-                  <div class="h-px w-8 bg-primary" />
-                  <span class="section-label"><ThemedContentString :content="heroEyebrow" /></span>
-                </div>
+                <HeroBreadcrumbsRow
+                  :items="crumbItems"
+                  :on-dark-hero="heroBreadcrumbsOnDark"
+                />
               </MarinReveal>
               <MarinReveal :delay-ms="120">
-                <h1
-                  class="mts-hero-themed-copy font-display mb-6 text-3xl leading-tight text-white drop-shadow-md lg:text-4xl"
-                >
-                  <ThemedContentString :content="lineV2.data.sec1Hero.title" />
-                </h1>
-              </MarinReveal>
-              <MarinReveal :delay-ms="180">
-                <div class="mb-6 h-0.5 w-12 bg-white" />
-                <p
-                  class="mts-hero-themed-copy font-body text-lg leading-relaxed text-white/95 drop-shadow"
-                >
-                  <ThemedContentString :content="lineV2.data.sec1Hero.lead" />
-                </p>
-              </MarinReveal>
-              <MarinReveal v-if="lineV2.data.sec1Hero.body.trim()" :delay-ms="240">
-                <div
-                  class="mts-hero-themed-copy mts-markdown mt-6 max-w-3xl text-base leading-relaxed text-white/90 [&_strong]:text-white"
-                  v-html="lineRichHtml(lineV2.data.sec1Hero.body)"
-                />
+                <div class="mts-figma-hero-stack">
+                  <h1
+                    class="mts-figma-hero-h1 mts-hero-themed-copy max-w-[1055px] text-white drop-shadow-md"
+                  >
+                    <ThemedContentString :content="lineV2.data.sec1Hero.title" />
+                  </h1>
+                  <p
+                    class="mts-figma-hero-lead mts-hero-themed-copy max-w-[895px] text-white/95 drop-shadow"
+                  >
+                    <ThemedContentString :content="lineV2.data.sec1Hero.lead" />
+                  </p>
+                  <div
+                    v-if="lineV2.data.sec1Hero.body.trim()"
+                    class="mts-figma-hero-body mts-hero-themed-copy mts-markdown max-w-[798px] text-white/90 [&_strong]:text-white"
+                    v-html="lineRichHtml(lineV2.data.sec1Hero.body)"
+                  />
+                </div>
               </MarinReveal>
               <MarinReveal v-if="visibleHeroButtons.length > 0" :delay-ms="300">
                 <div class="mt-8 flex flex-wrap gap-4">
@@ -413,41 +408,40 @@ function lnkSectionGridClass(columns: number | undefined): string {
           class="w-full max-w-none"
         >
           <div class="w-full max-w-7xl">
-            <Breadcrumbs :items="crumbItems" :on-dark-hero="heroBreadcrumbsOnDark" />
             <div
               :class="[
-                'mb-4 flex items-center gap-3 transition-all duration-600',
+                'transition-all duration-600',
                 heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
               ]"
             >
-              <div class="h-px w-8 bg-primary" />
-              <span class="section-label"><ThemedContentString :content="heroEyebrow" /></span>
+              <HeroBreadcrumbsRow
+                :items="crumbItems"
+                :on-dark-hero="heroBreadcrumbsOnDark"
+              />
             </div>
-            <h1
-              :class="[
-                'font-display mb-6 text-3xl leading-tight text-body transition-all duration-600 lg:text-4xl',
-                heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-                isLineV2 ? 'mts-hero-themed-copy text-white drop-shadow-md' : '',
-              ]"
-            >
-              <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-            </h1>
             <div
               :class="[
-                'mb-6 h-0.5 w-12 bg-primary transition-all duration-600',
-                isLineV2 ? 'bg-white' : '',
+                'mts-figma-hero-stack transition-all duration-600',
                 heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-              ]"
-            />
-            <p
-              :class="[
-                'font-body text-lg leading-relaxed transition-all duration-600',
-                heroVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0',
-                isLineV2 ? 'mts-hero-themed-copy text-white/95 drop-shadow' : 'text-muted',
               ]"
             >
-              <ThemedContentString :content="cms.hero.lead" />
-            </p>
+              <h1
+                :class="[
+                  'mts-figma-hero-h1 max-w-[1055px]',
+                  isLineV2 ? 'mts-hero-themed-copy text-white drop-shadow-md' : 'text-body',
+                ]"
+              >
+                <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+              </h1>
+              <p
+                :class="[
+                  'mts-figma-hero-lead max-w-[895px]',
+                  isLineV2 ? 'mts-hero-themed-copy text-white/95 drop-shadow' : 'text-muted',
+                ]"
+              >
+                <ThemedContentString :content="cms.hero.lead" />
+              </p>
+            </div>
             <div
               v-if="visibleHeroButtons.length > 0"
               :class="[
@@ -510,18 +504,18 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap"
           >
             <MarinReveal>
-              <h2 class="font-display mb-6 text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-6 text-body">
                 <ThemedContentString :content="lineV2.data.sec2Approach.title" />
               </h2>
             </MarinReveal>
             <MarinReveal :delay-ms="120">
               <div
-                class="mts-markdown max-w-3xl font-body leading-relaxed text-muted"
+                class="mts-figma-section-body mts-markdown max-w-3xl text-muted"
                 v-html="lineRichHtml(lineV2.data.sec2Approach.body)"
               />
             </MarinReveal>
             <MarinReveal v-if="lineV2.data.sec2Approach.cardsHeading.trim()" :delay-ms="180">
-              <p class="font-display mt-10 mb-6 text-lg text-body">
+              <p class="mts-figma-section-lead mt-10 mb-6 text-body">
                 <ThemedContentString :content="lineV2.data.sec2Approach.cardsHeading" />
               </p>
             </MarinReveal>
@@ -541,11 +535,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     :is="resolveApproachCardIcon(c, i)!"
                     class="mb-4 h-9 w-9 shrink-0 text-primary"
                   />
-                  <h3 class="font-display mb-3 shrink-0 text-lg text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -568,11 +562,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     :is="resolveApproachCardIcon(c, i)!"
                     class="mb-4 h-9 w-9 shrink-0 text-primary"
                   />
-                  <h3 class="font-display mb-3 shrink-0 text-lg text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -580,16 +574,16 @@ function lnkSectionGridClass(columns: number | undefined): string {
             </MarinReveal>
           </AboutSectionContentParallax>
           <div v-else class="relative z-10 mts-content-wrap">
-            <h2 class="font-display mb-6 text-xl text-body md:text-2xl">
+            <h2 class="mts-figma-section-h2 mb-6 text-body">
               <ThemedContentString :content="lineV2.data.sec2Approach.title" />
             </h2>
             <div
-              class="mts-markdown max-w-3xl font-body leading-relaxed text-muted"
+              class="mts-figma-section-body mts-markdown max-w-3xl text-muted"
               v-html="lineRichHtml(lineV2.data.sec2Approach.body)"
             />
             <p
               v-if="lineV2.data.sec2Approach.cardsHeading.trim()"
-              class="font-display mt-10 mb-6 text-lg text-body"
+              class="mts-figma-section-lead mt-10 mb-6 text-body"
             >
               <ThemedContentString :content="lineV2.data.sec2Approach.cardsHeading" />
             </p>
@@ -609,11 +603,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   :is="resolveApproachCardIcon(c, i)!"
                   class="mb-4 h-9 w-9 shrink-0 text-primary"
                 />
-                <h3 class="font-display mb-3 shrink-0 text-lg text-body">
+                <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                  class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                   v-html="lineRichHtml(c.text)"
                 />
               </div>
@@ -633,7 +627,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 :id="checklistHeadingId"
                 :class="
                   cms.checklist.sectionTitle.trim()
-                    ? 'font-display mb-8 text-xl text-body md:text-2xl'
+                    ? 'mts-figma-section-h2 mb-8 text-body'
                     : 'sr-only'
                 "
               >
@@ -643,7 +637,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
               </h2>
             </MarinReveal>
             <MarinReveal v-if="cms.checklist.intro.trim()" :delay-ms="120">
-              <p class="mb-8 font-body leading-relaxed text-muted">
+              <p class="mb-8 mts-figma-card-body text-muted">
                 <ThemedContentString :content="cms.checklist.intro" />
               </p>
             </MarinReveal>
@@ -653,7 +647,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   <h3
                     v-if="row.type === 'heading'"
                     :class="[
-                      'font-display border-b border-border pb-2 text-lg text-body',
+                      'mts-figma-card-title border-b border-border pb-2 text-body',
                       ri === 0 ? 'mt-0' : 'mt-8',
                     ]"
                   >
@@ -661,7 +655,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   </h3>
                   <div
                     v-else
-                    class="flex gap-3 border-b border-border/70 py-3 font-body text-sm leading-relaxed text-muted last:border-b-0"
+                    class="flex gap-3 border-b border-border/70 py-3 mts-figma-card-body text-muted last:border-b-0"
                   >
                     <span class="mt-0.5 shrink-0 tabular-nums text-primary">{{ row.num }}.</span>
                     <p>
@@ -687,13 +681,13 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap"
           >
             <MarinReveal>
-              <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
                 <ThemedContentString :content="lineV2.data.sec3Services.title" />
               </h2>
             </MarinReveal>
             <MarinReveal v-if="lineV2.data.sec3Services.body.trim()" :delay-ms="120">
               <div
-                class="mts-markdown mx-auto mb-12 max-w-3xl text-center font-body leading-relaxed text-muted"
+                class="mts-figma-section-body mts-markdown mx-auto mb-12 max-w-3xl text-center text-muted"
                 v-html="lineRichHtml(lineV2.data.sec3Services.body)"
               />
             </MarinReveal>
@@ -711,7 +705,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
                 >
                   <div class="mb-3 flex shrink-0 items-start justify-between gap-2">
-                    <span class="font-display text-3xl tabular-nums text-primary">
+                    <span class="mts-figma-section-h2 tabular-nums text-primary">
                       {{ String(i + 1).padStart(2, '0') }}
                     </span>
                     <component
@@ -720,11 +714,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                       class="h-7 w-7 shrink-0 text-primary"
                     />
                   </div>
-                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -743,7 +737,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   ]"
                 >
                   <div class="mb-3 flex shrink-0 items-start justify-between gap-2">
-                    <span class="font-display text-3xl tabular-nums text-primary">
+                    <span class="mts-figma-section-h2 tabular-nums text-primary">
                       {{ String(i + 1).padStart(2, '0') }}
                     </span>
                     <component
@@ -752,11 +746,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                       class="h-7 w-7 shrink-0 text-primary"
                     />
                   </div>
-                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -764,12 +758,12 @@ function lnkSectionGridClass(columns: number | undefined): string {
             </MarinReveal>
           </AboutSectionContentParallax>
           <div v-else class="relative z-10 mts-content-wrap">
-            <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+            <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
               <ThemedContentString :content="lineV2.data.sec3Services.title" />
             </h2>
             <div
               v-if="lineV2.data.sec3Services.body.trim()"
-              class="mts-markdown mx-auto mb-12 max-w-3xl text-center font-body leading-relaxed text-muted"
+              class="mts-figma-section-body mts-markdown mx-auto mb-12 max-w-3xl text-center text-muted"
               v-html="lineRichHtml(lineV2.data.sec3Services.body)"
             />
             <div
@@ -784,7 +778,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 ]"
               >
                 <div class="mb-3 flex shrink-0 items-start justify-between gap-2">
-                  <span class="font-display text-3xl tabular-nums text-primary">
+                  <span class="mts-figma-section-h2 tabular-nums text-primary">
                     {{ String(i + 1).padStart(2, '0') }}
                   </span>
                   <component
@@ -793,11 +787,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     class="h-7 w-7 shrink-0 text-primary"
                   />
                 </div>
-                <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                  class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                   v-html="lineRichHtml(c.text)"
                 />
               </div>
@@ -817,7 +811,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap"
           >
             <MarinReveal>
-              <h2 class="font-display mb-12 text-center text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-12 text-center text-body">
                 <ThemedContentString :content="lineV2.data.sec4Advantages.title" />
               </h2>
             </MarinReveal>
@@ -840,11 +834,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     class="mt-1 h-10 w-10 shrink-0 text-primary"
                   />
                   <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-                    <h3 class="font-display mb-2 shrink-0 text-lg text-body">
+                    <h3 class="mts-figma-card-title mb-2 shrink-0 text-body">
                       <ThemedContentString :content="c.title" />
                     </h3>
                     <div
-                      class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                      class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                       v-html="lineRichHtml(c.text)"
                     />
                   </div>
@@ -869,11 +863,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     class="mt-1 h-10 w-10 shrink-0 text-primary"
                   />
                   <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-                    <h3 class="font-display mb-2 shrink-0 text-lg text-body">
+                    <h3 class="mts-figma-card-title mb-2 shrink-0 text-body">
                       <ThemedContentString :content="c.title" />
                     </h3>
                     <div
-                      class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                      class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                       v-html="lineRichHtml(c.text)"
                     />
                   </div>
@@ -882,7 +876,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             </MarinReveal>
           </AboutSectionContentParallax>
           <div v-else class="relative z-10 mts-content-wrap">
-            <h2 class="font-display mb-12 text-center text-xl text-body md:text-2xl">
+            <h2 class="mts-figma-section-h2 mb-12 text-center text-body">
               <ThemedContentString :content="lineV2.data.sec4Advantages.title" />
             </h2>
             <div class="grid grid-cols-1 gap-8 md:grid-cols-6 md:items-stretch md:gap-8 md:[grid-auto-rows:1fr]">
@@ -900,11 +894,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   class="mt-1 h-10 w-10 shrink-0 text-primary"
                 />
                 <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-                  <h3 class="font-display mb-2 shrink-0 text-lg text-body">
+                  <h3 class="mts-figma-card-title mb-2 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -924,38 +918,38 @@ function lnkSectionGridClass(columns: number | undefined): string {
             <div class="mx-auto max-w-3xl text-center">
               <template v-if="lineV2.kind === 'crewing'">
                 <MarinReveal>
-                  <h2 class="font-display mb-8 text-xl text-body md:text-2xl">
+                  <h2 class="mts-figma-section-h2 mb-8 text-body">
                     <ThemedContentString :content="lineV2.data.sec5Trust.title" />
                   </h2>
                 </MarinReveal>
                 <MarinReveal :delay-ms="120">
                   <div
-                    class="mts-markdown mb-6 font-body text-lg leading-relaxed text-muted"
+                    class="mts-figma-section-body mts-markdown mb-6 text-muted"
                     v-html="lineRichHtml(lineV2.data.sec5Trust.paragraph1)"
                   />
                 </MarinReveal>
                 <MarinReveal :delay-ms="180">
                   <div
-                    class="mts-markdown font-body text-lg leading-relaxed text-muted"
+                    class="mts-figma-section-body mts-markdown text-muted"
                     v-html="lineRichHtml(lineV2.data.sec5Trust.paragraph2)"
                   />
                 </MarinReveal>
               </template>
               <template v-else>
                 <MarinReveal>
-                  <h2 class="font-display mb-8 text-xl text-body md:text-2xl">
+                  <h2 class="mts-figma-section-h2 mb-8 text-body">
                     <ThemedContentString :content="lineV2.data.sec5Closing.title" />
                   </h2>
                 </MarinReveal>
                 <MarinReveal :delay-ms="120">
                   <div
-                    class="mts-markdown mb-6 font-body text-lg leading-relaxed text-muted"
+                    class="mts-figma-section-body mts-markdown mb-6 text-muted"
                     v-html="lineRichHtml(lineV2.data.sec5Closing.paragraph1)"
                   />
                 </MarinReveal>
                 <MarinReveal :delay-ms="180">
                   <div
-                    class="mts-markdown font-body text-lg leading-relaxed text-muted"
+                    class="mts-figma-section-body mts-markdown text-muted"
                     v-html="lineRichHtml(lineV2.data.sec5Closing.paragraph2)"
                   />
                 </MarinReveal>
@@ -965,28 +959,28 @@ function lnkSectionGridClass(columns: number | undefined): string {
           <div v-else class="relative z-10 mts-content-wrap">
             <div class="mx-auto max-w-3xl text-center">
               <template v-if="lineV2.kind === 'crewing'">
-                <h2 class="font-display mb-8 text-xl text-body md:text-2xl">
+                <h2 class="mts-figma-section-h2 mb-8 text-body">
                   <ThemedContentString :content="lineV2.data.sec5Trust.title" />
                 </h2>
                 <div
-                  class="mts-markdown mb-6 font-body text-lg leading-relaxed text-muted"
+                  class="mts-figma-section-body mts-markdown mb-6 text-muted"
                   v-html="lineRichHtml(lineV2.data.sec5Trust.paragraph1)"
                 />
                 <div
-                  class="mts-markdown font-body text-lg leading-relaxed text-muted"
+                  class="mts-figma-section-body mts-markdown text-muted"
                   v-html="lineRichHtml(lineV2.data.sec5Trust.paragraph2)"
                 />
               </template>
               <template v-else>
-                <h2 class="font-display mb-8 text-xl text-body md:text-2xl">
+                <h2 class="mts-figma-section-h2 mb-8 text-body">
                   <ThemedContentString :content="lineV2.data.sec5Closing.title" />
                 </h2>
                 <div
-                  class="mts-markdown mb-6 font-body text-lg leading-relaxed text-muted"
+                  class="mts-figma-section-body mts-markdown mb-6 text-muted"
                   v-html="lineRichHtml(lineV2.data.sec5Closing.paragraph1)"
                 />
                 <div
-                  class="mts-markdown font-body text-lg leading-relaxed text-muted"
+                  class="mts-figma-section-body mts-markdown text-muted"
                   v-html="lineRichHtml(lineV2.data.sec5Closing.paragraph2)"
                 />
               </template>
@@ -1006,13 +1000,13 @@ function lnkSectionGridClass(columns: number | undefined): string {
           >
             <div class="mx-auto max-w-2xl text-center">
               <MarinReveal>
-                <h2 class="font-display mb-4 text-xl text-body md:text-2xl">
+                <h2 class="mts-figma-section-h2 mb-4 text-body">
                   <ThemedContentString :content="lineV2.data.sec6Cta.title" />
                 </h2>
               </MarinReveal>
               <MarinReveal :delay-ms="120">
                 <div
-                  class="mts-markdown font-body leading-relaxed text-muted"
+                  class="mts-figma-section-body mts-markdown text-muted"
                   v-html="lineRichHtml(lineV2.data.sec6Cta.body)"
                 />
               </MarinReveal>
@@ -1051,7 +1045,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
           >
             <MarinReveal>
-              <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
                 <ThemedContentString :content="lineV2.data.sec2Competencies.title" />
               </h2>
             </MarinReveal>
@@ -1070,11 +1064,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     v-if="!c.hideIcon"
                     class="mb-4 h-9 w-9 shrink-0 text-primary"
                   />
-                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -1094,7 +1088,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
           >
             <MarinReveal>
-              <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
                 <ThemedContentString :content="lineV2.data.sec3StrategicAdvantages.title" />
               </h2>
             </MarinReveal>
@@ -1116,11 +1110,11 @@ function lnkSectionGridClass(columns: number | undefined): string {
                     v-if="!c.hideIcon"
                     class="mb-4 h-9 w-9 shrink-0 text-primary"
                   />
-                  <h3 class="font-display mb-3 shrink-0 text-base text-body">
+                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown min-h-0 flex-1 text-sm leading-relaxed text-muted [&_p:first-child]:mt-0"
+                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -1139,13 +1133,13 @@ function lnkSectionGridClass(columns: number | undefined): string {
             <div class="mx-auto max-w-3xl text-center">
               <MarinReveal>
                 <div
-                  class="mts-markdown mb-8 font-display text-xl leading-snug text-body md:text-2xl [&_p:first-child]:mt-0"
+                  class="mts-figma-section-lead mts-markdown mb-8 text-body [&_p:first-child]:mt-0"
                   v-html="lineRichHtml(lineV2.data.sec4TechBase.titleHtml)"
                 />
               </MarinReveal>
               <MarinReveal :delay-ms="120">
                 <div
-                  class="mts-markdown font-body text-lg leading-relaxed text-muted [&_p:first-child]:mt-0"
+                  class="mts-figma-section-body mts-markdown text-muted [&_p:first-child]:mt-0"
                   v-html="lineRichHtml(lineV2.data.sec4TechBase.bodyHtml)"
                 />
               </MarinReveal>
@@ -1163,7 +1157,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
       >
         <LineSectionMediaBackdrop :image-url="sectionBgUrl('directions')" />
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
-          <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+          <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
             <ThemedContentString :content="cms.directionsSection.title" />
           </h2>
           <p class="mx-auto mb-14 max-w-7xl text-center font-body text-muted">
@@ -1184,8 +1178,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   v-if="!item.hideIcon"
                   class="mb-4 h-8 w-8 text-primary"
                 />
-                <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
-                <p class="font-body text-sm leading-relaxed text-muted">
+                <h3 class="mts-figma-card-title mb-3 text-body"><ThemedContentString :content="item.title" /></h3>
+                <p class="mts-figma-card-body text-muted">
                   <ThemedContentString :content="item.text" />
                 </p>
                 <span class="mts-cta-link-compact mt-5 inline-flex">
@@ -1198,8 +1192,8 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   v-if="!item.hideIcon"
                   class="mb-4 h-8 w-8 text-primary"
                 />
-                <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
-                <p class="font-body text-sm leading-relaxed text-muted">
+                <h3 class="mts-figma-card-title mb-3 text-body"><ThemedContentString :content="item.title" /></h3>
+                <p class="mts-figma-card-body text-muted">
                   <ThemedContentString :content="item.text" />
                 </p>
               </div>
@@ -1219,7 +1213,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             :id="checklistHeadingId"
             :class="
               cms.checklist.sectionTitle.trim()
-                ? 'font-display mb-8 text-xl text-body md:text-2xl'
+                ? 'mts-figma-section-h2 mb-8 text-body'
                 : 'sr-only'
             "
           >
@@ -1229,7 +1223,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
           </h2>
           <p
             v-if="cms.checklist.intro.trim()"
-            class="mb-8 font-body leading-relaxed text-muted"
+            class="mb-8 mts-figma-card-body text-muted"
           >
             <ThemedContentString :content="cms.checklist.intro" />
           </p>
@@ -1238,7 +1232,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
               <h3
                 v-if="row.type === 'heading'"
                 :class="[
-                  'font-display border-b border-border pb-2 text-lg text-body',
+                  'mts-figma-card-title border-b border-border pb-2 text-body',
                   ri === 0 ? 'mt-0' : 'mt-8',
                 ]"
               >
@@ -1246,7 +1240,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
               </h3>
               <div
                 v-else
-                class="flex gap-3 border-b border-border/70 py-3 font-body text-sm leading-relaxed text-muted last:border-b-0"
+                class="flex gap-3 border-b border-border/70 py-3 mts-figma-card-body text-muted last:border-b-0"
               >
                 <span class="mt-0.5 shrink-0 tabular-nums text-primary">{{ row.num }}.</span>
                 <p>
@@ -1266,7 +1260,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
             <template v-for="col in [chunk.left, chunk.right]" :key="col">
               <div v-if="col === 'principles'" class="relative">
                 <div class="card-tech corner-accent p-8">
-                  <h2 class="font-display mb-6 text-xl text-body">
+                  <h2 class="mts-figma-section-h2 mb-6 text-body">
                     <ThemedContentString :content="cms.principles.title" />
                   </h2>
                   <ul class="space-y-4">
@@ -1282,13 +1276,13 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 </div>
               </div>
               <div v-else>
-                <h2 class="font-display mb-6 text-xl text-body">
+                <h2 class="mts-figma-section-h2 mb-6 text-body">
                   <ThemedContentString :content="cms.audience.title" />
                 </h2>
-                <p class="mb-6 font-body leading-relaxed text-muted">
+                <p class="mb-6 mts-figma-card-body text-muted">
                   <ThemedContentString :content="cms.audience.paragraph1" />
                 </p>
-                <p class="mb-8 font-body leading-relaxed text-muted">
+                <p class="mb-8 mts-figma-card-body text-muted">
                   <ThemedContentString :content="cms.audience.paragraph2" />
                 </p>
                 <ButtonLink
@@ -1315,7 +1309,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
         <AboutSectionContentParallax :max-shift="32" :factor="0.085" class="relative z-10 mts-content-wrap">
           <div v-if="chunk.id === 'principles'" class="relative max-w-7xl">
             <div class="card-tech corner-accent p-8">
-              <h2 class="font-display mb-6 text-xl text-body">
+              <h2 class="mts-figma-section-h2 mb-6 text-body">
                 <ThemedContentString :content="cms.principles.title" />
               </h2>
               <ul class="space-y-4">
@@ -1331,13 +1325,13 @@ function lnkSectionGridClass(columns: number | undefined): string {
             </div>
           </div>
           <div v-else class="max-w-7xl">
-            <h2 class="font-display mb-6 text-xl text-body">
+            <h2 class="mts-figma-section-h2 mb-6 text-body">
               <ThemedContentString :content="cms.audience.title" />
             </h2>
-            <p class="mb-6 font-body leading-relaxed text-muted">
+            <p class="mb-6 mts-figma-card-body text-muted">
               <ThemedContentString :content="cms.audience.paragraph1" />
             </p>
-            <p class="mb-8 font-body leading-relaxed text-muted">
+            <p class="mb-8 mts-figma-card-body text-muted">
               <ThemedContentString :content="cms.audience.paragraph2" />
             </p>
             <ButtonLink

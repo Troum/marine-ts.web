@@ -308,6 +308,56 @@
     @apply font-body text-xs font-semibold uppercase tracking-[0.2em] text-primary;
   }
 
+  /**
+   * Герой: типографика Figma на lg+; на мобильных — компактнее (читаемо без «плаката»).
+   * Desktop: заголовок 40/50; лид 22/34; текст 20/34; шаг 38px.
+   */
+  .mts-figma-hero-stack {
+    @apply flex flex-col gap-6 md:gap-8 lg:gap-[2.375rem];
+  }
+  .mts-figma-hero-title-pair {
+    @apply flex flex-col gap-6 md:gap-8 lg:gap-[2.375rem];
+  }
+  .mts-figma-hero-h1 {
+    @apply font-display font-medium text-[1.375rem] leading-[1.25] sm:text-[1.5rem] md:text-[1.875rem] md:leading-[1.2] lg:text-[40px] lg:leading-[50px];
+  }
+  /** Kicker: на мобильных меньше; desktop 16/44 как раньше. */
+  .mts-figma-hero-eyebrow {
+    @apply mb-0 min-w-0 font-body text-[13px] font-bold uppercase leading-snug sm:text-sm sm:leading-normal md:text-[15px] md:leading-7 lg:text-[16px] lg:leading-[44px] [text-wrap:pretty];
+  }
+  /** Крошки на тёмном hero (Figma 14:390 на md+); на узких экранах компактнее. */
+  .mts-figma-hero-breadcrumbs {
+    @apply font-body text-[13px] font-bold uppercase leading-5 sm:text-[14px] sm:leading-6 md:text-[16px] md:leading-[34px];
+  }
+  .mts-figma-hero-lead {
+    @apply font-body font-medium text-[1rem] leading-[1.55] sm:text-[1.0625rem] sm:leading-[1.58] md:text-[1.125rem] md:leading-[1.62] lg:text-[22px] lg:leading-[34px];
+  }
+  .mts-figma-hero-body {
+    @apply space-y-4 md:space-y-5 font-body text-[15px] font-normal leading-[1.55] sm:text-[16px] sm:leading-[1.6] md:text-[17px] md:leading-[1.65] lg:text-[20px] lg:leading-[34px];
+  }
+
+  /**
+   * Внутренние секции: на lg — как Figma; на мобильных — уменьшенные шаги и кегль.
+   */
+  .mts-figma-section-stack {
+    @apply flex flex-col gap-6 md:gap-8 lg:gap-[2.375rem];
+  }
+  .mts-figma-section-h2 {
+    @apply font-display font-medium text-[1.25rem] leading-[1.25] sm:text-[1.375rem] md:text-[1.75rem] md:leading-[1.2] lg:text-[40px] lg:leading-[50px];
+  }
+  .mts-figma-section-lead {
+    @apply font-body font-medium text-[1rem] leading-[1.55] sm:text-[1.0625rem] sm:leading-[1.58] md:text-[1.125rem] md:leading-[1.62] lg:text-[22px] lg:leading-[34px];
+  }
+  .mts-figma-section-body {
+    @apply space-y-4 md:space-y-5 font-body text-[15px] font-normal leading-[1.55] sm:text-[16px] sm:leading-[1.6] md:text-[17px] md:leading-[1.65] lg:text-[20px] lg:leading-[34px];
+  }
+  .mts-figma-card-title {
+    @apply font-display font-medium text-[1.0625rem] leading-[1.35] sm:text-[1.125rem] sm:leading-[1.38] md:text-[1.1875rem] md:leading-[1.4] lg:text-[22px] lg:leading-[34px];
+  }
+  .mts-figma-card-body {
+    @apply font-body text-[15px] font-normal leading-[1.55] sm:text-[16px] sm:leading-[1.6] md:text-[17px] md:leading-[1.65] lg:text-[20px] lg:leading-[34px];
+  }
+
   .reveal {
     opacity: 0;
     transform: translateY(30px);

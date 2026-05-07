@@ -52,7 +52,7 @@ function migrateLegacyAbout(
     lead2: '',
   }
   const mergedHero = mergeAboutHero(heroRaw, heroBase)
-  const bodyChunks = [mergedHero.subtitle, mergedHero.lead, mergedHero.lead2].filter(
+  const bodyChunks = [mergedHero.lead, mergedHero.lead2].filter(
     (x) => typeof x === 'string' && x.trim().length > 0,
   )
   const sec1Body = bodyChunks.length ? bodyChunks.join('<br><br>') : base.sec1Hero.body
@@ -110,7 +110,12 @@ function migrateLegacyAbout(
     ...base,
     aboutVersion: 2,
     sec1Hero: {
+      label: '',
       title: mergedHero.title,
+      subtitle:
+        typeof mergedHero.subtitle === 'string' && mergedHero.subtitle.trim() !== ''
+          ? mergedHero.subtitle
+          : '',
       body: incomingCmsValueToHtml(sec1Body),
     },
     sec2History: {
@@ -183,7 +188,9 @@ function mergeV2Fields(p: Record<string, unknown>, base: AboutPageData): AboutPa
     ...base,
     aboutVersion: 2,
     sec1Hero: {
+      label: typeof s1?.label === 'string' ? s1.label : base.sec1Hero.label ?? '',
       title: typeof s1?.title === 'string' ? s1.title : base.sec1Hero.title,
+      subtitle: typeof s1?.subtitle === 'string' ? s1.subtitle : base.sec1Hero.subtitle ?? '',
       body: typeof s1?.body === 'string' ? s1.body : base.sec1Hero.body,
     },
     sec2History: {
@@ -248,9 +255,14 @@ function emptyAboutPageData(_locale: MarineContentLocale): AboutPageData {
   const b = '<p></p>'
   return {
     aboutVersion: 2,
-    sec1Hero: { title: '', body: b },
-    hideHeroPrimaryButton: false,
-    hideHeroSecondaryButton: false,
+    sec1Hero: {
+      label: '',
+      title: '',
+      subtitle: '',
+      body: b,
+    },
+    hideHeroPrimaryButton: true,
+    hideHeroSecondaryButton: true,
     sec2History: { title: '', body: b, cards: [] },
     sec3Technical: { title: '', lead: b, lead2: b, cards: [] },
     sec4Crewing: { title: '', lead: b, lead2: b, cards: [] },

@@ -719,6 +719,20 @@ export function useMarineApi() {
       getSummary: () => fetchAuth<PageViewsSummary>('/analytics/manage/summary'),
     },
     applicationForms: {
+      getFormListsPublic: async () => {
+        return await fetchPublic<{ positionOptions: string[]; vesselTypeOptions: string[] }>(
+          '/application-form-lists',
+        )
+      },
+      updateFormLists: async (body: { positionOptions: string[]; vesselTypeOptions: string[] }) => {
+        return await fetchAuth<{ positionOptions: string[]; vesselTypeOptions: string[] }>(
+          '/application-form-lists',
+          {
+            method: 'PUT',
+            body,
+          },
+        )
+      },
       submit: async (slug: string, body: VacancyApplicationForm, photo?: File | null) => {
         const enc = encodeURIComponent(slug)
         if (photo) {

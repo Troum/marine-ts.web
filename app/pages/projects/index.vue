@@ -1,14 +1,14 @@
 <script setup lang="ts">
-useSectionGuard('projects')
 import { MapPin, Calendar, ArrowRight, Ship, Loader2 } from 'lucide-vue-next'
 import type { Project, ProjectsPageData, MarineContentLocale } from '~/types'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import { projectTypeLabel } from '~/utils/contentLabels'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { defaultListingData, listingDefaultOrder, mergeListingPageData } from '~/utils/pageDefaults'
 import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
+import { resolveHeroBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 useSiteSeoMeta('projects')
 
@@ -115,6 +115,9 @@ function sectionShown(id: string): boolean {
 }
 
 const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
+const heroBreadcrumbsOnDark = computed(() =>
+  resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, hasHeroPhoto.value),
+)
 </script>
 
 <template>
@@ -126,31 +129,33 @@ const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
       :hero-veil="hasHeroPhoto"
     >
       <div class="max-w-7xl">
-        <Breadcrumbs :items="crumbItems" :on-dark-hero="hasHeroPhoto" />
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-primary" />
-          <span class="section-label">{{ t('pages.projects.heroEyebrow') }}</span>
-        </div>
-
-        <h1
-          :class="[
-            'font-display mb-6 text-3xl leading-tight lg:text-4xl',
-            hasHeroPhoto ? 'text-white drop-shadow-md' : 'text-body',
-          ]"
-        >
-          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-        </h1>
-        <div
-          :class="['mb-6 h-0.5 w-12', hasHeroPhoto ? 'bg-white' : 'bg-primary']"
+        <HeroBreadcrumbsRow
+          :items="crumbItems"
+          :on-dark-hero="heroBreadcrumbsOnDark"
         />
-        <p
-          :class="[
-            'font-body text-lg leading-relaxed',
-            hasHeroPhoto ? 'text-white/95 drop-shadow' : 'text-muted',
-          ]"
-        >
-          <ThemedContentString :content="cms.hero.lead" />
-        </p>
+
+        <div class="mts-figma-hero-stack">
+          <h1
+            :class="[
+              'mts-figma-hero-h1 max-w-[1055px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white drop-shadow-md'
+                : 'text-body',
+            ]"
+          >
+            <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+          </h1>
+          <p
+            :class="[
+              'mts-figma-hero-lead max-w-[895px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white/95 drop-shadow'
+                : 'text-muted',
+            ]"
+          >
+            <ThemedContentString :content="cms.hero.lead" />
+          </p>
+        </div>
       </div>
     </ListingHeroShell>
 
@@ -197,7 +202,7 @@ const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
                   <Ship class="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                   <span class="section-label text-[10px]">{{ typeLabelFor(p) }}</span>
                 </div>
-                <h2 class="font-display text-lg leading-snug text-body">
+                <h2 class="mts-figma-card-title leading-snug text-body">
                   <NuxtLink
                     v-if="p.contentPage?.slug"
                     :to="localePath(`/projects/${p.contentPage.slug}`)"
@@ -243,7 +248,7 @@ const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
         class="relative py-16 bg-bg-light border-t border-border"
       >
         <div class="max-w-7xl mx-auto px-6 text-center">
-          <h2 class="font-display text-xl text-body mb-4">
+          <h2 class="mts-figma-section-h2 text-body mb-4">
             <ThemedContentString :content="cms.cta?.title || t('pages.projects.ctaTitle')" />
           </h2>
           <NuxtLink :to="localePath('/request')" class="btn-primary group">

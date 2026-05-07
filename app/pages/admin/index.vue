@@ -55,15 +55,24 @@ const {
   canManageNavigation,
 } = useAdminPermissions()
 const canManageVacancySection = computed(() => canManageContentPages.value && canManageVacancies.value)
+const { isAdminSectionHidden } = useAdminHiddenSections()
 
 const sectionPickerOpen = ref(false)
-const sectionOptions = [
+const sectionOptions: Array<{
+  label: string
+  to: string
+  icon: typeof ClipboardList
+  desc: string
+  permission: { value: boolean }
+  hideKey?: string
+}> = [
   {
     label: 'Анкеты',
-    to: '/admin/vacancies/application-forms',
+    to: '/admin/application-forms',
     icon: ClipboardList,
-    desc: 'Поданные анкеты кандидатов по вакансиям и открытой форме',
+    desc: 'Самостоятельный раздел: все анкеты, списки для открытой формы',
     permission: canManageVacancies,
+    hideKey: 'application_forms',
   },
   {
     label: 'Вакансии',
@@ -71,16 +80,39 @@ const sectionOptions = [
     icon: Users,
     desc: 'Hero, фон, CTA, форма заявки',
     permission: canManageVacancySection,
+    hideKey: 'vacancies',
   },
-  { label: 'Главная', to: '/admin/home', icon: Home, desc: 'Hero, статистика, превью сервисов, процесс работы, CTA', permission: canManageContentPages },
-  { label: 'О компании', to: '/admin/about', icon: Building2, desc: 'Экосистема, миссия, преимущества, география, сертификаты', permission: canManageContentPages },
-  { label: 'Судоремонт', to: '/admin/services-page', icon: Wrench, desc: 'Hero-блок и CTA', permission: canManageContentPages },
+  {
+    label: 'Главная',
+    to: '/admin/home',
+    icon: Home,
+    desc: 'Hero, статистика, превью сервисов, процесс работы, CTA',
+    permission: canManageContentPages,
+    hideKey: 'home',
+  },
+  {
+    label: 'О компании',
+    to: '/admin/about',
+    icon: Building2,
+    desc: 'Экосистема, миссия, преимущества, география, сертификаты',
+    permission: canManageContentPages,
+    hideKey: 'about',
+  },
+  {
+    label: 'Судоремонт',
+    to: '/admin/services-page',
+    icon: Wrench,
+    desc: 'Hero-блок и CTA',
+    permission: canManageContentPages,
+    hideKey: 'services',
+  },
   {
     label: 'Судовой менеджмент',
     to: '/admin/line-pages/ship-management',
     icon: Ship,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
     permission: canManageContentPages,
+    hideKey: 'ship_management',
   },
   {
     label: 'Крюинг-менеджмент',
@@ -88,6 +120,7 @@ const sectionOptions = [
     icon: Users,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
     permission: canManageContentPages,
+    hideKey: 'crewing_management',
   },
   {
     label: 'ЛНК',
@@ -95,13 +128,48 @@ const sectionOptions = [
     icon: Anchor,
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
     permission: canManageContentPages,
+    hideKey: 'lnk',
   },
-  { label: 'Контакты', to: '/admin/contacts-page', icon: Mail, desc: 'Hero, форма, офисы', permission: canManageContentPages },
-  { label: 'Галерея', to: '/admin/gallery-page', icon: Camera, desc: 'Hero-блок', permission: canManageContentPages },
-  { label: 'Проекты', to: '/admin/projects-page', icon: Compass, desc: 'Hero-блок, изображение и CTA', permission: canManageContentPages },
-  { label: 'Новости', to: '/admin/news-page', icon: Newspaper, desc: 'Hero-блок', permission: canManageContentPages },
+  {
+    label: 'Контакты',
+    to: '/admin/contacts-page',
+    icon: Mail,
+    desc: 'Hero, форма, офисы',
+    permission: canManageContentPages,
+    hideKey: 'contacts',
+  },
+  {
+    label: 'Галерея',
+    to: '/admin/gallery-page',
+    icon: Camera,
+    desc: 'Hero-блок',
+    permission: canManageContentPages,
+    hideKey: 'gallery',
+  },
+  {
+    label: 'Проекты',
+    to: '/admin/projects-page',
+    icon: Compass,
+    desc: 'Hero-блок, изображение и CTA',
+    permission: canManageContentPages,
+    hideKey: 'projects',
+  },
+  {
+    label: 'Новости',
+    to: '/admin/news-page',
+    icon: Newspaper,
+    desc: 'Hero-блок',
+    permission: canManageContentPages,
+    hideKey: 'news',
+  },
 ]
-const visibleSectionOptions = computed(() => sectionOptions.filter((s) => s.permission.value))
+const visibleSectionOptions = computed(() =>
+  sectionOptions.filter((s) => {
+    if (!s.permission.value) return false
+    if (s.hideKey && isAdminSectionHidden(s.hideKey)) return false
+    return true
+  }),
+)
 
 const news = ref<NewsItem[]>([])
 const projects = ref<Project[]>([])
@@ -147,14 +215,29 @@ const chartBarMaxPx = 112
 
 const statCards = computed(() =>
   [
-    { label: 'Всего новостей', value: stats.value.news_count || news.value.length, icon: Newspaper, color: 'bg-blue-500', visible: canManageNews.value },
-    { label: 'Всего проектов', value: stats.value.projects_count || projects.value.length, icon: Briefcase, color: 'bg-green-500', visible: canManageProjects.value },
+    {
+      label: 'Всего новостей',
+      value: stats.value.news_count || news.value.length,
+      icon: Newspaper,
+      color: 'bg-blue-500',
+      visible: canManageNews.value,
+      hideKey: 'news',
+    },
+    {
+      label: 'Всего проектов',
+      value: stats.value.projects_count || projects.value.length,
+      icon: Briefcase,
+      color: 'bg-green-500',
+      visible: canManageProjects.value,
+      hideKey: 'projects',
+    },
     {
       label: 'Изб. новостей',
       value: stats.value.featured_news || news.value.filter((x) => x.featured).length,
       icon: Eye,
       color: 'bg-purple-500',
       visible: canManageNews.value,
+      hideKey: 'news',
     },
     {
       label: 'Карточек сервисов',
@@ -162,6 +245,7 @@ const statCards = computed(() =>
       icon: Wrench,
       color: 'bg-amber-600',
       visible: canManageServices.value,
+      hideKey: 'services',
     },
     {
       label: 'Вакансий',
@@ -169,6 +253,7 @@ const statCards = computed(() =>
       icon: Users,
       color: 'bg-teal-600',
       visible: canManageVacancies.value,
+      hideKey: 'vacancies',
     },
     {
       label: 'Поданных анкет',
@@ -176,8 +261,9 @@ const statCards = computed(() =>
       icon: ClipboardList,
       color: 'bg-slate-600',
       visible: canManageVacancies.value,
+      hideKey: 'application_forms',
     },
-  ].filter((card) => card.visible),
+  ].filter((card) => card.visible && !(card.hideKey && isAdminSectionHidden(card.hideKey))),
 )
 </script>
 
@@ -311,7 +397,7 @@ const statCards = computed(() =>
         </section>
 
         <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div v-if="canManageVacancies" class="bg-white border border-mts-border">
+          <div v-if="canManageVacancies && !isAdminSectionHidden('application_forms')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <ClipboardList class="w-5 h-5 text-mts-accent" />
@@ -323,7 +409,7 @@ const statCards = computed(() =>
                 Поданные анкеты кандидатов: открытая анкета, анкеты по вакансиям, PDF, фото и запрос документов.
               </p>
               <NuxtLink
-                to="/admin/vacancies/application-forms"
+                to="/admin/application-forms"
                 class="flex items-center gap-2 text-mts-accent font-mono text-xs uppercase hover:underline"
               >
                 <Edit class="w-4 h-4" />
@@ -332,7 +418,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageVacancies" class="bg-white border border-mts-border">
+          <div v-if="canManageVacancies && !isAdminSectionHidden('vacancies')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Users class="w-5 h-5 text-mts-accent" />
@@ -354,7 +440,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManagePageInquiries" class="bg-white border border-mts-border">
+          <div v-if="canManagePageInquiries && !isAdminSectionHidden('inquiries')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Inbox class="w-5 h-5 text-mts-accent" />
@@ -375,7 +461,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageFeedback" class="bg-white border border-mts-border">
+          <div v-if="canManageFeedback && !isAdminSectionHidden('feedback')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <MessageSquare class="w-5 h-5 text-mts-accent" />
@@ -396,7 +482,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageContentPages" class="bg-white border border-mts-border">
+          <div v-if="canManageContentPages && !isAdminSectionHidden('section_editor')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <FileText class="w-5 h-5 text-mts-accent" />
@@ -418,7 +504,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageContentPages" class="bg-white border border-mts-border">
+          <div v-if="canManageContentPages && !isAdminSectionHidden('content_pages')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <BookOpen class="w-5 h-5 text-mts-accent" />
@@ -440,7 +526,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+          <div v-if="canManageNavigation && !isAdminSectionHidden('sections_panel')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <EyeOff class="w-5 h-5 text-mts-accent" />
@@ -461,7 +547,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageServices" class="bg-white border border-mts-border">
+          <div v-if="canManageServices && !isAdminSectionHidden('services')" class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
             >
@@ -485,7 +571,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageGallery" class="bg-white border border-mts-border">
+          <div v-if="canManageGallery && !isAdminSectionHidden('gallery')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Images class="w-5 h-5 text-mts-accent" />
@@ -506,7 +592,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageProjects" class="bg-white border border-mts-border">
+          <div v-if="canManageProjects && !isAdminSectionHidden('projects')" class="bg-white border border-mts-border">
             <div
               class="p-6 border-b border-mts-border flex flex-nowrap items-center justify-between gap-3 overflow-x-auto"
             >
@@ -550,7 +636,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageNews" class="bg-white border border-mts-border">
+          <div v-if="canManageNews && !isAdminSectionHidden('news')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Newspaper class="w-5 h-5 text-mts-accent" />
@@ -569,7 +655,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageContacts" class="bg-white border border-mts-border">
+          <div v-if="canManageContacts && !isAdminSectionHidden('contacts')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Phone class="w-5 h-5 text-mts-accent" />
@@ -590,7 +676,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+          <div v-if="canManageNavigation && !isAdminSectionHidden('appearance')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Palette class="w-5 h-5 text-mts-accent" />
@@ -611,7 +697,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+          <div v-if="canManageNavigation && !isAdminSectionHidden('navigation')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <LayoutList class="w-5 h-5 text-mts-accent" />
@@ -632,7 +718,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageNavigation" class="bg-white border border-mts-border">
+          <div v-if="canManageNavigation && !isAdminSectionHidden('footer_navigation')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <LayoutList class="w-5 h-5 text-mts-accent" />
@@ -653,7 +739,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageUsers" class="bg-white border border-mts-border">
+          <div v-if="canManageUsers && !isAdminSectionHidden('users')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Shield class="w-5 h-5 text-mts-accent" />
@@ -672,7 +758,7 @@ const statCards = computed(() =>
             </div>
           </div>
 
-          <div v-if="canManageSeo" class="bg-white border border-mts-border">
+          <div v-if="canManageSeo && !isAdminSectionHidden('seo')" class="bg-white border border-mts-border">
             <div class="p-6 border-b border-mts-border flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <Search class="w-5 h-5 text-mts-accent" />
@@ -691,7 +777,7 @@ const statCards = computed(() =>
           </div>
         </div>
 
-        <div v-if="canManageNews" class="mt-12">
+        <div v-if="canManageNews && !isAdminSectionHidden('news')" class="mt-12">
           <h2 class="font-display text-2xl text-mts-text mb-6">Последние новости</h2>
           <div class="bg-white border border-mts-border overflow-x-auto">
             <table class="w-full min-w-150">

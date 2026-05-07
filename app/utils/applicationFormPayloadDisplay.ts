@@ -17,6 +17,7 @@ function fieldLabel(key: string): string {
     availableFrom: 'Доступен с',
     citizenship: 'Гражданство',
     englishLevel: 'Уровень английского',
+    desiredVesselTypes: 'Желаемый тип судна',
     mobilePhone: 'Мобильный телефон',
     homePhone: 'Домашний телефон',
     email: 'Email (из анкеты)',
@@ -87,6 +88,9 @@ function formatArrayValue(value: unknown[]): string {
     return '—'
   }
   if (isListArray(value)) {
+    if (value.every((item) => item !== null && typeof item !== 'object')) {
+      return value.map(String).join(', ')
+    }
     const blocks: string[] = []
     for (let i = 0; i < value.length; i++) {
       const item = value[i]

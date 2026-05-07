@@ -17,12 +17,14 @@ import { flattenEncodedOrPlain } from '~/utils/adminThemedTextCodec'
 import { emptyNavigationSettings } from '~/utils/emptyNavigationSettings'
 import { sanitizeRichContentHtml } from '~/composables/useMarkdownSafeHtml'
 import { stripLocalePrefix } from '~/utils/stripLocalePrefix'
+import { routePathToSiteSectionKey } from '~/utils/siteSectionRoutes'
 
 const route = useRoute()
 const localePath = useLocalePath()
 const { locale } = useI18n()
 const loc = computed(() => (locale.value === 'en' ? 'en' : 'ru') as MarineContentLocale)
 const api = useMarineApi()
+const { settings: appearanceSettings } = useSiteAppearance()
 
 const { data: navigationRemote, refresh: refreshNavigation } = await useAsyncData(
   'site-navigation',
@@ -170,18 +172,51 @@ const burgerOverlaySectionVisible = computed(
   () => burgerPhoneColVisible.value || burgerEmailColVisible.value || burgerOfficeColVisible.value,
 )
 
-const menuItems = computed(() => {
-  if (menu.value.more.length) {
-    return fallbackItems.value
+/** Разделы, скрытые в «Разделы сайта» (API), не показываем в меню — иначе ведут на 404. */
+function isNavSectionPathVisible(path: string): boolean {
+  if (isExternalPath(path) || path === '#' || path === '/') {
+    return true
   }
-  const saved = [...menu.value.main, ...menu.value.more]
-  return saved.length ? saved : fallbackItems.value
+  const key = routePathToSiteSectionKey(path)
+  if (!key) {
+    return true
+  }
+  return appearanceSettings.value.hiddenSections[key] !== true
+}
+
+function filterNavItemsForAppearance(items: NavigationMenuItem[]): NavigationMenuItem[] {
+  const out: NavigationMenuItem[] = []
+  for (const item of items) {
+    if (item.children?.length) {
+      const children = item.children.filter((c) => isNavSectionPathVisible(c.path))
+      if (children.length === 0) {
+        continue
+      }
+      out.push({ ...item, children })
+      continue
+    }
+    if (isNavSectionPathVisible(item.path)) {
+      out.push(item)
+    }
+  }
+  return out
+}
+
+const menuItems = computed(() => {
+  let raw: NavigationMenuItem[]
+  if (menu.value.more.length) {
+    raw = fallbackItems.value
+  } else {
+    const saved = [...menu.value.main, ...menu.value.more]
+    raw = saved.length ? saved : fallbackItems.value
+  }
+  return filterNavItemsForAppearance(raw)
 })
 
 const horizMenuItems = computed(() => {
   const hi = menu.value.horizItems
   if (hi && hi.length > 0) {
-    return hi
+    return filterNavItemsForAppearance(hi)
   }
   return menuItems.value
 })

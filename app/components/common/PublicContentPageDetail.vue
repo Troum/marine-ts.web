@@ -4,7 +4,8 @@
  * → кастомные секции после статьи → заявка.
  * Тот же каркас, что у /projects/:slug и маркетинговых линеек; визуально согласован с about (`mts-about-shell`).
  */
-import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
+import type { BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
 import type { CustomPageSection, PageInquiryFormConfig } from '~/types'
 import { Loader2 } from 'lucide-vue-next'
 import ThemedContentString from "~/components/common/ThemedContentString.vue";
@@ -62,18 +63,21 @@ defineProps<{
       >
         <div class="relative z-10 mts-content-wrap">
           <div class="mx-auto max-w-7xl">
-            <Breadcrumbs v-if="showArticleBreadcrumbs" class="mb-8" :items="crumbItems" />
+            <HeroBreadcrumbsRow
+              v-if="showArticleBreadcrumbs"
+              :items="crumbItems"
+            />
 
             <h1
               v-if="page.showPublicTitle !== false"
-              class="font-display text-3xl font-bold leading-tight text-body [text-wrap:pretty] lg:text-4xl"
+              class="mts-figma-hero-h1 text-body [text-wrap:pretty]"
             >
               <ThemedContentString :content="page.title" />
             </h1>
 
             <p
               v-if="page.excerpt"
-              class="mt-8 max-w-3xl border-l-2 border-primary pl-6 font-body text-lg leading-relaxed text-muted lg:text-xl lg:leading-[34px]"
+              class="mts-figma-hero-lead mt-8 max-w-3xl border-l-2 border-primary pl-6 text-muted"
             >
               <ThemedContentString :content="page.excerpt" />
             </p>

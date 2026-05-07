@@ -7,19 +7,26 @@ export interface BreadcrumbItem {
   to?: string
 }
 
-const props = defineProps<{
-  items: BreadcrumbItem[]
-  /** Текст для тёмного фона (hero с фото и вуалью). */
-  onDarkHero?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    items: BreadcrumbItem[]
+    /** Текст для тёмного фона (hero с фото и вуалью). */
+    onDarkHero?: boolean
+    /** Без отступа снизу (напр. когда под крошками декоративная линия в колонке). */
+    omitBottomMargin?: boolean
+  }>(),
+  { omitBottomMargin: false },
+)
 
 const linkClass = computed(() =>
   props.onDarkHero
-    ? 'shrink-0 text-white/80 transition-colors hover:text-primary'
+    ? 'shrink-0 text-white transition-colors hover:text-primary'
     : 'shrink-0 text-muted transition-colors hover:text-primary',
 )
 const sepClass = computed(() =>
-  props.onDarkHero ? 'h-3.5 w-3.5 shrink-0 text-white/45' : 'h-3.5 w-3.5 shrink-0 text-muted',
+  props.onDarkHero
+    ? 'h-4 w-4 shrink-0 text-white/70 sm:h-5 sm:w-5 md:h-6 md:w-6'
+    : 'h-3.5 w-3.5 shrink-0 text-muted',
 )
 const currentClass = computed(() =>
   props.onDarkHero ? 'min-w-0 text-white [text-wrap:pretty] line-clamp-2' : 'min-w-0 text-body line-clamp-2',
@@ -27,12 +34,15 @@ const currentClass = computed(() =>
 </script>
 
 <template>
-  <nav class="mb-6" aria-label="Хлебные крошки">
+  <nav
+    :class="[omitBottomMargin ? 'mb-0' : 'mb-6']"
+    aria-label="Хлебные крошки"
+  >
     <ol
       :class="[
         'flex flex-wrap items-center gap-x-1 gap-y-2',
         onDarkHero
-          ? 'font-body text-xs font-semibold uppercase tracking-[0.2em]'
+          ? 'mts-figma-hero-breadcrumbs'
           : 'font-mono text-[10px] uppercase tracking-wide sm:text-xs',
       ]"
     >

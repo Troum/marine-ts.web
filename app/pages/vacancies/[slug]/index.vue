@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { MapPin, Briefcase, Loader2 } from 'lucide-vue-next'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { contentBodyToSafeHtml, isRichTextEmpty } from '~/composables/useMarkdownSafeHtml'
 
@@ -73,7 +73,7 @@ function vacancyContentHtml(text: string | null | undefined) {
     <article v-else class="relative overflow-hidden pb-24">
       <div class="relative z-10 mts-content-wrap">
         <div class="mx-auto max-w-7xl">
-          <Breadcrumbs class="mb-8" :items="crumbItems" />
+          <HeroBreadcrumbsRow :items="crumbItems" />
 
         <div class="mb-4 flex flex-wrap items-center gap-3">
           <span class="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide text-primary">
@@ -82,7 +82,7 @@ function vacancyContentHtml(text: string | null | undefined) {
           </span>
         </div>
 
-        <h1 class="font-display text-2xl leading-tight text-body lg:text-3xl">
+        <h1 class="mts-figma-hero-h1 text-body">
           <ThemedContentString :content="vacancy.title" />
         </h1>
 
@@ -91,7 +91,7 @@ function vacancyContentHtml(text: string | null | undefined) {
           <ThemedContentString :content="vacancy.location" />
         </div>
 
-        <p class="mt-10 border-l-2 border-primary pl-6 font-body text-lg leading-relaxed text-muted">
+        <p class="mts-figma-hero-lead mt-10 border-l-2 border-primary pl-6 text-muted">
           <ThemedContentString :content="vacancy.excerpt" />
         </p>
 

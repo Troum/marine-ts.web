@@ -325,12 +325,14 @@ const heroMarketingSlidesForSlider = computed(() => {
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
                 ]"
               >
-                <h1 class="mts-hero-themed-copy text-[36.936px] font-bold leading-tight text-primary drop-shadow sm:text-4xl lg:text-6xl">
-                  <ThemeFormattedTitle :title="d.hero.titleFormatted" />
-                </h1>
-                <p class="mt-5 text-[23.04px] font-semibold leading-snug text-white sm:text-lg lg:text-2xl">
-                  <ThemedContentString :content="d.hero.label" />
-                </p>
+                <div class="mts-figma-hero-stack">
+                  <h1 class="mts-figma-hero-h1 mts-hero-themed-copy text-primary drop-shadow">
+                    <ThemeFormattedTitle :title="d.hero.titleFormatted" />
+                  </h1>
+                  <p class="mts-figma-hero-lead mts-hero-themed-copy text-white">
+                    <ThemedContentString :content="d.hero.label" />
+                  </p>
+                </div>
               </div>
 
               <!-- Правая колонка: маркетинговый текст -->
@@ -352,7 +354,7 @@ const heroMarketingSlidesForSlider = computed(() => {
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
                     <div
                       v-if="activeHeroDirection"
-                      class="mts-hero-themed-copy space-y-5 text-[15.84px] font-body leading-relaxed text-white/85 md:text-2xl"
+                      class="mts-figma-hero-body mts-hero-themed-copy text-white/85"
                     >
                       <ThemedContentString :content="heroDirectionDescription(activeHeroDirection)" />
                     </div>
@@ -467,9 +469,9 @@ const heroMarketingSlidesForSlider = computed(() => {
             <div class="h-px w-6 bg-primary" />
             <span class="section-label"><ThemedContentString :content="d.directions.label" /></span>
           </div>
-          <h2 class="font-display text-3xl text-body lg:text-4xl break-words [text-wrap:pretty]">
-            <ThemeFormattedTitle :title="d.directions.headingFormatted" />
-          </h2>
+            <h2 class="mts-figma-section-h2 text-body break-words [text-wrap:pretty]">
+              <ThemeFormattedTitle :title="d.directions.headingFormatted" />
+            </h2>
         </div>
         <div class="grid gap-6 items-stretch" :class="directionsGridClass">
           <div
@@ -477,8 +479,8 @@ const heroMarketingSlidesForSlider = computed(() => {
             :key="row.title"
             class="service-card corner-accent flex h-full min-w-0 flex-col p-6 sm:p-8"
           >
-            <h3 class="font-display text-lg text-body"><ThemedContentString :content="row.title" /></h3>
-            <p class="mt-3 flex-1 font-body text-sm text-muted"><ThemedContentString :content="row.description" /></p>
+            <h3 class="mts-figma-card-title text-body"><ThemedContentString :content="row.title" /></h3>
+            <p class="mts-figma-card-body mt-3 flex-1 text-muted"><ThemedContentString :content="row.description" /></p>
             <NuxtLink :to="localePath(row.href)" class="mts-cta-link-compact mt-6 inline-flex self-start">
               <ThemedContentString :content="row.cta" /> →
             </NuxtLink>

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-useSectionGuard('ship_management')
 import LineMarketingPageView from '~/components/line-marketing/LineMarketingPageView.vue'
 
 /** Отдельный файл маршрута — свой экземпляр при каждом заходе (анимации, SEO). */

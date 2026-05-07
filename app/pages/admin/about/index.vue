@@ -36,7 +36,9 @@ function normalizeRich(s: string) {
 }
 
 function normalizeAboutRichEditorsPayload(d: AboutPageData) {
+  d.sec1Hero.label = normalizeRich(d.sec1Hero.label ?? '')
   d.sec1Hero.title = normalizeRich(d.sec1Hero.title ?? '')
+  d.sec1Hero.subtitle = normalizeRich(d.sec1Hero.subtitle ?? '')
   d.sec1Hero.body = normalizeRich(d.sec1Hero.body ?? '')
   d.sec2History.title = normalizeRich(d.sec2History.title ?? '')
   d.sec2History.body = normalizeRich(d.sec2History.body ?? '')
@@ -353,27 +355,25 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
           <div class="space-y-4">
             <AdminHeroImageField v-model="d.heroImage" />
             <div>
-              <label :class="sectionLabel">Заголовок</label>
+              <label :class="sectionLabel">Подпись у линии (kicker)</label>
+              <AdminThemedTextField v-model="d.sec1Hero.label" :multiline="false" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Заголовок (H1)</label>
               <AdminThemedTextField v-model="d.sec1Hero.title" />
             </div>
             <div>
-              <label :class="sectionLabel">Абзац</label>
+              <label :class="sectionLabel">Подзаголовок под H1</label>
+              <AdminThemedTextField v-model="d.sec1Hero.subtitle" />
+            </div>
+            <div>
+              <label :class="sectionLabel">Текст (абзацы)</label>
               <AdminRichTextEditor
                 :model-value="d.sec1Hero.body"
                 :disabled="saving"
                 placeholder="Основной текст первого экрана…"
                 @update:model-value="d.sec1Hero.body = $event"
               />
-            </div>
-            <div class="grid gap-2 md:grid-cols-2">
-              <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
-                <input v-model="d.hideHeroPrimaryButton" type="checkbox" class="mts-checkbox" />
-                Скрыть кнопку «Связаться»
-              </label>
-              <label class="flex cursor-pointer items-center gap-3 font-body text-sm text-mts-text">
-                <input v-model="d.hideHeroSecondaryButton" type="checkbox" class="mts-checkbox" />
-                Скрыть кнопку «Подать анкету»
-              </label>
             </div>
           </div>
         </AdminCollapsibleSection>

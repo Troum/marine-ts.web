@@ -689,10 +689,17 @@ export interface AboutPageData {
   /** 2 = шесть основных секций (Hero → закрытие). */
   aboutVersion?: 2
   /** Секция 1. Hero / первый экран. */
-  sec1Hero: { title: string; body: string }
-  /** Скрыть кнопку «Связаться» в hero первого экрана. */
+  sec1Hero: {
+    /** Подпись у линии (как в макете: «Профиль компании»). */
+    label?: string
+    title: string
+    /** Подзаголовок под H1 (как второй акцент в макете). */
+    subtitle?: string
+    body: string
+  }
+  /** @deprecated Кнопки в hero убраны из макета; поля сохраняются для старых JSON. */
   hideHeroPrimaryButton?: boolean
-  /** Скрыть кнопку «Подать анкету» в hero первого экрана. */
+  /** @deprecated */
   hideHeroSecondaryButton?: boolean
   /** Секция 2. История и география. */
   sec2History: { title: string; body: string; cards: AboutRichCard[] }
@@ -1017,6 +1024,8 @@ export interface ContactsPageData {
   sectionVisibility?: Record<string, boolean>
   /** Скрыть подвал сайта на этой странице. */
   hideFooter?: boolean
+  /** Контраст хлебных крошек поверх hero (авто — от наличия фото с вуалью). */
+  heroBreadcrumbTone?: PageBreadcrumbTone
 }
 
 /**

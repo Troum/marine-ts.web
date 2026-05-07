@@ -115,175 +115,30 @@ function mergeLnkCardGridSection(raw: Partial<LnkCardGridSection> | undefined, b
   }
 }
 
-const LNK_V2_RU: LnkPageContent = {
+const EMPTY_LNK_V2: LnkPageContent = {
   sec1Hero: {
-    title: 'Лаборатория неразрушающего контроля (ЛНК) «Марин Техникал Солюшионс»',
-    lead:
-      'Лаборатория неразрушающего контроля ООО «МТС» — это специализированное подразделение, обеспечивающее высокоточный технический аудит морских активов. Наша деятельность направлена на превентивное выявление износа корпусных конструкций и систем, что является фундаментом безопасности мореплавания и экономической устойчивости судовладельца.',
-    body: '',
+    title: '',
+    lead: '',
+    body: '<p></p>',
   },
   sec2Competencies: {
-    title: 'Ключевые компетенции и услуги',
+    title: '',
     columns: 2,
-    cards: [
-      {
-        icon: 'ClipboardList',
-        hideIcon: false,
-        title: 'Ультразвуковая толщинометрия (UTM):',
-        text:
-          '<p>Проведение комплексных замеров остаточных толщин корпуса судна, настилов палуб, переборок и элементов набора. Мы предоставляем детализированные отчеты, соответствующие требованиям классификационных обществ.</p>',
-      },
-      {
-        icon: 'Plane',
-        hideIcon: false,
-        title: 'Диагностика судовых систем:',
-        text:
-          '<p>Дефектоскопия трубопроводов гидравлических и топливных систем. Своевременный контроль позволяет исключить риск внезапных протечек и загрязнения окружающей среды.</p>',
-      },
-      {
-        icon: 'Users',
-        hideIcon: false,
-        title: 'Подготовка к освидетельствованию:',
-        text:
-          '<p>Проведение дефектации судна перед плановыми ремонтами или предъявлением инспекторам классификационного общества.</p>',
-      },
-      {
-        icon: 'PieChart',
-        hideIcon: false,
-        title: 'Контроль сварных соединений:',
-        text:
-          '<p>Проверка качества ремонтных работ на соответствие международным стандартам прочности.</p>',
-      },
-    ],
+    cards: [],
   },
   sec3StrategicAdvantages: {
-    title: 'Стратегические преимущества для заказчика',
+    title: '',
     columns: 2,
-    cards: [
-      {
-        icon: 'Database',
-        hideIcon: false,
-        title: '1. Минимизация рисков PSC:',
-        text:
-          '<p>Качественная диагностика ЛНК позволяет устранить потенциальные замечания Портового государственного контроля (PSC) еще на стадии подготовки, исключая необоснованные задержки судна в порту.</p>',
-      },
-      {
-        icon: 'Scale',
-        hideIcon: false,
-        title: '2. Оптимизация ремонтного бюджета:',
-        text:
-          '<p>Благодаря точным данным о состоянии металла, судовладелец может планировать объем сварочных и корпусных работ с точностью до квадратного метра, избегая лишних затрат.</p>',
-      },
-      {
-        icon: 'BadgeCheck',
-        hideIcon: false,
-        title: '3. Защита инвестиций:',
-        text:
-          '<p>Регулярный неразрушающий контроль продлевает жизненный цикл актива и сохраняет его высокую рыночную стоимость (resale value).</p>',
-      },
-      {
-        icon: 'Shield',
-        hideIcon: false,
-        title: '4. Мобильность и оперативность:',
-        text:
-          '<p>Наши специалисты готовы к выезду для проведения работ в портах и на судоремонтных предприятиях, минимизируя время нахождения судна вне коммерческой эксплуатации.</p>',
-      },
-    ],
+    cards: [],
   },
   sec4TechBase: {
-    titleHtml: '<p>Технологическая база</p>',
-    bodyHtml:
-      '<p>Лаборатория оснащена современным поверенным оборудованием, позволяющим проводить замеры даже в труднодоступных местах и через лакокрасочные покрытия. Все работы выполняются квалифицированным персоналом, имеющим соответствующие допуски и сертификаты.</p>'
-      + '<p>Точность измерений — гарантия долголетия вашего флота.</p>',
+    titleHtml: '<p></p>',
+    bodyHtml: '<p></p>',
   },
 }
 
-const LNK_V2_EN: LnkPageContent = {
-  sec1Hero: {
-    title: 'Non-destructive testing laboratory (NDT), Marine Technical Solutions',
-    lead:
-      'Marine Technical Solutions’ non-destructive testing laboratory is a dedicated unit delivering high-precision technical audits of marine assets. We focus on proactively identifying wear in hull structures and systems — the foundation of safe navigation and the shipowner’s long-term resilience.',
-    body: '',
-  },
-  sec2Competencies: {
-    title: 'Key competencies and services',
-    columns: 2,
-    cards: [
-      {
-        icon: 'ClipboardList',
-        hideIcon: false,
-        title: 'Ultrasonic thickness measurement (UTM):',
-        text:
-          '<p>Comprehensive residual thickness surveys of the hull, deck plating, bulkheads and stiffeners. We deliver detailed reports aligned with classification society requirements.</p>',
-      },
-      {
-        icon: 'Plane',
-        hideIcon: false,
-        title: 'Ship systems diagnostics:',
-        text:
-          '<p>Non-destructive testing of hydraulic and fuel piping. Early detection reduces the risk of sudden leaks and environmental incidents.</p>',
-      },
-      {
-        icon: 'Users',
-        hideIcon: false,
-        title: 'Survey preparation:',
-        text:
-          '<p>Vessel defect surveys ahead of scheduled repairs or class inspections.</p>',
-      },
-      {
-        icon: 'PieChart',
-        hideIcon: false,
-        title: 'Welded joint inspection:',
-        text:
-          '<p>Verification of repair quality against international strength and workmanship standards.</p>',
-      },
-    ],
-  },
-  sec3StrategicAdvantages: {
-    title: 'Strategic benefits for our clients',
-    columns: 2,
-    cards: [
-      {
-        icon: 'Database',
-        hideIcon: false,
-        title: '1. Minimizing PSC risks:',
-        text:
-          '<p>High-quality NDT diagnostics help address potential Port State Control findings before they arise, avoiding unwarranted vessel delays in port.</p>',
-      },
-      {
-        icon: 'Scale',
-        hideIcon: false,
-        title: '2. Repair budget optimization:',
-        text:
-          '<p>Accurate steel condition data lets owners plan welding and hull work down to square metres, reducing unnecessary spend.</p>',
-      },
-      {
-        icon: 'BadgeCheck',
-        hideIcon: false,
-        title: '3. Protecting your investment:',
-        text:
-          '<p>Regular non-destructive testing extends asset life and helps preserve strong resale value.</p>',
-      },
-      {
-        icon: 'Shield',
-        hideIcon: false,
-        title: '4. Mobility and responsiveness:',
-        text:
-          '<p>Our specialists deploy to ports and shipyards to keep time off-hire to a minimum.</p>',
-      },
-    ],
-  },
-  sec4TechBase: {
-    titleHtml: '<p>Technical capabilities</p>',
-    bodyHtml:
-      '<p>The laboratory is equipped with modern, calibrated instruments that allow measurements even in hard-to-reach areas and through paint coatings. All work is performed by qualified personnel with the appropriate approvals and certificates.</p>'
-      + '<p>Measurement accuracy is the foundation of your fleet’s long service life.</p>',
-  },
-}
-
-export function defaultLnkManagementContent(locale: MarineContentLocale): LnkPageContent {
-  const src = locale === 'en' ? LNK_V2_EN : LNK_V2_RU
-  return JSON.parse(JSON.stringify(src)) as LnkPageContent
+export function defaultLnkManagementContent(_locale: MarineContentLocale): LnkPageContent {
+  return JSON.parse(JSON.stringify(EMPTY_LNK_V2)) as LnkPageContent
 }
 
 export function mergeLnkManagementContent(raw: unknown, base: LnkPageContent): LnkPageContent {

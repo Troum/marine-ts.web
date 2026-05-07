@@ -1,10 +1,9 @@
 <script setup lang="ts">
-useSectionGuard('services')
 import { Check, Loader2 } from 'lucide-vue-next'
 import ButtonLink from '~/components/common/ButtonLink.vue'
 import type { ServiceItem, ListingPageData, MarineContentLocale } from '~/types'
 import { resolveServiceIcon } from '~/utils/serviceIcons'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
@@ -121,18 +120,15 @@ function sectionShown(id: string): boolean {
   <div v-else class="bg-white">
     <ListingHeroShell :hero-image="cms.heroImage">
       <div class="max-w-7xl">
-        <Breadcrumbs :items="crumbItems" />
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-primary" />
-          <span class="section-label">{{ t('pages.services.heroEyebrow') }}</span>
+        <HeroBreadcrumbsRow :items="crumbItems" />
+        <div class="mts-figma-hero-stack">
+          <h1 class="mts-figma-hero-h1 max-w-[1055px] text-body">
+            <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+          </h1>
+          <p class="mts-figma-hero-lead max-w-[895px] text-muted">
+            <ThemedContentString :content="cms.hero.lead" />
+          </p>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
-          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-        </h1>
-        <div class="mb-6 h-0.5 w-12 bg-primary" />
-        <p class="font-body text-lg leading-relaxed text-muted">
-          <ThemedContentString :content="cms.hero.lead" />
-        </p>
       </div>
     </ListingHeroShell>
 
@@ -172,7 +168,7 @@ function sectionShown(id: string): boolean {
                   :is="resolveServiceIcon(service.iconKey)"
                   class="mb-4 h-8 w-8 text-primary"
                 />
-                <h3 class="font-display text-lg leading-snug text-body">
+                <h3 class="mts-figma-card-title leading-snug text-body">
                   <NuxtLink
                     v-if="service.contentPage?.slug"
                     :to="localePath(`/${service.contentPage.slug}`)"

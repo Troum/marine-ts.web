@@ -32,7 +32,8 @@ export interface EducationRow {
 /** Полная анкета (структура совместима с шаблоном PDF). */
 export interface VacancyApplicationForm {
   vacancySlug: string
-  positionApplyingFor: string
+  /** Одна или несколько позиций (список из админки и/или название вакансии). */
+  positionApplyingFor: string[]
 
   surnameAndName: string
   dateOfBirth: string
@@ -82,6 +83,8 @@ export interface VacancyApplicationForm {
   consentRuPd: boolean
   consentEnAccuracy: boolean
   consentEnPd: boolean
+  /** Типы судов по желанию кандидата (1–3 значения из списка в админке). */
+  desiredVesselTypes: string[]
 }
 
 export function emptyCertRow(): CertTableRow {

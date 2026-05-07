@@ -1,7 +1,6 @@
 <script setup lang="ts">
-useSectionGuard('vacancies')
 import { MapPin, Briefcase, Loader2, ArrowRight } from 'lucide-vue-next'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import type { MarineContentLocale, VacancyItem, VacanciesPageData } from '~/types'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
@@ -98,24 +97,24 @@ onMounted(() => {
       <div :class="['max-w-7xl', hasHeroPhoto && 'pt-8 lg:pt-14']">
         <template v-if="hasHeroPhoto">
           <MarinReveal>
-            <Breadcrumbs :items="crumbItems" :on-dark-hero="heroBreadcrumbsOnDark" />
-            <div class="mb-4 flex items-center gap-3">
-              <div class="h-px w-8 bg-primary" />
-              <span class="section-label">{{ t('pages.vacancies.labelCareer') }}</span>
-            </div>
+            <HeroBreadcrumbsRow
+              :items="crumbItems"
+              :on-dark-hero="heroBreadcrumbsOnDark"
+            />
           </MarinReveal>
           <MarinReveal :delay-ms="120">
-            <h1
-              class="mts-hero-themed-copy font-display mb-6 text-3xl leading-tight text-white drop-shadow-md lg:text-4xl"
-            >
-              <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-            </h1>
-          </MarinReveal>
-          <MarinReveal :delay-ms="180">
-            <div class="mb-6 h-0.5 w-12 bg-white" />
-            <p class="mts-hero-themed-copy font-body text-lg leading-relaxed text-white/95 drop-shadow">
-              <ThemedContentString :content="cms.hero.lead" />
-            </p>
+            <div class="mts-figma-hero-stack">
+              <h1
+                class="mts-figma-hero-h1 mts-hero-themed-copy max-w-[1055px] text-white drop-shadow-md"
+              >
+                <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+              </h1>
+              <p
+                class="mts-figma-hero-lead mts-hero-themed-copy max-w-[895px] text-white/95 drop-shadow"
+              >
+                <ThemedContentString :content="cms.hero.lead" />
+              </p>
+            </div>
           </MarinReveal>
           <MarinReveal :delay-ms="260">
             <div class="mt-8">
@@ -126,18 +125,15 @@ onMounted(() => {
           </MarinReveal>
         </template>
         <template v-else>
-          <Breadcrumbs :items="crumbItems" />
-          <div class="mb-4 flex items-center gap-3">
-            <div class="h-px w-6 bg-primary" />
-            <span class="section-label">{{ t('pages.vacancies.labelCareer') }}</span>
+          <HeroBreadcrumbsRow :items="crumbItems" />
+          <div class="mts-figma-hero-stack">
+            <h1 class="mts-figma-hero-h1 text-body">
+              <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+            </h1>
+            <p class="mts-figma-hero-lead text-muted">
+              <ThemedContentString :content="cms.hero.lead" />
+            </p>
           </div>
-          <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
-            <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-          </h1>
-          <div class="mb-6 h-0.5 w-12 bg-primary" />
-          <p class="font-body text-lg leading-relaxed text-muted">
-            <ThemedContentString :content="cms.hero.lead" />
-          </p>
           <div class="mt-8">
             <NuxtLink :to="applicationFormHref" class="btn-primary inline-flex items-center justify-center">
               {{ t('pages.vacancies.openApplicationButton') }}
@@ -174,7 +170,7 @@ onMounted(() => {
                     {{ v.employmentType }}
                   </span>
                 </div>
-                <h2 class="font-display text-lg text-body leading-snug">
+                <h2 class="mts-figma-card-title text-body leading-snug">
                   <NuxtLink :to="localePath(`/vacancies/${v.slug}`)" class="text-body">
                     <ThemedContentString :content="v.title" />
                   </NuxtLink>
@@ -204,7 +200,7 @@ onMounted(() => {
       >
         <div class="mts-content-wrap text-center">
           <div class="mx-auto max-w-7xl">
-            <h2 class="font-display mb-4 text-xl text-body">
+            <h2 class="mts-figma-section-h2 text-body mb-4">
               <ThemedContentString :content="cms.cta?.title || t('pages.vacancies.ctaTitle')" />
             </h2>
             <NuxtLink :to="localePath('/request')" class="btn-primary group inline-flex items-center">

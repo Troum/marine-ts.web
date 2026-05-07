@@ -102,7 +102,7 @@ async function handleDelete(id: number) {
           </div>
           <div class="flex flex-wrap items-center gap-4">
             <NuxtLink
-              to="/admin/vacancies/application-forms"
+              to="/admin/application-forms"
               class="inline-flex shrink-0 items-center gap-1.5 border border-mts-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-mts-text transition-colors hover:border-mts-accent hover:text-mts-accent"
             >
               <ClipboardList class="h-3.5 w-3.5" aria-hidden="true" />

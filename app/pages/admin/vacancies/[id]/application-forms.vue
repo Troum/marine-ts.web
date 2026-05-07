@@ -271,7 +271,7 @@ async function deleteRow(row: ApplicationFormItem) {
             >
               Редактировать вакансию
             </NuxtLink>
-            <NuxtLink to="/admin/vacancies/application-forms" class="font-mono text-xs uppercase text-mts-accent hover:underline">
+            <NuxtLink to="/admin/application-forms" class="font-mono text-xs uppercase text-mts-accent hover:underline">
               Все анкеты
             </NuxtLink>
             <NuxtLink to="/admin/vacancies" class="font-mono text-xs uppercase text-mts-accent hover:underline">

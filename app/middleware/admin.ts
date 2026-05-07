@@ -23,6 +23,7 @@ const ADMIN_ROUTE_PERMISSIONS: Array<{ prefix: string; permissions: string[] }> 
   { prefix: '/admin/gallery', permissions: ['manage gallery'] },
   { prefix: '/admin/seo', permissions: ['manage seo'] },
   { prefix: '/admin/vacancies', permissions: ['manage vacancies'] },
+  { prefix: '/admin/application-forms', permissions: ['manage vacancies'] },
   { prefix: '/admin/feedback', permissions: ['manage feedback'] },
   { prefix: '/admin/inquiries', permissions: ['manage page inquiries'] },
   { prefix: '/admin/contacts', permissions: ['manage contacts'] },

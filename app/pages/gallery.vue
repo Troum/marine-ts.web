@@ -1,13 +1,13 @@
 <script setup lang="ts">
-useSectionGuard('gallery')
 import { X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-vue-next'
-import Breadcrumbs from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import ListingHeroShell from '~/components/common/ListingHeroShell.vue'
 import type { GalleryItem, ListingPageData, MarineContentLocale } from '~/types'
 import ThemeFormattedTitle from '~/components/common/ThemeFormattedTitle.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import { defaultListingData, listingDefaultOrder, mergeListingPageData } from '~/utils/pageDefaults'
 import { isSectionVisible, resolveSectionOrder } from '~/utils/sectionVisibility'
+import { resolveHeroBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 
 useSiteSeoMeta('gallery')
 
@@ -50,6 +50,11 @@ watchEffect(() => { setFooterHidden(cms.value?.hideFooter ?? false) })
 
 const crumbItems = computed(() =>
   breadcrumbs({ label: t('nav.gallery'), to: '/gallery' }),
+)
+
+const hasHeroPhoto = computed(() => Boolean(cms.value.heroImage?.trim()))
+const heroBreadcrumbsOnDark = computed(() =>
+  resolveHeroBreadcrumbOnDark(cms.value.heroBreadcrumbTone, hasHeroPhoto.value),
 )
 
 const { data: slides, pending, error } = await useAsyncData(
@@ -140,20 +145,34 @@ function sectionShown(id: string): boolean {
 
 <template>
   <div class="bg-white">
-    <ListingHeroShell :hero-image="cms.heroImage">
+    <ListingHeroShell :hero-image="cms.heroImage" :hero-veil="hasHeroPhoto">
       <div class="max-w-7xl">
-        <Breadcrumbs :items="crumbItems" />
-        <div class="mb-4 flex items-center gap-3">
-          <div class="h-px w-6 bg-primary" />
-          <span class="section-label">{{ t('pages.gallery.heroEyebrow') }}</span>
+        <HeroBreadcrumbsRow
+          :items="crumbItems"
+          :on-dark-hero="heroBreadcrumbsOnDark"
+        />
+        <div class="mts-figma-hero-stack">
+          <h1
+            :class="[
+              'mts-figma-hero-h1 max-w-[1055px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white drop-shadow-md'
+                : 'text-body',
+            ]"
+          >
+            <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
+          </h1>
+          <p
+            :class="[
+              'mts-figma-hero-lead max-w-[895px]',
+              hasHeroPhoto
+                ? 'mts-hero-themed-copy text-white/95 drop-shadow'
+                : 'text-muted',
+            ]"
+          >
+            <ThemedContentString :content="cms.hero.lead" />
+          </p>
         </div>
-        <h1 class="font-display mb-6 text-3xl leading-tight text-body lg:text-4xl">
-          <ThemeFormattedTitle :title="cms.hero.titleFormatted" />
-        </h1>
-        <div class="mb-6 h-0.5 w-12 bg-primary" />
-        <p class="font-body text-lg leading-relaxed text-muted">
-          <ThemedContentString :content="cms.hero.lead" />
-        </p>
       </div>
     </ListingHeroShell>
 

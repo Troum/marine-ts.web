@@ -11,6 +11,10 @@ COPY . .
 ARG NUXT_PUBLIC_API_BASE=http://localhost:8000/api
 ENV NUXT_PUBLIC_API_BASE=$NUXT_PUBLIC_API_BASE
 
+# Канонический URL сайта (обязательно для прода): i18n hreflang/alternate и согласованные OG/каноникалы.
+ARG NUXT_PUBLIC_SITE_URL=
+ENV NUXT_PUBLIC_SITE_URL=$NUXT_PUBLIC_SITE_URL
+
 RUN npm run build
 
 FROM node:22-alpine AS runner

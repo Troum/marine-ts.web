@@ -94,10 +94,8 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
               role="heading"
               aria-level="2"
               :class="[
-                'font-display font-bold leading-tight mb-4 lg:mb-6',
-                theme === 'dark'
-                  ? 'text-xl sm:text-2xl lg:text-[34px] text-primary lg:leading-10'
-                  : 'text-xl sm:text-2xl lg:text-3xl text-body',
+                'mts-figma-section-h2 mb-4 break-words lg:mb-6',
+                theme === 'dark' ? 'text-primary' : 'text-body',
               ]"
             >
               <ThemedContentString :content="displayTitle" />
@@ -105,8 +103,8 @@ const mapboxToken = computed(() => (config.public.mapboxToken as string | undefi
             <p
               v-if="displayLead"
               :class="[
-                'font-body leading-relaxed',
-                theme === 'dark' ? 'text-base lg:text-lg text-mts-frost/90' : 'text-sm lg:text-base text-muted',
+                'mts-figma-section-lead',
+                theme === 'dark' ? 'text-mts-frost/90' : 'text-muted',
               ]"
             >
               <ThemedContentString :content="displayLead" />

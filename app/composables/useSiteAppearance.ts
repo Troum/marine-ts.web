@@ -1,10 +1,10 @@
-import type { SiteAppearanceSettings, SiteSectionKey } from '~/types'
+import type { SiteAppearanceSettings } from '~/types'
 import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 
 /**
  * Глобальная тема публичного сайта: Marin (тёмный navy + красные акценты) или Golden Sepia
  * (та же база в CSS, золотые `--color-primary` / `mts-accent*`). Класс `mts-theme-scglobal` на `<body>`.
- * Также хранит `hiddenSections` — разделы, скрытые администратором (отдают 404).
+ * Настройки внешнего вида (в т.ч. `hiddenSections` для админки «Разделы сайта») подгружаются с API.
  * Админка (`admin-shell` на body) не затрагивается.
  */
 export function useSiteAppearance() {
@@ -32,13 +32,8 @@ export function useSiteAppearance() {
     },
   })
 
-  function isSectionHidden(key: SiteSectionKey): boolean {
-    return settings.value.hiddenSections[key] === true
-  }
-
   return {
     settings,
     refresh,
-    isSectionHidden,
   }
 }

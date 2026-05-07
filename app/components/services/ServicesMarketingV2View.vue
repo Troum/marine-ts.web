@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Check, Loader2 } from 'lucide-vue-next'
-import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
+import type { BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
 import LineMarketingCustomSectionView from '~/components/line-marketing/LineMarketingCustomSectionView.vue'
 import type { AboutRichCard, LineMarketingCustomSection, ListingPageData, ServiceItem } from '~/types'
@@ -9,6 +9,7 @@ import { incomingCmsValueToHtml } from '~/utils/adminHtmlField'
 import AboutSectionContentParallax from '~/components/about/AboutSectionContentParallax.vue'
 import MarinMapboxMap from '~/components/about/MarinMapboxMap.vue'
 import MarinReveal from '~/components/about/MarinReveal.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import { SERVICES_MARKETING_V2_SECTION_ORDER, SERVICES_REACH_MAP_LOCATIONS } from '~/utils/servicesMarketingPageDefaults'
 import { resolveCrewingIcon } from '~/utils/crewingIcons'
 import { resolveServiceIcon } from '~/utils/serviceIcons'
@@ -148,30 +149,29 @@ const heroBreadcrumbsOnDark = computed(() =>
         >
           <div class="w-full max-w-7xl">
             <MarinReveal>
-              <Breadcrumbs :items="crumbItems" :on-dark-hero="heroBreadcrumbsOnDark" />
-              <div class="mb-4 flex items-center gap-3">
-                <div class="h-px w-8 bg-primary" />
-                <span class="section-label">{{ t('pages.services.heroEyebrow') }}</span>
-              </div>
+              <HeroBreadcrumbsRow
+                :items="crumbItems"
+                :on-dark-hero="heroBreadcrumbsOnDark"
+              />
             </MarinReveal>
             <MarinReveal :delay-ms="120">
-              <h1
-                class="font-display mb-6 text-3xl leading-tight text-white drop-shadow-md lg:text-4xl"
-              >
-                <ThemedContentString :content="v2.sec1Hero.title" />
-              </h1>
-            </MarinReveal>
-            <MarinReveal :delay-ms="180">
-              <div class="mb-6 h-0.5 w-12 bg-white" />
-              <p class="font-body text-lg leading-relaxed text-white/95 drop-shadow italic">
-                <ThemedContentString :content="v2.sec1Hero.lead" />
-              </p>
-            </MarinReveal>
-            <MarinReveal v-if="v2.sec1Hero.body.trim()" :delay-ms="240">
-              <div
-                class="mts-markdown mt-6 max-w-3xl text-base leading-relaxed text-white/90 [&_strong]:text-white"
-                v-html="lineRichHtml(v2.sec1Hero.body)"
-              />
+              <div class="mts-figma-hero-stack">
+                <h1
+                  class="mts-figma-hero-h1 mts-hero-themed-copy max-w-[1055px] text-white drop-shadow-md"
+                >
+                  <ThemedContentString :content="v2.sec1Hero.title" />
+                </h1>
+                <p
+                  class="mts-figma-hero-lead mts-hero-themed-copy max-w-[895px] text-white/95 drop-shadow"
+                >
+                  <ThemedContentString :content="v2.sec1Hero.lead" />
+                </p>
+                <div
+                  v-if="v2.sec1Hero.body.trim()"
+                  class="mts-figma-hero-body mts-hero-themed-copy mts-markdown max-w-[798px] text-white/90 [&_strong]:text-white"
+                  v-html="lineRichHtml(v2.sec1Hero.body)"
+                />
+              </div>
             </MarinReveal>
             <MarinReveal v-if="visibleHeroButtons.length > 0" :delay-ms="300">
               <div class="mt-8 flex flex-wrap gap-4">
@@ -249,20 +249,20 @@ const heroBreadcrumbsOnDark = computed(() =>
                 <MarinReveal>
                   <h2
                     id="services-reach-heading"
-                    class="font-display mb-6 text-2xl font-bold leading-tight text-primary md:text-3xl lg:text-[34px] lg:leading-10"
+                    class="mts-figma-section-h2 mb-6"
                   >
                     <ThemedContentString :content="v2.sec2Reach.title" />
                   </h2>
                 </MarinReveal>
                 <MarinReveal :delay-ms="120">
                   <div
-                    class="mts-markdown mb-6 font-body text-base leading-relaxed text-mts-frost/90 lg:text-lg"
+                    class="mts-markdown mb-6 mts-figma-section-body text-mts-frost/90"
                     v-html="lineRichHtml(v2.sec2Reach.paragraph1)"
                   />
                 </MarinReveal>
                 <MarinReveal :delay-ms="180">
                   <div
-                    class="mts-markdown font-body text-base leading-relaxed text-mts-frost/90 lg:text-lg"
+                    class="mts-markdown mts-figma-section-body text-mts-frost/90"
                     v-html="lineRichHtml(v2.sec2Reach.paragraph2)"
                   />
                 </MarinReveal>
@@ -278,13 +278,13 @@ const heroBreadcrumbsOnDark = computed(() =>
       >
         <div class="relative z-10 mts-content-wrap">
           <MarinReveal>
-            <h2 class="font-display mb-4 text-center text-xl text-body md:text-2xl">
+            <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
               <ThemedContentString :content="v2.sec3Solutions.title" />
             </h2>
           </MarinReveal>
           <MarinReveal v-if="v2.sec3Solutions.body.trim()" :delay-ms="120">
             <div
-              class="mts-markdown mx-auto mb-12 max-w-3xl text-center font-body leading-relaxed text-muted"
+              class="mts-markdown mx-auto mb-12 max-w-3xl text-center mts-figma-section-body text-muted"
               v-html="lineRichHtml(v2.sec3Solutions.body)"
             />
           </MarinReveal>
@@ -299,7 +299,7 @@ const heroBreadcrumbsOnDark = computed(() =>
                 class="service-card corner-accent flex min-h-full min-w-0 flex-col p-6"
               >
                 <div class="mb-3 flex items-start justify-between gap-2">
-                  <span class="font-display text-3xl tabular-nums text-mts-accent">
+                  <span class="mts-figma-section-h2 tabular-nums text-mts-accent">
                     {{ String(i + 1).padStart(2, '0') }}
                   </span>
                   <component
@@ -308,11 +308,11 @@ const heroBreadcrumbsOnDark = computed(() =>
                     class="h-7 w-7 shrink-0 text-mts-accent"
                   />
                 </div>
-                <h3 class="font-display mb-3 text-base text-mts-text">
+                <h3 class="mts-figma-card-title mb-3 text-mts-text">
                   <ThemedContentString :content="c.title" />
                 </h3>
                 <div
-                  class="mts-markdown flex-1 text-sm leading-relaxed text-mts-text-secondary [&_strong]:text-mts-text"
+                  class="mts-markdown mts-figma-section-body flex-1 text-mts-text-secondary [&_strong]:text-mts-text"
                   v-html="lineRichHtml(c.text)"
                 />
               </div>
@@ -327,7 +327,7 @@ const heroBreadcrumbsOnDark = computed(() =>
       >
         <div class="relative z-10 mts-content-wrap">
           <MarinReveal>
-            <h2 class="font-display mb-12 text-center text-xl text-body md:text-2xl">
+            <h2 class="mts-figma-section-h2 mb-12 text-center text-body">
               <ThemedContentString :content="v2.sec4Advantages.title" />
             </h2>
           </MarinReveal>
@@ -347,11 +347,11 @@ const heroBreadcrumbsOnDark = computed(() =>
                   class="mt-0.5 h-8 w-8 shrink-0 text-mts-accent"
                 />
                 <div class="min-w-0">
-                  <h3 class="font-display mb-2 text-lg text-mts-text">
+                  <h3 class="mts-figma-card-title mb-2 text-mts-text">
                     <ThemedContentString :content="c.title" />
                   </h3>
                   <div
-                    class="mts-markdown text-sm leading-relaxed text-mts-text-secondary [&_strong]:text-mts-text"
+                    class="mts-markdown mts-figma-section-body text-mts-text-secondary [&_strong]:text-mts-text"
                     v-html="lineRichHtml(c.text)"
                   />
                 </div>
@@ -368,19 +368,19 @@ const heroBreadcrumbsOnDark = computed(() =>
         <div class="mts-content-wrap">
           <div class="mx-auto max-w-3xl text-center">
             <MarinReveal>
-              <h2 class="font-display mb-8 text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-8 text-body">
                 <ThemedContentString :content="v2.sec5Guarantees.title" />
               </h2>
             </MarinReveal>
             <MarinReveal :delay-ms="120">
               <div
-                class="mts-markdown mb-8 font-body leading-relaxed text-muted"
+                class="mts-markdown mb-8 mts-figma-section-body text-muted"
                 v-html="lineRichHtml(v2.sec5Guarantees.paragraph1)"
               />
             </MarinReveal>
             <MarinReveal :delay-ms="180">
               <div
-                class="mts-markdown font-body text-lg leading-relaxed text-body"
+                class="mts-markdown mts-figma-section-body text-body"
                 v-html="lineRichHtml(v2.sec5Guarantees.paragraph2)"
               />
             </MarinReveal>
@@ -395,13 +395,13 @@ const heroBreadcrumbsOnDark = computed(() =>
         <div class="mts-content-wrap">
           <div class="mx-auto max-w-3xl text-center">
             <MarinReveal>
-              <h2 class="font-display mb-4 text-xl text-body md:text-2xl">
+              <h2 class="mts-figma-section-h2 mb-4 text-body">
                 <ThemedContentString :content="v2.sec6PreForm.title" />
               </h2>
             </MarinReveal>
             <MarinReveal :delay-ms="120">
               <div
-                class="mts-markdown font-body leading-relaxed text-muted"
+                class="mts-markdown mts-figma-section-body text-muted"
                 v-html="lineRichHtml(v2.sec6PreForm.body)"
               />
             </MarinReveal>
@@ -446,7 +446,7 @@ const heroBreadcrumbsOnDark = computed(() =>
                     :is="resolveServiceIcon(service.iconKey)"
                     class="mb-4 h-8 w-8 text-primary"
                   />
-                  <h3 class="font-display text-lg leading-snug text-body">
+                  <h3 class="mts-figma-card-title leading-snug text-body">
                     <NuxtLink
                       v-if="service.contentPage?.slug"
                       :to="localePath(`/${service.contentPage.slug}`)"
@@ -456,7 +456,7 @@ const heroBreadcrumbsOnDark = computed(() =>
                     </NuxtLink>
                     <template v-else><ThemedContentString :content="service.title" /></template>
                   </h3>
-                  <p class="mt-3 font-body text-sm leading-relaxed text-muted">
+                  <p class="mts-figma-card-body mt-3 text-muted">
                     <ThemedContentString :content="service.description" />
                   </p>
                   <ul v-if="service.features?.length" class="mt-4 space-y-2">

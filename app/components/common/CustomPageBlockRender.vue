@@ -3,7 +3,8 @@ import { computed, ref } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 import ImageFadeCarousel from '~/components/common/ImageFadeCarousel.vue'
 import ThemedContentString from '~/components/common/ThemedContentString.vue'
-import Breadcrumbs, { type BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
+import type { BreadcrumbItem } from '~/components/common/Breadcrumbs.vue'
+import HeroBreadcrumbsRow from '~/components/common/HeroBreadcrumbsRow.vue'
 import { contentBodyToSafeHtml } from '~/composables/useMarkdownSafeHtml'
 import type { CustomPageBlock, PageBreadcrumbTone } from '~/types'
 import type { AboutCarouselSlide } from '~/utils/aboutCarouselSlides'
@@ -175,7 +176,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
           v-if="!item.hideIcon"
           :class="marketingCardsIconClass(block)"
         />
-        <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
+        <h3 class="mts-figma-card-title mb-3 text-body"><ThemedContentString :content="item.title" /></h3>
         <p class="font-body text-sm leading-relaxed text-muted">
           <ThemedContentString :content="item.text" />
         </p>
@@ -189,7 +190,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
           v-if="!item.hideIcon"
           :class="marketingCardsIconClass(block)"
         />
-        <h3 class="font-display mb-3 text-xl text-body"><ThemedContentString :content="item.title" /></h3>
+        <h3 class="mts-figma-card-title mb-3 text-body"><ThemedContentString :content="item.title" /></h3>
         <p class="font-body text-sm leading-relaxed text-muted">
           <ThemedContentString :content="item.text" />
         </p>
@@ -199,7 +200,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
 
   <!-- Text -->
   <div v-else-if="block.type === 'text'" class="mx-auto max-w-7xl text-center">
-    <h3 v-if="block.title.trim()" class="font-display mb-2 text-xl text-body">
+    <h3 v-if="block.title.trim()" class="mts-figma-card-title mb-2 text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <p
@@ -266,28 +267,25 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
       <div
         class="mts-content-wrap flex min-h-0 flex-1 flex-col justify-center pt-28 pb-20 md:pt-32 md:pb-24 lg:pt-36 lg:pb-28"
       >
-        <Breadcrumbs
+        <HeroBreadcrumbsRow
           v-if="showHeroBannerCrumbs"
-          class="!mb-0 shrink-0"
+          wrapper-class="shrink-0"
           :items="pageCrumbItems!"
           :on-dark-hero="heroBannerCrumbsOnDark"
         />
         <div
           v-if="block.title.trim() || block.caption.trim()"
-          :class="[
-            'flex max-w-4xl flex-col items-start text-left text-white',
-            showHeroBannerCrumbs ? 'mt-3 md:mt-4' : '',
-          ]"
+          class="mts-figma-hero-stack max-w-4xl items-start text-left text-white"
         >
           <h3
             v-if="block.title.trim()"
-            class="font-display text-2xl font-bold leading-[1.1] [text-wrap:pretty] sm:text-3xl md:text-4xl lg:text-5xl"
+            class="mts-figma-hero-h1 max-w-4xl text-white [text-wrap:pretty]"
           >
             <ThemedContentString :content="block.title" />
           </h3>
           <p
             v-if="block.caption.trim()"
-            class="mt-3 max-w-3xl font-body text-base leading-relaxed text-white/90 sm:mt-4 sm:text-lg md:mt-5 md:text-xl lg:text-2xl"
+            class="mts-figma-hero-lead max-w-[653px] font-body text-white/90"
           >
             <ThemedContentString :content="block.caption" />
           </p>
@@ -298,7 +296,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
 
   <!-- Gallery -->
   <div v-else-if="block.type === 'gallery'">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-body">
+    <h3 v-if="block.title.trim()" class="mts-figma-card-title mb-6 text-center text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <div :class="['grid gap-4', galleryGridClass]">
@@ -318,7 +316,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
 
   <!-- Accordion -->
   <div v-else-if="block.type === 'accordion'" class="mx-auto max-w-7xl">
-    <h3 v-if="block.title.trim()" class="font-display mb-6 text-center text-xl text-body">
+    <h3 v-if="block.title.trim()" class="mts-figma-card-title mb-6 text-center text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <ul class="space-y-2">
@@ -355,7 +353,7 @@ function marketingCardsIconClass(block: CustomPageBlock): string {
     v-else-if="block.type === 'htmlMarkdown'"
     :class="block.align === 'center' ? 'mx-auto max-w-7xl text-center' : 'max-w-7xl'"
   >
-    <h3 v-if="block.title.trim()" class="font-display mb-4 text-xl text-body">
+    <h3 v-if="block.title.trim()" class="mts-figma-card-title mb-4 text-body">
       <ThemedContentString :content="block.title" />
     </h3>
     <div
