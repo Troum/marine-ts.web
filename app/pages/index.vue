@@ -303,7 +303,7 @@ const heroMarketingSlidesForSlider = computed(() => {
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
                 ]"
               >
-                <h1 class="mts-hero-themed-copy text-[36.936px] font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
+                <h1 class="mts-hero-themed-copy text-[36.936px] font-bold leading-tight text-primary drop-shadow sm:text-4xl lg:text-6xl">
                   <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                 </h1>
                 <p class="mt-5 text-[23.04px] font-semibold leading-snug text-white sm:text-lg lg:text-2xl">
