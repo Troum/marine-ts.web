@@ -147,7 +147,7 @@ watch(
 )
 
 const slideCopyClass =
-  'mts-hero-themed-copy space-y-5 text-[13.2px] font-body leading-relaxed text-white/85 md:text-[28.8px]'
+  'mts-hero-themed-copy space-y-5 text-[13.2px] font-body leading-relaxed text-white/85 md:text-2xl'
 </script>
 
 <template>
