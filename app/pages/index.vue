@@ -56,6 +56,28 @@ const d = computed<HomePageData>(() => {
 const { setHidden: setFooterHidden } = usePageFooterHidden()
 watchEffect(() => { setFooterHidden(d.value?.hideFooter ?? false) })
 
+/** Полная блокировка вертикального скролла документа, если подвал скрыт (любой ширины экрана). */
+watchEffect((onCleanup) => {
+  if (!import.meta.client) {
+    return
+  }
+  const lock = d.value?.hideFooter === true
+  const html = document.documentElement
+  const body = document.body
+  if (lock) {
+    html.style.overflowY = 'hidden'
+    body.style.overflowY = 'hidden'
+  }
+  else {
+    html.style.overflowY = ''
+    body.style.overflowY = ''
+  }
+  onCleanup(() => {
+    html.style.overflowY = ''
+    body.style.overflowY = ''
+  })
+})
+
 const isVisible = ref(false)
 onMounted(() => { isVisible.value = true })
 
