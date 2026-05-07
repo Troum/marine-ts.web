@@ -3,16 +3,13 @@ import { ChevronRight } from 'lucide-vue-next'
 
 export interface BreadcrumbItem {
   label: string
-  /** У последнего пункта не указывать — это текущая страница */
   to?: string
 }
 
 const props = withDefaults(
   defineProps<{
     items: BreadcrumbItem[]
-    /** Текст для тёмного фона (hero с фото и вуалью). */
     onDarkHero?: boolean
-    /** Без отступа снизу (напр. когда под крошками декоративная линия в колонке). */
     omitBottomMargin?: boolean
   }>(),
   { omitBottomMargin: false },
@@ -20,8 +17,8 @@ const props = withDefaults(
 
 const linkClass = computed(() =>
   props.onDarkHero
-    ? 'shrink-0 font-bold text-white transition-colors hover:text-primary'
-    : 'shrink-0 font-normal text-muted transition-colors hover:text-primary',
+    ? 'shrink-0 text-white transition-colors hover:text-primary'
+    : 'shrink-0 text-muted transition-colors hover:text-primary',
 )
 const sepClass = computed(() =>
   props.onDarkHero
@@ -30,8 +27,8 @@ const sepClass = computed(() =>
 )
 const currentClass = computed(() =>
   props.onDarkHero
-    ? 'min-w-0 font-bold text-white [text-wrap:pretty] line-clamp-2'
-    : 'min-w-0 font-normal text-body line-clamp-2',
+    ? 'min-w-0 text-white [text-wrap:pretty] line-clamp-2'
+    : 'min-w-0 text-body line-clamp-2',
 )
 </script>
 
