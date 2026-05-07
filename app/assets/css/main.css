@@ -327,7 +327,7 @@
   }
   /** Крошки на тёмном hero (14:390): Bold, без medium у ссылок — явно в Breadcrumbs. */
   .mts-figma-hero-breadcrumbs {
-    @apply font-body text-[13px] font-bold uppercase leading-5 sm:text-[14px] sm:leading-6 md:text-[16px] md:leading-[34px];
+    @apply font-body text-[13px] uppercase leading-5 sm:text-[14px] sm:leading-6 md:text-[16px] md:leading-[34px];
   }
   .mts-figma-hero-lead {
     @apply font-body font-normal text-[1rem] leading-[1.55] sm:text-[1.0625rem] sm:leading-[1.58] md:text-[1.125rem] md:leading-[1.62] lg:text-[22px] lg:leading-[34px];
