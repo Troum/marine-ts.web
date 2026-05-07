@@ -160,7 +160,7 @@ async function submitFeedback() {
       <div class="mts-content-wrap relative z-10">
         <div class="grid lg:grid-cols-2 gap-12 items-start">
           <div>
-            <h2 class="mts-figma-section-h2 text-body mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
+            <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="cms.infoTitle" /></h2>
             <div v-if="contactsPending" class="flex items-center gap-2 text-muted font-body text-sm mb-12">
               <Loader2 class="h-4 w-4 animate-spin" />
               {{ t('pages.common.loading') }}
@@ -185,15 +185,15 @@ async function submitFeedback() {
             </div>
 
             <div v-if="resolvedContacts.departments.length" class="mb-12">
-              <h3 class="mts-figma-card-title text-body mb-4">{{ departmentsTitle }}</h3>
+              <h3 class="font-display text-lg text-body mb-4">{{ departmentsTitle }}</h3>
               <div class="grid gap-4">
                 <div
                   v-for="(department, idx) in resolvedContacts.departments"
                   :key="`${department.title}-${idx}`"
                   class="public-card p-5"
                 >
-                  <h4 class="mts-figma-card-title text-body">{{ lineForLocale(department.title) }}</h4>
-                  <p class="mt-3 mts-figma-card-body text-muted">{{ lineForLocale(department.phone) }}</p>
+                  <h4 class="font-display text-base text-body">{{ lineForLocale(department.title) }}</h4>
+                  <p class="mt-3 font-body text-sm text-muted">{{ lineForLocale(department.phone) }}</p>
                   <a
                     :href="`mailto:${department.email}`"
                     class="mt-2 inline-flex font-mono text-xs text-primary hover:underline"
@@ -205,11 +205,11 @@ async function submitFeedback() {
             </div>
           </div>
           <div class="card-tech w-full p-8">
-            <h3 class="mts-figma-card-title mb-4 flex items-center gap-2 text-body">
+            <h3 class="font-display mb-4 flex items-center gap-2 text-lg text-body">
               <Send class="h-5 w-5 text-primary" />
               <ThemedContentString :content="cms.formTitle" />
             </h3>
-            <p class="mb-6 mts-figma-card-body text-muted">
+            <p class="mb-6 font-body text-sm text-muted">
               <ThemedContentString :content="cms.formLead" />
             </p>
             <form class="space-y-4" @submit.prevent="submitFeedback">
@@ -278,7 +278,7 @@ async function submitFeedback() {
         </div>
 
         <div class="mt-16">
-          <h2 class="mts-figma-section-h2 text-body mb-8"><ThemedContentString :content="officesTitle" /></h2>
+          <h2 class="font-display text-xl text-body mb-8"><ThemedContentString :content="officesTitle" /></h2>
           <div class="grid md:grid-cols-3 gap-6">
             <div
               v-for="(o, oi) in resolvedContacts.offices"
@@ -286,9 +286,9 @@ async function submitFeedback() {
               class="card-tech p-6"
             >
               <p class="font-mono text-xs text-primary mb-1">{{ lineForLocale(o.country) }}</p>
-              <h3 class="mts-figma-card-title text-body mb-2">{{ lineForLocale(o.city) }}</h3>
-              <p class="mts-figma-card-body text-muted mb-4">{{ lineForLocale(o.address) }}</p>
-              <p class="mts-figma-card-body">{{ o.phone }}</p>
+              <h3 class="font-display text-lg text-body mb-2">{{ lineForLocale(o.city) }}</h3>
+              <p class="font-body text-sm text-muted mb-4">{{ lineForLocale(o.address) }}</p>
+              <p class="font-body text-sm">{{ o.phone }}</p>
               <p class="font-mono text-xs text-primary mt-2">{{ o.email }}</p>
             </div>
           </div>
