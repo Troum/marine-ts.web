@@ -303,10 +303,10 @@ const heroMarketingSlidesForSlider = computed(() => {
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
                 ]"
               >
-                <h1 class="mts-hero-themed-copy text-[27px] font-bold leading-tight text-primary drop-shadow sm:text-5xl lg:text-6xl">
+                <h1 class="mts-hero-themed-copy text-[47px] font-bold leading-tight text-primary drop-shadow sm:text-[68px] lg:text-[80px]">
                   <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                 </h1>
-                <p class="mt-5 text-base font-semibold leading-snug text-white sm:text-lg lg:text-2xl">
+                <p class="mt-5 text-[36px] font-semibold leading-snug text-white sm:text-[38px] lg:text-[44px]">
                   <ThemedContentString :content="d.hero.label" />
                 </p>
               </div>
@@ -330,7 +330,7 @@ const heroMarketingSlidesForSlider = computed(() => {
                   <div :key="activeHeroDirection ? `dir-${activeHeroDirectionIndex}` : 'default'">
                     <div
                       v-if="activeHeroDirection"
-                      class="mts-hero-themed-copy space-y-5 text-[11px] font-body leading-relaxed text-white/85 md:text-2xl"
+                      class="mts-hero-themed-copy space-y-5 text-[31px] font-body leading-relaxed text-white/85 md:text-[44px]"
                     >
                       <ThemedContentString :content="heroDirectionDescription(activeHeroDirection)" />
                     </div>
