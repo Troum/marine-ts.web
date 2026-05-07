@@ -806,7 +806,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
             <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.consentsTitle') }}</h2>
             <div>
               <label
-                class="flex cursor-pointer gap-3"
+                class="flex cursor-pointer items-start gap-3"
                 :class="errorOf('consentRuAccuracy') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
               >
                 <input
@@ -815,7 +815,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                   class="mts-checkbox mt-1"
                   @change="markTouched('consentRuAccuracy')"
                 />
-                <span class="font-body text-[11px] leading-snug text-muted">
+                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
                   {{ t('pages.vacancyForm.consentRu1') }}
                 </span>
               </label>
@@ -823,7 +823,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
             </div>
             <div>
               <label
-                class="flex cursor-pointer gap-3"
+                class="flex cursor-pointer items-start gap-3"
                 :class="errorOf('consentRuPd') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
               >
                 <input
@@ -832,7 +832,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                   class="mt-1 size-4 accent-mts-accent"
                   @change="markTouched('consentRuPd')"
                 />
-                <span class="font-body text-[11px] leading-snug text-muted">
+                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
                   {{ t('pages.vacancyForm.consentRu2') }}
                 </span>
               </label>
@@ -840,7 +840,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
             </div>
             <div>
               <label
-                class="flex cursor-pointer gap-3"
+                class="flex cursor-pointer items-start gap-3"
                 :class="errorOf('consentEnAccuracy') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
               >
                 <input
@@ -849,7 +849,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                   class="mts-checkbox mt-1"
                   @change="markTouched('consentEnAccuracy')"
                 />
-                <span class="font-body text-[11px] leading-snug text-muted">
+                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
                   {{ t('pages.vacancyForm.consentEn1') }}
                 </span>
               </label>
@@ -857,7 +857,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
             </div>
             <div>
               <label
-                class="flex cursor-pointer gap-3"
+                class="flex cursor-pointer items-start gap-3"
                 :class="errorOf('consentEnPd') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
               >
                 <input
@@ -866,7 +866,7 @@ const positionReadonly = computed(() => props.variant === 'vacancy')
                   class="mts-checkbox mt-1"
                   @change="markTouched('consentEnPd')"
                 />
-                <span class="font-body text-[11px] leading-snug text-muted">
+                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
                   {{ t('pages.vacancyForm.consentEn2') }}
                 </span>
               </label>

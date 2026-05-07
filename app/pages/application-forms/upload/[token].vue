@@ -53,6 +53,11 @@ function onFileChange(key: string, e: Event) {
   fileInputs.value = { ...fileInputs.value, [key]: file }
 }
 
+function fileChosenLabel(key: string) {
+  const f = fileInputs.value[key]
+  return f ? f.name : t('pages.vacancyForm.fileInputNone')
+}
+
 function formatExp(iso: string | null) {
   if (!iso) {
     return '—'
@@ -134,12 +139,22 @@ async function submitUpload() {
               {{ t('pages.upload.uploadedLabel') }} {{ session.uploaded[doc.key]?.originalName }}
               ({{ formatExp(session.uploaded[doc.key]?.uploadedAt ?? null) }})
             </div>
-            <input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*"
-              class="mt-3 block w-full font-body text-sm file:mr-4 file:rounded file:border file:border-border file:bg-white file:px-3 file:py-1 file:font-mono file:text-[10px] file:uppercase"
-              @change="onFileChange(doc.key, $event)"
-            />
+            <label
+              class="mt-3 flex cursor-pointer flex-wrap items-center gap-2 rounded-md border border-mts-border bg-mts-bg/30 px-3 py-2 font-body text-sm text-mts-text-secondary transition-colors hover:border-primary/40"
+            >
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*"
+                class="sr-only"
+                @change="onFileChange(doc.key, $event)"
+              />
+              <span
+                class="inline-flex shrink-0 rounded border border-mts-border bg-white/10 px-3 py-1.5 font-mono text-[10px] uppercase text-mts-frost"
+              >
+                {{ t('pages.vacancyForm.fileInputChoose') }}
+              </span>
+              <span class="min-w-0 break-words text-mts-slate-muted">{{ fileChosenLabel(doc.key) }}</span>
+            </label>
           </li>
         </ul>
 
