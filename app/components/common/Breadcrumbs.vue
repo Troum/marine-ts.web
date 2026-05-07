@@ -22,7 +22,7 @@ const linkClass = computed(() =>
 )
 const sepClass = computed(() =>
   props.onDarkHero
-    ? 'h-4 w-4 shrink-0 text-white/70 sm:h-5 sm:w-5 md:h-6 md:w-6'
+    ? 'h-3 w-3 shrink-0 text-white/50 sm:h-3 sm:w-3 md:h-4 md:w-4'
     : 'h-3.5 w-3.5 shrink-0 text-muted',
 )
 const currentClass = computed(() =>
