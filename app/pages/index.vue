@@ -326,7 +326,7 @@ const heroMarketingSlidesForSlider = computed(() => {
                 ]"
               >
                 <div class="mts-figma-hero-stack">
-                  <h1 class="mts-figma-hero-h1 mts-hero-themed-copy text-primary drop-shadow">
+                  <h1 class="mts-figma-hero-h1 mts-hero-themed-copy drop-shadow">
                     <ThemeFormattedTitle :title="d.hero.titleFormatted" />
                   </h1>
                   <p class="mts-figma-hero-lead mts-hero-themed-copy text-white">
