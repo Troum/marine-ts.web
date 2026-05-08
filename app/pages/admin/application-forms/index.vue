@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core'
 import { ArrowLeft, ChevronLeft, ChevronRight, ClipboardList, ListTree, Loader2 } from 'lucide-vue-next'
 import type { ApplicationFormItem, ApplicationFormStatus, DocumentRequestCatalogEntry } from '~/types'
+import AdminApplicationFormPayloadFiltersBar from '~/components/admin/AdminApplicationFormPayloadFiltersBar.vue'
 import AdminApplicationFormViewModal from '~/components/admin/AdminApplicationFormViewModal.vue'
 import AdminRequestDocumentsModal from '~/components/admin/AdminRequestDocumentsModal.vue'
+import {
+  applicationFormMatchesPayloadFilters,
+  defaultApplicationFormPayloadFilters,
+  hasActiveApplicationFormPayloadFilters,
+  type ApplicationFormPayloadFilterState,
+} from '~/utils/applicationFormAdminPayloadFilters'
 
 definePageMeta({
   layout: 'admin',
@@ -27,12 +35,22 @@ const viewOpen = ref(false)
 const viewRow = ref<ApplicationFormItem | null>(null)
 const page = ref(1)
 const perPage = 50
+/** При фильтрах по payload подгружаем все страницы API порциями этого размера. */
+const FETCH_CHUNK = 150
 const meta = ref({
   current_page: 1,
   last_page: 1,
   per_page: perPage,
   total: 0,
 })
+
+const listPositionOptions = ref<string[]>([])
+const listVesselTypeOptions = ref<string[]>([])
+const payloadFilters = ref<ApplicationFormPayloadFilterState>(defaultApplicationFormPayloadFilters())
+/** Кэш отфильтрованного списка при клиентской фильтрации (сброс при смене поиска/сортировки/полей анкеты). */
+const cachedPayloadFilteredList = ref<ApplicationFormItem[] | null>(null)
+let cachedServerQueryKey = ''
+let cachedPayloadFilterKey = ''
 
 const search = ref('')
 const sort = ref('id')
@@ -55,6 +73,8 @@ const sortOptions = [
   { value: 'status', label: 'Статус' },
   { value: 'vacancy_id', label: 'Вакансия' },
 ]
+
+const usesPayloadFilters = computed(() => hasActiveApplicationFormPayloadFilters(payloadFilters.value))
 
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
 
@@ -95,21 +115,97 @@ function formatDate(iso: string | null) {
   }
 }
 
+function serverQueryKey(): string {
+  return JSON.stringify({
+    search: search.value.trim(),
+    sort: sort.value,
+    order: order.value,
+    status: statusFilter.value || '',
+  })
+}
+
+function payloadFilterKey(): string {
+  return JSON.stringify(payloadFilters.value)
+}
+
+function invalidatePayloadFilterCache() {
+  cachedPayloadFilteredList.value = null
+  cachedServerQueryKey = ''
+  cachedPayloadFilterKey = ''
+}
+
+async function fetchAllApplicationFormChunks(serverParams: {
+  search?: string
+  sort: string
+  order: 'asc' | 'desc'
+  status?: string
+}): Promise<ApplicationFormItem[]> {
+  const merged: ApplicationFormItem[] = []
+  let lastPage = 1
+  for (let p = 1; p <= lastPage; p++) {
+    const res = await api.applicationForms.getManageAll(p, FETCH_CHUNK, serverParams)
+    merged.push(...res.data)
+    lastPage = res.meta.last_page
+  }
+  return merged
+}
+
 async function load() {
   pending.value = true
+  let pendingPageClamp: number | null = null
   try {
-    const res = await api.applicationForms.getManageAll(page.value, perPage, {
+    const serverParams = {
       search: search.value.trim() || undefined,
       sort: sort.value,
       order: order.value,
       status: statusFilter.value || undefined,
-    })
-    rows.value = res.data
-    meta.value = res.meta
+    }
+
+    if (!hasActiveApplicationFormPayloadFilters(payloadFilters.value)) {
+      invalidatePayloadFilterCache()
+      const res = await api.applicationForms.getManageAll(page.value, perPage, serverParams)
+      rows.value = res.data
+      meta.value = res.meta
+      return
+    }
+
+    const sk = serverQueryKey()
+    const pk = payloadFilterKey()
+    if (
+      cachedPayloadFilteredList.value === null ||
+      sk !== cachedServerQueryKey ||
+      pk !== cachedPayloadFilterKey
+    ) {
+      const merged = await fetchAllApplicationFormChunks(serverParams)
+      cachedPayloadFilteredList.value = merged.filter((r) =>
+        applicationFormMatchesPayloadFilters(r, payloadFilters.value),
+      )
+      cachedServerQueryKey = sk
+      cachedPayloadFilterKey = pk
+    }
+
+    const list = cachedPayloadFilteredList.value
+    const total = list.length
+    const lastPage = Math.max(1, Math.ceil(total / perPage))
+    const curPage = Math.min(Math.max(1, page.value), lastPage)
+    if (curPage !== page.value) {
+      pendingPageClamp = curPage
+    }
+    const start = (curPage - 1) * perPage
+    rows.value = list.slice(start, start + perPage)
+    meta.value = {
+      current_page: curPage,
+      last_page: lastPage,
+      per_page: perPage,
+      total,
+    }
   } catch {
     rows.value = []
   } finally {
     pending.value = false
+    if (pendingPageClamp !== null) {
+      page.value = pendingPageClamp
+    }
   }
 }
 
@@ -131,17 +227,42 @@ function onExtraFilter(v: string) {
   statusFilter.value = v as '' | ApplicationFormStatus
 }
 
-onMounted(load)
+const payloadFilterKeyDebounced = computed(() => payloadFilterKey())
+
+watchDebounced(
+  payloadFilterKeyDebounced,
+  () => {
+    invalidatePayloadFilterCache()
+    if (page.value !== 1) {
+      page.value = 1
+    } else {
+      void load()
+    }
+  },
+  { debounce: 400 },
+)
+
+onMounted(() => {
+  void api.applicationForms
+    .getFormListsPublic()
+    .then((d) => {
+      listPositionOptions.value = d.positionOptions ?? []
+      listVesselTypeOptions.value = d.vesselTypeOptions ?? []
+    })
+    .catch(() => {})
+  void load()
+})
 
 watch(page, () => {
-  load()
+  void load()
 })
 
 watch([sort, order, statusFilter], () => {
+  invalidatePayloadFilterCache()
   if (page.value !== 1) {
     page.value = 1
   } else {
-    load()
+    void load()
   }
 })
 
@@ -166,16 +287,23 @@ async function runAction(row: ApplicationFormItem, status: 'accepted' | 'rejecte
   actionId.value = row.id
   try {
     const updated = await api.applicationForms.updateStatus(row.id, status)
-    const i = rows.value.findIndex((r) => r.id === row.id)
-    if (i !== -1) {
-      const prev = rows.value[i]
+    const patch = (list: ApplicationFormItem[]) => {
+      const i = list.findIndex((r) => r.id === row.id)
+      if (i === -1) {
+        return
+      }
+      const prev = list[i]
       if (prev) {
-        rows.value[i] = {
+        list[i] = {
           ...updated,
           vacancyTitle: prev.vacancyTitle,
           vacancySlug: prev.vacancySlug,
         }
       }
+    }
+    patch(rows.value)
+    if (cachedPayloadFilteredList.value) {
+      patch(cachedPayloadFilteredList.value)
     }
     adminToast.success(status === 'accepted' ? 'Анкета принята' : 'Анкета отклонена')
   } catch {
@@ -230,16 +358,23 @@ async function onRequestDocsConfirm(keys: string[]) {
   requestDocsSubmitting.value = true
   try {
     const updated = await api.applicationForms.requestDocuments(requestDocsRow.value.id, keys)
-    const i = rows.value.findIndex((r) => r.id === requestDocsRow.value!.id)
-    if (i !== -1) {
-      const prev = rows.value[i]
+    const patch = (list: ApplicationFormItem[]) => {
+      const i = list.findIndex((r) => r.id === requestDocsRow.value!.id)
+      if (i === -1) {
+        return
+      }
+      const prev = list[i]
       if (prev) {
-        rows.value[i] = {
+        list[i] = {
           ...updated,
           vacancyTitle: prev.vacancyTitle,
           vacancySlug: prev.vacancySlug,
         }
       }
+    }
+    patch(rows.value)
+    if (cachedPayloadFilteredList.value) {
+      patch(cachedPayloadFilteredList.value)
     }
     closeRequestDocs()
     adminToast.show({
@@ -268,6 +403,9 @@ async function deleteRow(row: ApplicationFormItem) {
   actionId.value = row.id
   try {
     await api.applicationForms.destroy(row.id)
+    if (cachedPayloadFilteredList.value) {
+      cachedPayloadFilteredList.value = cachedPayloadFilteredList.value.filter((r) => r.id !== row.id)
+    }
     if (viewRow.value?.id === row.id) {
       closeView()
     }
@@ -318,7 +456,13 @@ async function deleteRow(row: ApplicationFormItem) {
 
     <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
       <p class="mb-4 font-body text-sm text-mts-text-secondary">
-        Все поданные анкеты: открытая форма и вакансии. Всего: {{ meta.total }}.
+        Все поданные анкеты: открытая форма и вакансии.
+        <template v-if="usesPayloadFilters"> После фильтрации по полям анкеты: {{ meta.total }}.</template>
+        <template v-else> Всего: {{ meta.total }}.</template>
+      </p>
+      <p v-if="usesPayloadFilters" class="mb-4 font-body text-xs text-mts-text-secondary">
+        Фильтры по должности, типу судна и морской службе загружают все анкеты, подходящие к поиску и статусу, затем
+        сужают список на этой странице.
       </p>
 
       <AdminListToolbar
@@ -335,7 +479,15 @@ async function deleteRow(row: ApplicationFormItem) {
         @update:sort="sort = $event"
         @update:order="order = $event"
         @update:extra-filter="onExtraFilter($event)"
-      />
+      >
+        <div class="w-full min-w-0 basis-full">
+          <AdminApplicationFormPayloadFiltersBar
+            v-model="payloadFilters"
+            :position-options="listPositionOptions"
+            :vessel-type-options="listVesselTypeOptions"
+          />
+        </div>
+      </AdminListToolbar>
 
       <div v-if="pending" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
