@@ -41,16 +41,17 @@ export interface VacancyApplicationForm {
 
   lastName: string
   firstName: string
-  fathersName: string
+  /** ISO 4217: в анкете и PDF сохраняем код валюты (₽→RUB, $→USD, €→EUR). */
+  expectedMonthlySalaryCurrency: 'RUB' | 'USD' | 'EUR'
+  /** Ожидаемая месячная зарплата (сумма, каноническая строка без группировки). */
+  expectedMonthlySalary: string
   maritalStatus: string
   placeOfBirth: string
   availableFrom: string
   citizenship: string
   englishLevel: string
   mobilePhone: string
-  homePhone: string
   email: string
-  messenger: string
   homeAddress: string
   nearestAirport: string
 
@@ -151,5 +152,6 @@ export const OTHER_CERT_LABELS = [
   'Vaccination/YF',
   'Medical Health Certificate',
   'ISPS/SSO',
+  'Preventing and responding to violence and harassment, including sexual harassment, bullying, and sexual violence',
   'Tanker certificates:',
 ] as const

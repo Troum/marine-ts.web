@@ -1,3 +1,7 @@
+import {
+  fetchSiteAppearanceForAsyncData,
+  siteAppearanceAsyncDataOptions,
+} from '~/utils/siteAppearanceAsyncData'
 import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 import { routePathToSiteSectionKey } from '~/utils/siteSectionRoutes'
 
@@ -13,15 +17,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data } = await useAsyncData(
     'site-appearance',
-    async () => {
-      const api = useMarineApi()
-      try {
-        return await api.appearanceSettings.get()
-      } catch {
-        return null
-      }
-    },
-    { server: true, default: () => null },
+    fetchSiteAppearanceForAsyncData,
+    siteAppearanceAsyncDataOptions,
   )
 
   const settings = normalizeAppearanceSettingsPayload(data.value)

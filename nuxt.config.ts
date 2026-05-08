@@ -6,6 +6,9 @@ const isDev = import.meta.env.NODE_ENV !== 'production'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  features: {
+    inlineStyles: false,
+  },
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
   routeRules: {
@@ -52,6 +55,9 @@ export default defineNuxtConfig({
     },
   },
   vite: {
+    build: {
+      cssCodeSplit: false,
+    },
     plugins: [tailwindcss()],
     server: {
       proxy: isDev
@@ -78,12 +84,7 @@ export default defineNuxtConfig({
       mapboxToken:
         import.meta.env.NUXT_PUBLIC_MAPBOX_TOKEN
         ?? 'pk.eyJ1IjoidHJvdW0iLCJhIjoiY2tlZWdvMWVoMTJiYzJ6bWkzbWp4NmR4ZSJ9.GUTHIgv8DFR8rwZ2WzsjhA',
-      /** Fallback для выбора координат в админке, если не задан Mapbox-токен. */
       yandexMapsApiKey: import.meta.env.NUXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '',
-      /**
-       * Скрытые в админ-панели карточки дашборда (`/admin`) и строки в «Выберите раздел».
-       * Пример: NUXT_PUBLIC_ADMIN_HIDDEN_SECTIONS=vacancies,news,gallery,projects,application_forms
-       */
       adminHiddenSections: (import.meta.env.NUXT_PUBLIC_ADMIN_HIDDEN_SECTIONS ?? '')
         .split(',')
         .map((s) => s.trim().toLowerCase().replace(/-/g, '_'))

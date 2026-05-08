@@ -1,4 +1,8 @@
 import type { SiteAppearanceSettings } from '~/types'
+import {
+  fetchSiteAppearanceForAsyncData,
+  siteAppearanceAsyncDataOptions,
+} from '~/utils/siteAppearanceAsyncData'
 import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceSettingsPayload'
 
 /**
@@ -8,15 +12,11 @@ import { normalizeAppearanceSettingsPayload } from '~/utils/normalizeAppearanceS
  * Админка (`admin-shell` на body) не затрагивается.
  */
 export function useSiteAppearance() {
-  const api = useMarineApi()
-
-  const { data, refresh } = useAsyncData('site-appearance', async () => {
-    try {
-      return await api.appearanceSettings.get()
-    } catch {
-      return null
-    }
-  }, { server: true, default: () => null })
+  const { data, refresh } = useAsyncData(
+    'site-appearance',
+    fetchSiteAppearanceForAsyncData,
+    siteAppearanceAsyncDataOptions,
+  )
 
   const settings = computed<SiteAppearanceSettings>(() =>
     data.value ?? normalizeAppearanceSettingsPayload(null),

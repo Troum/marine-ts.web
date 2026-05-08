@@ -26,16 +26,15 @@ export function createVacancyApplicationForm(vacancySlug: string, positionTitle:
 
     lastName: '',
     firstName: '',
-    fathersName: '',
+    expectedMonthlySalaryCurrency: 'RUB',
+    expectedMonthlySalary: '',
     maritalStatus: '',
     placeOfBirth: '',
     availableFrom: '',
     citizenship: '',
     englishLevel: '',
     mobilePhone: '',
-    homePhone: '',
     email: '',
-    messenger: '',
     homeAddress: '',
     nearestAirport: '',
 

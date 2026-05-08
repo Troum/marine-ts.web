@@ -18,7 +18,7 @@ const props = withDefaults(
   {
     placeholder: 'Выберите…',
     disabled: false,
-    searchPlaceholder: 'Поиск по подписи или коду…',
+    searchPlaceholder: 'Search by label or code…',
     variant: 'default',
     maxSelections: null,
   },

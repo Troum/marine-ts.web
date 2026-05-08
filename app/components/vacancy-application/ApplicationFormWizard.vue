@@ -4,8 +4,8 @@ import VacancyCertTable from '~/components/vacancy-application/VacancyCertTable.
 import VacancyEducationTable from '~/components/vacancy-application/VacancyEducationTable.vue'
 import VacancySeaServiceTable from '~/components/vacancy-application/VacancySeaServiceTable.vue'
 import MarinePhoneField from '~/components/vacancy-application/MarinePhoneField.vue'
+import MarineCurrencyField from '~/components/vacancy-application/MarineCurrencyField.vue'
 import MtsDateInput from '~/components/common/MtsDateInput.vue'
-import MtsDecorativeAccentLine from '~/components/common/MtsDecorativeAccentLine.vue'
 import AdminSelect from '~/components/admin/AdminSelect.vue'
 import AdminMultiSelect from '~/components/admin/AdminMultiSelect.vue'
 import type { AdminSelectOption } from '~/components/admin/AdminSelect.vue'
@@ -361,14 +361,14 @@ function errorOf(field: RequiredField): string | null {
   return touched.value.has(field) ? fieldErrors.value[field] ?? null : null
 }
 
-const fieldErrorClass = 'mt-1 font-mono text-[10px] text-red-700'
+const fieldErrorClass = 'mt-1 font-mono text-[10px] text-red-400'
 function inputErrClass(field: RequiredField): string {
   return errorOf(field) ? 'border-b-red-500 focus:border-red-500' : ''
 }
 
 /**
  * Валидирует все обязательные поля шага, помечает их touched.
- * Возвращает общий баннер «Проверьте выделенные поля» (или null, если ок).
+ * Возвращает первую конкретную ошибку для баннера (или null, если ок).
  * Для шага 10 по-прежнему требуем ВСЕ согласия одновременно.
  */
 function validateStep(s: number): string | null {
@@ -382,17 +382,28 @@ function validateStep(s: number): string | null {
   }
   const newTouched = new Set(touched.value)
   let hasError = false
+  let firstErr: string | null = null
   for (const field of fields) {
     newTouched.add(field)
-    if (validateField(field) !== null) {
+    const msg = validateField(field)
+    if (msg !== null) {
       hasError = true
+      if (firstErr === null) {
+        firstErr = msg
+      }
     }
   }
-  if (s === 2 && validatePhotoAttachment() !== null) {
-    hasError = true
+  if (s === 2) {
+    const photoErr = validatePhotoAttachment()
+    if (photoErr !== null) {
+      hasError = true
+      if (firstErr === null) {
+        firstErr = photoErr
+      }
+    }
   }
   touched.value = newTouched
-  return hasError ? t('pages.vacancyForm.errCheckFields') : null
+  return hasError ? (firstErr ?? t('pages.vacancyForm.errCheckFields')) : null
 }
 
 /**
@@ -621,7 +632,6 @@ function syncSurnameName() {
 
         <template v-else>
           <div class="flex flex-col gap-3">
-            <MtsDecorativeAccentLine />
             <h1 class="font-display text-2xl text-body md:text-3xl">
               <span class="text-primary">{{ t('pages.vacancyForm.formHeading') }}</span>
               <template v-if="variant === 'vacancy' && vacancyTitle"> — {{ vacancyTitle }}</template>
@@ -637,30 +647,30 @@ function syncSurnameName() {
 
           <div
             v-if="stepError"
-            class="mt-6 flex gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3"
+            class="mt-6 flex gap-3 rounded-lg border border-red-400/35 bg-red-500/10 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm"
             role="alert"
           >
-            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-400" aria-hidden="true" />
             <div class="min-w-0">
               <p class="font-display text-sm font-semibold text-body">
                 {{ t('pages.vacancyForm.clientValidationTitle') }}
               </p>
-              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-700">
+              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-300">
                 <li>{{ stepError }}</li>
               </ul>
             </div>
           </div>
           <div
             v-if="submitErrorMessages.length"
-            class="mt-4 flex gap-3 rounded-sm border border-red-200 bg-red-50 px-4 py-3"
+            class="mt-4 flex gap-3 rounded-lg border border-red-400/35 bg-red-500/10 px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-sm"
             role="alert"
           >
-            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-400" aria-hidden="true" />
             <div class="min-w-0">
               <p class="font-display text-sm font-semibold text-body">
                 {{ t('pages.vacancyForm.serverErrorTitle') }}
               </p>
-              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-700">
+              <ul class="mts-arrow-bullets mt-2 list-none space-y-1 font-body text-sm leading-relaxed text-red-300">
                 <li v-for="(line, idx) in submitErrorMessages" :key="idx">{{ line }}</li>
               </ul>
             </div>
@@ -684,7 +694,7 @@ function syncSurnameName() {
                   class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted"
                   :for="hasPositionList ? positionListSelectId : variant === 'open' && !hasPositionList ? positionListSelectId : undefined"
                 >
-                  {{ t('pages.vacancyForm.fields.positionApplyingFor') }}<span class="text-red-700"> *</span>
+                  {{ t('pages.vacancyForm.fields.positionApplyingFor') }}<span class="text-red-400"> *</span>
                 </label>
                 <p v-if="hasPositionList" class="mb-2 font-body text-xs text-muted">
                   {{ t('pages.vacancyForm.desiredVesselTypesHint') }}
@@ -700,6 +710,7 @@ function syncSurnameName() {
                       variant="underline"
                       :options="positionMultiOptions"
                       :placeholder="t('pages.vacancyForm.positionSelectPlaceholder')"
+                      :search-placeholder="t('pages.vacancyForm.selectSearchPlaceholder')"
                       :searchable="true"
                       :max-selections="3"
                       @update:model-value="markTouched('positionApplyingFor')"
@@ -730,10 +741,10 @@ function syncSurnameName() {
               </div>
               <div class="min-w-0">
                 <p class="mb-1.5 font-mono text-[10px] uppercase tracking-wide text-muted">
-                  {{ t('pages.vacancyForm.fields.desiredVesselTypes') }}<span class="text-red-700"> *</span>
+                  {{ t('pages.vacancyForm.fields.desiredVesselTypes') }}<span class="text-red-400"> *</span>
                 </p>
                 <p class="mb-2 font-body text-xs text-muted">{{ t('pages.vacancyForm.desiredVesselTypesHint') }}</p>
-                <p v-if="vesselTypeOptionList.length === 0" class="font-body text-xs text-amber-800">
+                <p v-if="vesselTypeOptionList.length === 0" class="font-body text-xs text-amber-400/95">
                   {{ t('pages.vacancyForm.desiredVesselTypesEmptyList') }}
                 </p>
                 <template v-else>
@@ -746,6 +757,7 @@ function syncSurnameName() {
                       variant="underline"
                       :options="vesselTypeSelectOptions"
                       :placeholder="t('pages.vacancyForm.vesselTypesPlaceholder')"
+                      :search-placeholder="t('pages.vacancyForm.selectSearchPlaceholder')"
                       :searchable="true"
                       :max-selections="3"
                       @update:model-value="markTouched('desiredVesselTypes')"
@@ -782,9 +794,13 @@ function syncSurnameName() {
               </div>
               <div>
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.fathersName')
+                  t('pages.vacancyForm.fields.expectedMonthlySalary')
                 }}</label>
-                <input v-model="form.fathersName" type="text" :class="fieldInputClass" />
+                <MarineCurrencyField
+                  v-model="form.expectedMonthlySalary"
+                  v-model:currency-code="form.expectedMonthlySalaryCurrency"
+                  :placeholder="t('pages.vacancyForm.expectedMonthlySalaryPlaceholder')"
+                />
               </div>
               <div>
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
@@ -872,46 +888,36 @@ function syncSurnameName() {
                 }}</label>
                 <input v-model="form.availableFrom" type="text" :class="fieldInputClass" />
               </div>
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.englishLevel')
-                }}</label>
-                <input v-model="form.englishLevel" type="text" :class="fieldInputClass" />
-              </div>
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.mobilePhone')
-                }}</label>
-                <MarinePhoneField
-                  v-model="form.mobilePhone"
-                  :input-class="`${fieldInputClass} ${inputErrClass('mobilePhone')}`"
-                />
-                <p v-if="errorOf('mobilePhone')" :class="fieldErrorClass">{{ errorOf('mobilePhone') }}</p>
-              </div>
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.homePhone')
-                }}</label>
-                <MarinePhoneField v-model="form.homePhone" :input-class="fieldInputClass" />
-              </div>
-              <div>
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.email')
-                }}</label>
-                <input
-                  v-model="form.email"
-                  type="email"
-                  :aria-invalid="!!errorOf('email') || undefined"
-                  :class="[fieldInputClass, inputErrClass('email')]"
-                  @blur="markTouched('email')"
-                />
-                <p v-if="errorOf('email')" :class="fieldErrorClass">{{ errorOf('email') }}</p>
-              </div>
-              <div class="md:col-span-2">
-                <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
-                  t('pages.vacancyForm.fields.messenger')
-                }}</label>
-                <input v-model="form.messenger" type="text" :class="fieldInputClass" />
+              <div class="grid gap-4 md:col-span-2 md:grid-cols-3">
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
+                    t('pages.vacancyForm.fields.englishLevel')
+                  }}</label>
+                  <input v-model="form.englishLevel" type="text" :class="fieldInputClass" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
+                    t('pages.vacancyForm.fields.mobilePhone')
+                  }}</label>
+                  <MarinePhoneField
+                    v-model="form.mobilePhone"
+                    :input-class="`${fieldInputClass} ${inputErrClass('mobilePhone')}`"
+                  />
+                  <p v-if="errorOf('mobilePhone')" :class="fieldErrorClass">{{ errorOf('mobilePhone') }}</p>
+                </div>
+                <div>
+                  <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
+                    t('pages.vacancyForm.fields.email')
+                  }}</label>
+                  <input
+                    v-model="form.email"
+                    type="email"
+                    :aria-invalid="!!errorOf('email') || undefined"
+                    :class="[fieldInputClass, inputErrClass('email')]"
+                    @blur="markTouched('email')"
+                  />
+                  <p v-if="errorOf('email')" :class="fieldErrorClass">{{ errorOf('email') }}</p>
+                </div>
               </div>
               <div class="md:col-span-2">
                 <label class="mb-1.5 block font-mono text-[10px] uppercase tracking-wide text-muted">{{
@@ -1046,7 +1052,7 @@ function syncSurnameName() {
             <div>
               <label
                 class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentRuAccuracy') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
+                :class="errorOf('consentRuAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
               >
                 <input
                   v-model="form.consentRuAccuracy"
@@ -1063,7 +1069,7 @@ function syncSurnameName() {
             <div>
               <label
                 class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentRuPd') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
+                :class="errorOf('consentRuPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
               >
                 <input
                   v-model="form.consentRuPd"
@@ -1080,7 +1086,7 @@ function syncSurnameName() {
             <div>
               <label
                 class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentEnAccuracy') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
+                :class="errorOf('consentEnAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
               >
                 <input
                   v-model="form.consentEnAccuracy"
@@ -1097,7 +1103,7 @@ function syncSurnameName() {
             <div>
               <label
                 class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentEnPd') ? 'rounded-sm border border-red-300 bg-red-50/40 p-2' : ''"
+                :class="errorOf('consentEnPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
               >
                 <input
                   v-model="form.consentEnPd"

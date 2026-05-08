@@ -29,12 +29,32 @@ const props = withDefaults(
      */
     searchable?: boolean
     searchPlaceholder?: string
+    /**
+     * Показывать иконку «галочка» у выбранного пункта в списке.
+     */
+    showOptionCheck?: boolean
+    /**
+     * Только для `variant="underline"`: не рисовать нижнюю линию у кнопки-триггера
+     * (общую линию задаёт родитель, например composit-поле ввода).
+     */
+    underlineBareTrigger?: boolean
+    /** Ширина корня + триггера: во всю ячейку или по содержимому (короткие метки). */
+    selectWidth?: 'block' | 'fit-content'
+    /** Панель списка: на всю ширину триггера или узкая (`w-max`). */
+    dropdownListLayout?: 'full' | 'hug'
+    /** Между блоком метки и шевроном: `sm` = 4px (`gap-1`). */
+    triggerGap?: 'md' | 'sm'
   }>(),
   {
     placeholder: 'Выберите…',
     disabled: false,
-    searchPlaceholder: 'Поиск по подписи или коду…',
+    searchPlaceholder: 'Search by label or code…',
     variant: 'default',
+    showOptionCheck: true,
+    underlineBareTrigger: false,
+    selectWidth: 'block',
+    dropdownListLayout: 'full',
+    triggerGap: 'md',
   },
 )
 
@@ -104,21 +124,6 @@ const triggerTitle = computed(() => {
 
 const selectedIcon = computed(() => selectedOption.value?.icon)
 
-/** Классы триггера: админский «карточный» или underline как `.form-input`. */
-const triggerClass = computed(() => {
-  if (props.variant === 'underline') {
-    const border =
-      open.value === true
-        ? 'border-primary'
-        : 'border-[#cccccc] hover:border-primary/60'
-    return [
-      'flex w-full shrink-0 items-center justify-between gap-2 border-0 border-b bg-transparent px-0 py-3 text-left font-body text-sm transition-colors focus:border-primary focus:outline-none disabled:opacity-50',
-      border,
-    ].join(' ')
-  }
-  return 'flex h-12 w-full shrink-0 items-center justify-between gap-2 border border-mts-border bg-mts-bg px-4 py-0 text-left font-body text-sm text-mts-text transition-colors hover:border-mts-accent/50 focus:outline-none focus:ring-2 focus:ring-mts-accent/30 focus:border-mts-accent disabled:opacity-50'
-})
-
 const selectedTextClass = computed(() => {
   if (props.variant === 'underline') {
     return props.modelValue ? 'text-body' : 'text-muted'
@@ -181,13 +186,32 @@ function onSearchKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <div ref="root" class="relative">
+  <div
+    ref="root"
+    :class="[
+      selectWidth === 'fit-content' ? 'relative inline-block w-max max-w-none' : 'relative min-w-0',
+    ]"
+  >
     <button
       :id="id"
       type="button"
       :disabled="disabled"
       :title="triggerTitle"
-      :class="triggerClass"
+      :class="[
+        'flex shrink-0 items-center justify-between',
+        selectWidth === 'fit-content' ? 'w-max' : 'w-full',
+        triggerGap === 'sm' ? 'gap-1' : 'gap-2',
+        variant === 'underline' &&
+          underlineBareTrigger &&
+          'border-0 bg-transparent px-0 py-3 text-left font-body text-sm transition-colors focus:outline-none disabled:opacity-50',
+        variant === 'underline' &&
+          !underlineBareTrigger && [
+            'border-0 border-b bg-transparent px-0 py-3 text-left font-body text-sm transition-colors focus:border-primary focus:outline-none disabled:opacity-50',
+            open ? 'border-primary' : 'border-[#cccccc] hover:border-primary/60',
+          ],
+        variant === 'default' &&
+          'h-12 border border-mts-border bg-mts-bg px-4 py-0 text-left font-body text-sm text-mts-text transition-colors hover:border-mts-accent/50 focus:outline-none focus:ring-2 focus:ring-mts-accent/30 focus:border-mts-accent disabled:opacity-50',
+      ]"
       :aria-expanded="open"
       aria-haspopup="listbox"
       :aria-label="modelValue ? triggerTitle : placeholder"
@@ -215,7 +239,10 @@ function onSearchKeydown(e: KeyboardEvent) {
     >
       <div
         v-show="open"
-        class="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-72 flex-col overflow-hidden border border-mts-border bg-white shadow-tech-lg"
+        :class="[
+          'absolute left-0 top-full z-50 mt-1 flex max-h-72 flex-col overflow-hidden border border-mts-border bg-white shadow-tech-lg',
+          dropdownListLayout === 'hug' ? 'min-w-max w-max' : 'right-0',
+        ]"
         @click.stop
       >
         <div
@@ -239,7 +266,11 @@ function onSearchKeydown(e: KeyboardEvent) {
         <ul role="listbox" class="max-h-60 flex-1 overflow-y-auto py-1">
           <li
             v-if="filteredOptions.length === 0"
-            class="px-4 py-6 text-center font-body text-sm text-mts-text-secondary"
+            :class="[
+              dropdownListLayout === 'hug'
+                ? 'px-2 py-6 text-center font-body text-sm text-mts-text-secondary'
+                : 'px-4 py-6 text-center font-body text-sm text-mts-text-secondary',
+            ]"
           >
             Ничего не найдено
           </li>
@@ -251,10 +282,20 @@ function onSearchKeydown(e: KeyboardEvent) {
             :title="
               opt.label && opt.label !== '' ? `${opt.label} (${opt.value})` : opt.value
             "
-            class="flex cursor-pointer items-center justify-between gap-2 px-4 py-2.5 font-body text-sm text-mts-text hover:bg-mts-bg"
+            :class="[
+              'flex cursor-pointer items-center gap-2 py-2.5 font-body text-sm text-mts-text hover:bg-mts-bg',
+              dropdownListLayout === 'hug' ? 'px-2' : 'px-4',
+              dropdownListLayout === 'hug' && !showOptionCheck ? 'justify-center' : 'justify-between',
+            ]"
             @click="select(opt.value)"
           >
-            <span class="flex min-w-0 flex-1 items-center gap-2">
+            <span
+              :class="
+                dropdownListLayout === 'hug' && !showOptionCheck
+                  ? 'flex min-w-0 items-center gap-2'
+                  : 'flex min-w-0 flex-1 items-center gap-2'
+              "
+            >
               <component
                 :is="opt.icon"
                 v-if="opt.icon"
@@ -263,7 +304,7 @@ function onSearchKeydown(e: KeyboardEvent) {
               />
               <span v-if="opt.label != null && opt.label !== ''" class="min-w-0">{{ opt.label }}</span>
             </span>
-            <Check v-if="opt.value === modelValue" class="h-4 w-4 shrink-0 text-mts-accent" />
+            <Check v-if="showOptionCheck && opt.value === modelValue" class="h-4 w-4 shrink-0 text-mts-accent" />
           </li>
         </ul>
       </div>
