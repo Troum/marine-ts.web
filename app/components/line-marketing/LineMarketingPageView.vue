@@ -27,7 +27,11 @@ import { buildCrewingChecklistRenderRows, countFilledCrewingChecklistPoints } fr
 import { defaultLinePageData, mergeLinePageData } from '~/utils/pageDefaults'
 import { resolveHeroBreadcrumbOnDark } from '~/utils/pageBreadcrumbTone'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
-import { LINE_MARKETING_PAGE_LAYOUT, LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
+import {
+  isLnkLikeLineMarketingSlug,
+  LINE_MARKETING_PAGE_LAYOUT,
+  LINE_MARKETING_SECTION_DEFAULT_ORDER,
+} from '~/utils/lineMarketingPages'
 import { buildLineMarketingLayoutChunks, type LineMarketingLayoutChunk } from '~/utils/lineMarketingSectionLayout'
 import { resolveCrewingIcon } from '~/utils/crewingIcons'
 import { visibleOrderedSections } from '~/utils/sectionVisibility'
@@ -135,7 +139,7 @@ const lineV2 = computed((): LineMarketingV2Payload | null => {
   if (props.slug === 'ship-management' && cms.value.shipPageLayout === 'v2' && cms.value.shipV2) {
     return { kind: 'ship', data: cms.value.shipV2 }
   }
-  if (props.slug === 'lnk' && cms.value.lnkV2) {
+  if (isLnkLikeLineMarketingSlug(props.slug) && cms.value.lnkV2) {
     return { kind: 'lnk', data: cms.value.lnkV2 }
   }
   return null
@@ -702,7 +706,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 :content-class="`h-full min-h-0 ${lineV2CardsGridItemClass(i, lineV2.data.sec3Services.cards.length)}`"
               >
                 <div
-                  class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                  class="marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
                 >
                   <div class="mb-3 flex shrink-0 items-start justify-between gap-2">
                     <span class="mts-figma-section-h2 tabular-nums text-primary">
@@ -732,7 +736,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   v-for="(c, i) in lineV2.data.sec3Services.cards"
                   :key="`sv-${i}`"
                   :class="[
-                    'corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm',
+                    'marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm',
                     lineV2CardsGridItemClass(i, lineV2.data.sec3Services.cards.length),
                   ]"
                 >
@@ -773,7 +777,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 v-for="(c, i) in lineV2.data.sec3Services.cards"
                 :key="`sv-${i}`"
                 :class="[
-                  'corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm',
+                  'marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm',
                   lineV2CardsGridItemClass(i, lineV2.data.sec3Services.cards.length),
                 ]"
               >
@@ -826,7 +830,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 :content-class="`h-full min-h-0 ${lineV2CardsGridItemClass(i, lineV2.data.sec4Advantages.cards.length)}`"
               >
                 <div
-                  class="flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                  class="marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm"
                 >
                   <component
                     v-if="!c.hideIcon"
@@ -853,7 +857,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                   v-for="(c, i) in lineV2.data.sec4Advantages.cards"
                   :key="`adv-${i}`"
                   :class="[
-                    'flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm',
+                    'marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm',
                     lineV2CardsGridItemClass(i, lineV2.data.sec4Advantages.cards.length),
                   ]"
                 >
@@ -884,7 +888,7 @@ function lnkSectionGridClass(columns: number | undefined): string {
                 v-for="(c, i) in lineV2.data.sec4Advantages.cards"
                 :key="`adv-${i}`"
                 :class="[
-                  'flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm',
+                  'marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 gap-4 rounded-xl border border-mts-border bg-white p-6 shadow-sm',
                   lineV2CardsGridItemClass(i, lineV2.data.sec4Advantages.cards.length),
                 ]"
               >
@@ -1045,34 +1049,47 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
           >
             <MarinReveal>
-              <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
+              <h2 class="lnk-grid-section-title mb-10 text-center text-body md:mb-14">
                 <ThemedContentString :content="lineV2.data.sec2Competencies.title" />
               </h2>
             </MarinReveal>
-            <div v-if="lineV2.data.sec2Competencies.cards.length" :class="lnkSectionGridClass(lineV2.data.sec2Competencies.columns)">
-              <MarinReveal
-                v-for="(c, i) in lineV2.data.sec2Competencies.cards"
-                :key="`lnk-co-${i}`"
-                :delay-ms="160 + i * 60"
-                class="h-full min-h-0"
+            <div class="space-y-12 md:space-y-16">
+              <div
+                v-for="(g, gi) in lineV2.data.sec2Competencies.groups"
+                v-show="g.cards.length"
+                :key="`lnk-co-g-${gi}`"
               >
-                <div
-                  class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
-                >
-                  <component
-                    :is="resolveCrewingIcon(c.icon)"
-                    v-if="!c.hideIcon"
-                    class="mb-4 h-9 w-9 shrink-0 text-primary"
-                  />
-                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
-                    <ThemedContentString :content="c.title" />
+                <MarinReveal v-if="g.title && g.title.trim().length">
+                  <h3 class="lnk-group-title mb-6 text-body md:mb-8">
+                    <ThemedContentString :content="g.title" />
                   </h3>
-                  <div
-                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
-                    v-html="lineRichHtml(c.text)"
-                  />
+                </MarinReveal>
+                <div :class="lnkSectionGridClass(g.columns ?? lineV2.data.sec2Competencies.columns)">
+                  <MarinReveal
+                    v-for="(c, i) in g.cards"
+                    :key="`lnk-co-${gi}-${i}`"
+                    :delay-ms="160 + i * 60"
+                    class="h-full min-h-0"
+                  >
+                    <div
+                      class="marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                    >
+                      <component
+                        :is="resolveCrewingIcon(c.icon)"
+                        v-if="!c.hideIcon"
+                        class="mb-4 h-9 w-9 shrink-0 text-primary"
+                      />
+                      <h4 class="mts-figma-card-title mb-3 shrink-0 text-body !text-[15px] !leading-[1.35] sm:!text-[15.5px] md:!text-[16px] lg:!text-[18px] lg:!leading-[28px]">
+                        <ThemedContentString :content="c.title" />
+                      </h4>
+                      <div
+                        class="lnk-card-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0 !text-[13px] !leading-[1.55] sm:!text-[13.5px] md:!text-[14px] lg:!text-[14px] lg:!leading-[22px]"
+                        v-html="lineRichHtml(c.text)"
+                      />
+                    </div>
+                  </MarinReveal>
                 </div>
-              </MarinReveal>
+              </div>
             </div>
           </AboutSectionContentParallax>
         </section>
@@ -1088,37 +1105,47 @@ function lnkSectionGridClass(columns: number | undefined): string {
             class="relative z-10 mts-content-wrap flex min-h-0 flex-1 flex-col justify-center"
           >
             <MarinReveal>
-              <h2 class="mts-figma-section-h2 mb-4 text-center text-body">
+              <h2 class="lnk-grid-section-title mb-10 text-center text-body md:mb-14">
                 <ThemedContentString :content="lineV2.data.sec3StrategicAdvantages.title" />
               </h2>
             </MarinReveal>
-            <div
-              v-if="lineV2.data.sec3StrategicAdvantages.cards.length"
-              :class="lnkSectionGridClass(lineV2.data.sec3StrategicAdvantages.columns)"
-            >
-              <MarinReveal
-                v-for="(c, i) in lineV2.data.sec3StrategicAdvantages.cards"
-                :key="`lnk-ad-${i}`"
-                :delay-ms="160 + i * 60"
-                class="h-full min-h-0"
+            <div class="space-y-12 md:space-y-16">
+              <div
+                v-for="(g, gi) in lineV2.data.sec3StrategicAdvantages.groups"
+                v-show="g.cards.length"
+                :key="`lnk-ad-g-${gi}`"
               >
-                <div
-                  class="corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
-                >
-                  <component
-                    :is="resolveCrewingIcon(c.icon)"
-                    v-if="!c.hideIcon"
-                    class="mb-4 h-9 w-9 shrink-0 text-primary"
-                  />
-                  <h3 class="mts-figma-card-title mb-3 shrink-0 text-body">
-                    <ThemedContentString :content="c.title" />
+                <MarinReveal v-if="g.title && g.title.trim().length">
+                  <h3 class="lnk-group-title mb-6 text-body md:mb-8">
+                    <ThemedContentString :content="g.title" />
                   </h3>
-                  <div
-                    class="mts-figma-section-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0"
-                    v-html="lineRichHtml(c.text)"
-                  />
+                </MarinReveal>
+                <div :class="lnkSectionGridClass(g.columns ?? lineV2.data.sec3StrategicAdvantages.columns)">
+                  <MarinReveal
+                    v-for="(c, i) in g.cards"
+                    :key="`lnk-ad-${gi}-${i}`"
+                    :delay-ms="160 + i * 60"
+                    class="h-full min-h-0"
+                  >
+                    <div
+                      class="marketing-card-interactive corner-accent flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-mts-border bg-white p-6 shadow-sm"
+                    >
+                      <component
+                        :is="resolveCrewingIcon(c.icon)"
+                        v-if="!c.hideIcon"
+                        class="mb-4 h-9 w-9 shrink-0 text-primary"
+                      />
+                      <h4 class="mts-figma-card-title mb-3 shrink-0 text-body !text-[15px] !leading-[1.35] sm:!text-[15.5px] md:!text-[16px] lg:!text-[18px] lg:!leading-[28px]">
+                        <ThemedContentString :content="c.title" />
+                      </h4>
+                      <div
+                        class="lnk-card-body mts-markdown min-h-0 flex-1 text-muted [&_p:first-child]:mt-0 !text-[13px] !leading-[1.55] sm:!text-[13.5px] md:!text-[14px] lg:!text-[14px] lg:!leading-[22px]"
+                        v-html="lineRichHtml(c.text)"
+                      />
+                    </div>
+                  </MarinReveal>
                 </div>
-              </MarinReveal>
+              </div>
             </div>
           </AboutSectionContentParallax>
         </section>
