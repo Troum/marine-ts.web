@@ -339,7 +339,7 @@ const heroBreadcrumbsOnDark = computed(() =>
               :delay-ms="160 + i * 90"
             >
               <div
-                class="service-card flex h-full gap-5 p-6"
+                class="service-card corner-accent flex h-full gap-5 p-6"
               >
                 <component
                   v-if="!c.hideIcon"
@@ -430,7 +430,7 @@ const heroBreadcrumbsOnDark = computed(() =>
               class="h-full"
               :delay-ms="80 + si * 90"
             >
-              <article class="service-card min-h-full min-w-0 overflow-hidden">
+              <article class="service-card corner-accent min-h-full min-w-0 overflow-hidden">
                 <div v-if="service.imageUrl" class="aspect-[16/9] w-full overflow-hidden border-b border-border bg-white">
                   <img
                     :src="service.imageUrl"
