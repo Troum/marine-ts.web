@@ -1,6 +1,7 @@
 import type {
   LnkCardGridSection,
   LnkMarketingCard,
+  LnkMarketingGroup,
   LnkPageContent,
   MarineContentLocale,
   ShipManagementPageContent,
@@ -42,22 +43,32 @@ function migrateShipShapedToLnkPage(old: ShipManagementPageContent, base: LnkPag
     sec2Competencies: {
       title: old.sec3Services.title || base.sec2Competencies.title,
       columns: base.sec2Competencies.columns,
-      cards: old.sec3Services.cards.map((c, i) => ({
-        icon: pickIcon(i),
-        hideIcon: false,
-        title: c.title,
-        text: c.text,
-      })),
+      groups: [
+        {
+          title: '',
+          cards: old.sec3Services.cards.map((c, i) => ({
+            icon: pickIcon(i),
+            hideIcon: false,
+            title: c.title,
+            text: c.text,
+          })),
+        },
+      ],
     },
     sec3StrategicAdvantages: {
       title: old.sec4Advantages.title || base.sec3StrategicAdvantages.title,
       columns: base.sec3StrategicAdvantages.columns,
-      cards: old.sec4Advantages.cards.map((c, i) => ({
-        icon: pickIcon(i),
-        hideIcon: false,
-        title: c.title,
-        text: c.text,
-      })),
+      groups: [
+        {
+          title: '',
+          cards: old.sec4Advantages.cards.map((c, i) => ({
+            icon: pickIcon(i),
+            hideIcon: false,
+            title: c.title,
+            text: c.text,
+          })),
+        },
+      ],
     },
     sec4TechBase: {
       titleHtml:
@@ -103,7 +114,59 @@ function normalizeLnkCards(incoming: unknown, fallback: LnkMarketingCard[]): Lnk
   })
 }
 
-function mergeLnkCardGridSection(raw: Partial<LnkCardGridSection> | undefined, base: LnkCardGridSection): LnkCardGridSection {
+function normalizeLnkGroupColumns(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined
+  }
+  const n = Math.floor(value)
+  if (n < 1 || n > 6) {
+    return undefined
+  }
+  return n
+}
+
+function normalizeLnkGroup(raw: unknown, fallback: LnkMarketingGroup): LnkMarketingGroup {
+  if (!raw || typeof raw !== 'object') {
+    return { title: fallback.title, columns: fallback.columns, cards: fallback.cards.map((c) => ({ ...c })) }
+  }
+  const r = raw as Partial<LnkMarketingGroup>
+  return {
+    title: typeof r.title === 'string' ? r.title : fallback.title,
+    columns: normalizeLnkGroupColumns(r.columns),
+    cards: normalizeLnkCards(r.cards, fallback.cards),
+  }
+}
+
+/**
+ * Нормализация группы карточек:
+ * - Если в данных есть `groups[]` — используем их.
+ * - Если есть только устаревший `cards[]` — оборачиваем в одну группу без заголовка
+ *   (обратная совместимость со старыми JSON и страницами вроде /lnk).
+ * - Если ничего нет — берём `groups` из `base`.
+ */
+function normalizeLnkGroups(
+  rawGroups: unknown,
+  rawCards: unknown,
+  baseGroups: LnkMarketingGroup[],
+): LnkMarketingGroup[] {
+  if (Array.isArray(rawGroups)) {
+    return rawGroups.map((g, i) => normalizeLnkGroup(g, baseGroups[i] ?? { title: '', cards: [] }))
+  }
+  if (Array.isArray(rawCards)) {
+    return [
+      {
+        title: '',
+        cards: normalizeLnkCards(rawCards, baseGroups[0]?.cards ?? []),
+      },
+    ]
+  }
+  return baseGroups.map((g) => ({ title: g.title, columns: g.columns, cards: g.cards.map((c) => ({ ...c })) }))
+}
+
+function mergeLnkCardGridSection(
+  raw: (Partial<LnkCardGridSection> & { cards?: unknown }) | undefined,
+  base: LnkCardGridSection,
+): LnkCardGridSection {
   const cols = raw?.columns
   return {
     title: typeof raw?.title === 'string' ? raw.title : base.title,
@@ -111,7 +174,7 @@ function mergeLnkCardGridSection(raw: Partial<LnkCardGridSection> | undefined, b
       typeof cols === 'number' && cols >= 1 && cols <= 6
         ? Math.floor(cols)
         : base.columns,
-    cards: normalizeLnkCards(raw?.cards, base.cards),
+    groups: normalizeLnkGroups(raw?.groups, raw?.cards, base.groups),
   }
 }
 
@@ -124,12 +187,12 @@ const EMPTY_LNK_V2: LnkPageContent = {
   sec2Competencies: {
     title: '',
     columns: 2,
-    cards: [],
+    groups: [{ title: '', cards: [] }],
   },
   sec3StrategicAdvantages: {
     title: '',
     columns: 2,
-    cards: [],
+    groups: [{ title: '', cards: [] }],
   },
   sec4TechBase: {
     titleHtml: '<p></p>',
@@ -146,7 +209,10 @@ export function mergeLnkManagementContent(raw: unknown, base: LnkPageContent): L
   if (!coerced || typeof coerced !== 'object') {
     return JSON.parse(JSON.stringify(base)) as LnkPageContent
   }
-  const r = coerced as Partial<LnkPageContent>
+  const r = coerced as Partial<LnkPageContent> & {
+    sec2Competencies?: Partial<LnkCardGridSection> & { cards?: unknown }
+    sec3StrategicAdvantages?: Partial<LnkCardGridSection> & { cards?: unknown }
+  }
   const tb = r.sec4TechBase
   return {
     sec1Hero: {

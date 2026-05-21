@@ -5,9 +5,27 @@ export const LINE_MARKETING_PAGE_SLUGS = [
   'crewing-management',
   'ship-management',
   'lnk',
+  'engineering',
+  'spare-parts-supply-and-procurement-services',
 ] as const
 
 export type LineMarketingPageSlug = (typeof LINE_MARKETING_PAGE_SLUGS)[number]
+
+/**
+ * Slug, использующие единую структуру «как у ЛНК»: hero + сетки компетенций/преимуществ
+ * + блок «Технологическая база». Редактор и публичный рендер берут одну ветку для всех.
+ */
+export const LNK_LIKE_LINE_MARKETING_SLUGS = [
+  'lnk',
+  'engineering',
+  'spare-parts-supply-and-procurement-services',
+] as const satisfies readonly LineMarketingPageSlug[]
+
+export type LnkLikeLineMarketingSlug = (typeof LNK_LIKE_LINE_MARKETING_SLUGS)[number]
+
+export function isLnkLikeLineMarketingSlug(s: string): s is LnkLikeLineMarketingSlug {
+  return (LNK_LIKE_LINE_MARKETING_SLUGS as readonly string[]).includes(s)
+}
 
 export function isLineMarketingPageSlug(s: string): s is LineMarketingPageSlug {
   return (LINE_MARKETING_PAGE_SLUGS as readonly string[]).includes(s)
@@ -33,6 +51,16 @@ export const LINE_MARKETING_PAGE_LAYOUT: Record<
     navI18nKey: 'nav.lnk',
     heroEyebrowI18nKey: 'pages.lineMarketing.lnkHeroEyebrow',
   },
+  engineering: {
+    heroBg: '',
+    navI18nKey: 'nav.engineering',
+    heroEyebrowI18nKey: 'pages.lineMarketing.engineeringHeroEyebrow',
+  },
+  'spare-parts-supply-and-procurement-services': {
+    heroBg: '',
+    navI18nKey: 'nav.spareParts',
+    heroEyebrowI18nKey: 'pages.lineMarketing.sparePartsHeroEyebrow',
+  },
 }
 
 /** Заголовки страницы в переводах content_pages (админка). */
@@ -43,6 +71,11 @@ export const LINE_MARKETING_PAGE_CONTENT_TITLES: Record<
   'crewing-management': { ru: 'Крюинг-менеджмент', en: 'Crew management' },
   'ship-management': { ru: 'Судовой менеджмент', en: 'Ship management' },
   lnk: { ru: 'ЛНК — неразрушающий контроль', en: 'NDT laboratory (LNK)' },
+  engineering: { ru: 'Инжиниринговые услуги', en: 'Engineering Services' },
+  'spare-parts-supply-and-procurement-services': {
+    ru: 'Судовое снабжение и услуги по закупкам',
+    en: 'Spare Parts Supply & Procurement Services',
+  },
 }
 
 /** Человекочитаемые названия для шапки админки. */
@@ -50,6 +83,8 @@ export const LINE_MARKETING_PAGE_ADMIN_LABELS: Record<LineMarketingPageSlug, str
   'crewing-management': 'Крюинг-менеджмент',
   'ship-management': 'Судовой менеджмент',
   lnk: 'ЛНК — неразрушающий контроль',
+  engineering: 'Инжиниринговые услуги',
+  'spare-parts-supply-and-procurement-services': 'Судовое снабжение и закупки',
 }
 
 /** Порядок секций по умолчанию (после hero). */

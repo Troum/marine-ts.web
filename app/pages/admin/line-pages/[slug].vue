@@ -32,6 +32,7 @@ import { crewingIconSelectOptions } from '~/utils/crewingIcons'
 import { ABOUT_RICH_CARD_ICON_AUTO } from '~/utils/aboutRichCardNormalize'
 import {
   isLineMarketingPageSlug,
+  isLnkLikeLineMarketingSlug,
   LINE_MARKETING_PAGE_ADMIN_LABELS,
   LINE_MARKETING_PAGE_CONTENT_TITLES,
   LINE_MARKETING_SECTION_ADMIN_LABELS,
@@ -94,7 +95,9 @@ const isShipV2 = computed(
   () => slug.value === 'ship-management' && d.value?.shipPageLayout === 'v2' && !!d.value?.shipV2,
 )
 
-const isLnkPage = computed(() => slug.value === 'lnk' && !!d.value?.lnkV2)
+const isLnkPage = computed(
+  () => !!slug.value && isLnkLikeLineMarketingSlug(slug.value) && !!d.value?.lnkV2,
+)
 
 const shipLikeV2Content = computed((): ShipManagementPageContent | null => {
   if (isShipV2.value && d.value?.shipV2) {
@@ -105,7 +108,9 @@ const shipLikeV2Content = computed((): ShipManagementPageContent | null => {
 
 const isShipLikeV2 = computed(() => shipLikeV2Content.value !== null)
 
-const maxHeroButtons = computed(() => (slug.value === 'lnk' ? 12 : 2))
+const maxHeroButtons = computed(
+  () => (slug.value && isLnkLikeLineMarketingSlug(slug.value) ? 12 : 2),
+)
 
 const isCrewingV2 = computed(
   () => slug.value === 'crewing-management' && d.value?.crewingPageLayout === 'v2' && !!d.value?.crewingV2,
@@ -143,7 +148,11 @@ watch(
     if (cur.heroButtons.length > maxHeroButtons.value) {
       cur.heroButtons.splice(maxHeroButtons.value)
     }
-    if (cur.crewingPageLayout === 'v2' || cur.shipPageLayout === 'v2' || (slug.value === 'lnk' && cur.lnkV2)) {
+    if (
+      cur.crewingPageLayout === 'v2' ||
+      cur.shipPageLayout === 'v2' ||
+      (slug.value && isLnkLikeLineMarketingSlug(slug.value) && cur.lnkV2)
+    ) {
       return
     }
     if (!cur.hero.titleFormatted?.spans?.length) {
@@ -386,15 +395,21 @@ function normalizeLnkPageContent(v: LnkPageContent) {
   v.sec1Hero.lead = n(v.sec1Hero.lead)
   v.sec1Hero.body = n(v.sec1Hero.body)
   v.sec2Competencies.title = n(v.sec2Competencies.title)
-  v.sec2Competencies.cards.forEach((c) => {
-    c.title = n(c.title)
-    c.text = n(c.text)
-  })
+  for (const g of v.sec2Competencies.groups) {
+    g.title = n(g.title)
+    g.cards.forEach((c) => {
+      c.title = n(c.title)
+      c.text = n(c.text)
+    })
+  }
   v.sec3StrategicAdvantages.title = n(v.sec3StrategicAdvantages.title)
-  v.sec3StrategicAdvantages.cards.forEach((c) => {
-    c.title = n(c.title)
-    c.text = n(c.text)
-  })
+  for (const g of v.sec3StrategicAdvantages.groups) {
+    g.title = n(g.title)
+    g.cards.forEach((c) => {
+      c.title = n(c.title)
+      c.text = n(c.text)
+    })
+  }
   v.sec4TechBase.titleHtml = n(v.sec4TechBase.titleHtml)
   v.sec4TechBase.bodyHtml = n(v.sec4TechBase.bodyHtml)
 }
@@ -464,22 +479,70 @@ async function removeShipV2Card(sec: 'approach' | 'services' | 'advantages', ind
 
 type LnkGridSectionKey = 'sec2Competencies' | 'sec3StrategicAdvantages'
 
-const LNK_GRID_MAX_CARDS = 16
+const LNK_GRID_MAX_CARDS_PER_GROUP = 16
+const LNK_GRID_MAX_GROUPS = 8
 
-function addLnkGridCard(sec: LnkGridSectionKey) {
-  if (!d.value?.lnkV2) {
-    return
-  }
-  const grid = d.value.lnkV2[sec]
-  if (grid.cards.length >= LNK_GRID_MAX_CARDS) {
-    return
-  }
-  grid.cards.push({ icon: 'ClipboardList', hideIcon: false, title: '', text: '<p></p>' })
+function lnkSection(sec: LnkGridSectionKey) {
+  return d.value?.lnkV2?.[sec]
 }
 
-async function removeLnkGridCard(sec: LnkGridSectionKey, index: number) {
-  const grid = d.value?.lnkV2?.[sec]
-  if (!grid || grid.cards.length <= 1) {
+function addLnkGroup(sec: LnkGridSectionKey) {
+  const grid = lnkSection(sec)
+  if (!grid) {
+    return
+  }
+  if (grid.groups.length >= LNK_GRID_MAX_GROUPS) {
+    return
+  }
+  grid.groups.push({ title: '', cards: [] })
+}
+
+async function removeLnkGroup(sec: LnkGridSectionKey, groupIndex: number) {
+  const grid = lnkSection(sec)
+  if (!grid || grid.groups.length <= 1) {
+    return
+  }
+  const ok = await confirm({
+    message: 'Удалить эту подсекцию вместе со всеми карточками?',
+    confirmLabel: 'Удалить',
+    variant: 'danger',
+  })
+  if (!ok) {
+    return
+  }
+  grid.groups.splice(groupIndex, 1)
+}
+
+function moveLnkGroup(sec: LnkGridSectionKey, groupIndex: number, delta: number) {
+  const grid = lnkSection(sec)
+  if (!grid) {
+    return
+  }
+  const j = groupIndex + delta
+  if (j < 0 || j >= grid.groups.length) {
+    return
+  }
+  const t = grid.groups[groupIndex]!
+  grid.groups[groupIndex] = grid.groups[j]!
+  grid.groups[j] = t
+}
+
+function addLnkGridCard(sec: LnkGridSectionKey, groupIndex: number) {
+  const grid = lnkSection(sec)
+  if (!grid) {
+    return
+  }
+  const group = grid.groups[groupIndex]
+  if (!group || group.cards.length >= LNK_GRID_MAX_CARDS_PER_GROUP) {
+    return
+  }
+  group.cards.push({ icon: 'ClipboardList', hideIcon: false, title: '', text: '<p></p>' })
+}
+
+async function removeLnkGridCard(sec: LnkGridSectionKey, groupIndex: number, cardIndex: number) {
+  const grid = lnkSection(sec)
+  const group = grid?.groups[groupIndex]
+  if (!group) {
     return
   }
   const ok = await confirm({
@@ -490,21 +553,22 @@ async function removeLnkGridCard(sec: LnkGridSectionKey, index: number) {
   if (!ok) {
     return
   }
-  grid.cards.splice(index, 1)
+  group.cards.splice(cardIndex, 1)
 }
 
-function moveLnkGridCard(sec: LnkGridSectionKey, index: number, delta: number) {
-  const cards = d.value?.lnkV2?.[sec].cards
-  if (!cards) {
+function moveLnkGridCard(sec: LnkGridSectionKey, groupIndex: number, cardIndex: number, delta: number) {
+  const grid = lnkSection(sec)
+  const group = grid?.groups[groupIndex]
+  if (!group) {
     return
   }
-  const j = index + delta
-  if (j < 0 || j >= cards.length) {
+  const j = cardIndex + delta
+  if (j < 0 || j >= group.cards.length) {
     return
   }
-  const t = cards[index]!
-  cards[index] = cards[j]!
-  cards[j] = t
+  const t = group.cards[cardIndex]!
+  group.cards[cardIndex] = group.cards[j]!
+  group.cards[j] = t
 }
 
 function toggle(s: string) {
@@ -665,7 +729,7 @@ function sectionOrderRowLabel(sid: string): string {
     const sec = d.value?.customSections.find((s) => s.id === id)
     return sec?.title?.trim() ? sec.title : 'Пользовательская секция'
   }
-  if (slug.value === 'lnk' && d.value?.lnkV2) {
+  if (slug.value && isLnkLikeLineMarketingSlug(slug.value) && d.value?.lnkV2) {
     const lnkLab = LNK_V2_SECTION_ADMIN_LABELS[sid as keyof typeof LNK_V2_SECTION_ADMIN_LABELS]
     if (lnkLab) {
       return lnkLab
@@ -723,7 +787,7 @@ const sectionBackgroundEditorKeys = computed(() => {
   const keys: string[] = []
   if (isCrewingV2.value) {
     keys.push(...CREWING_MANAGEMENT_V2_SECTION_ORDER)
-  } else if (slug.value === 'lnk') {
+  } else if (slug.value && isLnkLikeLineMarketingSlug(slug.value)) {
     keys.push(...LNK_V2_SECTION_ORDER)
   } else if (isShipLikeV2.value) {
     keys.push(...SHIP_MANAGEMENT_V2_SECTION_ORDER)
@@ -2369,81 +2433,150 @@ function directionPreviewPath(detailSlug: string) {
               <AdminThemedTextField v-model="d.lnkV2.sec2Competencies.title" :multiline="false" />
             </div>
             <div class="max-w-xs">
-              <label :class="sectionLabel">Колонок в ряду на широком экране (1–6)</label>
+              <label :class="sectionLabel">Колонок в ряду по умолчанию (1–6)</label>
               <AdminInputNumberStepper
                 :model-value="d.lnkV2.sec2Competencies.columns ?? 3"
                 :min="1"
                 :max="6"
                 @update:model-value="(v) => (d.lnkV2!.sec2Competencies.columns = v)"
               />
+              <p class="mt-1 font-body text-[11px] text-mts-text-secondary">
+                Используется, если в подсекции не задано своё значение.
+              </p>
             </div>
             <p class="font-body text-xs text-mts-text-secondary">
               Фон секции задаётся в блоке «Фоны секций» с ключом
               <code class="font-mono text-[11px]">competencies</code>.
             </p>
+
             <div
-              v-for="(card, ci) in d.lnkV2.sec2Competencies.cards"
-              :key="`lnk-co-${ci}`"
-              class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+              v-for="(group, gi) in d.lnkV2.sec2Competencies.groups"
+              :key="`lnk-co-g-${gi}`"
+              class="space-y-3 rounded-lg border border-mts-border-strong bg-mts-bg/60 p-4"
             >
               <div class="flex flex-wrap items-start justify-between gap-2">
-                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Подсекция {{ gi + 1 }}</p>
                 <div class="flex flex-wrap gap-1">
                   <button
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
-                    :disabled="ci === 0"
+                    :disabled="gi === 0"
                     aria-label="Выше"
-                    @click="moveLnkGridCard('sec2Competencies', ci, -1)"
+                    @click="moveLnkGroup('sec2Competencies', gi, -1)"
                   >
                     <ArrowUp class="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
-                    :disabled="ci >= d.lnkV2.sec2Competencies.cards.length - 1"
+                    :disabled="gi >= d.lnkV2.sec2Competencies.groups.length - 1"
                     aria-label="Ниже"
-                    @click="moveLnkGridCard('sec2Competencies', ci, 1)"
+                    @click="moveLnkGroup('sec2Competencies', gi, 1)"
                   >
                     <ArrowDown class="h-4 w-4" />
                   </button>
                   <button
-                    v-if="d.lnkV2.sec2Competencies.cards.length > 1"
+                    v-if="d.lnkV2.sec2Competencies.groups.length > 1"
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs text-red-700"
-                    @click="removeLnkGridCard('sec2Competencies', ci)"
+                    @click="removeLnkGroup('sec2Competencies', gi)"
                   >
-                    Удалить
+                    Удалить подсекцию
                   </button>
                 </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Иконка</label>
-                <AdminIconSelect
-                  :icon="card.icon"
-                  :hide-icon="card.hideIcon"
-                  :options="crewingIconSelectOptions"
-                  @update:icon="(v) => (card.icon = v)"
-                  @update:hide-icon="(v) => (card.hideIcon = v)"
-                />
+              <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,200px)]">
+                <div>
+                  <label :class="sectionLabel">Заголовок подсекции <span class="font-normal text-mts-text-secondary">(пусто — без заголовка)</span></label>
+                  <AdminThemedTextField v-model="group.title" :multiline="false" />
+                </div>
+                <div>
+                  <label :class="sectionLabel">Колонок в подсекции</label>
+                  <AdminInputNumberStepper
+                    :model-value="group.columns ?? d.lnkV2.sec2Competencies.columns ?? 3"
+                    :min="1"
+                    :max="6"
+                    @update:model-value="(v) => (group.columns = v)"
+                  />
+                </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Заголовок</label>
-                <AdminThemedTextField v-model="card.title" :multiline="false" />
+
+              <div
+                v-for="(card, ci) in group.cards"
+                :key="`lnk-co-${gi}-${ci}`"
+                class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+              >
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                      :disabled="ci === 0"
+                      aria-label="Выше"
+                      @click="moveLnkGridCard('sec2Competencies', gi, ci, -1)"
+                    >
+                      <ArrowUp class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                      :disabled="ci >= group.cards.length - 1"
+                      aria-label="Ниже"
+                      @click="moveLnkGridCard('sec2Competencies', gi, ci, 1)"
+                    >
+                      <ArrowDown class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs text-red-700"
+                      @click="removeLnkGridCard('sec2Competencies', gi, ci)"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+                  <div>
+                    <label :class="sectionLabel">Иконка</label>
+                    <AdminIconSelect
+                      :icon="card.icon"
+                      :hide-icon="card.hideIcon"
+                      :options="crewingIconSelectOptions"
+                      @update:icon="(v) => (card.icon = v)"
+                      @update:hide-icon="(v) => (card.hideIcon = v)"
+                    />
+                  </div>
+                  <div>
+                    <label :class="sectionLabel">Заголовок</label>
+                    <AdminThemedTextField v-model="card.title" :multiline="false" />
+                  </div>
+                </div>
+                <div>
+                  <label :class="sectionLabel">Текст (TipTap)</label>
+                  <AdminRichTextEditor v-model="card.text" />
+                </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Текст (TipTap)</label>
-                <AdminRichTextEditor v-model="card.text" />
-              </div>
+
+              <button
+                v-if="group.cards.length < LNK_GRID_MAX_CARDS_PER_GROUP"
+                type="button"
+                class="btn-secondary inline-flex items-center gap-2"
+                @click="addLnkGridCard('sec2Competencies', gi)"
+              >
+                <Plus class="h-4 w-4" />
+                Добавить карточку
+              </button>
             </div>
+
             <button
-              v-if="d.lnkV2.sec2Competencies.cards.length < LNK_GRID_MAX_CARDS"
+              v-if="d.lnkV2.sec2Competencies.groups.length < LNK_GRID_MAX_GROUPS"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
-              @click="addLnkGridCard('sec2Competencies')"
+              @click="addLnkGroup('sec2Competencies')"
             >
               <Plus class="h-4 w-4" />
-              Добавить карточку
+              Добавить подсекцию
             </button>
           </AdminCollapsibleSection>
 
@@ -2463,82 +2596,151 @@ function directionPreviewPath(detailSlug: string) {
               <AdminThemedTextField v-model="d.lnkV2.sec3StrategicAdvantages.title" :multiline="false" />
             </div>
             <div class="max-w-xs">
-              <label :class="sectionLabel">Колонок в ряду на широком экране (1–6)</label>
+              <label :class="sectionLabel">Колонок в ряду по умолчанию (1–6)</label>
               <AdminInputNumberStepper
                 :model-value="d.lnkV2.sec3StrategicAdvantages.columns ?? 3"
                 :min="1"
                 :max="6"
                 @update:model-value="(v) => (d.lnkV2!.sec3StrategicAdvantages.columns = v)"
               />
+              <p class="mt-1 font-body text-[11px] text-mts-text-secondary">
+                Используется, если в подсекции не задано своё значение.
+              </p>
             </div>
             <p class="font-body text-xs text-mts-text-secondary">
               Фон — ключ
               <code class="font-mono text-[11px]">strategicAdvantages</code>
               в «Фонах секций».
             </p>
+
             <div
-              v-for="(card, ci) in d.lnkV2.sec3StrategicAdvantages.cards"
-              :key="`lnk-ad-${ci}`"
-              class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+              v-for="(group, gi) in d.lnkV2.sec3StrategicAdvantages.groups"
+              :key="`lnk-ad-g-${gi}`"
+              class="space-y-3 rounded-lg border border-mts-border-strong bg-mts-bg/60 p-4"
             >
               <div class="flex flex-wrap items-start justify-between gap-2">
-                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Подсекция {{ gi + 1 }}</p>
                 <div class="flex flex-wrap gap-1">
                   <button
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
-                    :disabled="ci === 0"
+                    :disabled="gi === 0"
                     aria-label="Выше"
-                    @click="moveLnkGridCard('sec3StrategicAdvantages', ci, -1)"
+                    @click="moveLnkGroup('sec3StrategicAdvantages', gi, -1)"
                   >
                     <ArrowUp class="h-4 w-4" />
                   </button>
                   <button
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
-                    :disabled="ci >= d.lnkV2.sec3StrategicAdvantages.cards.length - 1"
+                    :disabled="gi >= d.lnkV2.sec3StrategicAdvantages.groups.length - 1"
                     aria-label="Ниже"
-                    @click="moveLnkGridCard('sec3StrategicAdvantages', ci, 1)"
+                    @click="moveLnkGroup('sec3StrategicAdvantages', gi, 1)"
                   >
                     <ArrowDown class="h-4 w-4" />
                   </button>
                   <button
-                    v-if="d.lnkV2.sec3StrategicAdvantages.cards.length > 1"
+                    v-if="d.lnkV2.sec3StrategicAdvantages.groups.length > 1"
                     type="button"
                     class="btn-secondary px-2 py-1 text-xs text-red-700"
-                    @click="removeLnkGridCard('sec3StrategicAdvantages', ci)"
+                    @click="removeLnkGroup('sec3StrategicAdvantages', gi)"
                   >
-                    Удалить
+                    Удалить подсекцию
                   </button>
                 </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Иконка</label>
-                <AdminIconSelect
-                  :icon="card.icon"
-                  :hide-icon="card.hideIcon"
-                  :options="crewingIconSelectOptions"
-                  @update:icon="(v) => (card.icon = v)"
-                  @update:hide-icon="(v) => (card.hideIcon = v)"
-                />
+              <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,200px)]">
+                <div>
+                  <label :class="sectionLabel">Заголовок подсекции <span class="font-normal text-mts-text-secondary">(пусто — без заголовка)</span></label>
+                  <AdminThemedTextField v-model="group.title" :multiline="false" />
+                </div>
+                <div>
+                  <label :class="sectionLabel">Колонок в подсекции</label>
+                  <AdminInputNumberStepper
+                    :model-value="group.columns ?? d.lnkV2.sec3StrategicAdvantages.columns ?? 3"
+                    :min="1"
+                    :max="6"
+                    @update:model-value="(v) => (group.columns = v)"
+                  />
+                </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Заголовок</label>
-                <AdminThemedTextField v-model="card.title" :multiline="false" />
+
+              <div
+                v-for="(card, ci) in group.cards"
+                :key="`lnk-ad-${gi}-${ci}`"
+                class="space-y-3 border border-mts-border bg-mts-bg/50 p-4"
+              >
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                  <p class="font-mono text-[10px] uppercase text-mts-text-secondary">Карточка {{ ci + 1 }}</p>
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                      :disabled="ci === 0"
+                      aria-label="Выше"
+                      @click="moveLnkGridCard('sec3StrategicAdvantages', gi, ci, -1)"
+                    >
+                      <ArrowUp class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs disabled:opacity-40"
+                      :disabled="ci >= group.cards.length - 1"
+                      aria-label="Ниже"
+                      @click="moveLnkGridCard('sec3StrategicAdvantages', gi, ci, 1)"
+                    >
+                      <ArrowDown class="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-secondary px-2 py-1 text-xs text-red-700"
+                      @click="removeLnkGridCard('sec3StrategicAdvantages', gi, ci)"
+                    >
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+                  <div>
+                    <label :class="sectionLabel">Иконка</label>
+                    <AdminIconSelect
+                      :icon="card.icon"
+                      :hide-icon="card.hideIcon"
+                      :options="crewingIconSelectOptions"
+                      @update:icon="(v) => (card.icon = v)"
+                      @update:hide-icon="(v) => (card.hideIcon = v)"
+                    />
+                  </div>
+                  <div>
+                    <label :class="sectionLabel">Заголовок</label>
+                    <AdminThemedTextField v-model="card.title" :multiline="false" />
+                  </div>
+                </div>
+                <div>
+                  <label :class="sectionLabel">Текст (TipTap)</label>
+                  <AdminRichTextEditor v-model="card.text" />
+                </div>
               </div>
-              <div>
-                <label :class="sectionLabel">Текст (TipTap)</label>
-                <AdminRichTextEditor v-model="card.text" />
-              </div>
+
+              <button
+                v-if="group.cards.length < LNK_GRID_MAX_CARDS_PER_GROUP"
+                type="button"
+                class="btn-secondary inline-flex items-center gap-2"
+                @click="addLnkGridCard('sec3StrategicAdvantages', gi)"
+              >
+                <Plus class="h-4 w-4" />
+                Добавить карточку
+              </button>
             </div>
+
             <button
-              v-if="d.lnkV2.sec3StrategicAdvantages.cards.length < LNK_GRID_MAX_CARDS"
+              v-if="d.lnkV2.sec3StrategicAdvantages.groups.length < LNK_GRID_MAX_GROUPS"
               type="button"
               class="btn-secondary inline-flex items-center gap-2"
-              @click="addLnkGridCard('sec3StrategicAdvantages')"
+              @click="addLnkGroup('sec3StrategicAdvantages')"
             >
               <Plus class="h-4 w-4" />
-              Добавить карточку
+              Добавить подсекцию
             </button>
           </AdminCollapsibleSection>
 

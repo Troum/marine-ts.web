@@ -12,6 +12,8 @@
     "shipManagement": "Ship management",
     "crewing": "Crewing",
     "lnk": "LNK",
+    "engineering": "Engineering",
+    "spareParts": "Procurement",
     "vacancies": "Careers"
   },
   "header": {
@@ -385,6 +387,8 @@
       "shipHeroEyebrow": "Operations & maintenance",
       "crewingHeroEyebrow": "Manning & crew support",
       "lnkHeroEyebrow": "Non-destructive testing laboratory",
+      "engineeringHeroEyebrow": "Engineering services",
+      "sparePartsHeroEyebrow": "Spare parts supply & procurement",
       "heroInquiryCta": "To the request form",
       "checklistSection": "Checklist criteria"
     },

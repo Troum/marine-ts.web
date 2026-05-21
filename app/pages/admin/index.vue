@@ -29,6 +29,8 @@ import {
   LayoutList,
   Palette,
   BookOpen,
+  Cog,
+  Package,
 } from 'lucide-vue-next'
 import type { NewsItem, PageViewsSummary, Project } from '~/types'
 import AdminPlusLink from "~/components/admin/AdminPlusLink.vue";
@@ -129,6 +131,22 @@ const sectionOptions: Array<{
     desc: 'Hero, направления, чек-лист, принципы, аудитория',
     permission: canManageContentPages,
     hideKey: 'lnk',
+  },
+  {
+    label: 'Инжиниринг',
+    to: '/admin/line-pages/engineering',
+    icon: Cog,
+    desc: 'Hero, компетенции, преимущества, технологическая база',
+    permission: canManageContentPages,
+    hideKey: 'engineering',
+  },
+  {
+    label: 'Судовое снабжение',
+    to: '/admin/line-pages/spare-parts-supply-and-procurement-services',
+    icon: Package,
+    desc: 'Hero, ассортимент, преимущества, технологическая база',
+    permission: canManageContentPages,
+    hideKey: 'spare_parts',
   },
   {
     label: 'Контакты',

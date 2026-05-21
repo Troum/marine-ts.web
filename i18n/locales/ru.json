@@ -12,6 +12,8 @@
     "shipManagement": "Судовой менеджмент",
     "crewing": "Крюинг",
     "lnk": "ЛНК",
+    "engineering": "Инжиниринг",
+    "spareParts": "Судовое снабжение",
     "vacancies": "Вакансии"
   },
   "header": {
@@ -385,6 +387,8 @@
       "shipHeroEyebrow": "Эксплуатация и ТОиР",
       "crewingHeroEyebrow": "Подбор и сопровождение экипажей",
       "lnkHeroEyebrow": "Лаборатория неразрушающего контроля",
+      "engineeringHeroEyebrow": "Инжиниринговые услуги",
+      "sparePartsHeroEyebrow": "Снабжение и закупки для флота",
       "heroInquiryCta": "К форме заявки",
       "checklistSection": "Чек-лист критериев"
     },

@@ -45,7 +45,7 @@ import {
   servicesPageDataIsLegacy,
 } from '~/utils/servicesMarketingPageDefaults'
 import type { LineMarketingPageSlug } from '~/utils/lineMarketingPages'
-import { LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
+import { isLnkLikeLineMarketingSlug, LINE_MARKETING_SECTION_DEFAULT_ORDER } from '~/utils/lineMarketingPages'
 import {
   emptyThemeTitle,
   mergeContactsHero,
@@ -1245,10 +1245,28 @@ const LNK_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
   en: emptyLnkPageData('en'),
 }
 
+/**
+ * Страницы «Инжиниринг» и «Судовое снабжение» используют ту же структуру JSON, что и ЛНК
+ * (`lnkV2`: hero + два грид-блока с карточками + блок «Технологическая база»).
+ * Отдельных дефолтов с предзаполнением не делаем — контент задаётся миграцией из
+ * прежних customSections и далее редактируется через `/admin/line-pages/<slug>`.
+ */
+const ENGINEERING_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
+  ru: emptyLnkPageData('ru'),
+  en: emptyLnkPageData('en'),
+}
+
+const SPARE_PARTS_DEFAULTS: Record<MarineContentLocale, CrewingPageData> = {
+  ru: emptyLnkPageData('ru'),
+  en: emptyLnkPageData('en'),
+}
+
 const LINE_PAGE_DATA: Record<LineMarketingPageSlug, Record<MarineContentLocale, CrewingPageData>> = {
   'crewing-management': CREWING_DEFAULTS,
   'ship-management': SHIP_DEFAULTS,
   lnk: LNK_DEFAULTS,
+  engineering: ENGINEERING_DEFAULTS,
+  'spare-parts-supply-and-procurement-services': SPARE_PARTS_DEFAULTS,
 }
 
 export function defaultLinePageData(slug: LineMarketingPageSlug, locale: MarineContentLocale): CrewingPageData {
@@ -1274,6 +1292,7 @@ export function mergeLinePageData(
     slug === 'crewing-management' ? (p.crewingPageLayout === 'v2' ? 'v2' : 'legacy') : undefined
   const shipLayout: 'legacy' | 'v2' | undefined =
     slug === 'ship-management' ? (p.shipPageLayout === 'v2' ? 'v2' : 'legacy') : undefined
+  const isLnkLike = isLnkLikeLineMarketingSlug(slug)
   const mergeBase =
     (slug === 'crewing-management' && crewingLayout === 'legacy') ||
     (slug === 'ship-management' && shipLayout === 'legacy')
@@ -1284,7 +1303,7 @@ export function mergeLinePageData(
       ? CREWING_MANAGEMENT_V2_SECTION_ORDER
       : slug === 'ship-management' && shipLayout === 'v2'
         ? SHIP_MANAGEMENT_V2_SECTION_ORDER
-        : slug === 'lnk'
+        : isLnkLike
           ? LNK_V2_SECTION_ORDER
           : LINE_MARKETING_SECTION_DEFAULT_ORDER
   const dirs = mergeCrewingDirections(mergeBase.directions, p.directions)
@@ -1315,8 +1334,9 @@ export function mergeLinePageData(
       ? mergeShipManagementContent(p.shipV2, defaultShipManagementContent(locale))
       : undefined
 
-  const lnkV2Merged =
-    slug === 'lnk' ? mergeLnkManagementContent(p.lnkV2, defaultLnkManagementContent(locale)) : undefined
+  const lnkV2Merged = isLnkLike
+    ? mergeLnkManagementContent(p.lnkV2, defaultLnkManagementContent(locale))
+    : undefined
 
   const heroMerged = mergeCrewingHero(p.hero, mergeBase.hero)
   const hero =
@@ -1332,7 +1352,7 @@ export function mergeLinePageData(
             lead: shipV2Merged.sec1Hero.lead,
             titleFormatted: themeTitleTriple(shipV2Merged.sec1Hero.title, '', ''),
           }
-        : slug === 'lnk' && lnkV2Merged
+        : isLnkLike && lnkV2Merged
           ? {
               ...heroMerged,
               lead: lnkV2Merged.sec1Hero.lead,
@@ -1348,13 +1368,13 @@ export function mergeLinePageData(
       p.heroButtons,
       p.showInquiryForm,
       hadHeroButtonsKey,
-      slug === 'lnk' ? 12 : 2,
+      isLnkLike ? 12 : 2,
     ),
     ...(slug === 'crewing-management'
       ? { crewingPageLayout: crewingLayout, crewingV2: crewingV2Merged }
       : {}),
     ...(slug === 'ship-management' ? { shipPageLayout: shipLayout, shipV2: shipV2Merged } : {}),
-    ...(slug === 'lnk' ? { lnkPageLayout: 'v2' as const, lnkV2: lnkV2Merged } : {}),
+    ...(isLnkLike ? { lnkPageLayout: 'v2' as const, lnkV2: lnkV2Merged } : {}),
     sectionOrder,
     sectionVisibility,
     customSections,

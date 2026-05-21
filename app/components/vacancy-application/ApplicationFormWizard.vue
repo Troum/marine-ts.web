@@ -40,6 +40,14 @@ const { t, locale } = useI18n()
 const localePath = useLocalePath()
 const { settings: appearanceSettings } = useSiteAppearance()
 
+/**
+ * UI согласий на шаге 10 показываем строго на языке текущей локали:
+ * на RU — только русские пункты, на EN — только английские. На сабмите
+ * значения зеркалим в скрытую языковую пару, потому что backend всё ещё
+ * требует `accepted` для всех четырёх флагов.
+ */
+const isEnLocale = computed(() => locale.value === 'en')
+
 /** Раздел «Вакансии» скрыт в настройках сайта — страницы /vacancies* для гостей недоступны. */
 const vacanciesSectionHidden = computed(
   () => appearanceSettings.value.hiddenSections.vacancies === true,
@@ -252,7 +260,9 @@ const positionOpenText = computed({
 const requiredByStep = computed<Record<number, RequiredField[]>>(() => ({
   2: ['positionApplyingFor', 'desiredVesselTypes', 'lastName', 'firstName', 'dateOfBirth'],
   3: ['email', 'mobilePhone'],
-  10: ['consentRuAccuracy', 'consentRuPd', 'consentEnAccuracy', 'consentEnPd'],
+  10: isEnLocale.value
+    ? ['consentEnAccuracy', 'consentEnPd']
+    : ['consentRuAccuracy', 'consentRuPd'],
 }))
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -511,6 +521,18 @@ async function submitForm() {
   submitErrorMessages.value = []
   try {
     syncSurnameName()
+    /**
+     * На UI пользователь видит согласия только в одной локали, но в payload
+     * нужно отправить обе языковые пары — backend требует `accepted` для всех
+     * четырёх флагов. Зеркалим значения с активной локали на скрытую.
+     */
+    if (isEnLocale.value) {
+      form.value.consentRuAccuracy = form.value.consentEnAccuracy
+      form.value.consentRuPd = form.value.consentEnPd
+    } else {
+      form.value.consentEnAccuracy = form.value.consentRuAccuracy
+      form.value.consentEnPd = form.value.consentRuPd
+    }
     const payload: VacancyApplicationForm = {
       ...form.value,
       dateOfBirth: normalizeVacancyDob(form.value.dateOfBirth),
@@ -1049,74 +1071,78 @@ function syncSurnameName() {
           <!-- Step 10 Consents -->
           <section v-show="step === 10" class="mt-8 space-y-6">
             <h2 class="font-display text-lg text-body">{{ t('pages.vacancyForm.consentsTitle') }}</h2>
-            <div>
-              <label
-                class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentRuAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
-              >
-                <input
-                  v-model="form.consentRuAccuracy"
-                  type="checkbox"
-                  class="mts-checkbox mt-1"
-                  @change="markTouched('consentRuAccuracy')"
-                />
-                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
-                  {{ t('pages.vacancyForm.consentRu1') }}
-                </span>
-              </label>
-              <p v-if="errorOf('consentRuAccuracy')" :class="fieldErrorClass">{{ errorOf('consentRuAccuracy') }}</p>
-            </div>
-            <div>
-              <label
-                class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentRuPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
-              >
-                <input
-                  v-model="form.consentRuPd"
-                  type="checkbox"
-                  class="mt-1 size-4 accent-mts-accent"
-                  @change="markTouched('consentRuPd')"
-                />
-                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
-                  {{ t('pages.vacancyForm.consentRu2') }}
-                </span>
-              </label>
-              <p v-if="errorOf('consentRuPd')" :class="fieldErrorClass">{{ errorOf('consentRuPd') }}</p>
-            </div>
-            <div>
-              <label
-                class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentEnAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
-              >
-                <input
-                  v-model="form.consentEnAccuracy"
-                  type="checkbox"
-                  class="mts-checkbox mt-1"
-                  @change="markTouched('consentEnAccuracy')"
-                />
-                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
-                  {{ t('pages.vacancyForm.consentEn1') }}
-                </span>
-              </label>
-              <p v-if="errorOf('consentEnAccuracy')" :class="fieldErrorClass">{{ errorOf('consentEnAccuracy') }}</p>
-            </div>
-            <div>
-              <label
-                class="flex cursor-pointer items-start gap-3"
-                :class="errorOf('consentEnPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
-              >
-                <input
-                  v-model="form.consentEnPd"
-                  type="checkbox"
-                  class="mts-checkbox mt-1"
-                  @change="markTouched('consentEnPd')"
-                />
-                <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
-                  {{ t('pages.vacancyForm.consentEn2') }}
-                </span>
-              </label>
-              <p v-if="errorOf('consentEnPd')" :class="fieldErrorClass">{{ errorOf('consentEnPd') }}</p>
-            </div>
+            <template v-if="!isEnLocale">
+              <div>
+                <label
+                  class="flex cursor-pointer items-start gap-3"
+                  :class="errorOf('consentRuAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
+                >
+                  <input
+                    v-model="form.consentRuAccuracy"
+                    type="checkbox"
+                    class="mts-checkbox mt-1"
+                    @change="markTouched('consentRuAccuracy')"
+                  />
+                  <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
+                    {{ t('pages.vacancyForm.consentRu1') }}
+                  </span>
+                </label>
+                <p v-if="errorOf('consentRuAccuracy')" :class="fieldErrorClass">{{ errorOf('consentRuAccuracy') }}</p>
+              </div>
+              <div>
+                <label
+                  class="flex cursor-pointer items-start gap-3"
+                  :class="errorOf('consentRuPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
+                >
+                  <input
+                    v-model="form.consentRuPd"
+                    type="checkbox"
+                    class="mt-1 size-4 accent-mts-accent"
+                    @change="markTouched('consentRuPd')"
+                  />
+                  <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
+                    {{ t('pages.vacancyForm.consentRu2') }}
+                  </span>
+                </label>
+                <p v-if="errorOf('consentRuPd')" :class="fieldErrorClass">{{ errorOf('consentRuPd') }}</p>
+              </div>
+            </template>
+            <template v-else>
+              <div>
+                <label
+                  class="flex cursor-pointer items-start gap-3"
+                  :class="errorOf('consentEnAccuracy') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
+                >
+                  <input
+                    v-model="form.consentEnAccuracy"
+                    type="checkbox"
+                    class="mts-checkbox mt-1"
+                    @change="markTouched('consentEnAccuracy')"
+                  />
+                  <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
+                    {{ t('pages.vacancyForm.consentEn1') }}
+                  </span>
+                </label>
+                <p v-if="errorOf('consentEnAccuracy')" :class="fieldErrorClass">{{ errorOf('consentEnAccuracy') }}</p>
+              </div>
+              <div>
+                <label
+                  class="flex cursor-pointer items-start gap-3"
+                  :class="errorOf('consentEnPd') ? 'rounded-sm border border-red-400/40 bg-red-500/10 p-2' : ''"
+                >
+                  <input
+                    v-model="form.consentEnPd"
+                    type="checkbox"
+                    class="mts-checkbox mt-1"
+                    @change="markTouched('consentEnPd')"
+                  />
+                  <span class="min-w-0 flex-1 font-body text-sm leading-relaxed text-muted">
+                    {{ t('pages.vacancyForm.consentEn2') }}
+                  </span>
+                </label>
+                <p v-if="errorOf('consentEnPd')" :class="fieldErrorClass">{{ errorOf('consentEnPd') }}</p>
+              </div>
+            </template>
           </section>
 
           <div v-if="!submitted" class="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-8">
