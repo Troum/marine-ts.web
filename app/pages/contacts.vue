@@ -288,8 +288,20 @@ async function submitFeedback() {
               <p class="font-mono text-xs text-primary mb-1">{{ lineForLocale(o.country) }}</p>
               <h3 class="font-display text-lg text-body mb-2">{{ lineForLocale(o.city) }}</h3>
               <p class="font-body text-sm text-muted mb-4">{{ lineForLocale(o.address) }}</p>
-              <p class="font-body text-sm">{{ o.phone }}</p>
-              <p class="font-mono text-xs text-primary mt-2">{{ o.email }}</p>
+              <a
+                v-if="o.phone"
+                :href="`tel:${o.phone.replace(/[^+\d]/g, '')}`"
+                class="block font-body text-sm text-body hover:underline"
+              >
+                {{ o.phone }}
+              </a>
+              <a
+                v-if="o.email"
+                :href="`mailto:${o.email}`"
+                class="mt-2 inline-flex font-mono text-xs text-primary hover:underline"
+              >
+                {{ o.email }}
+              </a>
             </div>
           </div>
         </div>
