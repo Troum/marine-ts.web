@@ -27,7 +27,15 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
-  routeRules: legacyRouteRules,
+  routeRules: {
+    ...legacyRouteRules,
+    '/robots.txt': {
+      headers: { 'content-type': 'text/plain; charset=utf-8' },
+    },
+    '/sitemap.xml': {
+      headers: { 'content-type': 'application/xml; charset=utf-8' },
+    },
+  },
   modules: ['@nuxtjs/i18n'],
   i18n: {
     baseUrl: siteUrl || (isDev ? 'http://localhost:3000' : 'https://marin-ts.com'),
