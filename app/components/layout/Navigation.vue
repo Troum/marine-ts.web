@@ -471,7 +471,6 @@ watch(
           </NuxtLink>
 
           <button type="button" class="group flex items-center gap-3 text-body transition-colors hover:text-primary" @click="closeMenu">
-            <span class="text-sm">закрыть</span>
             <span class="relative h-6 w-6">
               <span class="absolute left-0 top-1/2 h-0.5 w-6 -translate-y-1/2 rotate-45 bg-current transition-transform duration-300 group-hover:rotate-[225deg]" />
               <span class="absolute left-0 top-1/2 h-0.5 w-6 -translate-y-1/2 -rotate-45 bg-current transition-transform duration-300 group-hover:-rotate-[225deg]" />
