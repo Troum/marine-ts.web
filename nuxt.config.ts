@@ -2,6 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 const defaultApiOrigin = import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test'
 const isDev = import.meta.env.NODE_ENV !== 'production'
+const yandexMetrikaId = (import.meta.env.NUXT_PUBLIC_YANDEX_METRIKA_ID ?? '').trim()
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -12,35 +13,80 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
   routeRules: {
+    // Миграция со старого сайта (см. deploy/nginx/legacy-redirects.map)
     '/ru': { redirect: { to: '/', statusCode: 301 } },
     '/ru/': { redirect: { to: '/', statusCode: 301 } },
     '/ru/o-nas': { redirect: { to: '/about', statusCode: 301 } },
-    '/ru/nashi-raboty': { redirect: { to: '/projects', statusCode: 301 } },
+    '/ru/nashi-raboty': { redirect: { to: '/about', statusCode: 301 } },
     '/ru/sudovoj-menedzhment': { redirect: { to: '/ship-management', statusCode: 301 } },
     '/ru/sudoremont': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/inzheneriya': { redirect: { to: '/engineering', statusCode: 301 } },
+    '/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam': {
+      redirect: { to: '/spare-parts-supply-and-procurement-services', statusCode: 301 },
+    },
+    '/ru/karera': { redirect: { to: '/crewing-management', statusCode: 301 } },
+    '/ru/kontakty': { redirect: { to: '/contacts', statusCode: 301 } },
+    '/ru/remont-sudovih-dvigateley': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/remont-sudovogo-elektrooborudovaniya': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/truboprovodnye-raboty': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/ustanovka-sistem-ochistki-ballastnykh-vod': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/politika-konfidentsialnosti': { redirect: { to: '/privacy', statusCode: 301 } },
+    '/ru/vypolnennye-proekty': { redirect: { to: '/about', statusCode: 301 } },
+    '/ru/vypolnennye-proekty/stroitelstvo-sektsij-dlya-morskikh-kruiznykh-lajnerov': {
+      redirect: { to: '/engineering', statusCode: 301 },
+    },
+    '/ru/vypolnennye-proekty/ustanovka-sistemy-bwts': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/palubnie-raboti': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/ru/tehnicheskoe-obsluzhivanie': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/en/about-us': { redirect: { to: '/en/about', statusCode: 301 } },
+    '/en/career': { redirect: { to: '/en/crewing-management', statusCode: 301 } },
+    '/en/contact-us': { redirect: { to: '/en/contacts', statusCode: 301 } },
+    '/en/pipeline': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
+    '/en/provision-of-spare-parts-and-procurement-services': {
+      redirect: { to: '/en/spare-parts-supply-and-procurement-services', statusCode: 301 },
+    },
+    '/en/completed-projects': { redirect: { to: '/en/about', statusCode: 301 } },
+    '/en/completed-projects/bwts-installation': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
+    '/en/completed-projects/deck-works': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
+    '/en/completed-projects/installation-of-the-platform-varandey-crane': {
+      redirect: { to: '/en/ship-repair', statusCode: 301 },
+    },
+    '/en/installation-of-ballast-water-treatment-systems': {
+      redirect: { to: '/en/ship-repair', statusCode: 301 },
+    },
+    '/index.php/en/kontakty': { redirect: { to: '/en/contacts', statusCode: 301 } },
+    '/index.php/en/karera': { redirect: { to: '/en/crewing-management', statusCode: 301 } },
+    '/index.php/en/sudoremont': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
     '/services': { redirect: { to: '/ship-repair', statusCode: 301 } },
     '/en/services': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-    '/ru/inzheneriya': { redirect: { to: '/inzheneriya', statusCode: 301 } },
-    '/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam': {
-      redirect: { to: '/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam', statusCode: 301 },
-    },
-    '/ru/karera': { redirect: { to: '/vacancies', statusCode: 301 } },
-    '/ru/kontakty': { redirect: { to: '/contacts', statusCode: 301 } },
-    '/ru/glavnye-i-vspomogatelnye-dvigateli': {
-      redirect: { to: '/glavnye-i-vspomogatelnye-dvigateli', statusCode: 301 },
-    },
-    '/ru/elektrooborudovanie-i-avtomatika': {
-      redirect: { to: '/elektrooborudovanie-i-avtomatika', statusCode: 301 },
-    },
-    '/ru/truboprovodnye-sistemy': {
-      redirect: { to: '/truboprovodnye-sistemy', statusCode: 301 },
-    },
-    '/ru/bwts': { redirect: { to: '/bwts', statusCode: 301 } },
-    '/ru/tehnicheskoe-obsluzhivanie': {
-      redirect: { to: '/tehnicheskoe-obsluzhivanie', statusCode: 301 },
+  },
+  modules: ['@nuxtjs/i18n', ...(yandexMetrikaId ? ['nuxt-yandex-metrika'] : [])],
+  ...(yandexMetrikaId
+    ? {
+        yandexMetrika: {
+          id: yandexMetrikaId,
+          debug: isDev,
+          options: {
+            defer: false,
+            clickmap: true,
+            trackLinks: true,
+            accurateTrackBounce: true,
+            webvisor: true,
+          },
+        },
+      }
+    : {}),
+  hooks: {
+    ready(nuxt) {
+      if (!yandexMetrikaId) {
+        return
+      }
+      nuxt.options.plugins = nuxt.options.plugins.filter((plugin) => {
+        const src = typeof plugin === 'string' ? plugin : (plugin?.src ?? '')
+        return !String(src).includes('nuxt-yandex-metrika/dist/runtime/plugin')
+      })
     },
   },
-  modules: ['@nuxtjs/i18n'],
   i18n: {
     baseUrl: import.meta.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     langDir: 'locales',

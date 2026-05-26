@@ -1,0 +1,46 @@
+# Старые URL → новые (301). Подключается в map $uri $legacy_redirect.
+# Источник: редирект301.xlsx (миграция с Joomla/старых service pages).
+
+/ru /;
+/ru/o-nas /about;
+/ru/nashi-raboty /about;
+/ru/sudovoj-menedzhment /ship-management;
+/ru/sudoremont /ship-repair;
+/ru/inzheneriya /engineering;
+/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam /spare-parts-supply-and-procurement-services;
+/ru/karera /crewing-management;
+/ru/kontakty /contacts;
+/ru/remont-sudovih-dvigateley /ship-repair;
+/ru/remont-sudovogo-elektrooborudovaniya /ship-repair;
+/ru/truboprovodnye-raboty /ship-repair;
+/ru/ustanovka-sistem-ochistki-ballastnykh-vod /ship-repair;
+/ru/politika-konfidentsialnosti /privacy;
+/ru/vypolnennye-proekty /about;
+/ru/vypolnennye-proekty/stroitelstvo-sektsij-dlya-morskikh-kruiznykh-lajnerov /engineering;
+/ru/vypolnennye-proekty/ustanovka-sistemy-bwts /ship-repair;
+/ru/palubnie-raboti /ship-repair;
+/ru/tehnicheskoe-obsluzhivanie /ship-repair;
+
+/en/about-us /en/about;
+/en/career /en/crewing-management;
+/en/contact-us /en/contacts;
+/en/pipeline /en/ship-repair;
+/en/provision-of-spare-parts-and-procurement-services /en/spare-parts-supply-and-procurement-services;
+/en/completed-projects /en/about;
+/en/completed-projects/bwts-installation /en/ship-repair;
+/en/completed-projects/deck-works /en/ship-repair;
+/en/completed-projects/installation-of-the-platform-varandey-crane /en/ship-repair;
+/en/installation-of-ballast-water-treatment-systems /en/ship-repair;
+
+/index.php/en/kontakty /en/contacts;
+/index.php/en/karera /en/crewing-management;
+/index.php/en/sudoremont /en/ship-repair;
+
+/services /ship-repair;
+/en/services /en/ship-repair;
+
+/images/broshyura-mts.pdf /about;
+/images/mts-brochure_.pdf /about;
+/images/fibersol/rz_fibersol_marine_a4_2_kl_compressed.pdf /en/engineering;
+/images/fibersol/fibersol-f-fkt_reference_kl_compressed.pdf /en/ship-repair;
+/images/group-of-companies-mts-en-leaflet.pdf /en/about;

@@ -1,0 +1,53 @@
+# Nginx: marin-ts.com
+
+## Что настроено
+
+| Задача | Реализация |
+|--------|------------|
+| 301 со старых URL | `legacy-redirects.map` + `map $uri` в `marin-ts.com.conf` |
+| HTTP → HTTPS | отдельный `server` на :80 → `https://marin-ts.com` |
+| www → non-www | `server_name www.marin-ts.com` на :443 → 301 на apex |
+| `/services` → `/ship-repair` | в map и в Nuxt `routeRules` |
+| robots.txt / sitemap.xml | файлы в `public/`, отдаются через Nuxt |
+
+## Установка на сервере
+
+```bash
+sudo mkdir -p /etc/nginx/maps
+sudo cp legacy-redirects.map /etc/nginx/maps/marin-ts-legacy-redirects.map
+sudo cp marin-ts.com.conf /etc/nginx/sites-available/marin-ts.com.conf
+sudo ln -sf /etc/nginx/sites-available/marin-ts.com.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### TLS (если сертификата ещё нет)
+
+```bash
+sudo certbot certonly --nginx -d marin-ts.com -d www.marin-ts.com
+```
+
+Пока нет HTTPS, можно временно оставить только прежний `listen 80` блок и подключить `legacy-redirects.map` через `include` внутри него — но для продакшена нужен HTTPS.
+
+### Проверка редиректов
+
+```bash
+curl -sI http://marin-ts.com/ru | grep -i location
+curl -sI https://marin-ts.com/services | grep -i location
+curl -sI https://www.marin-ts.com/ | grep -i location
+```
+
+Ожидаемо: `Location: https://marin-ts.com/...` и код `301`.
+
+## Яндекс.Метрика
+
+Используется модуль [nuxt-yandex-metrika](https://www.npmjs.com/package/nuxt-yandex-metrika) (Nuxt 4, SSR через `@nuxt/scripts` + `useHead`).
+
+На сервере в `.env` **до** `npm run build`:
+
+```env
+NUXT_PUBLIC_YANDEX_METRIKA_ID=86888216
+```
+
+Поведение: `defer: false` (первый просмотр при загрузке SSR-страницы), `hit` после `router.isReady()` при клиентских переходах. `/admin/*` не трекается (`app/plugins/yandex-metrika.ts`).
+
+**Важно:** заголовок nginx `Clear-Site-Data` с `"cookies"` ломает Метрику — уберите после миграции.
