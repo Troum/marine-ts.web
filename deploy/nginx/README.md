@@ -28,6 +28,10 @@ sudo certbot certonly --nginx -d marin-ts.com -d www.marin-ts.com
 
 Пока нет HTTPS, можно временно оставить только прежний `listen 80` блок и подключить `legacy-redirects.map` через `include` внутри него — но для продакшена нужен HTTPS.
 
+### Ошибка `map_hash_bucket_size: 64`
+
+В `marin-ts.com.conf` уже задано `map_hash_bucket_size 256;` перед `map $uri`. Если ошибка останется — попробуйте `512` или добавьте ту же строку в `http { }` в `/etc/nginx/nginx.conf`.
+
 ### Проверка редиректов
 
 ```bash
