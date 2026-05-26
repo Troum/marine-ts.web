@@ -12,16 +12,28 @@ ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 Если файлов нет, `nginx -t` и `certbot --nginx` падают.
 
 ```bash
-cd /var/www/marin-ts.com   # или путь к репозиторию фронта с deploy/nginx
+cd /var/www/marin-ts.com
+git pull
 sudo bash deploy/nginx/install-letsencrypt-snippets.sh
 sudo cp deploy/nginx/api.marin-ts.com.conf /etc/nginx/sites-available/api.marin-ts.com.conf
-sudo cp deploy/nginx/nginx-http-limits.conf /etc/nginx/conf.d/marine-http-limits.conf
 ```
 
-В `/etc/nginx/nginx.conf` внутри `http { }` (один раз):
+**Зоны `limit_req_zone`** — только **один раз** в `http { }`. Если уже есть (как у sibyllon) — **не** копируйте `nginx-http-limits.conf.example` в `conf.d/`.
 
-```nginx
-include /etc/nginx/conf.d/marine-http-limits.conf;
+Проверка:
+
+```bash
+sudo nginx -T 2>/dev/null | grep limit_req_zone
+```
+
+Если зон нет — добавьте в `nginx.conf` содержимое из `nginx-http-limits.conf.example` (без отдельного include в conf.d, чтобы не дублировать).
+
+**Ошибка `api_general is already bound`:** удалите дубликат:
+
+```bash
+sudo rm -f /etc/nginx/conf.d/marine-http-limits.conf
+# и уберите строку include ... marine-http-limits.conf из nginx.conf
+sudo nginx -t
 ```
 
 ```bash

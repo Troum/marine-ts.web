@@ -1,0 +1,7 @@
+# Лимиты для api.marin-ts.com — вставить в http { } в /etc/nginx/nginx.conf,
+# если зон api_general / api_auth ещё НЕТ (sudo nginx -T | grep limit_req_zone).
+#
+# НЕ копировать в conf.d/, если зоны уже объявлены — будет "already bound".
+
+limit_req_zone $binary_remote_addr zone=api_general:10m rate=30r/s;
+limit_req_zone $binary_remote_addr zone=api_auth:10m rate=5r/s;
