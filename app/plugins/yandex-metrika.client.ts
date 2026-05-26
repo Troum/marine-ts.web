@@ -1,17 +1,19 @@
 /**
- * Яндекс.Метрика через nuxt-yandex-metrika (@nuxt/scripts + useHead для SSR).
- * Логика как в модуле: init без defer (первый просмотр при загрузке), hit после router.isReady().
- * Дополнительно: не трекаем /admin/*.
+ * Яндекс.Метрика (только клиент). Модуль nuxt-yandex-metrika должен быть в build
+ * с NUXT_PUBLIC_YANDEX_METRIKA_ID в .env при npm run build.
  */
 export default defineNuxtPlugin({
   name: 'marine-yandex-metrika',
   parallel: true,
   setup() {
-    const { proxy } = useYandexMetrikaScript()
-
-    if (!import.meta.client) {
+    const config = useRuntimeConfig()
+    const ym = config.public.yandexMetrika as { id?: string } | undefined
+    const id = String(ym?.id ?? '').trim()
+    if (!id || id === 'xxx') {
       return
     }
+
+    const { proxy } = useYandexMetrikaScript()
 
     let ready = false
     const router = useRouter()

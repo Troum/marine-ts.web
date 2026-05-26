@@ -78,11 +78,14 @@ export default defineNuxtConfig({
     : {}),
   hooks: {
     ready(nuxt) {
-      if (!yandexMetrikaId) {
-        return
-      }
       nuxt.options.plugins = nuxt.options.plugins.filter((plugin) => {
         const src = typeof plugin === 'string' ? plugin : (plugin?.src ?? '')
+        if (String(src).includes('yandex-metrika.client')) {
+          return Boolean(yandexMetrikaId)
+        }
+        if (!yandexMetrikaId) {
+          return true
+        }
         return !String(src).includes('nuxt-yandex-metrika/dist/runtime/plugin')
       })
     },
