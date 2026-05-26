@@ -5,7 +5,7 @@ export function stripLocalePrefix(path: string): string {
     return '/'
   }
   if (p.startsWith('/en/')) {
-    return p.slice(4) || '/'
+    return p.slice(3) || '/'
   }
   return p
 }

@@ -60,6 +60,7 @@ async function save() {
       hiddenSections: hidden.value,
     })
     adminToast.success('Видимость разделов сохранена')
+    await refreshNuxtData('site-appearance')
   } catch {
     await showAdminAlert({ message: 'Не удалось сохранить настройки', variant: 'error' })
   } finally {

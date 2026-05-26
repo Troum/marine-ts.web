@@ -10,8 +10,8 @@ import { routePathToSiteSectionKey } from '~/utils/siteSectionRoutes'
  * Совпадает с описанием на /admin/sections.
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const p = to.path
-  if (p.includes('/admin') || p.includes('/__nuxt')) {
+  const requestPath = import.meta.server ? useRequestURL().pathname : to.path
+  if (requestPath.includes('/admin') || requestPath.includes('/__nuxt')) {
     return
   }
 
@@ -23,7 +23,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const settings = normalizeAppearanceSettingsPayload(data.value)
 
-  const key = routePathToSiteSectionKey(p)
+  const key = routePathToSiteSectionKey(requestPath)
   if (key && settings.hiddenSections[key] === true) {
     throw createError({ statusCode: 404, statusMessage: 'Not Found' })
   }
