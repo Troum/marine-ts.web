@@ -121,6 +121,18 @@ sudo certbot certonly --nginx -d marin-ts.com -d www.marin-ts.com
 
 ### Проверка редиректов
 
+Скрипт (все пути из `legacy-redirects.map` + HTTP/www/services):
+
+```bash
+cd /var/www/marin-ts.com
+./deploy/check-redirects.sh
+# при проблемах с TLS на стенде:
+INSECURE=1 ./deploy/check-redirects.sh
+BASE_URL=https://staging.example.com ./deploy/check-redirects.sh
+```
+
+Вручную:
+
 ```bash
 curl -sI http://marin-ts.com/ru | grep -i location
 curl -sI https://marin-ts.com/services | grep -i location
