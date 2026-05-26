@@ -203,13 +203,8 @@ function filterNavItemsForAppearance(items: NavigationMenuItem[]): NavigationMen
 }
 
 const menuItems = computed(() => {
-  let raw: NavigationMenuItem[]
-  if (menu.value.more.length) {
-    raw = fallbackItems.value
-  } else {
-    const saved = [...menu.value.main, ...menu.value.more]
-    raw = saved.length ? saved : fallbackItems.value
-  }
+  const saved = [...menu.value.main, ...menu.value.more]
+  const raw = saved.length ? saved : fallbackItems.value
   return filterNavItemsForAppearance(raw)
 })
 

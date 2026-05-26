@@ -19,7 +19,7 @@ const customSectionCrumbItems = computed(() => breadcrumbs())
 
 const cms = ref<HomePageData | null>(null)
 
-const { data: cmsPage, pending: homeCmsPending } = await useAsyncData(
+const { data: cmsPage, pending: homeCmsPending, refresh: refreshHomeCms } = await useAsyncData(
   () => `home-cms-${locale.value}`,
   async () => {
     try {
@@ -31,6 +31,13 @@ const { data: cmsPage, pending: homeCmsPending } = await useAsyncData(
   },
   { server: true, watch: [locale] },
 )
+
+/** SSR иногда не достучится до API (DNS на сервере) — догружаем главную в браузере. */
+onMounted(async () => {
+  if (!cmsPage.value?.body) {
+    await refreshHomeCms()
+  }
+})
 
 watchEffect(() => {
   const body = cmsPage.value?.body

@@ -104,4 +104,4 @@ NUXT_PUBLIC_YANDEX_METRIKA_ID=86888216
 
 Поведение: `defer: false` (первый просмотр при загрузке SSR-страницы), `hit` после `router.isReady()` при клиентских переходах. `/admin/*` не трекается (`app/plugins/yandex-metrika.ts`).
 
-**Важно:** заголовок nginx `Clear-Site-Data` с `"cookies"` ломает Метрику — уберите после миграции.
+Заголовки `Clear-Site-Data` / `Cache-Control: no-store` убраны из `marin-ts.com.conf` — они ломали Cmd+Shift+R (сброс cookies) и мешали нормальной загрузке после SSR.

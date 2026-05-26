@@ -22,6 +22,14 @@ export function useSiteAppearance() {
     data.value ?? normalizeAppearanceSettingsPayload(null),
   )
 
+  if (import.meta.client) {
+    onMounted(async () => {
+      if (data.value == null) {
+        await refresh()
+      }
+    })
+  }
+
   const bodyThemeClass = computed(() =>
     settings.value.theme === 'scglobal' ? 'mts-theme-scglobal' : '',
   )
