@@ -38,7 +38,7 @@ function defaultMenuItems(): NavigationMenuItem[] {
   return [
     { path: '/', label: { ru: 'Главная', en: 'Home' } },
     { path: '/about', label: { ru: 'О компании', en: 'About' } },
-    { path: '/services', label: { ru: 'Судоремонт', en: 'Ship Repair' } },
+    { path: '/ship-repair', label: { ru: 'Судоремонт', en: 'Ship Repair' } },
     { path: '/projects', label: { ru: 'Проекты', en: 'Projects' } },
     { path: '/ship-management', label: { ru: 'Судовой менеджмент', en: 'Ship management' } },
     { path: '/crewing-management', label: { ru: 'Крюинг-менеджмент', en: 'Crewing management' } },
@@ -452,7 +452,7 @@ async function submit() {
             <p class="mt-3 font-body text-sm leading-relaxed text-mts-text-secondary">
               Список «Раздел сайта» строится из файлов <span class="font-mono">app/pages</span> и опубликованных
               контентных страниц API. Можно ввести путь вручную: внутренний
-              (<span class="font-mono">/services</span>) или полный URL (<span class="font-mono">https://…</span>).
+              (<span class="font-mono">/ship-repair</span>) или полный URL (<span class="font-mono">https://…</span>).
             </p>
           </div>
 
@@ -608,7 +608,7 @@ async function submit() {
             </div>
 
             <div class="sm:col-span-2">
-              <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/services или https://…" />
+              <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/ship-repair или https://…" />
             </div>
 
             <div>
@@ -698,7 +698,7 @@ async function submit() {
               </div>
 
               <div class="sm:col-span-2">
-                <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/services или https://…" />
+                <AdminNavPathPick v-model="row.path" :path-options="pathOptions" input-placeholder="/ship-repair или https://…" />
               </div>
 
               <div>

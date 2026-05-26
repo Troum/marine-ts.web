@@ -39,6 +39,7 @@ const SOURCE_PAGE_LABELS: Record<string, string> = {
   home: 'Главная',
   about: 'О компании',
   services: 'Судоремонт',
+  'ship-repair': 'Судоремонт',
   'ship-management': 'Судовой менеджмент',
   'crewing-management': 'Крюинг-менеджмент',
   lnk: 'ЛНК',

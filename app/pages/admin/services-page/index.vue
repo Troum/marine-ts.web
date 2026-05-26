@@ -318,7 +318,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
             <h1 class="font-display text-xl text-mts-text">Страница «Судоремонт»</h1>
           </div>
           <div class="flex items-center gap-4">
-            <NuxtLink to="/services" target="_blank" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">Открыть на сайте ↗</NuxtLink>
+            <NuxtLink to="/ship-repair" target="_blank" class="font-body text-sm text-mts-text-secondary hover:text-mts-accent transition-colors">Открыть на сайте ↗</NuxtLink>
             <button type="button" :disabled="saving || loading" class="btn-primary px-6 disabled:opacity-50" @click="submit">{{ saving ? 'Сохранение…' : 'Сохранить' }}</button>
           </div>
         </div>

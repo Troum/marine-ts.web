@@ -206,7 +206,7 @@ const heroBreadcrumbsOnDark = computed(() =>
       >
         <LineMarketingCustomSectionView
           :section="customSectionById(sid.slice(7))!"
-          slug="services"
+          slug="ship-repair"
           :page-crumb-items="crumbItems"
         />
       </MarinReveal>
@@ -486,7 +486,7 @@ const heroBreadcrumbsOnDark = computed(() =>
 
     <MarinReveal v-if="cms.showInquiryForm">
       <CommonPageInquiryForm
-        source-page="services"
+        source-page="ship-repair"
         :hide-intro="cms.hideInquiryFormIntro === true"
         :hide-form-card-heading="cms.hideInquiryFormCardHeading === true"
         :config="cms.inquiryForm"

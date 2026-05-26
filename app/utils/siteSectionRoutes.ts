@@ -3,7 +3,7 @@ import { stripLocalePrefix } from '~/utils/stripLocalePrefix'
 
 const ROUTE_PREFIXES: { prefix: string; key: SiteSectionKey }[] = [
   { prefix: '/about', key: 'about' },
-  { prefix: '/services', key: 'services' },
+  { prefix: '/ship-repair', key: 'services' },
   { prefix: '/ship-management', key: 'ship_management' },
   { prefix: '/crewing-management', key: 'crewing_management' },
   { prefix: '/lnk', key: 'lnk' },

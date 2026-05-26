@@ -17,7 +17,9 @@ export default defineNuxtConfig({
     '/ru/o-nas': { redirect: { to: '/about', statusCode: 301 } },
     '/ru/nashi-raboty': { redirect: { to: '/projects', statusCode: 301 } },
     '/ru/sudovoj-menedzhment': { redirect: { to: '/ship-management', statusCode: 301 } },
-    '/ru/sudoremont': { redirect: { to: '/services', statusCode: 301 } },
+    '/ru/sudoremont': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/services': { redirect: { to: '/ship-repair', statusCode: 301 } },
+    '/en/services': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
     '/ru/inzheneriya': { redirect: { to: '/inzheneriya', statusCode: 301 } },
     '/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam': {
       redirect: { to: '/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam', statusCode: 301 },

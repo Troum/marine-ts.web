@@ -130,7 +130,7 @@ function createEmptyHomePageData(_locale: MarineContentLocale): HomePageData {
       secondaryCta: '',
       secondaryHref: '/',
     },
-    funnelTechnical: { label: '', titleFormatted: blank, text: '', cta: '', href: '/services' },
+    funnelTechnical: { label: '', titleFormatted: blank, text: '', cta: '', href: '/ship-repair' },
     directions: { label: '', headingFormatted: blank, rows: [] },
     about: {
       label: '',

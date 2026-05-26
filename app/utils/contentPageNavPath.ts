@@ -10,7 +10,7 @@ export function contentPageSlugToPublicPath(
 ): string {
   const special: Record<string, string> = {
     home: '/',
-    'services-page': '/services',
+    'services-page': '/ship-repair',
     'projects-page': '/projects',
     'vacancies-page': '/vacancies',
     'gallery-page': '/gallery',

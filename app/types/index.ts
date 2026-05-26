@@ -591,7 +591,7 @@ export interface FooterMenuSettings {
   /** Полностью скрыть подвал на всём сайте. */
   hideFooterGlobally?: boolean
   /**
-   * Скрыть подвал на страницах с этими путями (как в браузере без `/en`: `/`, `/about`, `/services/...`).
+   * Скрыть подвал на страницах с этими путями (как в браузере без `/en`: `/`, `/about`, `/ship-repair/...`).
    * Префикс локали при проверке отбрасывается.
    */
   hideFooterPaths?: string[]

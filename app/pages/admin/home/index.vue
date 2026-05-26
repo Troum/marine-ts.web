@@ -96,7 +96,7 @@ function addDirectionRow() {
       title: '',
       description: '',
       cta: loc === 'en' ? 'Open' : 'Подробнее',
-      href: '/services',
+      href: '/ship-repair',
       hoverTitle: '',
       hoverDescription: '',
       heroImage: '',
@@ -736,7 +736,7 @@ const sectionInput = 'w-full bg-mts-bg border border-mts-border px-4 py-3 font-b
                 </div>
                 <div class="mt-4">
                   <p class="font-mono text-[10px] uppercase tracking-wide text-mts-text-secondary mb-2">Ссылка</p>
-                  <AdminNavPathPick v-model="row.href" :path-options="pathOptions" input-placeholder="/services" />
+                  <AdminNavPathPick v-model="row.href" :path-options="pathOptions" input-placeholder="/ship-repair" />
                 </div>
 
                 <div class="mt-4 space-y-2 border-t border-mts-border pt-4">

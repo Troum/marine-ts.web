@@ -20,7 +20,7 @@ interface SectionDef {
 
 const SECTIONS: SectionDef[] = [
   { key: 'about', label: 'О компании', desc: 'Страница /about — история, миссия, география', path: '/about' },
-  { key: 'services', label: 'Судоремонт', desc: 'Каталог сервисов /services и дочерние страницы', path: '/services' },
+  { key: 'services', label: 'Судоремонт', desc: 'Каталог сервисов /ship-repair и дочерние страницы', path: '/ship-repair' },
   { key: 'ship_management', label: 'Судовой менеджмент', desc: 'Страница /ship-management и подразделы', path: '/ship-management' },
   { key: 'crewing_management', label: 'Крюинг-менеджмент', desc: 'Страница /crewing-management и подразделы', path: '/crewing-management' },
   { key: 'lnk', label: 'ЛНК', desc: 'Страница /lnk и подразделы', path: '/lnk' },

@@ -72,7 +72,7 @@ const crumbItems = computed(() => {
   }
   const plainTitle = flattenEncodedOrPlain(p.title).trim() || p.slug
   if (p.contentableType === 'service') {
-    return breadcrumbs({ label: t('nav.services'), to: '/services' }, { label: plainTitle })
+    return breadcrumbs({ label: t('nav.services'), to: '/ship-repair' }, { label: plainTitle })
   }
   return breadcrumbs({ label: plainTitle })
 })
@@ -109,7 +109,7 @@ watchEffect(() => {
   >
     <template #not-found>
       <p class="mb-6 font-body text-muted">{{ t('pages.common.notFoundPage') }}</p>
-      <NuxtLink :to="localePath('/services')" class="btn-primary inline-flex">{{ t('pages.common.toServices') }}</NuxtLink>
+      <NuxtLink :to="localePath('/ship-repair')" class="btn-primary inline-flex">{{ t('pages.common.toServices') }}</NuxtLink>
     </template>
   </CommonPublicContentPageDetail>
 </template>

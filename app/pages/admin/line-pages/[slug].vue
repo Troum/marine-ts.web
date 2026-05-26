@@ -1367,7 +1367,7 @@ function directionPreviewPath(detailSlug: string) {
             </p>
             <p class="font-body text-xs text-mts-text-secondary">
               Внутренние страницы: <code class="font-mono text-[11px]">/contacts</code>,
-              <code class="font-mono text-[11px]">/services</code> и т.д.; форма внизу этой страницы:
+              <code class="font-mono text-[11px]">/ship-repair</code> и т.д.; форма внизу этой страницы:
               <code class="font-mono text-[11px]">#page-inquiry</code>; внешние ссылки — полный URL.
             </p>
             <div

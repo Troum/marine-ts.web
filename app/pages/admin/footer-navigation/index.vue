@@ -49,7 +49,7 @@ function toggleColumnHidden(ci: number) {
 const footerVisibilityRoutes = [
   { path: '/', label: 'Главная' },
   { path: '/about', label: 'О компании' },
-  { path: '/services', label: 'Судоремонт' },
+  { path: '/ship-repair', label: 'Судоремонт' },
   { path: '/projects', label: 'Проекты' },
   { path: '/gallery', label: 'Галерея' },
   { path: '/news', label: 'Новости' },
