@@ -50,9 +50,7 @@ const resolvedHeroImage = computed(() => {
   if (!raw) {
     return ''
   }
-  // Абсолютные URL (например, api-домен со storage) оставляем без изменений.
-  // Относительные `/storage/...` тоже поддерживаются как есть.
-  return raw
+  return publicAssetUrl(raw)
 })
 </script>
 

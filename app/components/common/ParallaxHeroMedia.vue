@@ -24,8 +24,8 @@ const offset = ref(0)
 let raf = 0
 const reducedMotion = ref(false)
 
-const imageUrl = computed(() => props.image?.trim() || '')
-const videoUrl = computed(() => props.video?.trim() || '')
+const imageUrl = computed(() => publicAssetUrl(props.image))
+const videoUrl = computed(() => publicAssetUrl(props.video))
 const useVideo = computed(() => videoUrl.value.length > 0 && !reducedMotion.value)
 
 /** Чуть больше 1 — запас для параллакса без чёрных кромок; меньше старого 1.22, чтобы кадр не «перезумливался». */
