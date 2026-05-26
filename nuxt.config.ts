@@ -1,66 +1,41 @@
 import tailwindcss from '@tailwindcss/vite'
+import { legacyRouteRules } from './config/legacyRouteRules'
 
-const defaultApiOrigin = import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test'
 const isDev = import.meta.env.NODE_ENV !== 'production'
+
+/** Публичный URL фронта (i18n baseUrl, canonical, SEO). */
+const siteUrl = (import.meta.env.NUXT_PUBLIC_SITE_URL ?? '').trim()
+
+/**
+ * Базовый URL API с суффиксом /api (браузер и SSR).
+ * Прод: https://api.marin-ts.com/api
+ */
+const publicApiBase = (import.meta.env.NUXT_PUBLIC_API_BASE ?? '').trim().replace(/\/+$/, '')
+const serverApiBase = (import.meta.env.NUXT_API_BASE_SERVER ?? '').trim().replace(/\/+$/, '') || publicApiBase
+
+/**
+ * Только dev: origin Laravel для Vite proxy (/api → origin/api).
+ * Не путать с NUXT_PUBLIC_SITE_URL — это бэкенд, не marin-ts.com.
+ */
+const devApiOrigin = (import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test').trim().replace(/\/+$/, '')
+
 const yandexMetrikaId = (import.meta.env.NUXT_PUBLIC_YANDEX_METRIKA_ID ?? '').trim()
+
+const modules: string[] = ['@nuxtjs/i18n']
+if (yandexMetrikaId) {
+  modules.push('nuxt-yandex-metrika')
+}
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: isDev },
   features: {
     inlineStyles: false,
   },
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
-  routeRules: {
-    // Миграция со старого сайта (см. deploy/nginx/legacy-redirects.map)
-    '/ru': { redirect: { to: '/', statusCode: 301 } },
-    '/ru/': { redirect: { to: '/', statusCode: 301 } },
-    '/ru/o-nas': { redirect: { to: '/about', statusCode: 301 } },
-    '/ru/nashi-raboty': { redirect: { to: '/about', statusCode: 301 } },
-    '/ru/sudovoj-menedzhment': { redirect: { to: '/ship-management', statusCode: 301 } },
-    '/ru/sudoremont': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/inzheneriya': { redirect: { to: '/engineering', statusCode: 301 } },
-    '/ru/obespechenie-zapasnymi-chastyami-i-uslugi-po-zakupkam': {
-      redirect: { to: '/spare-parts-supply-and-procurement-services', statusCode: 301 },
-    },
-    '/ru/karera': { redirect: { to: '/crewing-management', statusCode: 301 } },
-    '/ru/kontakty': { redirect: { to: '/contacts', statusCode: 301 } },
-    '/ru/remont-sudovih-dvigateley': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/remont-sudovogo-elektrooborudovaniya': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/truboprovodnye-raboty': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/ustanovka-sistem-ochistki-ballastnykh-vod': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/politika-konfidentsialnosti': { redirect: { to: '/privacy', statusCode: 301 } },
-    '/ru/vypolnennye-proekty': { redirect: { to: '/about', statusCode: 301 } },
-    '/ru/vypolnennye-proekty/stroitelstvo-sektsij-dlya-morskikh-kruiznykh-lajnerov': {
-      redirect: { to: '/engineering', statusCode: 301 },
-    },
-    '/ru/vypolnennye-proekty/ustanovka-sistemy-bwts': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/palubnie-raboti': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/ru/tehnicheskoe-obsluzhivanie': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/en/about-us': { redirect: { to: '/en/about', statusCode: 301 } },
-    '/en/career': { redirect: { to: '/en/crewing-management', statusCode: 301 } },
-    '/en/contact-us': { redirect: { to: '/en/contacts', statusCode: 301 } },
-    '/en/pipeline': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-    '/en/provision-of-spare-parts-and-procurement-services': {
-      redirect: { to: '/en/spare-parts-supply-and-procurement-services', statusCode: 301 },
-    },
-    '/en/completed-projects': { redirect: { to: '/en/about', statusCode: 301 } },
-    '/en/completed-projects/bwts-installation': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-    '/en/completed-projects/deck-works': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-    '/en/completed-projects/installation-of-the-platform-varandey-crane': {
-      redirect: { to: '/en/ship-repair', statusCode: 301 },
-    },
-    '/en/installation-of-ballast-water-treatment-systems': {
-      redirect: { to: '/en/ship-repair', statusCode: 301 },
-    },
-    '/index.php/en/kontakty': { redirect: { to: '/en/contacts', statusCode: 301 } },
-    '/index.php/en/karera': { redirect: { to: '/en/crewing-management', statusCode: 301 } },
-    '/index.php/en/sudoremont': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-    '/services': { redirect: { to: '/ship-repair', statusCode: 301 } },
-    '/en/services': { redirect: { to: '/en/ship-repair', statusCode: 301 } },
-  },
-  modules: ['@nuxtjs/i18n', ...(yandexMetrikaId ? ['nuxt-yandex-metrika'] : [])],
+  routeRules: legacyRouteRules,
+  modules,
   ...(yandexMetrikaId
     ? {
         yandexMetrika: {
@@ -91,7 +66,7 @@ export default defineNuxtConfig({
     },
   },
   i18n: {
-    baseUrl: import.meta.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+    baseUrl: siteUrl || (isDev ? 'http://localhost:3000' : 'https://marin-ts.com'),
     langDir: 'locales',
     locales: [
       { code: 'ru', language: 'ru-RU', file: 'ru.json' },
@@ -110,26 +85,24 @@ export default defineNuxtConfig({
       cssCodeSplit: false,
     },
     plugins: [tailwindcss()],
-    server: {
-      proxy: isDev
-        ? {
+    server: isDev
+      ? {
+          proxy: {
             '/api': {
-              target: defaultApiOrigin,
+              target: devApiOrigin,
               changeOrigin: true,
             },
-          }
-        : undefined,
-    },
+          },
+        }
+      : undefined,
   },
   runtimeConfig: {
-    apiBaseServer:
-      import.meta.env.NUXT_API_BASE_SERVER
-      ?? import.meta.env.NUXT_PUBLIC_API_BASE
-      ?? `${defaultApiOrigin}/api`,
+    /** SSR: полный URL API (NUXT_API_BASE_SERVER). */
+    apiBaseServer: serverApiBase || (isDev ? `${devApiOrigin}/api` : ''),
     public: {
-      apiBase:
-        import.meta.env.NUXT_PUBLIC_API_BASE ?? (isDev ? '/api' : `${defaultApiOrigin}/api`),
-      siteUrl: import.meta.env.NUXT_PUBLIC_SITE_URL ?? '',
+      /** Клиент: полный URL API в проде или /api через Vite proxy в dev. */
+      apiBase: publicApiBase || (isDev ? '/api' : ''),
+      siteUrl: siteUrl || (isDev ? 'http://localhost:3000' : 'https://marin-ts.com'),
       analyticsGtagId: import.meta.env.NUXT_PUBLIC_ANALYTICS_GTAG_ID ?? '',
       analyticsPlausibleDomain: import.meta.env.NUXT_PUBLIC_ANALYTICS_PLAUSIBLE_DOMAIN ?? '',
       mapboxToken:
