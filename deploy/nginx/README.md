@@ -94,7 +94,7 @@ curl -sI https://www.marin-ts.com/ | grep -i location
 
 ## Яндекс.Метрика
 
-Используется модуль [nuxt-yandex-metrika](https://www.npmjs.com/package/nuxt-yandex-metrika) (Nuxt 4, SSR через `@nuxt/scripts` + `useHead`).
+Плагин `app/plugins/yandex-metrika.client.ts` (официальный счётчик `ym`, без `nuxt-yandex-metrika`).
 
 На сервере в `.env` **до** `npm run build`:
 

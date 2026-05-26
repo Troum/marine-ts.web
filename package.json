@@ -13,7 +13,6 @@
   "dependencies": {
     "@jamescoyle/vue-icon": "^0.1.2",
     "@mdi/js": "^7.4.47",
-    "@nuxt/scripts": "^0.13.4",
     "@nuxtjs/i18n": "^10.2.4",
     "@tiptap/extension-color": "^3.22.4",
     "@tiptap/extension-highlight": "^3.22.2",
@@ -37,7 +36,6 @@
     "mapbox-gl": "^3.22.0",
     "marked": "^18.0.0",
     "nuxt": "^4.4.2",
-    "nuxt-yandex-metrika": "^2.0.2",
     "vue": "^3.5.31",
     "vue-router": "^5.0.4"
   },

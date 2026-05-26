@@ -19,13 +19,6 @@ const serverApiBase = (import.meta.env.NUXT_API_BASE_SERVER ?? '').trim().replac
  */
 const devApiOrigin = (import.meta.env.NUXT_API_ORIGIN ?? 'http://marine-ts.test').trim().replace(/\/+$/, '')
 
-const yandexMetrikaId = (import.meta.env.NUXT_PUBLIC_YANDEX_METRIKA_ID ?? '').trim()
-
-const modules: string[] = ['@nuxtjs/i18n']
-if (yandexMetrikaId) {
-  modules.push('nuxt-yandex-metrika')
-}
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: isDev },
@@ -35,36 +28,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   srcDir: 'app',
   routeRules: legacyRouteRules,
-  modules,
-  ...(yandexMetrikaId
-    ? {
-        yandexMetrika: {
-          id: yandexMetrikaId,
-          debug: isDev,
-          options: {
-            defer: false,
-            clickmap: true,
-            trackLinks: true,
-            accurateTrackBounce: true,
-            webvisor: true,
-          },
-        },
-      }
-    : {}),
-  hooks: {
-    ready(nuxt) {
-      nuxt.options.plugins = nuxt.options.plugins.filter((plugin) => {
-        const src = typeof plugin === 'string' ? plugin : (plugin?.src ?? '')
-        if (String(src).includes('yandex-metrika.client')) {
-          return Boolean(yandexMetrikaId)
-        }
-        if (!yandexMetrikaId) {
-          return true
-        }
-        return !String(src).includes('nuxt-yandex-metrika/dist/runtime/plugin')
-      })
-    },
-  },
+  modules: ['@nuxtjs/i18n'],
   i18n: {
     baseUrl: siteUrl || (isDev ? 'http://localhost:3000' : 'https://marin-ts.com'),
     langDir: 'locales',
@@ -109,6 +73,7 @@ export default defineNuxtConfig({
         import.meta.env.NUXT_PUBLIC_MAPBOX_TOKEN
         ?? 'pk.eyJ1IjoidHJvdW0iLCJhIjoiY2tlZWdvMWVoMTJiYzJ6bWkzbWp4NmR4ZSJ9.GUTHIgv8DFR8rwZ2WzsjhA',
       yandexMapsApiKey: import.meta.env.NUXT_PUBLIC_YANDEX_MAPS_API_KEY ?? '',
+      yandexMetrikaId: import.meta.env.NUXT_PUBLIC_YANDEX_METRIKA_ID ?? '',
       adminHiddenSections: (import.meta.env.NUXT_PUBLIC_ADMIN_HIDDEN_SECTIONS ?? '')
         .split(',')
         .map((s) => s.trim().toLowerCase().replace(/-/g, '_'))

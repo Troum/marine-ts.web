@@ -1,6 +1,6 @@
 /**
  * Публичный сайт: учёт просмотров в API + опционально Plausible / GA4.
- * Яндекс.Метрика — модуль nuxt-yandex-metrika (app/plugins/yandex-metrika.ts).
+ * Яндекс.Метрика — app/plugins/yandex-metrika.client.ts
  * Маршруты /admin/* не трекаются.
  */
 export default defineNuxtPlugin(() => {
