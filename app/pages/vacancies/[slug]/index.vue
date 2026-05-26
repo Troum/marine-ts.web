@@ -33,19 +33,19 @@ const crumbItems = computed(() => {
   return breadcrumbs({ label: t('nav.vacancies'), to: '/vacancies' }, { label: v.title })
 })
 
-watchEffect(() => {
+usePublicSeoMeta(computed(() => {
   const v = vacancy.value
   if (!v) {
-    return
+    return {}
   }
-  usePublicSeoMeta({
+  return {
     title: plainMetaString(v.seoTitle) || plainMetaString(v.title) || slug.value,
     description: plainMetaString(v.seoDescription) || plainMetaString(v.excerpt) || undefined,
     keywords: plainMetaString(v.seoKeywords) || undefined,
     image: v.seoImage || undefined,
-    type: 'article',
-  })
-})
+    type: 'article' as const,
+  }
+}))
 
 function hasVacancyContent(text: string | null | undefined) {
   if (!text) {

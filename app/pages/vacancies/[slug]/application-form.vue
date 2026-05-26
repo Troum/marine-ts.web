@@ -20,10 +20,10 @@ const { data: vacancy, pending } = await useAsyncData(
 
 const vacancyMissing = computed(() => !pending.value && !vacancy.value)
 
-usePublicSeoMeta({
+usePublicSeoMeta(computed(() => ({
   title: t('pages.vacancyForm.seoTitle'),
   robots: 'noindex, nofollow',
-})
+})))
 </script>
 
 <template>

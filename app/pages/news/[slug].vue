@@ -32,19 +32,19 @@ const crumbItems = computed(() => {
   return breadcrumbs({ label: t('nav.news'), to: '/news' }, { label: a.title })
 })
 
-watchEffect(() => {
+usePublicSeoMeta(computed(() => {
   const item = article.value
   if (!item) {
-    return
+    return {}
   }
-  usePublicSeoMeta({
+  return {
     title: plainMetaString(item.seoTitle) || plainMetaString(item.title) || slug.value,
     description: plainMetaString(item.seoDescription) || plainMetaString(item.excerpt) || undefined,
     keywords: plainMetaString(item.seoKeywords) || undefined,
     image: item.seoImage || item.image,
-    type: 'article',
-  })
-})
+    type: 'article' as const,
+  }
+}))
 
 function formatContent(text: string | undefined) {
   if (!text) {

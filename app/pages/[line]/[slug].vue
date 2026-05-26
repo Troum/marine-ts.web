@@ -75,21 +75,21 @@ const crumbItems = computed(() => {
   return breadcrumbs(parentCrumb, { label: flattenEncodedOrPlain(p.title).trim() || childSlug.value })
 })
 
-watchEffect(() => {
+usePublicSeoMeta(computed(() => {
   const item = page.value
   if (!item) {
-    return
+    return {}
   }
   const docTitle = plainMetaString(item.seoTitle) || plainMetaString(item.title) || childSlug.value
   const desc = plainMetaString(item.seoDescription) || plainMetaString(item.excerpt)
-  usePublicSeoMeta({
+  return {
     title: docTitle,
     description: desc || undefined,
     keywords: plainMetaString(item.seoKeywords) || undefined,
     image: item.seoImage || undefined,
-    type: 'article',
-  })
-})
+    type: 'article' as const,
+  }
+}))
 </script>
 
 <template>

@@ -21,10 +21,10 @@ const uploading = ref(false)
 const uploadError = ref<string | null>(null)
 const uploadDone = ref(false)
 
-usePublicSeoMeta({
+usePublicSeoMeta(computed(() => ({
   title: t('pages.upload.title'),
   robots: 'noindex, nofollow',
-})
+})))
 
 async function loadSession() {
   pending.value = true
