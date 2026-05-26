@@ -1,3 +1,41 @@
+# Nginx: marin-ts.com и api.marin-ts.com
+
+## api.marin-ts.com — ошибка `options-ssl-nginx.conf`
+
+Certbot добавляет в vhost:
+
+```nginx
+include /etc/letsencrypt/options-ssl-nginx.conf;
+ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+```
+
+Если файлов нет, `nginx -t` и `certbot --nginx` падают.
+
+```bash
+cd /var/www/marin-ts.com   # или путь к репозиторию фронта с deploy/nginx
+sudo bash deploy/nginx/install-letsencrypt-snippets.sh
+sudo cp deploy/nginx/api.marin-ts.com.conf /etc/nginx/sites-available/api.marin-ts.com.conf
+sudo cp deploy/nginx/nginx-http-limits.conf /etc/nginx/conf.d/marine-http-limits.conf
+```
+
+В `/etc/nginx/nginx.conf` внутри `http { }` (один раз):
+
+```nginx
+include /etc/nginx/conf.d/marine-http-limits.conf;
+```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Исправления в `api.marin-ts.com.conf` относительно сломанного certbot-варианта:
+
+- HTTP `:80` → **301 на HTTPS** (вместо `return 404`)
+- `http2 on` вместо устаревшего `listen ... http2`
+- выровнены блоки `location /storage/`
+
+---
+
 # Nginx: marin-ts.com
 
 ## Что настроено
