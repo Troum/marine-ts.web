@@ -44,7 +44,44 @@ sudo nginx -t && sudo systemctl reload nginx
 
 - HTTP `:80` → **301 на HTTPS** (вместо `return 404`)
 - `http2 on` вместо устаревшего `listen ... http2`
-- выровнены блоки `location /storage/`
+- выровнены блоки `location /storage/` (jpg→webp и webp→jpg fallback)
+
+## Перенос storage (медиа 404 на новом сервере)
+
+Файлы лежат в Laravel **не** в `public/`, а в `storage/app/public/`. В браузере URL вида `/storage/media/…` — это симлинк `public/storage` → `storage/app/public`.
+
+Проверка на **новом** сервере (`130.49.151.50`):
+
+```bash
+API=/var/www/api.marin-ts.com
+ls -la "$API/public/storage"    # должен быть symlink на ../storage/app/public
+test -f "$API/storage/app/public/media/bg-contacts-1-wdyGgGKd.jpg" && echo OK || echo MISSING
+```
+
+Сравнение со **старым** сервером (пока доступен `91.229.11.22`):
+
+```bash
+curl -sI --resolve api.marin-ts.com:443:91.229.11.22 \
+  https://api.marin-ts.com/storage/media/bg-contacts-1-wdyGgGKd.jpg | head -1
+curl -sI --resolve api.marin-ts.com:443:130.49.151.50 \
+  https://api.marin-ts.com/storage/media/bg-contacts-1-wdyGgGKd.jpg | head -1
+# старый: HTTP/1.1 200 — новый: 404 → файлы не скопированы или битый symlink
+```
+
+Копирование (путь на старом сервере уточните; типично):
+
+```bash
+rsync -avz --progress OLD_HOST:/var/www/api.marin-ts.com/storage/app/public/ \
+  /var/www/api.marin-ts.com/storage/app/public/
+
+cd /var/www/api.marin-ts.com
+sudo -u www-data php artisan storage:link
+sudo chown -R www-data:www-data storage/app/public
+```
+
+Не копируйте только `public/storage` как обычную папку без `storage/app/public` — nginx ищет файлы относительно `public/`.
+
+`.webp` в URL при отсутствии webp на диске: nginx пробует `.jpg`/`.png` (см. `api.marin-ts.com.conf`). Если 404 и на `.jpg` — файла нет в `storage/app/public`.
 
 ---
 
