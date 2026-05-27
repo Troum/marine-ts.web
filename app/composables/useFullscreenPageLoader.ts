@@ -1,13 +1,25 @@
 /**
- * Полноэкранный индикатор при переходах между страницами, смене локали (Nuxt i18n)
- * и жёсткой перезагрузке (F5, Cmd+Shift+R).
- * Управляется из `plugins/fullscreen-page-loader.client.ts`.
+ * Полноэкранный индикатор загрузки — управляется через CustomEvent,
+ * которые слушает inline-скрипт в `app.html`.
+ * Не использует Vue-состояние, не завязан на Teleport/Transition.
  */
+import {
+  dispatchMtsPageLoaderShow,
+  dispatchMtsPageLoaderHide,
+} from '~/utils/mtsPageLoaderEvents'
 
-/** Пауза после `page:finish`, чтобы оверлей не исчезал слишком резко. */
-export const FULLSCREEN_LOADER_HIDE_DELAY_MS = 320
+/**
+ * Минимальное время показа лоадера при SPA-навигации (мс).
+ * Гарантирует, что лоадер будет виден, даже если page:finish стреляет
+ * почти мгновенно (кэш, быстрый API на localhost).
+ */
+const MIN_SHOW_MS = 500
+
+/** Пауза после MIN_SHOW_MS перед началом fade-out. */
+const HIDE_DELAY_MS = 200
 
 let hideTimeoutId: ReturnType<typeof setTimeout> | null = null
+let showTimestamp = 0
 
 function clearHideTimeout() {
   if (hideTimeoutId != null) {
@@ -17,34 +29,30 @@ function clearHideTimeout() {
 }
 
 export function useFullscreenPageLoader() {
-  const active = useState('fullscreen-page-loader', () => false)
-
   function start() {
-    if (!import.meta.client) {
-      return
-    }
+    if (!import.meta.client) return
     clearHideTimeout()
-    active.value = true
+    showTimestamp = Date.now()
+    dispatchMtsPageLoaderShow()
   }
 
   function stop() {
-    if (!import.meta.client) {
-      return
-    }
+    if (!import.meta.client) return
     clearHideTimeout()
-    nextTick(() => {
-      requestAnimationFrame(() => {
-        hideTimeoutId = setTimeout(() => {
-          active.value = false
-          hideTimeoutId = null
-        }, FULLSCREEN_LOADER_HIDE_DELAY_MS)
-      })
-    })
+    const elapsed = Date.now() - showTimestamp
+    const wait = Math.max(0, MIN_SHOW_MS - elapsed) + HIDE_DELAY_MS
+    hideTimeoutId = setTimeout(() => {
+      dispatchMtsPageLoaderHide({ delay: 0 })
+      hideTimeoutId = null
+    }, wait)
   }
 
-  return {
-    active: readonly(active),
-    start,
-    stop,
+  /** Скрыть немедленно — для fallback при ошибках, admin-роутах и начальной загрузки. */
+  function forceStop() {
+    if (!import.meta.client) return
+    clearHideTimeout()
+    dispatchMtsPageLoaderHide({ immediate: true })
   }
+
+  return { start, stop, forceStop }
 }

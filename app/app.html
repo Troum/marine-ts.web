@@ -49,8 +49,71 @@
   <body {{ BODY_ATTRS }}>
     <div id="mts-initial-loader" role="status" aria-live="polite" aria-busy="true">
       <div class="mts-initial-loader__spinner" aria-hidden="true"></div>
-      <div class="mts-initial-loader__label">Загрузка...</div>
+      <div
+        class="mts-initial-loader__label"
+        data-label-ru="Загрузка…"
+        data-label-en="Loading…"
+      >Загрузка…</div>
     </div>
+    <script>
+      (function () {
+        var SHOW = 'mts:page-loader:show'
+        var HIDE = 'mts:page-loader:hide'
+        var HIDE_CLASS = 'mts-initial-loader--hidden'
+        var DEFAULT_DELAY = 320
+        var hideTimer = null
+
+        function loaderEl() {
+          return document.getElementById('mts-initial-loader')
+        }
+
+        function applyDefaultLabel(el) {
+          var labelEl = el.querySelector('.mts-initial-loader__label')
+          if (!labelEl) return
+          var lang = (document.documentElement.lang || 'ru').toLowerCase()
+          var text = lang.startsWith('en')
+            ? labelEl.getAttribute('data-label-en')
+            : labelEl.getAttribute('data-label-ru')
+          if (text) labelEl.textContent = text
+        }
+
+        function showLoader(event) {
+          var el = loaderEl()
+          if (!el) return
+          if (hideTimer != null) {
+            clearTimeout(hideTimer)
+            hideTimer = null
+          }
+          var detail = (event && event.detail) || {}
+          var labelEl = el.querySelector('.mts-initial-loader__label')
+          if (labelEl) {
+            if (detail.label) {
+              labelEl.textContent = detail.label
+            } else {
+              applyDefaultLabel(el)
+            }
+          }
+          el.classList.remove(HIDE_CLASS)
+          el.setAttribute('aria-busy', 'true')
+        }
+
+        function hideLoader(event) {
+          var el = loaderEl()
+          if (!el) return
+          var detail = (event && event.detail) || {}
+          var delay = detail.immediate ? 0 : (typeof detail.delay === 'number' ? detail.delay : DEFAULT_DELAY)
+          if (hideTimer != null) clearTimeout(hideTimer)
+          hideTimer = setTimeout(function () {
+            hideTimer = null
+            el.classList.add(HIDE_CLASS)
+            el.setAttribute('aria-busy', 'false')
+          }, delay)
+        }
+
+        window.addEventListener(SHOW, showLoader)
+        window.addEventListener(HIDE, hideLoader)
+      })()
+    </script>
     {{ APP }}
   </body>
 </html>
