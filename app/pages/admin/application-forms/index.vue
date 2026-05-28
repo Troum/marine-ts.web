@@ -345,6 +345,7 @@ async function deleteRow(row: ApplicationFormItem) {
           <table class="w-full min-w-[1000px]">
             <thead class="border-b border-mts-border bg-mts-bg">
               <tr>
+                <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">ID</th>
                 <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Вакансия</th>
                 <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">ФИО</th>
                 <th class="p-4 text-left font-mono text-[10px] uppercase text-mts-text-secondary">Email</th>
@@ -356,9 +357,10 @@ async function deleteRow(row: ApplicationFormItem) {
             </thead>
             <tbody>
               <tr v-if="rows.length === 0">
-                <td colspan="7" class="p-8 text-center font-body text-mts-text-secondary">Анкет пока нет</td>
+                <td colspan="8" class="p-8 text-center font-body text-mts-text-secondary">Анкет пока нет</td>
               </tr>
               <tr v-for="row in rows" :key="row.id" class="border-b border-mts-border last:border-0">
+                <td class="p-4 font-mono text-sm text-mts-text-muted">#{{ row.id }}</td>
                 <td class="p-4">
                   <NuxtLink
                     v-if="row.vacancyId != null && row.vacancyTitle"
