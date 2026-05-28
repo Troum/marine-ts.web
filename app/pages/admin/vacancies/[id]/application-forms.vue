@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { ArrowLeft, Loader2 } from 'lucide-vue-next'
 import type { ApplicationFormItem, ApplicationFormStatus, DocumentRequestCatalogEntry, VacancyItem } from '~/types'
+import AdminApplicationFormPayloadFiltersBar from '~/components/admin/AdminApplicationFormPayloadFiltersBar.vue'
 import AdminApplicationFormViewModal from '~/components/admin/AdminApplicationFormViewModal.vue'
 import AdminRequestDocumentsModal from '~/components/admin/AdminRequestDocumentsModal.vue'
+import {
+  applicationFormMatchesPayloadFilters,
+  defaultApplicationFormPayloadFilters,
+  hasActiveApplicationFormPayloadFilters,
+  type ApplicationFormPayloadFilterState,
+} from '~/utils/applicationFormAdminPayloadFilters'
 
 definePageMeta({
   layout: 'admin',
@@ -19,7 +26,10 @@ const idParam = computed(() => route.params.id as string)
 const vacancyId = computed(() => Number(idParam.value))
 
 const vacancy = ref<VacancyItem | null>(null)
-const rows = ref<ApplicationFormItem[]>([])
+const allRows = ref<ApplicationFormItem[]>([])
+const payloadFilters = ref<ApplicationFormPayloadFilterState>(defaultApplicationFormPayloadFilters())
+const listPositionOptions = ref<string[]>([])
+const listVesselTypeOptions = ref<string[]>([])
 const pending = ref(true)
 const actionId = ref<number | null>(null)
 
@@ -53,6 +63,13 @@ const sortOptions = [
 ]
 
 let searchDebounce: ReturnType<typeof setTimeout> | null = null
+
+const displayRows = computed(() => {
+  if (!hasActiveApplicationFormPayloadFilters(payloadFilters.value)) {
+    return allRows.value
+  }
+  return allRows.value.filter((r) => applicationFormMatchesPayloadFilters(r, payloadFilters.value))
+})
 
 const statusLabel: Record<ApplicationFormStatus, string> = {
   pending: 'Ожидает',
@@ -92,7 +109,7 @@ async function load() {
       }),
     ])
     vacancy.value = v
-    rows.value = list
+    allRows.value = list
   } catch {
     await navigateTo('/admin/vacancies')
   } finally {
@@ -114,10 +131,19 @@ function onExtraFilter(v: string) {
   statusFilter.value = v as '' | ApplicationFormStatus
 }
 
-onMounted(load)
+onMounted(() => {
+  void api.applicationForms
+    .getFormListsPublic()
+    .then((d) => {
+      listPositionOptions.value = d.positionOptions ?? []
+      listVesselTypeOptions.value = d.vesselTypeOptions ?? []
+    })
+    .catch(() => {})
+  void load()
+})
 
 watch([sort, order, statusFilter], () => {
-  load()
+  void load()
 })
 
 async function runAction(row: ApplicationFormItem, status: 'accepted' | 'rejected', message: string) {
@@ -141,9 +167,9 @@ async function runAction(row: ApplicationFormItem, status: 'accepted' | 'rejecte
   actionId.value = row.id
   try {
     const updated = await api.applicationForms.updateStatus(row.id, status)
-    const i = rows.value.findIndex((r) => r.id === row.id)
+    const i = allRows.value.findIndex((r) => r.id === row.id)
     if (i !== -1) {
-      rows.value[i] = updated
+      allRows.value[i] = updated
     }
     adminToast.success(status === 'accepted' ? 'Анкета принята' : 'Анкета отклонена')
   } catch {
@@ -198,9 +224,9 @@ async function onRequestDocsConfirm(keys: string[]) {
   requestDocsSubmitting.value = true
   try {
     const updated = await api.applicationForms.requestDocuments(requestDocsRow.value.id, keys)
-    const i = rows.value.findIndex((r) => r.id === requestDocsRow.value!.id)
+    const i = allRows.value.findIndex((r) => r.id === requestDocsRow.value!.id)
     if (i !== -1) {
-      rows.value[i] = updated
+      allRows.value[i] = updated
     }
     closeRequestDocs()
     adminToast.show({
@@ -229,7 +255,7 @@ async function deleteRow(row: ApplicationFormItem) {
   actionId.value = row.id
   try {
     await api.applicationForms.destroy(row.id)
-    rows.value = rows.value.filter((r) => r.id !== row.id)
+    allRows.value = allRows.value.filter((r) => r.id !== row.id)
     if (viewRow.value?.id === row.id) {
       closeView()
     }
@@ -283,6 +309,13 @@ async function deleteRow(row: ApplicationFormItem) {
     </header>
 
     <main class="mx-auto max-w-[1600px] px-6 py-8 lg:px-12">
+      <p
+        v-if="hasActiveApplicationFormPayloadFilters(payloadFilters)"
+        class="mb-4 font-body text-xs text-mts-text-secondary"
+      >
+        Показано {{ displayRows.length }} из {{ allRows.length }} анкет по этой вакансии (учитываются только загруженные
+        записи, до {{ 500 }} шт.).
+      </p>
       <AdminListToolbar
         :search="search"
         :sort="sort"
@@ -297,7 +330,16 @@ async function deleteRow(row: ApplicationFormItem) {
         @update:sort="sort = $event"
         @update:order="order = $event"
         @update:extra-filter="onExtraFilter($event)"
-      />
+      >
+        <div class="w-full min-w-0 basis-full">
+          <AdminApplicationFormPayloadFiltersBar
+            v-model="payloadFilters"
+            :position-options="listPositionOptions"
+            :vessel-type-options="listVesselTypeOptions"
+            :show-vacancy-scope="false"
+          />
+        </div>
+      </AdminListToolbar>
 
       <div v-if="pending" class="flex justify-center py-24">
         <Loader2 class="h-8 w-8 animate-spin text-mts-accent" />
@@ -314,10 +356,10 @@ async function deleteRow(row: ApplicationFormItem) {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="rows.length === 0">
+            <tr v-if="displayRows.length === 0">
               <td colspan="5" class="p-8 text-center font-body text-mts-text-secondary">Пока нет поданных анкет</td>
             </tr>
-            <tr v-for="row in rows" :key="row.id" class="border-b border-mts-border last:border-0">
+            <tr v-for="row in displayRows" :key="row.id" class="border-b border-mts-border last:border-0">
               <td class="p-4 font-body text-sm text-mts-text">{{ row.fullName }}</td>
               <td class="p-4 font-mono text-xs text-mts-text-secondary">{{ row.email }}</td>
               <td class="p-4 font-mono text-xs text-mts-text-secondary">{{ row.phone || '—' }}</td>
